@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="downloads_channel_name">Канал загрузок</string>
+    <string name="download_notification_initial_text">Подготовка к загрузке файлов</string>
+    <string name="download_notification_progress_title">Выполняется загрузка файла</string>
+    <string name="download_notification_success_title">Файл загружен</string>
+    <string name="download_notification_success_view_button">Открыть</string>
+    <string name="download_notification_success_share_button">Поделиться</string>
+    <string name="download_notification_error_retry_button">Повторить</string>
+    <string name="download_notification_cancel_button">Отмена</string>
+    <string name="download_notification_failed_title">Не удалось загрузить файл</string>
+    <string name="download_notification_cancelled_title">Загрузка файла отменена</string>
+    <string name="download_starting_toast_message_format">Файл %s добавлен в очередь загрузок</string>
+    <string name="download_start_failed_toast_message_format">Не удалось запустить сервис для загрузки файла %s</string>
+    <string name="download_error">Ошибка при загрузке файла</string>
+
+    <string name="view.choose_client_file_title">Выберите клиент для открытия файла</string>
+    <string name="share.choose_client_file_title">Выберите клиент для отправки файла</string>
+</resources>

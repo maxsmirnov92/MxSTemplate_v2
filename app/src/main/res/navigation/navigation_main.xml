@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigationMain">
+
+    <fragment
+        android:id="@+id/navigationMain"
+        android:name="net.maxsmr.feature.address_sorter.ui.AddressSorterFragment"
+        android:label="@string/title_main"
+        tools:layout="@layout/fragment_address_sorter">
+
+        <action
+            android:id="@+id/navigateToSettingsFragment"
+            app:destination="@id/navigationSettings"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigationSettings"
+        android:name="net.maxsmr.preferences.ui.SettingsFragment"
+        android:label="@string/title_settings"
+        tools:layout="@layout/fragment_settings">
+
+        <action
+            android:id="@+id/navigateToMain"
+            app:destination="@id/navigationMain"
+            app:enterAnim="@android:anim/fade_in"
+            app:exitAnim="@android:anim/fade_out" />
+
+    </fragment>
+
+    <!--  остальные destination, которых нет в menu,
+    для навигации в пределах хоста - писать сюда же -->
+
+</navigation>

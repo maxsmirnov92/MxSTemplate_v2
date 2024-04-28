@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="get_permission">Для корректной работы приложения требуются некоторые разрешения</string>
+
+    <string name="pick_settings">настройках</string>
+    <string name="pick_more_permission">Вы можете предоставить разрешение %s в %s, чтобы увидеть больше вариантов.</string>
+    <string name="pick_more_permissions">Вы можете предоставить разрешения %s в %s, чтобы увидеть больше вариантов.</string>
+
+    <string name="gps_not_available_alert_message">К сожалению, ваше мобильное устройство не снабжено функцией определения местоположения.</string>
+    <string name="gps_enable_dialog_alert_title">Местоположение недоступно</string>
+    <string name="gps_enable_dialog_alert_message">Получение текущего местоположения недоступно. Для получения местоположения нужно включить геопозиционирование в настройках.</string>
+    <string name="gps_enable_dialog_alert_answer_settings">Настройки</string>
+</resources>

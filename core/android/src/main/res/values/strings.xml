@@ -1,0 +1,44 @@
+<resources>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+
+    <string name="no_internet">Проверьте настройки интернет-соединения. Если включен VPN - отключите его и повторите попытку</string>
+    <string name="server_unavailable">Сервер не отвечает</string>
+    <string name="no_connection">Нет соединения</string>
+    <string name="no_data">Нет данных</string>
+    <string name="try_again_internet">Проверить снова</string>
+    <string name="try_again_connect">Попробовать снова</string>
+
+    <string name="unexpected_error_try_again">Произошла непредвиденная ошибка, попробуйте повторить операцию позже</string>
+
+    <string name="pick_no_permissions">Не получено необходимых разрешений</string>
+    <string name="pick_no_apps">Не найдено подходящих приложений</string>
+    <string name="image_picker_title">Приложение для выбора изображения</string>
+    <string name="image_picker_error">Не удалось получить изображение</string>
+    <string name="document_picker_title">Приложение для выбора файла</string>
+    <string name="document_picker_error">Не удалось получить файл</string>
+    <string name="audio_picker_title">Приложение для выбора аудио файла</string>
+    <string name="audio_picker_error">Не удалось получить аудио файл</string>
+    <string name="video_picker_title">Приложение для выбора видеозаписи</string>
+    <string name="video_picker_error">Не удалось получить видеозапись</string>
+
+    <string name="empty" translatable="false"/>
+    <string name="bad_gateway">Время ожидания ответа РЖД истекло. Попробуйте повторить запрос позже</string>
+    <string name="unexpected_error">Произошла неизвестная ошибка</string>
+
+    <string name="delete">Удалить</string>
+    <string name="close">Закрыть</string>
+    <string name="understand">Понятно</string>
+
+    <string name="continue_caps">ПРОДОЛЖИТЬ</string>
+    <string name="download">Скачать</string>
+
+    <string name="choose_app_title">Выберите приложение</string>
+    <string name="choose_app_title_email">Выберите приложение для отправки письма</string>
+    <string name="choose_app_title_email_support">Обращение в службу технической поддержки приложения</string>
+    <string name="error_intent_email">Для отправки письма установите любое приложение для работы с электронной почтой</string>
+    <string name="error_intent_email_support">Для обращения в службу технической поддержки установите любое приложение для работы с электронной почтой</string>
+    <string name="error_intent_send">Приложение для отправки не обнаружено</string>
+    <string name="error_intent_open_url">Приложение для просмотра ссылки не обнаружено</string>
+    <string name="error_intent_open_document">Приложение для выбора документа не обнаружено</string>
+</resources>

@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Address Sorter</string>
+    <string name="title_main">Главный</string>
+    <string name="title_settings">Настройки</string>
+</resources>

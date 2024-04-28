@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Цвет подсказок EditText, TextInputLayout, TextView в роли подсказок.
+    Рекомендуется использовать его в качестве цвета, а не конкретный color.
+    Впоследствии, когда все подсказки в аппе будут использовать этот цвет, можно будет заменить
+    на стандартный android:textColorHint
+    -->
+    <attr name="appHintColor" format="color" />
+    <attr name="appErrorColor" format="color" />
+    <attr name="appEditTextColor" format="color" />
+
+</resources>

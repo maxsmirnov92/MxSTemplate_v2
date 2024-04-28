@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="8dp"
+    android:background="@drawable/background_gray_corners8"
+    android:backgroundTint="#EBEDEF"
+    android:clickable="true"
+    android:focusable="true"
+    android:padding="8dp"
+    android:textColor="@color/textColorPrimary"
+    android:textSize="12sp"
+    tools:text="@string/pick_more_permissions" />

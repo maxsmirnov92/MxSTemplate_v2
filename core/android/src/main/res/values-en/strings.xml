@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="no_internet">There is no internet connection, check the Internet connection settings.</string>
+    <string name="no_connection">Not connected</string>
+    <string name="no_data">No data</string>
+    <string name="try_again_internet">Check again</string>
+
+    <string name="unexpected_error_try_again">An unexpected error occurred, please try again later</string>
+
+    <string name="get_permission">Application requires some permissions</string>
+
+    <string name="bad_gateway">Request timeout is expired. Try again later</string>
+    <string name="unexpected_error">Unexpected error</string>
+
+    <string name="delete">Delete</string>
+    <string name="close">Close</string>
+    <string name="understand">Understood</string>
+
+    <string name="continue_caps">CONTINUE</string>
+    <string name="download">Download</string>
+</resources>

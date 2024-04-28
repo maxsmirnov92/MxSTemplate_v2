@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Базовый стиль для отображения любого текста-->
+    <style name="text" parent="android:Widget.TextView">
+        <item name="android:textCursorDrawable">@drawable/cursor</item>
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">@dimen/textSizeLarge</item>
+        <item name="android:textColor">@color/textColorPrimary</item>
+        <item name="fontFamily">@font/roboto_medium</item>
+    </style>
+</resources>

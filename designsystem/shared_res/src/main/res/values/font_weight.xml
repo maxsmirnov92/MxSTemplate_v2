@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="font_weight_100">100</integer>
+    <integer name="font_weight_200">200</integer>
+    <integer name="font_weight_300">300</integer>
+    <integer name="font_weight_400">400</integer>
+    <integer name="font_weight_500">500</integer>
+    <integer name="font_weight_600">600</integer>
+    <integer name="font_weight_700">700</integer>
+    <integer name="font_weight_800">800</integer>
+    <integer name="font_weight_900">900</integer>
+</resources>

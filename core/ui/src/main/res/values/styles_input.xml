@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="AppTextInputLayout" parent="Widget.Design.TextInputLayout">
+        <item name="android:textColorHint">?attr/appHintColor</item>
+        <item name="hintTextAppearance">@style/AppHintAppearance</item>
+        <item name="helperTextTextAppearance">@style/AppHintAppearance</item>
+        <item name="hintTextColor">?attr/appHintColor</item>
+        <item name="errorTextColor">?attr/appErrorColor</item>
+<!--        <item name="boxStrokeColor">?attr/appHintColor</item>-->
+        <item name="fontFamily">@font/roboto_regular</item>
+    </style>
+
+    <style name="AppEditText" parent="Widget.AppCompat.EditText">
+        <item name="android:textColor">?attr/appEditTextColor</item>
+        <item name="android:textCursorDrawable">@drawable/cursor</item>
+        <item name="fontFamily">@font/roboto_regular</item>
+    </style>
+
+    <style name="InputText" parent="AppEditText">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">@dimen/textSizeMini</item>
+        <item name="android:backgroundTint">@color/textColorHighlight</item>
+    </style>
+
+    <style name="InputText.Large">
+        <item name="android:textSize">@dimen/textSizeExtraLarge</item>
+    </style>
+
+</resources>

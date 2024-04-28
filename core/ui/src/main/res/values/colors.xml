@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- White palette -->
+    <color name="white">#FFFFFF</color>
+    <color name="white_alpha_10">#EAFFFFFF</color>
+    <color name="white_alpha_20">#D0FFFFFF</color>
+    <color name="white_alpha_30">#B6FFFFFF</color>
+    <color name="white_alpha_40">#9CFFFFFF</color>
+    <color name="white_alpha_50">#82FFFFFF</color>
+    <color name="white_alpha_60">#68FFFFFF</color>
+    <color name="white_alpha_70">#4EFFFFFF</color>
+    <color name="white_alpha_80">#34FFFFFF</color>
+    <color name="white_alpha_90">#1AFFFFFF</color>
+    <color name="white_alpha_100">#00ffffff</color>
+
+    <!-- Blue palette -->
+    <color name="blue">#0099CC</color>
+    <color name="blue_alpha_10">#EA0099CC</color>
+    <color name="blue_alpha_20">#D00099CC</color>
+    <color name="blue_alpha_30">#B60099CC</color>
+    <color name="blue_alpha_40">#9C0099CC</color>
+    <color name="blue_alpha_50">#820099CC</color>
+    <color name="blue_alpha_60">#680099CC</color>
+    <color name="blue_alpha_70">#4E0099CC</color>
+    <color name="blue_alpha_80">#340099CC</color>
+    <color name="blue_alpha_90">#1A0099CC</color>
+
+    <!-- Green palette -->
+    <color name="green">#669900</color>
+    <color name="green_alpha_10">#EA669900</color>
+    <color name="green_alpha_20">#D0669900</color>
+    <color name="green_alpha_30">#B6669900</color>
+    <color name="green_alpha_40">#9C669900</color>
+    <color name="green_alpha_50">#82669900</color>
+    <color name="green_alpha_60">#68669900</color>
+    <color name="green_alpha_70">#4E669900</color>
+    <color name="green_alpha_80">#34669900</color>
+    <color name="green_alpha_90">#1A669900</color>
+
+    <!-- Red palette -->
+    <color name="red">#CC0000</color>
+    <color name="red_alpha_10">#EACC0000</color>
+    <color name="red_alpha_20">#D0CC0000</color>
+    <color name="red_alpha_30">#B6CC0000</color>
+    <color name="red_alpha_40">#9CCC0000</color>
+    <color name="red_alpha_50">#82CC0000</color>
+    <color name="red_alpha_60">#68CC0000</color>
+    <color name="red_alpha_70">#4ECC0000</color>
+    <color name="red_alpha_80">#34CC0000</color>
+    <color name="red_alpha_90">#1ACC0000</color>
+
+    <!-- Orange palette -->
+    <color name="orange">#FF8A00</color>
+    <color name="orange_alpha_10">#EAFF8A00</color>
+    <color name="orange_alpha_20">#D0FF8A00</color>
+    <color name="orange_alpha_30">#B6FF8A00</color>
+    <color name="orange_alpha_40">#9CFF8A00</color>
+    <color name="orange_alpha_50">#82FF8A00</color>
+    <color name="orange_alpha_60">#68FF8A00</color>
+    <color name="orange_alpha_70">#4EFF8A00</color>
+    <color name="orange_alpha_80">#34FF8A00</color>
+    <color name="orange_alpha_90">#1AFF8A00</color>
+
+    <!-- Purple palette -->
+    <color name="purple">#9933CC</color>
+    <color name="purple_alpha_10">#EA9933CC</color>
+    <color name="purple_alpha_20">#D09933CC</color>
+    <color name="purple_alpha_30">#B69933CC</color>
+    <color name="purple_alpha_40">#9C9933CC</color>
+    <color name="purple_alpha_50">#829933CC</color>
+    <color name="purple_alpha_60">#689933CC</color>
+    <color name="purple_alpha_70">#4E9933CC</color>
+    <color name="purple_alpha_80">#349933CC</color>
+    <color name="purple_alpha_90">#1A9933CC</color>
+
+    <!-- Gray palette -->
+    <color name="gray">#404040</color>
+    <color name="gray_alpha_10">#EA404040</color>
+    <color name="gray_alpha_20">#D0404040</color>
+    <color name="gray_alpha_30">#B6404040</color>
+    <color name="gray_alpha_40">#9C404040</color>
+    <color name="gray_alpha_50">#82404040</color>
+    <color name="gray_alpha_60">#68404040</color>
+    <color name="gray_alpha_70">#4E404040</color>
+    <color name="gray_alpha_80">#34404040</color>
+    <color name="gray_alpha_90">#1A404040</color>
+    <color name="gray_alpha_95">#09404040</color>
+
+    <!-- Black palette -->
+    <color name="black">#000000</color>
+    <color name="black_alpha_10">#EA000000</color>
+    <color name="black_alpha_20">#D0000000</color>
+    <color name="black_alpha_30">#B6000000</color>
+    <color name="black_alpha_40">#9C000000</color>
+    <color name="black_alpha_50">#82000000</color>
+    <color name="black_alpha_60">#68000000</color>
+    <color name="black_alpha_70">#4E000000</color>
+    <color name="black_alpha_80">#34000000</color>
+    <color name="black_alpha_90">#1A000000</color>
+
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+
+    <color name="colorPrimary">@color/purple_500</color>
+    <color name="colorPrimaryVariant">@color/purple_500</color>
+    <color name="colorPrimaryDark">@color/purple_700</color>
+    <color name="colorAccent">@color/colorPrimary</color>
+    <color name="colorControlNormal">@color/white</color>
+    <color name="colorControlDisabled">#cecdcd</color>
+
+<!--    #96cbc6-->
+    <color name="textColorHighlight">@color/teal_700</color>
+    <color name="textColorPrimary">@color/black</color>
+    <color name="textColorDisabled">@color/colorControlDisabled</color>
+    <color name="textColorHint">#6d6f70</color>
+    <color name="textColorError">#EE3124</color>
+<!--    <color name="textColorToolbar">#cecdcd</color>-->
+
+    <color name="snackbarActionColor">#1BC886</color>
+    <color name="snackbarBackground">#4f4f5e</color>
+
+    <color name="backgroundLightGray">#F4F4F4</color>
+</resources>

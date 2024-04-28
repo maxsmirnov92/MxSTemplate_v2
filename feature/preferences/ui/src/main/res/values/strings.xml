@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Настройки</string>
+    <string name="settings_hint_field_max_downloads">Максимальное число одновременных загрузок</string>
+    <string name="settings_dialog_confirm_message">Есть изменения</string>
+    <string name="settings_dialog_confirm_yes_button">Сохранить</string>
+    <string name="settings_dialog_confirm_neutral_button">Не сохранять</string>
+    <string name="settings_dialog_confirm_negative_button">Отмена</string>
+    <string name="settings_menu_action_save">Сохранить</string>
+</resources>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_request">Для корректной работы приложения требуются некоторые разрешения: %1$s. Перейти к настройкам приложения?</string>
+    <string name="permission_camera">Камера</string>
+    <string name="permission_location">Местоположение</string>
+    <string name="permission_microphone">Микрофон</string>
+    <string name="permission_storage">Память</string>
+    <string name="permission_calendar">Календарь</string>
+</resources>
