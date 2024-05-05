@@ -12,7 +12,7 @@ android {
 dependencies {
     api(project(":feature:address_sorter:data"))
     implementation(project(":core:di"))
-    implementation(project(":feature:download"))
+    implementation(project(":feature:download:data"))
     implementation(project(":feature:preferences:ui"))
 
     implementation(libs.androidx.datastore.preferences)

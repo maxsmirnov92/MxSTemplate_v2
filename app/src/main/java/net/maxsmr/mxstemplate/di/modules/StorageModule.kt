@@ -19,8 +19,8 @@ import net.maxsmr.core.di.Preferences
 import net.maxsmr.core.di.PreferencesType
 import net.maxsmr.core.network.SessionStorage
 import net.maxsmr.mxstemplate.session.RadarIoSessionStorage
-import net.maxsmr.preferences.domain.AppSettings
-import net.maxsmr.preferences.domain.UserPreferencesSerializer
+import net.maxsmr.feature.preferences.data.domain.AppSettings
+import net.maxsmr.feature.preferences.data.domain.UserPreferencesSerializer
 import javax.inject.Singleton
 
 @[Module

@@ -1,11 +1,8 @@
 package net.maxsmr.feature.address_sorter.ui
 
-import android.Manifest
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
-import android.widget.EditText
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavArgs
@@ -22,20 +19,16 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
-import net.maxsmr.core.ui.alert.representation.DialogRepresentation
 import net.maxsmr.core.ui.alert.representation.asOkDialog
-import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_DOWNLOAD_PERMISSION
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_GPS_PERMISSION
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_NOTIFICATIONS_PERMISSION
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.location.LocationViewModel
-import net.maxsmr.download.DownloadsViewModel
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputAdapter
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputListener
 import net.maxsmr.feature.address_sorter.ui.databinding.FragmentAddressSorterBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
-import net.maxsmr.permissionchecker.PermissionsHelper.Companion.addPostNotificationsByApiVersion
 import javax.inject.Inject
 import kotlin.reflect.KClass
 
@@ -49,7 +42,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, Nav
 
     override val viewModel: AddressSorterViewModel by viewModels {
         AbstractSavedStateViewModelFactory(this) {
-            factory.create(it, locationViewModel, downloadsViewModel)
+            factory.create(it, locationViewModel)
         }
     }
 
@@ -60,8 +53,6 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, Nav
             locationFactory.create(it, AlertQueue(), null)
         }
     }
-
-    private val downloadsViewModel: DownloadsViewModel by viewModels()
 
     private val adapter = AddressInputAdapter(this).apply {
         startDragListener = this@AddressSorterFragment
@@ -102,21 +93,6 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, Nav
         bindAlertDialog(AddressSorterViewModel.DIALOG_TAG_PICKER_ERROR) {
             it.asOkDialog(requireContext())
         }
-        bindAlertDialog(AddressSorterViewModel.DIALOG_TAG_DOWNLOAD_FILE) {
-            val customView = LayoutInflater.from(requireContext()).inflate(R.layout.view_dialog_download_file, null)
-            val urlEdit = customView.findViewById<EditText>(R.id.etUrl)
-            val resourceNameEdit = customView.findViewById<EditText>(R.id.etName)
-            DialogRepresentation.Builder(requireContext(), it)
-//                .setThemeResId(com.google.android.material.R.style.Theme_MaterialComponents_DayNight)
-                .setCustomView(customView)
-                .setCancelable(true)
-                .setPositiveButton(it.answers[0]) {
-                    doOnPermissionsResult(REQUEST_CODE_DOWNLOAD_PERMISSION, addPostNotificationsByApiVersion(listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))) {
-                        viewModel.downloadFile(urlEdit.text.toString(), resourceNameEdit.text.toString())
-                    }
-                }
-                .build()
-        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: AddressSorterViewModel, alertHandler: AlertHandler) {
@@ -126,7 +102,6 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, Nav
             handleAlerts(requireContext(), alertHandler)
             handleEvents(this@AddressSorterFragment)
         }
-        downloadsViewModel.handleEvents(this)
 
         with(binding) {
             rvContent.adapter = adapter
@@ -175,15 +150,9 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, Nav
                 true
             }
 
-            R.id.actionDownloadFile -> {
-                viewModel.onDownloadFileAction()
-                true
-            }
-
             else -> {
                 super.onMenuItemSelected(menuItem)
             }
-
         }
     }
 

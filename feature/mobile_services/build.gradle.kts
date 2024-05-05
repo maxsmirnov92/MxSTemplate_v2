@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace = "net.maxsmr.mobile_services"
+    namespace = "net.maxsmr.feature.mobile_services"
 }
 
 dependencies {

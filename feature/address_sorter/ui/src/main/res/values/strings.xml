@@ -9,7 +9,4 @@
     <string name="address_sorter_menu_action_download_file">Загрузить файл</string>
     <string name="address_sorter_select_file_error_format">Не удалось выбрать файл, причина: %s</string>
     <string name="address_sorter_address_add_error">Не удалось добавить адреса</string>
-    <string name="address_sorter_download_file_title">@string/address_sorter_menu_action_download_file</string>
-    <string name="address_sorter_download_file_url_hint">URL для загрузки</string>
-    <string name="address_sorter_download_file_name_hint">Имя (опционально)</string>
 </resources>

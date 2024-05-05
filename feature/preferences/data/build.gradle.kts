@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "net.maxsmr.preferences.data"
+    namespace = "net.maxsmr.feature.preferences.data"
 }
 
 dependencies {

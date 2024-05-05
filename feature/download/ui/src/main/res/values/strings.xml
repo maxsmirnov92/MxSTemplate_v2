@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_pager_title">Загрузки</string>
+    <string name="download_params_title">Параметры</string>
+    <string name="download_state_title">Состояние</string>
+
+    <string name="download_file_url_hint">URL для загрузки</string>
+    <string name="download_file_url_empty_error">URL обязателен</string>
+    <string name="download_method_name">Метод</string>
+    <string-array name="download_method_names">
+        <item>GET</item>
+        <item>POST</item>
+    </string-array>
+    <string name="download_file_name_hint">Имя файла</string>
+    <string name="download_sub_dir_name_hint">Имя подкаталога</string>
+    <string name="download_header_name_subtitle">Заголовки</string>
+    <string name="download_key_name_hint">Название</string>
+    <string name="download_key_name_empty_error">Название заголовка не может быть пустым</string>
+    <string name="download_value_name_hint">Значение</string>
+    <string name="download_value_name_empty_error">Значение заголовка не может быть пустым</string>
+
+    <string name="download_start_button_text">Начать</string>
+</resources>

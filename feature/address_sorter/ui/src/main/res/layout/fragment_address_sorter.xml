@@ -19,13 +19,6 @@
             android:layout_height="?attr/actionBarSize"
             app:title="@string/address_sorter_screen_title" />
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/backgroundLightGray">
-
-        </FrameLayout>
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout

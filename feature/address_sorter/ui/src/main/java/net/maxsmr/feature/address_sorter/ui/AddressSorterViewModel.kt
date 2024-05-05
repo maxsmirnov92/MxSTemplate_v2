@@ -2,7 +2,6 @@ package net.maxsmr.feature.address_sorter.ui
 
 import android.content.Context
 import android.net.Uri
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -22,7 +21,7 @@ import net.maxsmr.commonutils.media.openInputStream
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.content.pick.PickResult
 import net.maxsmr.core.android.coroutines.usecase.asState
 import net.maxsmr.core.android.coroutines.usecase.mapData
@@ -31,23 +30,17 @@ import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.ui.location.LocationViewModel
-import net.maxsmr.download.DownloadService
-import net.maxsmr.download.DownloadService.Params.Companion.defaultGETServiceParamsFor
-import net.maxsmr.download.DownloadsViewModel
-import net.maxsmr.feature.address_sorter.AddressSuggestUseCase
-import net.maxsmr.feature.address_sorter.repository.AddressRepo
+import net.maxsmr.feature.address_sorter.data.AddressSuggestUseCase
+import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
-import net.maxsmr.preferences.repository.CacheDataStoreRepository
-import net.maxsmr.preferences.ui.BaseCachedViewModel
-import java.net.MalformedURLException
-import java.net.URL
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.ui.BaseCachedViewModel
 
 class AddressSorterViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val locationViewModel: LocationViewModel,
-    @Assisted private val downloadsViewModel: DownloadsViewModel,
     cacheRepo: CacheDataStoreRepository,
     @Dispatcher(AppDispatchers.IO)
     private val ioDispatcher: CoroutineDispatcher,
@@ -58,7 +51,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     // сразу нельзя получить из
     // repo.sortedAddress.asLiveData(),
     // т.к. дальше планируется изменение итемов
-    private val items = MutableLiveData<List<AddressItem>>(emptyList())
+    private val items by persistableLiveDataInitial<List<AddressItem>>(emptyList())
 
 //    private val suggestsLiveData = MutableLiveData<Map<Int, LoadState<List<AddressSuggestItem>>>>(mapOf())
 
@@ -66,7 +59,7 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     private val suggestFlowMap = mutableMapOf<Long, FlowInfo>()
 
-    val resultItems = MutableLiveData<List<AddressInputData>>(emptyList())
+    val resultItems by persistableLiveDataInitial<List<AddressInputData>>(emptyList())
 
     override fun onInitialized() {
         super.onInitialized()
@@ -141,28 +134,6 @@ class AddressSorterViewModel @AssistedInject constructor(
         viewModelScope.launch {
             repo.clearItems()
         }
-    }
-
-    fun onDownloadFileAction() {
-        AlertBuilder(DIALOG_TAG_DOWNLOAD_FILE)
-            .setTitle(R.string.address_sorter_download_file_title)
-            .setAnswers(Alert.Answer((android.R.string.ok)))
-            .build()
-    }
-
-    fun downloadFile(url: String, fileName: String?) {
-        val uri = url.toUrlOrNull() ?: return
-        downloadsViewModel.download(
-            defaultGETServiceParamsFor(
-                uri,
-                fileName,
-                notificationParams = DownloadService.NotificationParams(
-                    successActions = DownloadsViewModel.defaultNotificationActions(
-                        baseApplicationContext
-                    )
-                ),
-            )
-        )
     }
 
     /**
@@ -308,20 +279,11 @@ class AddressSorterViewModel @AssistedInject constructor(
         fun create(
             state: SavedStateHandle,
             locationViewModel: LocationViewModel,
-            downloadsViewModel: DownloadsViewModel,
         ): AddressSorterViewModel
     }
 
     companion object {
 
         const val DIALOG_TAG_PICKER_ERROR = "content_picker_error"
-        const val DIALOG_TAG_DOWNLOAD_FILE = "download_file"
-
-        // TODO перенести
-        fun String.toUrlOrNull() = try {
-            URL(this)
-        } catch (e: MalformedURLException) {
-            null
-        }
     }
 }

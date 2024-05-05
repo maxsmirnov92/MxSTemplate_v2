@@ -11,24 +11,21 @@
         android:label="@string/title_main"
         tools:layout="@layout/fragment_address_sorter">
 
-        <action
-            android:id="@+id/navigateToSettingsFragment"
-            app:destination="@id/navigationSettings"
-            app:enterAnim="@android:anim/fade_in"
-            app:exitAnim="@android:anim/fade_out" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigationDownloads"
+        android:name="net.maxsmr.feature.download.ui.DownloadsPagerFragment"
+        android:label="@string/title_downloads"
+        tools:layout="@layout/fragment_downloads_pager">
+
     </fragment>
 
     <fragment
         android:id="@+id/navigationSettings"
-        android:name="net.maxsmr.preferences.ui.SettingsFragment"
+        android:name="net.maxsmr.feature.preferences.ui.SettingsFragment"
         android:label="@string/title_settings"
         tools:layout="@layout/fragment_settings">
-
-        <action
-            android:id="@+id/navigateToMain"
-            app:destination="@id/navigationMain"
-            app:enterAnim="@android:anim/fade_in"
-            app:exitAnim="@android:anim/fade_out" />
 
     </fragment>
 

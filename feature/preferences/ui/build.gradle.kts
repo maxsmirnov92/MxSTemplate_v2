@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "net.maxsmr.preferences.ui"
+    namespace = "net.maxsmr.feature.preferences.ui"
 }
 
 dependencies {

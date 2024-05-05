@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_toStartOf="@+id/ibRemove"
+        android:orientation="vertical">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:hint="@string/download_key_name_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etName"
+                style="@style/DownloadEditTextStyle" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilValue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:hint="@string/download_key_name_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etValue"
+                style="@style/DownloadEditTextStyle" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+    </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/ibRemove"
+        style="@style/Widget.AppCompat.ActionButton"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="14dp"
+        android:scaleType="centerCrop"
+        app:srcCompat="@drawable/ic_clear" />
+
+</RelativeLayout>

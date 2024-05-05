@@ -6,6 +6,7 @@ import org.gradle.kotlin.dsl.dependencies
 import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.configureKotlinAndroid
 import net.maxsmr.mxstemplate.libs
+import org.gradle.kotlin.dsl.kotlin
 
 class AndroidApplicationConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -21,8 +22,13 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             }
             dependencies {
                 // Timber подключается в целевой app, для реализация BaseLogger
-                add("implementation", libs.findLibrary("timber").get())
                 add("coreLibraryDesugaring", libs.findLibrary("android.desugarJdkLibs").get())
+                add("implementation", libs.findLibrary("timber").get())
+                add("testImplementation", kotlin("test"))
+                add("testImplementation", libs.findLibrary("junit4").get())
+                add("androidTestImplementation", kotlin("test"))
+                add("androidTestImplementation", libs.findLibrary("androidx.test.ext.junit").get())
+                add("androidTestImplementation", libs.findLibrary("androidx.test.espresso.core").get())
             }
         }
     }

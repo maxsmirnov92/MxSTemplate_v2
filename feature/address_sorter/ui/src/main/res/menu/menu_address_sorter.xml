@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/actionPickFromJson"
-        android:title="@string/address_sorter_menu_action_pick_from_json"
-        />
-    <item android:id="@+id/actionClear"
-        android:title="@string/address_sorter_menu_action_clear"
-        />
-    <item android:id="@+id/actionDownloadFile"
-        android:title="@string/address_sorter_menu_action_download_file"
-        />
+    <item
+        android:id="@+id/actionPickFromJson"
+        android:title="@string/address_sorter_menu_action_pick_from_json" />
+    <item
+        android:id="@+id/actionClear"
+        android:title="@string/address_sorter_menu_action_clear" />
 </menu>

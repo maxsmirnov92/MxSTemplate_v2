@@ -183,9 +183,9 @@ dependencies {
     implementation(project(":core:utils"))
     implementation(project(":core:ui"))
 
-    implementation(project(":feature:preferences:ui"))
-    implementation(project(":feature:download"))
     implementation(project(":feature:mobile_services"))
+    implementation(project(":feature:preferences:ui"))
+    implementation(project(":feature:download:ui"))
     implementation(project(":feature:address_sorter:ui"))
 
 
