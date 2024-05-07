@@ -1,7 +1,6 @@
 package net.maxsmr.feature.download.ui.adapter
 
 import android.view.View
-import android.view.ViewParent
 import android.widget.EditText
 import com.google.android.material.textfield.TextInputLayout
 import com.hannesdorfmann.adapterdelegates4.dsl.v2.AdapterDelegateViewHolder
@@ -9,7 +8,6 @@ import com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setInputError
-import net.maxsmr.commonutils.gui.setTextDistinct
 import net.maxsmr.commonutils.gui.setTextWithSelectionToEnd
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.logger.BaseLogger

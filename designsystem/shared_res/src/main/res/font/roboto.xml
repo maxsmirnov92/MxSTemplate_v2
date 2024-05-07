@@ -17,6 +17,11 @@
         app:fontWeight="500" />
 
     <font
+        app:font="@font/ttf_roboto_italic"
+        app:fontStyle="normal"
+        app:fontWeight="600" />
+
+    <font
         app:font="@font/ttf_roboto_bold"
         app:fontStyle="normal"
         app:fontWeight="700" />

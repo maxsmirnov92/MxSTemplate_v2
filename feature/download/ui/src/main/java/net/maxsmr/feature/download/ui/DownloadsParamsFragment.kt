@@ -36,19 +36,20 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
     @Inject
     lateinit var factory: DownloadsParamsViewModel.Factory
 
-    private val headersAdapter = HeadersAdapter(this)
-
     override val layoutId: Int = R.layout.fragment_downloads_params
-
-    private val binding by viewBinding(FragmentDownloadsParamsBinding::bind)
-
-    private val downloadsViewModel: DownloadsViewModel by viewModels()
 
     override val viewModel: DownloadsParamsViewModel by viewModels {
         AbstractSavedStateViewModelFactory(this) {
             factory.create(it, downloadsViewModel)
         }
     }
+
+    private val downloadsViewModel: DownloadsViewModel by viewModels()
+
+    private val binding by viewBinding(FragmentDownloadsParamsBinding::bind)
+
+    private val headersAdapter by lazy { HeadersAdapter(this) }
+
 
     override fun onViewCreated(
         view: View,

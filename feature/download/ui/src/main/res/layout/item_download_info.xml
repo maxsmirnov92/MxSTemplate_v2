@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingBottom="10dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvResourceName"
+            style="@style/text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toStartOf="@id/containerActionButtons"
+            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+            app:fontFamily="@font/roboto_italic"
+            tools:text="downloadName" />
+
+        <LinearLayout
+            android:id="@+id/containerActionButtons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_marginStart="10dp">
+
+            <ImageButton
+                android:id="@+id/ibInfo"
+                style="@style/Widget.AppCompat.ActionButton"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:scaleType="centerCrop"
+                app:srcCompat="@drawable/ic_info" />
+
+            <ImageButton
+                android:id="@+id/ibCancel"
+                style="@style/Widget.AppCompat.ActionButton"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginStart="10dp"
+                android:scaleType="centerCrop"
+                app:srcCompat="@drawable/ic_stop" />
+
+            <ImageButton
+                android:id="@+id/ibRetry"
+                style="@style/Widget.AppCompat.ActionButton"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:layout_marginStart="10dp"
+                android:scaleType="centerCrop"
+                app:srcCompat="@drawable/ic_retry" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <ProgressBar
+        android:id="@+id/pbDownload"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp" />
+
+    <TextView
+        android:id="@+id/tvStatusInfo"
+        style="@style/text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Small"
+        android:textSize="@dimen/textSizeExtraMini"
+        tools:text=",status ," />
+
+</LinearLayout>

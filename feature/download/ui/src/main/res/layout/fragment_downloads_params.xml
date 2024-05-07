@@ -3,15 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_height="match_parent">
 
 <!--    <androidx.core.widget.NestedScrollView-->
 <!--        android:layout_width="match_parent"-->
 <!--        android:layout_height="match_parent"-->
 <!--        android:layout_above="@id/btStart">-->
 
-        <LinearLayout
+    <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
@@ -110,9 +109,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-            <!--        android:descendantFocusability="beforeDescendants"-->
-            <!--        android:focusableInTouchMode="true"-->
-            <!--        android:nestedScrollingEnabled="false"-->
+<!--        android:nestedScrollingEnabled="false"-->
+<!--        android:descendantFocusability="beforeDescendants"-->
+<!--        android:focusableInTouchMode="true"-->
+
 
         </LinearLayout>
 

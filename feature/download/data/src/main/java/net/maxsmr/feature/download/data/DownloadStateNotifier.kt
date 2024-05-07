@@ -39,9 +39,9 @@ class DownloadStateNotifier @Inject constructor(
         }
     }
 
-    fun onDownloadStarting(params: DownloadService.Params) {
+    fun onDownloadStarting(downloadInfo: DownloadInfo, params: DownloadService.Params) {
         scope.launch {
-            _downloadStartEvents.emit(DownloadStartInfo(params, true))
+            _downloadStartEvents.emit(DownloadStartInfo(params, true, downloadInfo))
         }
     }
 
@@ -52,13 +52,12 @@ class DownloadStateNotifier @Inject constructor(
     }
 
     fun onDownloadProcessing(
+        stateInfo: DownloadService.DownloadStateInfo,
         downloadInfo: DownloadInfo,
         params: DownloadService.Params,
-        currentBytes: Long,
-        totalBytes: Long,
     ) {
         scope.launch {
-            _downloadStateEvents.emit(DownloadState.Loading(currentBytes, totalBytes, downloadInfo, params))
+            _downloadStateEvents.emit(DownloadState.Loading(stateInfo, downloadInfo, params))
         }
     }
 
@@ -96,6 +95,7 @@ class DownloadStateNotifier @Inject constructor(
     class DownloadStartInfo(
         val params: DownloadService.Params,
         val isStarted: Boolean,
+        val downloadInfo: DownloadInfo? = null,
     )
 
     sealed class DownloadState(
@@ -105,8 +105,7 @@ class DownloadStateNotifier @Inject constructor(
     ) : Serializable {
 
         class Loading(
-            val currentBytes: Long,
-            val totalBytes: Long,
+            val stateInfo: DownloadService.DownloadStateInfo,
             downloadInfo: DownloadInfo,
             params: DownloadService.Params,
         ) : DownloadState(downloadInfo, params, params)

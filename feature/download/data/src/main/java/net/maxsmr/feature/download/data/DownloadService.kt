@@ -249,7 +249,7 @@ class DownloadService : Service() {
                 return@launch
             }
 
-            val downloadInfo = prevDownload?.copy(status = DownloadInfo.Status.Loading)
+            var downloadInfo = prevDownload?.copy(status = DownloadInfo.Status.Loading)
                 ?: DownloadInfo(
                     name = params.resourceNameWithoutExt,
                     mimeType = params.resourceMimeType,
@@ -265,10 +265,9 @@ class DownloadService : Service() {
 
             suspend fun onException(e: Exception, localUri: Uri? = null) {
                 logger.e("onException: $e, localUri: $localUri")
-                val newDownloadInfo = downloadInfo.copy(
+                onDownloadFailed(downloadInfo.copy(
                     status = DownloadInfo.Status.Error(localUri?.toString(), e)
-                )
-                onDownloadFailed(newDownloadInfo, params, oldParams, e)
+                ), params, oldParams, e)
             }
 
             try {
@@ -300,8 +299,16 @@ class DownloadService : Service() {
                 if (wasParamsChanged) {
                     // апдейт расширения/имени в основной нотификации
                     updateForegroundNotification()
+                    // актуализации изменёнными парамсами
+                    downloadInfo = downloadInfo.copy(
+                        name = params.resourceNameWithoutExt,
+                        mimeType = params.resourceMimeType,
+                        extension = params.extension,
+                    )
+//                    downloadsRepo.upsert(downloadInfo)
                 }
 
+                val startTime = System.currentTimeMillis()
                 val notifier = object : IStreamNotifier {
 
                     override val notifyInterval: Long
@@ -316,12 +323,27 @@ class DownloadService : Service() {
                         bytesWrite: Long,
                         bytesTotal: Long,
                     ): Boolean {
-                        onDownloadProcessing(downloadInfo, params, bytesWrite, bytesTotal)
+                        val elapsedTime = System.currentTimeMillis() - startTime
+                        val speed = bytesWrite / elapsedTime.toDouble()
+                        val estimatedTime = if (bytesTotal > 0) {
+                            ((bytesTotal - bytesWrite) / speed).toLong()
+                        } else {
+                            0
+                        }
+                        onDownloadProcessing(
+                            DownloadStateInfo(
+                                bytesWrite,
+                                bytesTotal,
+                                speed,
+                                elapsedTime,
+                                estimatedTime
+                                ),
+                            downloadInfo, params)
                         return isActive
                     }
                 }
 
-                // TODO реализовать докачку, поменять метод store
+                // TODO реализовать докачку
                 val localUri =
                     storage.store(params, prevDownload?.statusAsError?.localUri) { uri, outStream, previousSize ->
                         unfinishedLocalUri = uri
@@ -338,8 +360,6 @@ class DownloadService : Service() {
                 val newStatus = DownloadInfo.Status.Success(localUri.toString(), hashInfo)
                 onDownloadSuccess(
                     downloadInfo.copy(
-                        mimeType = params.resourceMimeType,
-                        extension = params.extension,
                         status = newStatus
                     ), params, oldParams
                 )
@@ -434,23 +454,22 @@ class DownloadService : Service() {
 
     private suspend fun onDownloadStarting(downloadInfo: DownloadInfo, params: Params) {
         logger.d("Download starting: ${downloadInfo.name}")
-        notifier.onDownloadStarting(params)
+        notifier.onDownloadStarting(downloadInfo, params)
         downloadsRepo.upsert(downloadInfo)
         updateForegroundNotification()
     }
 
     private fun onDownloadProcessing(
+        stateInfo: DownloadStateInfo,
         downloadInfo: DownloadInfo,
-        params: Params,
-        currentBytes: Long,
-        totalBytes: Long,
+        params: Params
     ) {
-        logger.d("Download processing: ${downloadInfo.name}, currentBytes: $currentBytes, totalBytes: $totalBytes")
-        notifier.onDownloadProcessing(downloadInfo, params, currentBytes, totalBytes)
+        logger.d("Download processing: ${downloadInfo.name}, stateInfo: $stateInfo")
+        notifier.onDownloadProcessing(stateInfo, downloadInfo, params)
 
         params.notificationParams ?: return
 
-        val progress = if (totalBytes > 0) ((currentBytes * 100f) / totalBytes).toInt() else 0
+        val progress = stateInfo.progress
         notificationWrapper.show(downloadInfo.id.toInt(), notificationChannel) {
             setDefaults(Notification.DEFAULT_ALL)
             setSmallIcon(params.notificationParams.smallIconResId)
@@ -526,14 +545,7 @@ class DownloadService : Service() {
             }
         }
 
-        downloadsRepo.upsert(
-            downloadInfo.copy(
-                name = params.resourceNameWithoutExt,
-                mimeType = params.resourceMimeType,
-                extension = params.extension,
-                status = status
-            )
-        )
+        downloadsRepo.upsert(downloadInfo)
         currentDownloads.remove(params.requestParams.url)
         updateForegroundNotification()
     }
@@ -1010,6 +1022,17 @@ class DownloadService : Service() {
         }
     }
 
+    data class DownloadStateInfo(
+        val currentBytes: Long,
+        val totalBytes: Long,
+        val speed: Double,
+        val elapsedTime: Long,
+        val estimatedTime: Long,
+    ) {
+
+        val progress = if (totalBytes > 0) ((currentBytes * 100f) / totalBytes).toInt() else 0
+    }
+
     private class ContentOrFileUriRequestBody(private val uri: Uri) : RequestBody() {
 
         override fun contentType(): MediaType? {
@@ -1058,6 +1081,28 @@ class DownloadService : Service() {
                 context,
                 DownloadService::class.java,
                 bundleOf(EXTRA_DOWNLOAD_SERVICE_PARAMS to params),
+                startForeground = true
+            )
+        }
+
+        @JvmStatic
+        @JvmOverloads
+        fun cancel(id: Long, context: Context = baseApplicationContext): Boolean {
+            return startNoCheck(
+                context,
+                DownloadService::class.java,
+                bundleOf(EXTRA_CANCEL_DOWNLOAD_ID to id),
+                startForeground = true
+            )
+        }
+
+        @JvmStatic
+        @JvmOverloads
+        fun cancelAll(context: Context = baseApplicationContext): Boolean {
+            return startNoCheck(
+                context,
+                DownloadService::class.java,
+                bundleOf(EXTRA_CANCEL_ALL to true),
                 startForeground = true
             )
         }

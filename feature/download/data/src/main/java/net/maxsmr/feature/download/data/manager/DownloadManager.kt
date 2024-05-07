@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.maxsmr.commonutils.GetMode
@@ -85,6 +86,12 @@ class DownloadManager @Inject constructor(
     val addedToQueueEvent: SharedFlow<DownloadService.Params> = _addedToQueueEvent.asSharedFlow()
 
     private val idCounter = AtomicInteger(0)
+
+    val downloadsPendingParams by lazy {
+        downloadsPendingQueue.map {
+            it.map { item -> item.params }
+        }
+    }
 
     init {
         scope.launch {

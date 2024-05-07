@@ -1,5 +1,6 @@
 package net.maxsmr.feature.download.ui.adapter
 
+import androidx.recyclerview.widget.RecyclerView
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDelegationAdapter
 

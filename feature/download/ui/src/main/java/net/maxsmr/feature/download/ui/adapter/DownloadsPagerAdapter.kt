@@ -10,7 +10,7 @@ class DownloadsPagerAdapter(fragment: Fragment) : FragmentStateAdapter(fragment)
 
     private val context = fragment.requireContext()
 
-    override fun getItemCount(): Int = 1
+    override fun getItemCount(): Int = 2
 
     override fun createFragment(position: Int): Fragment = when (position) {
         0 -> DownloadsParamsFragment()

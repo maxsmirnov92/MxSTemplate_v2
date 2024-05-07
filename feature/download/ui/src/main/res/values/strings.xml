@@ -5,7 +5,7 @@
     <string name="download_state_title">Состояние</string>
 
     <string name="download_file_url_hint">URL для загрузки</string>
-    <string name="download_file_url_empty_error">URL обязателен</string>
+    <string name="download_file_url_empty_error">URL некорректный</string>
     <string name="download_method_name">Метод</string>
     <string-array name="download_method_names">
         <item>GET</item>
@@ -20,4 +20,15 @@
     <string name="download_value_name_empty_error">Значение заголовка не может быть пустым</string>
 
     <string name="download_start_button_text">Начать</string>
+
+    <string name="download_queued_count_subtitle">В очереди:</string>
+    <string name="download_status_percent_text_format">Процент: %d\%%</string>
+    <string name="download_status_size_with_total_text_format">размер: %s из %s</string>
+    <string name="download_status_size_text_format">размер: %s</string>
+    <string name="download_status_time_with_estimated_text_format">прошло времени: %s, осталось времени: %s</string>
+    <string name="download_status_time_text_format">прошло времени: %s</string>
+    <string name="download_status_preparing">Подготовка</string>
+    <string name="download_status_success">Успех</string>
+    <string name="download_status_failed_format">Ошибка: %s</string>
+    <string name="download_status_cancelled">Отменена</string>
 </resources>

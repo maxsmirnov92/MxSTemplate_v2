@@ -24,7 +24,7 @@ open class BaseDownloadParams(
     val extension
         get() = getExtensionFromMimeType(resourceMimeType)
             .takeIf { it.isNotEmpty() }
-        // при изначально отсутствии resourceMimeTypeили если не смогли определить
+        // при изначально отсутствии resourceMimeType или если не смогли определить
         // выделять из имени
             ?: getExtension(resourceName)
 
