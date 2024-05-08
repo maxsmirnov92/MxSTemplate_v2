@@ -4,8 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/shape_background_download_info"
     android:orientation="vertical"
-    android:paddingBottom="10dp">
+    android:padding="6dp">
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -32,16 +34,16 @@
             <ImageButton
                 android:id="@+id/ibInfo"
                 style="@style/Widget.AppCompat.ActionButton"
-                android:layout_width="26dp"
-                android:layout_height="26dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:scaleType="centerCrop"
                 app:srcCompat="@drawable/ic_info" />
 
             <ImageButton
                 android:id="@+id/ibCancel"
                 style="@style/Widget.AppCompat.ActionButton"
-                android:layout_width="26dp"
-                android:layout_height="26dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:layout_marginStart="10dp"
                 android:scaleType="centerCrop"
                 app:srcCompat="@drawable/ic_stop" />
@@ -49,8 +51,8 @@
             <ImageButton
                 android:id="@+id/ibRetry"
                 style="@style/Widget.AppCompat.ActionButton"
-                android:layout_width="26dp"
-                android:layout_height="26dp"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
                 android:layout_marginStart="10dp"
                 android:scaleType="centerCrop"
                 app:srcCompat="@drawable/ic_retry" />

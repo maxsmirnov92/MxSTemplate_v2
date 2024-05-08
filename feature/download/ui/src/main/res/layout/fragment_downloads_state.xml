@@ -8,14 +8,15 @@
     android:padding="10dp">
 
     <LinearLayout
+        android:gravity="center_vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
         <TextView
+            android:gravity="center_vertical"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="@dimen/nav_header_vertical_spacing"
             android:text="@string/download_queued_count_subtitle"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
@@ -26,6 +27,15 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             tools:text="5" />
+
+        <ImageButton
+            android:id="@+id/ibClearQueue"
+            style="@style/Widget.AppCompat.ActionButton"
+            android:layout_marginStart="10dp"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:scaleType="centerCrop"
+            app:srcCompat="@drawable/ic_clear" />
 
     </LinearLayout>
 
@@ -39,11 +49,38 @@
         android:textSize="12sp"
         tools:text="abc1, abc2" />
 
+    <LinearLayout
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp">
+
+        <ImageButton
+            android:id="@+id/ibClearFinished"
+            style="@style/Widget.AppCompat.ActionButton"
+            android:layout_marginStart="10dp"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:scaleType="centerCrop"
+            app:srcCompat="@drawable/ic_clear" />
+
+
+        <ImageButton
+            android:id="@+id/ibCancelAll"
+            style="@style/Widget.AppCompat.ActionButton"
+            android:layout_marginStart="10dp"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:scaleType="centerCrop"
+            app:srcCompat="@drawable/ic_stop" />
+
+    </LinearLayout>
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvDownloads"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:descendantFocusability="beforeDescendants"
         android:focusableInTouchMode="true"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />

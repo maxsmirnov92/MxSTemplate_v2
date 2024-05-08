@@ -18,8 +18,9 @@
     <string name="download_key_name_empty_error">Название заголовка не может быть пустым</string>
     <string name="download_value_name_hint">Значение</string>
     <string name="download_value_name_empty_error">Значение заголовка не может быть пустым</string>
-
     <string name="download_start_button_text">Начать</string>
+
+    <string name="download_clear_queue_alert_message">Очистить очередь ожидающих загрузок?</string>
 
     <string name="download_queued_count_subtitle">В очереди:</string>
     <string name="download_status_percent_text_format">Процент: %d\%%</string>
@@ -27,7 +28,7 @@
     <string name="download_status_size_text_format">размер: %s</string>
     <string name="download_status_time_with_estimated_text_format">прошло времени: %s, осталось времени: %s</string>
     <string name="download_status_time_text_format">прошло времени: %s</string>
-    <string name="download_status_preparing">Подготовка</string>
+    <string name="download_status_requesting">Выполнение запроса…</string>
     <string name="download_status_success">Успех</string>
     <string name="download_status_failed_format">Ошибка: %s</string>
     <string name="download_status_cancelled">Отменена</string>

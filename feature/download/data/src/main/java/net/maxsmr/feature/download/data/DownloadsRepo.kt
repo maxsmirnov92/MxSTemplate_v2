@@ -35,13 +35,32 @@ class DownloadsRepo @Inject constructor(private val dao: DownloadsDao) {
         }
     }
 
+    suspend fun getById(id: Long): DownloadInfo? = dao.getById(id)
+
     suspend fun getByName(name: String): DownloadInfo? = dao.getByName(name)
 
     suspend fun getByNameAndExt(name: String, ext: String): DownloadInfo? = dao.getByNameAndExt(name, ext)
 
-    suspend fun remove(downloadInfo: DownloadInfo) = dao.remove(downloadInfo.id)
-
     suspend fun removeAll() = dao.removeAll()
+
+    suspend fun remove(id: Long) = dao.remove(id)
+
+    suspend fun remove(downloadInfo: DownloadInfo) = remove(downloadInfo.id)
+
+    suspend fun removeUnfinished() {
+        removeIf(false)
+//        dao.removeFinished()
+    }
+
+    suspend fun removeFinished() {
+        removeIf(true)
+//        dao.removeFinished()
+    }
+
+    private suspend fun removeIf(isFinished: Boolean) {
+        val ids = dao.getAllRaw().filter { it.isLoading != isFinished }.map { it.id }
+        dao.remove(ids)
+    }
 
     /**
      * Возвращает общий статус загрузок ресурсов в перечне [resourceNames] согласно следующим правилам

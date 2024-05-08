@@ -95,11 +95,11 @@
                 <ImageButton
                     android:id="@+id/ibAdd"
                     style="@style/Widget.AppCompat.ActionButton"
-                    android:layout_width="26dp"
-                    android:layout_height="26dp"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
                     android:layout_marginStart="8dp"
                     android:scaleType="centerCrop"
-                    app:srcCompat="@android:drawable/ic_menu_add" />
+                    app:srcCompat="@drawable/ic_add" />
 
             </LinearLayout>
 

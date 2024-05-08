@@ -1,4 +1,4 @@
-package net.maxsmr.core.domain.download
+package net.maxsmr.core.domain.entities.feature.download
 
 import java.io.Serializable
 

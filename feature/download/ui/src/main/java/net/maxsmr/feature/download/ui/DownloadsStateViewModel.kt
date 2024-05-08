@@ -6,21 +6,19 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import net.maxsmr.core.android.base.BaseViewModel
+import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.feature.download.data.DownloadService
-import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapterData
-import javax.inject.Inject
 
 class DownloadsStateViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val downloadsViewModel: DownloadsViewModel,
     private val manager: DownloadManager,
-    private val notifier: DownloadStateNotifier,
+
 ) : BaseViewModel(state) {
 
     val queueNames = MutableLiveData<List<String>>()
@@ -35,19 +33,29 @@ class DownloadsStateViewModel @AssistedInject constructor(
             }
         }
         viewModelScope.launch {
-            notifier.downloadStartEvents.collect {
-                if (it.isStarted) {
-                    it.downloadInfo?.let { downloadInfo ->
-                        DownloadInfoAdapterData(it.params, downloadInfo, null).refreshWith()
-                    }
-                }
+            manager.resultItems.collect {
+                downloadItems.value = it.map { item -> DownloadInfoAdapterData(item) }
             }
         }
-        viewModelScope.launch {
-            notifier.downloadStateEvents.collect {
-                DownloadInfoAdapterData(it.params, it.downloadInfo, it).refreshWith()
-            }
-        }
+    }
+
+    fun onClearQueue() {
+        AlertBuilder(DIALOG_TAG_CLEAR_QUEUE)
+            .setMessage(R.string.download_clear_queue_alert_message)
+            .setAnswers(
+                Alert.Answer(android.R.string.yes).onSelect {
+                    manager.removeAllPending()
+                },
+                Alert.Answer(android.R.string.no))
+            .build()
+    }
+
+    fun onClearFinished() {
+        manager.removeAllFinished()
+    }
+
+    fun onCancelAllDownloads() {
+        DownloadService.cancelAll()
     }
 
     fun onCancelDownload(id: Long) {
@@ -55,28 +63,12 @@ class DownloadsStateViewModel @AssistedInject constructor(
     }
 
     fun onRetryDownload(id: Long, params: DownloadService.Params) {
-        val currentDownloads = downloadItems.value?.toMutableList() ?: mutableListOf()
-        if (currentDownloads.removeIf { it.id == id }) {
-            downloadItems.value = currentDownloads
-        }
+        manager.removeFinished(id)
         downloadsViewModel.download(params)
     }
 
-    private fun DownloadInfoAdapterData.refreshWith() {
-        var has = false
-        val currentDownloads = downloadItems.value ?: emptyList()
-        val newDownloads = currentDownloads.map { currentItem ->
-            if (currentItem.downloadInfo.id == downloadInfo.id) {
-                has = true
-                this
-            } else {
-                currentItem
-            }
-        }.toMutableList()
-        if (!has) {
-            newDownloads.add(this)
-        }
-        downloadItems.value = newDownloads
+    fun onRemoveFinishedDownload(id: Long) {
+        manager.removeFinished(id)
     }
 
     @AssistedFactory
@@ -86,5 +78,10 @@ class DownloadsStateViewModel @AssistedInject constructor(
             state: SavedStateHandle,
             downloadsViewModel: DownloadsViewModel,
         ): DownloadsStateViewModel
+    }
+
+    companion object {
+
+        const val DIALOG_TAG_CLEAR_QUEUE = "CLEAR_QUEUE"
     }
 }

@@ -124,6 +124,5 @@
     <color name="snackbarActionColor">#1BC886</color>
     <color name="snackbarBackground">#4f4f5e</color>
 
-
     <color name="backgroundLightGray">@color/gray_light</color>
 </resources>

@@ -6,13 +6,17 @@ import androidx.core.view.isVisible
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegate
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.commonutils.conversion.SizeUnit.BYTES
+import net.maxsmr.commonutils.format.TIME_UNITS_TO_EXCLUDE_DEFAULT
 import net.maxsmr.commonutils.format.TimePluralFormat
 import net.maxsmr.commonutils.format.decomposeSizeFormatted
 import net.maxsmr.commonutils.format.decomposeTimeFormatted
 import net.maxsmr.commonutils.gui.setTextOrGone
+import net.maxsmr.commonutils.text.CharCase
+import net.maxsmr.commonutils.text.changeCaseFirstChar
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState
+import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
 import net.maxsmr.feature.download.ui.R
 import net.maxsmr.feature.download.ui.databinding.ItemDownloadInfoBinding
 import java.util.concurrent.TimeUnit
@@ -106,7 +110,8 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                                     val elapsedTimeFormatted = decomposeTimeFormatted(
                                         elapsedTime,
                                         TimeUnit.MILLISECONDS,
-                                        TimePluralFormat.NORMAL_WITH_VALUE
+                                        TimePluralFormat.NORMAL_WITH_VALUE,
+                                        timeUnitsToExclude = TIME_UNITS_TO_EXCLUDE_DEFAULT
                                     ).joinToString {
                                         it.get(context)
                                     }
@@ -115,7 +120,8 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                                         val estimatedTimeFormatted = decomposeTimeFormatted(
                                             estimatedTime,
                                             TimeUnit.MILLISECONDS,
-                                            TimePluralFormat.NORMAL_WITH_VALUE
+                                            TimePluralFormat.NORMAL_WITH_VALUE,
+                                            timeUnitsToExclude = TIME_UNITS_TO_EXCLUDE_DEFAULT
                                         ).joinToString {
                                             it.get(context)
                                         }
@@ -133,7 +139,14 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                                     parts.add(timePart)
                                 }
                             }
-                            parts.joinToString()
+                            parts.mapIndexed { index, s ->
+                                if (index == 0) {
+                                    // FIXME
+                                    s.changeCaseFirstChar(isUpperForFirst = true, CharCase.NO_CHANGE)
+                                } else {
+                                    s
+                                }
+                            }.joinToString()
                         }
 
                         is DownloadState.Success -> {
@@ -157,7 +170,7 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                     }
                 } else {
                     pbDownload.isVisible = true
-                    statusInfo = context.getString(R.string.download_status_preparing)
+                    statusInfo = context.getString(R.string.download_status_requesting)
                 }
                 pbDownload.isIndeterminate = isIndeterminate
                 tvStatusInfo.setTextOrGone(statusInfo)
@@ -170,18 +183,16 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
     }
 
 data class DownloadInfoAdapterData(
-    val params: DownloadService.Params,
-    val downloadInfo: DownloadInfo,
-    val state: DownloadState?,
+    val data: DownloadInfoResultData
 ) : BaseAdapterData {
 
-    init {
-        if (state != null && state.downloadInfo.id != downloadInfo.id) {
-            throw IllegalArgumentException("DownloadInfo ids not match: ${downloadInfo.id}, ${state.downloadInfo.id}")
-        }
-    }
+    val id = data.id
 
-    val id = downloadInfo.id
+    val params = data.params
+
+    val downloadInfo = data.downloadInfo
+
+    val state = data.state
 
     override fun isSame(other: BaseAdapterData): Boolean = id == (other as? DownloadInfoAdapterData)?.id
 }
@@ -193,4 +204,6 @@ interface DownloadListener {
     fun onCancelDownload(downloadInfo: DownloadInfo)
 
     fun onRetryDownload(downloadInfo: DownloadInfo, params: DownloadService.Params)
+
+    fun onRemoveFinishedDownload(downloadInfo: DownloadInfo)
 }

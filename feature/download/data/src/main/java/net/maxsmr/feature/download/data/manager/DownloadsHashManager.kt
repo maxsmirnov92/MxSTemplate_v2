@@ -4,7 +4,7 @@ import android.net.Uri
 import net.maxsmr.commonutils.digest
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.domain.download.HashInfo
+import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import java.util.Locale
 
 object DownloadsHashManager {

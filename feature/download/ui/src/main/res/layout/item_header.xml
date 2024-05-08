@@ -45,7 +45,7 @@
         android:layout_toStartOf="@+id/ibRemove"
         android:background="@color/black"
         android:layout_width="1dp"
-        android:layout_height="80dp" />
+        android:layout_height="100dp" />
 
     <ImageButton
         android:id="@+id/ibRemove"

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="textColorDownloadSuccess">#00FF00</color>
+    <color name="textColorDownloadSuccess">#6dc100</color>
     <color name="textColorDownloadFailed">@color/textColorError</color>
     <color name="textColorDownloadCancelled">#ffce00</color>
 </resources>

@@ -42,7 +42,7 @@ import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.ApplicationScope
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.di.DownloaderOkHttpClient
-import net.maxsmr.core.domain.download.HashInfo
+import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.network.newCallSuspended
 import net.maxsmr.core.network.toOutputStreamOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
@@ -160,8 +160,11 @@ class DownloadService : Service() {
         if (intent?.getBooleanExtra(EXTRA_CANCEL_ALL, false) == true) {
             logger.d("Cancel downloads by user")
             // отмена всех загрузок через родительскую Job
-            contextJob.cancel()
-//            stopSelf()
+            if (currentJobs.isNotEmpty()) {
+                contextJob.cancel()
+            } else {
+                stopSelf()
+            }
             return START_NOT_STICKY
         }
         val cancelDownloadId = intent?.getLongExtra(EXTRA_CANCEL_DOWNLOAD_ID, 0L) ?: 0L
@@ -325,7 +328,7 @@ class DownloadService : Service() {
                     ): Boolean {
                         val elapsedTime = System.currentTimeMillis() - startTime
                         val speed = bytesWrite / elapsedTime.toDouble()
-                        val estimatedTime = if (bytesTotal > 0) {
+                        val estimatedTime = if (bytesTotal > 0 && bytesWrite > 0) {
                             ((bytesTotal - bytesWrite) / speed).toLong()
                         } else {
                             0
@@ -599,7 +602,8 @@ class DownloadService : Service() {
         }
 
         currentDownloads.remove(params.requestParams.url)
-        downloadsRepo.remove(downloadInfo)
+//        downloadsRepo.remove(downloadInfo)
+        downloadsRepo.upsert(downloadInfo)
         updateForegroundNotification()
     }
 

@@ -4,10 +4,8 @@ import android.net.Uri
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverter
-import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.text.appendOrReplaceExtension
-import net.maxsmr.core.domain.download.HashInfo
+import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import java.io.Serializable
 
 /**
