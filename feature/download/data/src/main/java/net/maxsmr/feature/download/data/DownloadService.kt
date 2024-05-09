@@ -26,6 +26,7 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.media.getContentName
 import net.maxsmr.commonutils.media.getMimeTypeFromName
+import net.maxsmr.commonutils.media.lengthOrThrow
 import net.maxsmr.commonutils.media.mimeTypeOrThrow
 import net.maxsmr.commonutils.media.openInputStreamOrThrow
 import net.maxsmr.commonutils.service.createServicePendingIntent
@@ -66,7 +67,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
 import okio.ByteString
 import okio.source
-import org.json.JSONObject
 import ru.rzd.pass.downloads.storage.StoreException
 import java.io.*
 import java.net.URL
@@ -268,9 +268,11 @@ class DownloadService : Service() {
 
             suspend fun onException(e: Exception, localUri: Uri? = null) {
                 logger.e("onException: $e, localUri: $localUri")
-                onDownloadFailed(downloadInfo.copy(
-                    status = DownloadInfo.Status.Error(localUri?.toString(), e)
-                ), params, oldParams, e)
+                onDownloadFailed(
+                    downloadInfo.copy(
+                        status = DownloadInfo.Status.Error(localUri?.toString(), e)
+                    ), params, oldParams, e
+                )
             }
 
             try {
@@ -340,8 +342,9 @@ class DownloadService : Service() {
                                 speed,
                                 elapsedTime,
                                 estimatedTime
-                                ),
-                            downloadInfo, params)
+                            ),
+                            downloadInfo, params
+                        )
                         return isActive
                     }
                 }
@@ -465,7 +468,7 @@ class DownloadService : Service() {
     private fun onDownloadProcessing(
         stateInfo: DownloadStateInfo,
         downloadInfo: DownloadInfo,
-        params: Params
+        params: Params,
     ) {
         logger.d("Download processing: ${downloadInfo.name}, stateInfo: $stateInfo")
         notifier.onDownloadProcessing(stateInfo, downloadInfo, params)
@@ -717,40 +720,46 @@ class DownloadService : Service() {
             fun defaultPOSTServiceParamsFor(
                 uri: URL,
                 preferredFileName: String?,
+                body: RequestParams.Body,
+                ignoreFileName: Boolean = true,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
                 subDir: String = EMPTY_STRING,
                 ignoreHeaderMimeType: Boolean = false,
+                targetHashInfo: HashInfo? = null,
                 notificationParams: NotificationParams,
             ): Params {
                 val baseSubDir = baseAppName
                 val fileName: String
-                val ignoreFileName: Boolean
+                val targetIgnoreFileName: Boolean
                 if (preferredFileName.isNullOrEmpty()) {
                     // желаемое не указано - подбираем из урлы,
                     // но не игнорируем после получения ответа в заголовке
                     fileName = getContentName(preferredFileName.orEmpty(), uri.toString())
-                    ignoreFileName = false
+                    targetIgnoreFileName = false
                 } else {
                     fileName = preferredFileName
-                    ignoreFileName = true
+                    targetIgnoreFileName = ignoreFileName
                 }
                 return Params(
                     RequestParams.newPost(
                         uri.toString(),
+                        body,
                         headers = headers,
                         ignoreHeaderMimeType = ignoreHeaderMimeType,
-                        ignoreFileName = ignoreFileName
+                        ignoreFileName = targetIgnoreFileName
                     ),
                     notificationParams,
                     fileName,
                     DownloadServiceStorage.Type.SHARED,
                     if (subDir.isEmpty()) baseSubDir else toFile(subDir, baseSubDir)?.absolutePath,
-                    null,
-                    true,
+                    targetHashInfo,
+                    targetHashInfo != null,
                 ).apply {
-                    format?.let {
-                        resourceMimeType = format.mimeType
+                    resourceMimeType = format?.let {
+                        format.mimeType
+                    } ?: run {
+                        getMimeTypeFromName(fileName)
                     }
                 }
             }
@@ -759,40 +768,44 @@ class DownloadService : Service() {
             fun defaultGETServiceParamsFor(
                 uri: URL,
                 preferredFileName: String?,
+                ignoreFileName: Boolean = true,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
                 subDir: String = EMPTY_STRING,
                 ignoreHeaderMimeType: Boolean = false,
+                targetHashInfo: HashInfo? = null,
                 notificationParams: NotificationParams,
             ): Params {
                 val baseSubDir = baseAppName
                 val fileName: String
-                val ignoreFileName: Boolean
+                val targetIgnoreFileName: Boolean
                 if (preferredFileName.isNullOrEmpty()) {
                     // желаемое не указано - подбираем из урлы,
                     // но не игнорируем после получения ответа в заголовке
                     fileName = getContentName(preferredFileName.orEmpty(), uri.toString())
-                    ignoreFileName = false
+                    targetIgnoreFileName = false
                 } else {
                     fileName = preferredFileName
-                    ignoreFileName = true
+                    targetIgnoreFileName = ignoreFileName
                 }
                 return Params(
                     RequestParams.newGet(
                         uri.toString(),
                         headers = headers,
                         ignoreHeaderMimeType = ignoreHeaderMimeType,
-                        ignoreFileName = ignoreFileName
+                        ignoreFileName = targetIgnoreFileName
                     ),
                     notificationParams,
                     fileName,
                     DownloadServiceStorage.Type.SHARED,
                     if (subDir.isEmpty()) baseSubDir else toFile(subDir, baseSubDir)?.absolutePath,
-                    null,
-                    true
+                    targetHashInfo,
+                    targetHashInfo != null,
                 ).apply {
-                    format?.let {
-                        resourceMimeType = format.mimeType
+                    resourceMimeType = format?.let {
+                        format.mimeType
+                    } ?: run {
+                        getMimeTypeFromName(fileName)
                     }
                 }
             }
@@ -804,32 +817,38 @@ class DownloadService : Service() {
         val url: String,
         val method: String,
         val headers: HashMap<String, String>,
-        val body: Serializable?,
-        val bodyMimeType: String,
+        val body: Body?,
         val ignoreHeaderMimeType: Boolean,
         val ignoreFileName: Boolean,
     ) : Serializable {
 
         fun createRequest(): Request = Request.Builder()
             .url(url)
-            .method(method, createRequestBody())
+            .method(method, body?.createRequestBody())
             .headers(headers.toHeaders())
             .build()
 
-        private fun createRequestBody(): RequestBody? {
-            if (body == null) return null
-            val type = bodyMimeType.toMediaTypeOrNull()
-            return when (body) {
-                is Uri -> ContentOrFileUriRequestBody(body)
-                is File -> body.asRequestBody(
-                    type
-                        ?: getMimeTypeFromName(body.name).toMediaTypeOrNull()
-                )
+        class Body(val content: Serializable, val mimeType: String? = null): Serializable {
 
-                is ByteArray -> body.toRequestBody(type)
-                is String -> body.toRequestBody(type)
-                is ByteString -> body.toRequestBody(type)
-                else -> throw IllegalArgumentException("Wrong body type: " + body.javaClass)
+            fun createRequestBody(): RequestBody {
+                val type = mimeType?.toMediaTypeOrNull()
+                return when (content) {
+                    is Uri -> ContentOrFileUriRequestBody(content.toUri(), mimeType)
+                    is File -> content.asRequestBody(type
+                            ?: getMimeTypeFromName(content.name).toMediaTypeOrNull())
+
+                    is ByteArray -> content.toRequestBody(type)
+                    is String -> content.toRequestBody(type)
+                    is ByteString -> content.toRequestBody(type)
+                    else -> throw IllegalArgumentException("Incorrect body type: " + content.javaClass)
+                }
+            }
+
+            data class Uri(
+                val value: String
+            ): Serializable {
+
+                fun toUri() = android.net.Uri.parse(value)
             }
         }
 
@@ -839,26 +858,16 @@ class DownloadService : Service() {
             @JvmOverloads
             fun newPost(
                 url: String,
-                body: JSONObject? = null,
+                body: Body,
                 headers: HashMap<String, String> = HashMap(),
                 ignoreHeaderMimeType: Boolean = true,
                 ignoreFileName: Boolean = false,
-                appendPostParams: ((JSONObject) -> Unit)? = null,
-
-                ): RequestParams {
-                val targetBody = if (appendPostParams != null) {
-                    (body ?: JSONObject()).also {
-                        appendPostParams(it)
-                    }
-                } else {
-                    body
-                }
+            ): RequestParams {
                 return RequestParams(
                     url,
                     "POST",
                     headers,
-                    targetBody?.toString(),
-                    FileFormat.JSON.mimeType,
+                    body,
                     ignoreHeaderMimeType,
                     ignoreFileName
                 )
@@ -883,7 +892,6 @@ class DownloadService : Service() {
                     "GET",
                     headers,
                     null,
-                    EMPTY_STRING,
                     ignoreHeaderMimeType,
                     ignoreFileName
                 )
@@ -1037,12 +1045,14 @@ class DownloadService : Service() {
         val progress = if (totalBytes > 0) ((currentBytes * 100f) / totalBytes).toInt() else 0
     }
 
-    private class ContentOrFileUriRequestBody(private val uri: Uri) : RequestBody() {
+    private class ContentOrFileUriRequestBody(private val uri: Uri, private val type: String? = null) : RequestBody() {
 
         override fun contentType(): MediaType? {
-            val contentType = uri.mimeTypeOrThrow(baseApplicationContext.contentResolver)
+            val contentType = type ?: uri.mimeTypeOrThrow(baseApplicationContext.contentResolver)
             return contentType.toMediaTypeOrNull()
         }
+
+        override fun contentLength(): Long = uri.lengthOrThrow(baseApplicationContext.contentResolver)
 
         @Throws(IOException::class)
         override fun writeTo(sink: BufferedSink) {

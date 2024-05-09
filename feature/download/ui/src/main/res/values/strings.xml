@@ -11,7 +11,11 @@
         <item>GET</item>
         <item>POST</item>
     </string-array>
+    <string name="download_request_body_empty_text">Файл тела запроса не выбран</string>
+    <string name="download_request_body_non_required_text">Файл тела запроса не требуется</string>
+    <string name="download_request_body_empty_error">Тело запроса обязательно</string>
     <string name="download_file_name_hint">Имя файла</string>
+    <string name="download_file_name_fix_checkbox_text">Поменять из заголовка ответа при наличии</string>
     <string name="download_sub_dir_name_hint">Имя подкаталога</string>
     <string name="download_header_name_subtitle">Заголовки</string>
     <string name="download_key_name_hint">Название</string>
@@ -21,8 +25,8 @@
     <string name="download_start_button_text">Начать</string>
 
     <string name="download_clear_queue_alert_message">Очистить очередь ожидающих загрузок?</string>
-
     <string name="download_queued_count_subtitle">В очереди:</string>
+    <string name="download_active_empty_text">Нет активных загрузок</string>
     <string name="download_status_percent_text_format">Процент: %d\%%</string>
     <string name="download_status_size_with_total_text_format">размер: %s из %s</string>
     <string name="download_status_size_text_format">размер: %s</string>

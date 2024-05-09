@@ -15,6 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textColor="@color/textColorPrimary"
         android:textSize="22sp"
         app:fontFamily="@font/roboto_medium"
@@ -22,12 +23,12 @@
 
     <TextView
         android:id="@+id/message"
-        style="@style/text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:gravity="center"
         android:lineSpacingMultiplier="1.2"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:textColor="@color/textColorPrimary"
         android:textSize="18sp"
         app:fontFamily="@font/roboto_regular"

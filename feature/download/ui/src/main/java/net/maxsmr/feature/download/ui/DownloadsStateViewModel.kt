@@ -63,8 +63,7 @@ class DownloadsStateViewModel @AssistedInject constructor(
     }
 
     fun onRetryDownload(id: Long, params: DownloadService.Params) {
-        manager.removeFinished(id)
-        downloadsViewModel.download(params)
+        manager.retryDownload(id, params)
     }
 
     fun onRemoveFinishedDownload(id: Long) {

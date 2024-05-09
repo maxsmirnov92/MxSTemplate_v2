@@ -21,6 +21,7 @@
     <string name="audio_picker_error">Не удалось получить аудио файл</string>
     <string name="video_picker_title">Приложение для выбора видеозаписи</string>
     <string name="video_picker_error">Не удалось получить видеозапись</string>
+    <string name="pick_result_error_format">Не удалось выбрать файл, причина: %s</string>
 
     <string name="empty" translatable="false"/>
     <string name="bad_gateway">Время ожидания ответа РЖД истекло. Попробуйте повторить запрос позже</string>

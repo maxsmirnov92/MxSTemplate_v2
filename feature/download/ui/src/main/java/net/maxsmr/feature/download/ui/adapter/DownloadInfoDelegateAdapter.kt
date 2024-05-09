@@ -3,8 +3,10 @@ package net.maxsmr.feature.download.ui.adapter
 import android.annotation.SuppressLint
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegate
+import com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
+import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
+import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter.DragAndDropViewHolder.Companion.createWithDraggable
 import net.maxsmr.commonutils.conversion.SizeUnit.BYTES
 import net.maxsmr.commonutils.format.TIME_UNITS_TO_EXCLUDE_DEFAULT
 import net.maxsmr.commonutils.format.TimePluralFormat
@@ -23,8 +25,8 @@ import java.util.concurrent.TimeUnit
 
 @SuppressLint("StringFormatInvalid")
 fun downloadInfoDelegateAdapter(listener: DownloadListener) =
-    adapterDelegate<DownloadInfoAdapterData, DownloadInfoAdapterData>(
-        R.layout.item_download_info
+    adapterDelegate<DownloadInfoAdapterData, DownloadInfoAdapterData, BaseDraggableDelegationAdapter.DragAndDropViewHolder<DownloadInfoAdapterData>>(
+        R.layout.item_download_info, createViewHolder = { it.createWithDraggable(R.id.containerDownloadInfo) }
     ) {
 
         val binding = ItemDownloadInfoBinding.bind(itemView)
@@ -204,6 +206,4 @@ interface DownloadListener {
     fun onCancelDownload(downloadInfo: DownloadInfo)
 
     fun onRetryDownload(downloadInfo: DownloadInfo, params: DownloadService.Params)
-
-    fun onRemoveFinishedDownload(downloadInfo: DownloadInfo)
 }

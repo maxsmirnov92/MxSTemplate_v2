@@ -38,6 +38,7 @@ class DownloadsPagerFragment: BaseVmFragment<DownloadsViewModel>() {
             TabLayoutMediator(tabLayout, viewPagerFragments) { tab, position ->
                 tab.text = pagerAdapter.getTitle(position)
             }.attach()
+            viewPagerFragments.isUserInputEnabled = false
         }
 
         viewModel.handleEvents(this)

@@ -187,7 +187,9 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment() {
         bindAlertDialog(BaseViewModel.DIALOG_TAG_PERMISSION_YES_NO) {
             it.asYesNoDialog(requireContext())
         }
-
+        bindAlertDialog(BaseViewModel.DIALOG_TAG_PICKER_ERROR) {
+            it.asOkDialog(requireContext())
+        }
     }
 
     @CallSuper

@@ -20,9 +20,7 @@ import net.maxsmr.commonutils.live.recharge
 import net.maxsmr.commonutils.media.openInputStream
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.base.actions.ToastAction
-import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
-import net.maxsmr.core.android.content.pick.PickResult
 import net.maxsmr.core.android.coroutines.usecase.asState
 import net.maxsmr.core.android.coroutines.usecase.mapData
 import net.maxsmr.core.di.AppDispatchers
@@ -37,6 +35,7 @@ import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSugges
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.ui.BaseCachedViewModel
+import java.io.Serializable
 
 class AddressSorterViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
@@ -121,13 +120,6 @@ class AddressSorterViewModel @AssistedInject constructor(
                 it.close()
             }
         }
-    }
-
-    fun onJsonResourceSelectError(error: PickResult.Error) {
-        showOkDialog(
-            DIALOG_TAG_PICKER_ERROR,
-            TextMessage(R.string.address_sorter_select_file_error_format, error.reason)
-        )
     }
 
     fun onClearAction() {
@@ -245,7 +237,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         val id: Long,
         val address: String,
         val location: Address.Location?,
-    ) {
+    ): Serializable {
 
         companion object {
 
@@ -259,7 +251,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         val address: String,
         val location: Address.Location?,
         val distance: Int?,
-    ) {
+    ): Serializable {
 
         fun toDomain() = AddressSuggest(
             location, address, distance
@@ -280,10 +272,5 @@ class AddressSorterViewModel @AssistedInject constructor(
             state: SavedStateHandle,
             locationViewModel: LocationViewModel,
         ): AddressSorterViewModel
-    }
-
-    companion object {
-
-        const val DIALOG_TAG_PICKER_ERROR = "content_picker_error"
     }
 }

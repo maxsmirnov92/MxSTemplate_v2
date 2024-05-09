@@ -58,15 +58,16 @@ fun headersDelegateAdapter(listener: HeaderListener) =
 data class HeaderInfoAdapterData(
     val id: Int,
     val header: Pair<Info, Info>,
-) : BaseAdapterData {
+) : BaseAdapterData/*, Serializable*/ {
 
     override fun isSame(other: BaseAdapterData): Boolean = id == (other as? HeaderInfoAdapterData)?.id
 
+    // TODO Field.Hint Serializable
     data class Info(
         val value: String,
         val hint: Field.Hint?,
         val error: TextMessage?,
-    )
+    ) /*: Serializable*/
 }
 
 interface HeaderListener {

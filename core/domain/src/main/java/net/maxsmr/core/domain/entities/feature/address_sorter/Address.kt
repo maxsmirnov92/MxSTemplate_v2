@@ -8,11 +8,11 @@ data class Address(
     val location: Location? = null,
     val address: String = "",
     val distance: Int? = null,
-) {
+): java.io.Serializable {
 
     @Serializable
     data class Location(
         val latitude: Float,
         val longitude: Float,
-    )
+    ): java.io.Serializable
 }

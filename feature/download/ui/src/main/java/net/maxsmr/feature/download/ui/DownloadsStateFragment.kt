@@ -4,7 +4,12 @@ import android.os.Bundle
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
+import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
+import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
+import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
@@ -16,13 +21,15 @@ import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_CLEAR_QUEUE
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
+import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapterData
 import net.maxsmr.feature.download.ui.adapter.DownloadListener
 import net.maxsmr.feature.download.ui.databinding.FragmentDownloadsStateBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(), DownloadListener {
+class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
+        DownloadListener, BaseDraggableDelegationAdapter.ItemsEventsListener<DownloadInfoAdapterData> {
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -44,6 +51,10 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(), Downlo
 
     private val infoAdapter = DownloadInfoAdapter(this)
 
+    private val touchHelper: ItemTouchHelper = ItemTouchHelper(DragAndDropTouchHelperCallback(infoAdapter)).also {
+        infoAdapter.startDragListener = OnStartDragHelperListener(it)
+    }
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -51,6 +62,9 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(), Downlo
         alertHandler: AlertHandler,
     ) {
         binding.rvDownloads.adapter = infoAdapter
+        touchHelper.attachToRecyclerView(binding.rvDownloads)
+        infoAdapter.registerItemsEventsListener(this)
+
         // FIXME декоратор не работает?
 //        binding.rvDownloads.addItemDecoration(
 //            DividerItemDecoration.Builder(requireContext())
@@ -64,6 +78,13 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(), Downlo
             binding.ibClearQueue.isVisible = it.isNotEmpty()
         }
         viewModel.downloadItems.observe {
+            if (it.isNotEmpty()) {
+                binding.rvDownloads.isVisible = true
+                binding.containerEmpty.isVisible = false
+            } else {
+                binding.rvDownloads.isVisible = false
+                binding.containerEmpty.isVisible = true
+            }
             infoAdapter.items = it
             binding.ibCancelAll.isVisible = it.any { item -> item.downloadInfo.isLoading }
             binding.ibClearFinished.isVisible = it.any { item -> !item.downloadInfo.isLoading }
@@ -94,8 +115,11 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(), Downlo
         viewModel.onRetryDownload(downloadInfo.id, params)
     }
 
-    override fun onRemoveFinishedDownload(downloadInfo: DownloadInfo) {
-        // TODO удаление по кнопке или смахиванием
-        viewModel.onRemoveFinishedDownload(downloadInfo.id)
+    override fun onItemMoved(fromPosition: Int, toPosition: Int, item: DownloadInfoAdapterData) {
+        throw UnsupportedOperationException("Move DownloadInfoAdapterData not supported")
+    }
+
+    override fun onItemRemoved(position: Int, item: DownloadInfoAdapterData) {
+        viewModel.onRemoveFinishedDownload(item.id)
     }
 }

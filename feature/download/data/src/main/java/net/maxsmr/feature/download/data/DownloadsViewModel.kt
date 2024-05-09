@@ -126,8 +126,9 @@ class DownloadsViewModel @Inject constructor(
         uri: URL?,
         @DrawableRes smallIconResId: Int,
         resource: LoadState<*>?,
-        fileName: String,
-        format: FileFormat,
+        body: DownloadService.RequestParams.Body,
+        fileName: String? = null,
+        format: FileFormat? = null,
         notification: DownloadService.NotificationParams = DownloadService.NotificationParams(
             smallIconResId,
             successActions = defaultNotificationActions(
@@ -147,6 +148,7 @@ class DownloadsViewModel @Inject constructor(
             defaultPOSTServiceParamsFor(
                 uri,
                 fileName,
+                body,
                 format = format,
                 notificationParams = notification
             )
@@ -158,8 +160,8 @@ class DownloadsViewModel @Inject constructor(
         uri: URL?,
         @DrawableRes smallIconResId: Int,
         resource: LoadState<*>?,
-        fileName: String,
-        format: FileFormat,
+        fileName: String? = null,
+        format: FileFormat? = null,
         notification: DownloadService.NotificationParams = DownloadService.NotificationParams(
             smallIconResId,
             successActions = defaultNotificationActions(baseApplicationContext)
@@ -197,8 +199,8 @@ class DownloadsViewModel @Inject constructor(
             }
             .map {
                 when (it.downloadInfo.status) {
-                    is DownloadInfo.Status.Loading -> LoadState.loading<DownloadInfoWithUri>()
-                    is DownloadInfo.Status.Error -> LoadState.error<DownloadInfoWithUri>(
+                    is DownloadInfo.Status.Loading -> LoadState.loading()
+                    is DownloadInfo.Status.Error -> LoadState.error(
                         it.downloadInfo.statusAsError?.reason ?: RuntimeException()
                     )
 
@@ -263,7 +265,6 @@ class DownloadsViewModel @Inject constructor(
                 context.getString(R.string.download_notification_success_view_button),
                 viewIconResId
             ),
-
-            )
+        )
     }
 }

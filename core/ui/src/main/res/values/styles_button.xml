@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Button" parent="text">
+    <style name="Button">
         <item name="android:textStyle">normal</item>
         <item name="android:textSize">@dimen/textSizeMini</item>
         <item name="android:gravity">center</item>
@@ -10,6 +10,7 @@
         <item name="android:paddingStart">@dimen/defaultPadding</item>
         <item name="android:paddingEnd">@dimen/defaultPadding</item>
         <item name="android:elevation">0dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Button</item>
     </style>
 
     <!--красная кнопка со скругленными углами-->

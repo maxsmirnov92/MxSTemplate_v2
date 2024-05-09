@@ -2,22 +2,23 @@ package net.maxsmr.feature.download.ui
 
 import android.Manifest
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.EditText
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.bindToTextNotNull
+import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.live.field.observeFromText
-import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
-import net.maxsmr.core.ui.alert.representation.DialogRepresentation
+import net.maxsmr.core.android.content.pick.ContentPicker
+import net.maxsmr.core.android.content.pick.PickRequest
+import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -50,6 +51,20 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
 
     private val headersAdapter by lazy { HeadersAdapter(this) }
 
+    private val contentPicker: ContentPicker = FragmentContentPickerBuilder()
+        .addRequest(
+            PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_REQUEST_BODY_RESOURCE)
+                .addSafParams(SafPickerParams.any())
+                .needPersistableUriAccess(true)
+                .onSuccess {
+                    viewModel.onRequestBodyUriSelected(it.uri)
+                }
+                .onError {
+                    viewModel.onPickerResultError(it)
+                }
+                .build()
+
+        ).build()
 
     override fun onViewCreated(
         view: View,
@@ -57,6 +72,15 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         viewModel: DownloadsParamsViewModel,
         alertHandler: AlertHandler,
     ) {
+        binding.etUrl.bindToTextNotNull(viewModel.urlField)
+        viewModel.urlField.observeFromText(binding.etUrl, viewLifecycleOwner)
+        viewModel.urlField.hintLive.observe {
+            binding.tilUrl.hint = it?.get(requireContext())
+        }
+        viewModel.urlField.errorLive.observe {
+            binding.tilUrl.error = it?.get(requireContext())
+        }
+
         val adapter = ArrayAdapter.createFromResource(
             requireContext(),
             R.array.download_method_names,
@@ -66,39 +90,50 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         binding.spinnerMethod.adapter = adapter
         binding.spinnerMethod.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.method.setValueIfNew(DownloadsParamsViewModel.Method.entries[position])
+                viewModel.methodField.value = DownloadsParamsViewModel.Method.entries[position]
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
-        viewModel.method.observe {
+        viewModel.methodField.valueLive.observe {
             binding.spinnerMethod.setSelection(it.ordinal)
         }
 
-        binding.etUrl.bindToTextNotNull(viewModel.urlField)
-        viewModel.urlField.observeFromText(binding.etUrl, viewLifecycleOwner) {
-            viewModel.urlField.clearError()
-            it
+        viewModel.requestBodyField.valueLive.observe {
+            binding.containerSelectRequestBody.isEnabled = it.isEnabled
+            binding.ibSelectRequestBody.isEnabled = it.isEnabled
+            binding.ibClearRequestBody.isVisible = !it.isEmpty
+            binding.tvRequestBodyName.text = it.getName(requireContext()).takeIf { name -> name.isNotEmpty() }
+                ?: getString(
+                    if (it.isEnabled) {
+                        R.string.download_request_body_empty_text
+                    } else {
+                        R.string.download_request_body_non_required_text
+                    })
         }
-        viewModel.urlField.hintLive.observe {
-            binding.tilUrl.hint = it?.get(requireContext())
-        }
-        viewModel.urlField.errorLive.observe {
-            binding.tilUrl.error = it?.get(requireContext())
+        viewModel.requestBodyField.errorLive.observe {
+            binding.tvRequestBodyError.setTextOrGone(it?.get(requireContext()))
         }
 
-        binding.etFileName.bindToTextNotNull(viewModel.urlField)
-        viewModel.fileNameField.observeFromText(binding.etUrl, viewLifecycleOwner) {
-            it
+        binding.etFileName.bindToTextNotNull(viewModel.fileNameField)
+        viewModel.fileNameField.observeFromText(binding.etFileName, viewLifecycleOwner)
+        viewModel.fileNameField.hintLive.observe {
+            binding.tilFileName.hint = it?.get(requireContext())
+        }
+
+        binding.cbFileNameFix.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.onFileNameFixChanged(isChecked)
+        }
+        viewModel.fileNameFlagsField.valueLive.observe {
+            binding.cbFileNameFix.isEnabled = it.isEnabled
+            binding.cbFileNameFix.isChecked = it.shouldFix
         }
         viewModel.fileNameField.hintLive.observe {
             binding.tilFileName.hint = it?.get(requireContext())
         }
 
         binding.etSubDirName.bindToTextNotNull(viewModel.subDirNameField)
-        viewModel.subDirNameField.observeFromText(binding.etSubDirName, viewLifecycleOwner) {
-            it
-        }
+        viewModel.subDirNameField.observeFromText(binding.etSubDirName, viewLifecycleOwner)
         viewModel.subDirNameField.hintLive.observe {
             binding.tilSubDirName.hint = it?.get(requireContext())
         }
@@ -110,6 +145,13 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
             .build())
         viewModel.headerItems.observe {
             headersAdapter.items = it
+        }
+
+        binding.ibSelectRequestBody.setOnClickListener {
+            contentPicker.pick(REQUEST_CODE_CHOOSE_REQUEST_BODY_RESOURCE, requireContext())
+        }
+        binding.ibClearRequestBody.setOnClickListener {
+            viewModel.onClearRequestBodyUri()
         }
 
         binding.ibAdd.setOnClickListener {
@@ -136,5 +178,10 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
 
     override fun onRemoveHeader(id: Int) {
         viewModel.onRemoveHeader(id)
+    }
+
+    companion object {
+
+        private const val REQUEST_CODE_CHOOSE_REQUEST_BODY_RESOURCE = 1
     }
 }

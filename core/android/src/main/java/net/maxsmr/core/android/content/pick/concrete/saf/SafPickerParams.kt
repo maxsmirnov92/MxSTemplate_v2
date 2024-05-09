@@ -60,6 +60,9 @@ class SafPickerParams @JvmOverloads constructor(
          * поэтому не ограничиваем типы
          */
         @JvmStatic
-        fun json() = SafPickerParams(intentType = MIME_TYPE_ANY)
+        fun json() = any()
+
+        @JvmStatic
+        fun any() = SafPickerParams(intentType = MIME_TYPE_ANY)
     }
 }

@@ -3,10 +3,8 @@ package net.maxsmr.core.android.base
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.CallSuper
-import androidx.annotation.MainThread
 import androidx.annotation.StringRes
 import androidx.lifecycle.*
-import androidx.navigation.NavDirections
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.doOnNext
 import net.maxsmr.commonutils.live.event.VmEvent
@@ -23,8 +21,8 @@ import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.base.delegates.getPersistableKey
+import net.maxsmr.core.android.content.pick.PickResult
 import net.maxsmr.core.android.network.NetworkStateManager
-import net.maxsmr.core.network.UNKNOWN_ERROR
 import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.exceptions.NoConnectivityException
@@ -193,6 +191,13 @@ abstract class BaseViewModel(
         navigationCommands.postValue(VmEvent(NavigationCommand.Back))
     }
 
+    fun onPickerResultError(error: PickResult.Error) {
+        showOkDialog(
+            DIALOG_TAG_PICKER_ERROR,
+            TextMessage(R.string.pick_result_error_format, error.reason)
+        )
+    }
+
     /**
      * Добавляет, либо удаляет диалог с тегом [tag] из очереди в зависимости от параметра [add]
      */
@@ -257,5 +262,6 @@ abstract class BaseViewModel(
         const val DIALOG_TAG_UNKNOWN_ERROR = "unknown_error"
         const val DIALOG_TAG_PROGRESS = "progress"
         const val DIALOG_TAG_PERMISSION_YES_NO = "permission_yes_no"
+        const val DIALOG_TAG_PICKER_ERROR = "content_picker_error"
     }
 }

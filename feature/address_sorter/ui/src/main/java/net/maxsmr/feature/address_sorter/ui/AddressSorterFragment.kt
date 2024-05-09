@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
-import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragListener
+import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
 import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
@@ -34,7 +34,7 @@ import kotlin.reflect.KClass
 
 @AndroidEntryPoint
 class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, NavArgs>(),
-        AddressInputListener, OnStartDragListener, BaseDraggableDelegationAdapter.ItemsEventsListener<AddressInputData> {
+        AddressInputListener, BaseDraggableDelegationAdapter.ItemsEventsListener<AddressInputData> {
 
     override val argsClass: KClass<NavArgs>? = null
 
@@ -54,11 +54,22 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, Nav
         }
     }
 
-    private val adapter = AddressInputAdapter(this).apply {
-        startDragListener = this@AddressSorterFragment
-    }
+    private val adapter = AddressInputAdapter(this)
 
-    private val touchHelper: ItemTouchHelper = ItemTouchHelper(DragAndDropTouchHelperCallback(adapter))
+    private val touchHelper: ItemTouchHelper = ItemTouchHelper(DragAndDropTouchHelperCallback(adapter)).also {
+        adapter.startDragListener = object : OnStartDragHelperListener(it) {
+
+            override fun onStartDrag(viewHolder: RecyclerView.ViewHolder) {
+                if (binding.swipeLayout.isRefreshing) return
+                super.onStartDrag(viewHolder)
+            }
+
+            override fun onStartSwipe(viewHolder: RecyclerView.ViewHolder) {
+                if (binding.swipeLayout.isRefreshing) return
+                super.onStartSwipe(viewHolder)
+            }
+        }
+    }
 
     private val binding by viewBinding(FragmentAddressSorterBinding::bind)
 
@@ -82,18 +93,11 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, Nav
                         viewModel.onJsonResourceSelected(requireContext(), it.uri)
                     }
                     .onError {
-                        viewModel.onJsonResourceSelectError(it)
+                        viewModel.onPickerResultError(it)
                     }
                     .build()
 
             ).build()
-
-    override fun handleAlerts() {
-        super.handleAlerts()
-        bindAlertDialog(AddressSorterViewModel.DIALOG_TAG_PICKER_ERROR) {
-            it.asOkDialog(requireContext())
-        }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: AddressSorterViewModel, alertHandler: AlertHandler) {
         super.onViewCreated(view, savedInstanceState, viewModel, alertHandler)
@@ -174,16 +178,6 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, Nav
 
     override fun onItemMoved(fromPosition: Int, toPosition: Int, item: AddressInputData) {
         viewModel.onItemMoved(fromPosition, toPosition)
-    }
-
-    override fun onStartDrag(viewHolder: RecyclerView.ViewHolder) {
-        if (binding.swipeLayout.isRefreshing) return
-        touchHelper.startDrag(viewHolder)
-    }
-
-    override fun onStartSwipe(viewHolder: RecyclerView.ViewHolder) {
-        if (binding.swipeLayout.isRefreshing) return
-        touchHelper.startSwipe(viewHolder)
     }
 
     private fun doRequestGpsWithRefresh() {

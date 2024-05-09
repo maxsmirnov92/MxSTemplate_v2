@@ -57,7 +57,8 @@ class DownloadManager @Inject constructor(
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("DownloadManager")
 
-    private val scope = CoroutineScope(defaultDispatcher + Job()) // Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private val scope =
+        CoroutineScope(defaultDispatcher + Job()) // Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     private val downloadsPendingStorage = QueueFileStorage("download_pending_queue")
 
@@ -254,20 +255,14 @@ class DownloadManager @Inject constructor(
 
                             // актуализируем парамсы для завершённого итема
                             val newFinishedItem = item.copy(params = state.params, downloadId = state.downloadInfo.id)
-                            var previousFinishedItem: QueueItem? = null
-                            val finishedIterator = newFinishedSet.iterator()
-                            while (finishedIterator.hasNext()) {
-                                val finishedItem = finishedIterator.next()
-                                if (finishedItem.downloadId == newFinishedItem.downloadId) {
-                                    finishedIterator.remove()
-                                    previousFinishedItem = finishedItem
-                                    break
-                                }
+                            newFinishedSet.refreshWith(newFinishedItem) {
+                                it.downloadId == newFinishedItem.downloadId
+                            }.apply {
+                                newFinishedSet.clear()
+                                newFinishedSet.addAll(this)
                             }
-                            newFinishedSet.add(newFinishedItem)
-                            previousFinishedItem?.let {
-                                downloadsFinishedStorage.removeItem(previousFinishedItem)
-                            }
+
+                            downloadsFinishedStorage.removeItem(newFinishedItem.id)
                             downloadsFinishedStorage.addItem(newFinishedItem)
                             break
                         }
@@ -282,7 +277,7 @@ class DownloadManager @Inject constructor(
         scope.launch {
             notifier.downloadRetryEvents.collect {
                 logger.d("downloadRetryEvent: $it")
-                enqueueDownloadInternal(it)
+                retryDownloadInternal(it)
             }
         }
     }
@@ -293,6 +288,12 @@ class DownloadManager @Inject constructor(
     fun enqueueDownload(params: DownloadService.Params) {
         scope.launch { // без ioDispatcher, get room'а всё равно не падает на main...
             enqueueDownloadInternal(params)
+        }
+    }
+
+    fun retryDownload(downloadId: Long, params: DownloadService.Params) {
+        scope.launch {
+            retryDownloadInternal(downloadId, params)
         }
     }
 
@@ -315,25 +316,7 @@ class DownloadManager @Inject constructor(
 
     fun removeFinished(downloadId: Long, withDb: Boolean = true) {
         scope.launch {
-            // поиск только в завершённых
-            val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
-            val iterator = newFinishedSet.iterator()
-            var targetItem: QueueItem? = null
-            while (iterator.hasNext()) {
-                val item = iterator.next()
-                if (item.downloadId == downloadId) {
-                    targetItem = item
-                    iterator.remove()
-                    break
-                }
-            }
-            downloadsFinishedQueue.value = newFinishedSet
-            targetItem?.let {
-                downloadsFinishedStorage.removeItem(it)
-                if (withDb) {
-                    downloadsRepo.remove(downloadId)
-                }
-            }
+            removeFinishedInternal(downloadId, withDb)
         }
     }
 
@@ -359,6 +342,39 @@ class DownloadManager @Inject constructor(
         downloadsPendingQueue.appendToSet(item)
         downloadsPendingStorage.addItem(item)
         _addedToQueueEvent.emit(params)
+    }
+
+    private suspend fun retryDownloadInternal(params: DownloadService.Params) {
+        retryDownloadInternal(downloadsFinishedQueue.value.find { it.params.targetResourceName == params.targetResourceName }?.downloadId, params)
+    }
+
+    private suspend fun retryDownloadInternal(downloadId: Long?, params: DownloadService.Params) {
+        downloadId?.let {
+            removeFinishedInternal(it)
+        }
+        enqueueDownloadInternal(params)
+    }
+
+    private suspend fun removeFinishedInternal(downloadId: Long, withDb: Boolean = true) {
+        // поиск только в завершённых
+        val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
+        val iterator = newFinishedSet.iterator()
+        var targetItem: QueueItem? = null
+        while (iterator.hasNext()) {
+            val item = iterator.next()
+            if (item.downloadId == downloadId) {
+                targetItem = item
+                iterator.remove()
+                break
+            }
+        }
+        downloadsFinishedQueue.value = newFinishedSet
+        targetItem?.let {
+            downloadsFinishedStorage.removeItem(it)
+            if (withDb) {
+                downloadsRepo.remove(downloadId)
+            }
+        }
     }
 
     /**
@@ -411,20 +427,28 @@ class DownloadManager @Inject constructor(
     }
 
     private fun DownloadInfoResultData.refreshWith() {
+        _resultItems.value = _resultItems.value.refreshWith(this) {
+            it.downloadInfo.id == this.downloadInfo.id
+        }
+    }
+
+    /**
+     * Рефрешнуть итем в той же позиции новым или добавить его в конец
+     */
+    private fun <T> Collection<T>.refreshWith(value: T, isSameWithFunc: (T) -> Boolean): List<T> {
         var has = false
-        val currentDownloads = _resultItems.value
-        val newDownloads = currentDownloads.map { currentItem ->
-            if (currentItem.downloadInfo.id == downloadInfo.id) {
+        val newCollection = this.map { item ->
+            if (isSameWithFunc(item)) {
                 has = true
-                this
+                value
             } else {
-                currentItem
+                item
             }
         }.toMutableList()
         if (!has) {
-            newDownloads.add(this)
+            newCollection.add(value)
         }
-        _resultItems.value = newDownloads
+        return newCollection
     }
 
     /**
@@ -448,39 +472,40 @@ class DownloadManager @Inject constructor(
 
         val queueDir = File(parentPath, path)
 
-        suspend fun restoreItems(shouldDeleteFiles: Boolean): Set<QueueItem> = suspendCancellableCoroutine { continuation ->
+        suspend fun restoreItems(shouldDeleteFiles: Boolean): Set<QueueItem> =
+            suspendCancellableCoroutine { continuation ->
 
-            val notifier = object : IGetNotifier {
+                val notifier = object : IGetNotifier {
 
-                override fun shouldProceed(
-                    current: File,
-                    collected: Set<File>,
-                    currentLevel: Int,
-                    wasAdded: Boolean,
-                ): Boolean = continuation.isActive
-            }
-            val files = getFiles(
-                queueDir,
-                GetMode.FILES, null, 1, notifier
-            ).filter { it.name.split(FILE_NAME_PREFIX).size == 2 && it.extension == FILE_NAME_EXT }
-
-            val result: List<Pair<QueueItem, File>> = files.mapNotNull {
-                val item = fromInputStream(QueueItem::class.java, it.openInputStream())
-                if (item != null) {
-                    Pair(item, it)
-                } else {
-                    null
+                    override fun shouldProceed(
+                        current: File,
+                        collected: Set<File>,
+                        currentLevel: Int,
+                        wasAdded: Boolean,
+                    ): Boolean = continuation.isActive
                 }
-            }.sortedBy { it.first.id }
+                val files = getFiles(
+                    queueDir,
+                    GetMode.FILES, null, 1, notifier
+                ).filter { it.name.split(FILE_NAME_PREFIX).size == 2 && it.extension == FILE_NAME_EXT }
 
-            if (shouldDeleteFiles) {
-                // удалить файлы только по успешно восстановленным
-                result.forEach {
-                    deleteFile(it.second)
+                val result: List<Pair<QueueItem, File>> = files.mapNotNull {
+                    val item = fromInputStream(QueueItem::class.java, it.openInputStream())
+                    if (item != null) {
+                        Pair(item, it)
+                    } else {
+                        null
+                    }
+                }.sortedBy { it.first.id }
+
+                if (shouldDeleteFiles) {
+                    // удалить файлы только по успешно восстановленным
+                    result.forEach {
+                        deleteFile(it.second)
+                    }
                 }
+                continuation.resume(result.map { it.first }.toSet())
             }
-            continuation.resume(result.map { it.first }.toSet())
-        }
 
         @Synchronized
         fun addItem(item: QueueItem): Boolean {
@@ -492,7 +517,12 @@ class DownloadManager @Inject constructor(
 
         @Synchronized
         fun removeItem(item: QueueItem): Boolean {
-            return deleteFile(File(queueDir, FILE_NAME_FORMAT.format(item.id)))
+            return removeItem(item.id)
+        }
+
+        @Synchronized
+        fun removeItem(itemId: Int): Boolean {
+            return deleteFile(File(queueDir, FILE_NAME_FORMAT.format(itemId)))
         }
 
         @Synchronized
