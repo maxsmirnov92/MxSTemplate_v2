@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -35,6 +34,7 @@ import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsRepo
+import net.maxsmr.feature.preferences.data.domain.AppSettings
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.File
 import java.io.Serializable
@@ -101,6 +101,8 @@ class DownloadManager @Inject constructor(
     private val _addedToQueueEvent = MutableSharedFlow<DownloadService.Params>()
 
     val addedToQueueEvent: SharedFlow<DownloadService.Params> = _addedToQueueEvent.asSharedFlow()
+
+    private var settings = AppSettings()
 
     private val idCounter = AtomicInteger(0)
 
@@ -280,6 +282,11 @@ class DownloadManager @Inject constructor(
                 retryDownloadInternal(it)
             }
         }
+        scope.launch {
+            settingsRepo.settings.collect {
+                settings = it
+            }
+        }
     }
 
     /**
@@ -322,26 +329,42 @@ class DownloadManager @Inject constructor(
 
     private suspend fun enqueueDownloadInternal(params: DownloadService.Params) {
         logger.i("enqueueDownloadInternal, params: $params")
-        if (params.requestParams.url.isEmpty()) return
-        if (downloadsLaunchedQueue.value.map { it.params }.contains(params)) {
+
+        fun getActualParams(): DownloadService.Params {
+            val settings = settings
+            return DownloadService.Params(
+                params.requestParams.copy(storeErrorBody = settings.ignoreServerError),
+                if (settings.disableNotifications) null else params.notificationParams,
+                params.resourceName,
+                params.storageType,
+                params.subDirPath,
+                params.targetHashInfo,
+                params.skipIfDownloaded,
+                settings.deleteUnfinished
+            )
+        }
+        val actualParams = getActualParams()
+
+        if (actualParams.requestParams.url.isEmpty()) return
+        if (downloadsLaunchedQueue.value.map { it.params }.contains(actualParams)) {
             logger.w("not added to pending queue - already in launched queue")
             return
         }
-        if (downloadsPendingQueue.value.map { it.params }.contains(params)) {
+        if (downloadsPendingQueue.value.map { it.params }.contains(actualParams)) {
             logger.w("not added to pending queue - already in pending queue")
             return
         }
         // на этапе loading extension не актуализировалось в таблице, можно искать с исходным расширением
         // или если это retry - params должны быть актуальные!
-        val prevDownload = downloadsRepo.getByNameAndExt(params.resourceNameWithoutExt, params.extension)
+        val prevDownload = downloadsRepo.getByNameAndExt(actualParams.resourceNameWithoutExt, actualParams.extension)
         if (prevDownload?.isLoading == true) {
-            logger.w("DownloadInfo with ${params.targetResourceName} already loading in service")
+            logger.w("DownloadInfo with ${actualParams.targetResourceName} already loading in service")
             return
         }
-        val item = QueueItem(idCounter.incrementAndGet(), params)
+        val item = QueueItem(idCounter.incrementAndGet(), actualParams)
         downloadsPendingQueue.appendToSet(item)
         downloadsPendingStorage.addItem(item)
-        _addedToQueueEvent.emit(params)
+        _addedToQueueEvent.emit(actualParams)
     }
 
     private suspend fun retryDownloadInternal(params: DownloadService.Params) {
@@ -387,7 +410,7 @@ class DownloadManager @Inject constructor(
 
         // есть проблемы с актуальностью значений из-за suspend'ов, читаем вручную по месту
         // при этом getRaw() suspend - ставим его на первое место
-        val maxDownloadsCount = settingsRepo.settings.firstOrNull()?.maxDownloads ?: MAX_DOWNLOADS_UNLIMITED
+        val maxDownloadsCount = settings.maxDownloads
         val downloads = downloadsRepo.getRaw() // state.downloads
         val downloadsPendingQueue = downloadsPendingQueue.value // state.downloadsPendingQueue
         val downloadsLaunchedQueue = downloadsLaunchedQueue.value // state.downloadsLaunchedQueue

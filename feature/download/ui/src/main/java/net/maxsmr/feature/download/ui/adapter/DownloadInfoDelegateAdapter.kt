@@ -158,7 +158,7 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
 
                         is DownloadState.Failed -> {
                             statusColorResId = R.color.textColorDownloadFailed
-                            context.getString(R.string.download_status_failed_format, state.e.toString())
+                            context.getString(R.string.download_status_failed_format, state.e?.message)
                         }
 
                         is DownloadState.Cancelled -> {

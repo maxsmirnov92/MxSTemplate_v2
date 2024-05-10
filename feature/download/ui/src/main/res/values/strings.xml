@@ -4,8 +4,8 @@
     <string name="download_params_title">Параметры</string>
     <string name="download_state_title">Состояние</string>
 
-    <string name="download_file_url_hint">URL для загрузки</string>
-    <string name="download_file_url_empty_error">URL некорректный</string>
+    <string name="download_url_hint">URL для загрузки</string>
+    <string name="download_url_empty_error">URL некорректный</string>
     <string name="download_method_name">Метод</string>
     <string-array name="download_method_names">
         <item>GET</item>
@@ -15,6 +15,7 @@
     <string name="download_request_body_non_required_text">Файл тела запроса не требуется</string>
     <string name="download_request_body_empty_error">Тело запроса обязательно</string>
     <string name="download_file_name_hint">Имя файла</string>
+    <string name="download_file_name_error">Некорректное имя файла</string>
     <string name="download_file_name_fix_checkbox_text">Поменять из заголовка ответа при наличии</string>
     <string name="download_sub_dir_name_hint">Имя подкаталога</string>
     <string name="download_header_name_subtitle">Заголовки</string>

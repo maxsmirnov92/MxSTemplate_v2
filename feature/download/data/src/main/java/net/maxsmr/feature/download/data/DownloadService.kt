@@ -44,6 +44,12 @@ import net.maxsmr.core.di.ApplicationScope
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
+import net.maxsmr.core.network.ContentDispositionType
+import net.maxsmr.core.network.HEADER_CONTENT_DISPOSITION
+import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
+import net.maxsmr.core.network.getContentTypeHeader
+import net.maxsmr.core.network.getFileNameFromAttachmentHeader
+import net.maxsmr.core.network.hasContentDisposition
 import net.maxsmr.core.network.newCallSuspended
 import net.maxsmr.core.network.toOutputStreamOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
@@ -70,7 +76,6 @@ import okio.source
 import ru.rzd.pass.downloads.storage.StoreException
 import java.io.*
 import java.net.URL
-import java.nio.charset.Charset
 import java.util.*
 import javax.inject.Inject
 
@@ -200,7 +205,7 @@ class DownloadService : Service() {
             return START_NOT_STICKY
         }
 
-        //защита от множественных параллельных скачиваний одного и того же файла
+        // защита от множественных параллельных скачиваний одного и того же файла
         if (currentDownloads[params.requestParams.url] != null) {
             notifier.onDownloadNotStarted(params)
             logger.d("Skip download of $params: another same download is already in progress")
@@ -239,7 +244,6 @@ class DownloadService : Service() {
 
         var unfinishedLocalUri: Uri? = null
 
-
         coroutineScope.launch(/*exceptionHandler*/) { // start = CoroutineStart.LAZY
             // в самом начале mimeType и ext, могут быть неправильными, поиск производим по исходному
             val prevDownload = downloadsRepo.getByNameAndExt(params.resourceNameWithoutExt, params.extension)
@@ -276,13 +280,25 @@ class DownloadService : Service() {
             }
 
             try {
-                val response = okHttpClient.newCallSuspended(params.createRequest())
+                val response = okHttpClient.newCallSuspended(params.createRequest(), false)
+                logger.i("Response finished with code ${response.code}, message \"${response.message}\"")
+
+                val isSuccessful = response.isSuccessful
+                if (!params.requestParams.storeErrorBody
+                        && (!isSuccessful || !response.hasContentDisposition(ContentDispositionType.ATTACHMENT))
+                ) {
+                    val exception = response.toHttpProtocolException(
+                        if (isSuccessful) "$HEADER_CONTENT_DISPOSITION header is empty" else null
+                    )
+                    onException(exception)
+                    return@launch
+                }
 
                 var wasParamsChanged = false
 
                 if (params.resourceMimeType.isEmpty() || !params.requestParams.ignoreHeaderMimeType) {
                     // при пустом исходном типе или если игнорить заголовок не надо
-                    response.header(HEADER_CONTENT_TYPE, EMPTY_STRING)?.takeIf { it.isNotEmpty() }?.let {
+                    response.getContentTypeHeader()?.takeIf { it.isNotEmpty() }?.let {
                         if (params.resourceMimeType != it) {
                             // актуализируем из заголовка, если есть - влияет на целевое имя
                             params.resourceMimeType = it
@@ -291,11 +307,9 @@ class DownloadService : Service() {
                     }
                 }
                 if (!params.requestParams.ignoreFileName) {
-                    response.header(HEADER_CONTENT_DISPOSITION, EMPTY_STRING)?.takeIf { it.isNotEmpty() }?.let {
-                        val fileName =
-                            java.net.URLDecoder.decode(it.substringAfter("''"), Charset.defaultCharset().toString())
-                        if (params.targetResourceName != fileName) {
-                            params.resourceName = fileName
+                    response.getFileNameFromAttachmentHeader().takeIf { it.isNotEmpty() }?.let {
+                        if (params.targetResourceName != it) {
+                            params.resourceName = it
                             wasParamsChanged = true
                         }
                     }
@@ -370,15 +384,10 @@ class DownloadService : Service() {
                     ), params, oldParams
                 )
             } catch (e: CancellationException) {
-                logger.w("$downloadInfo", e)
                 // после отмены корутины на вызове suspend функций будет брошен эксепшн ->
                 // надо запустить в другом неотменённом скопе
                 applicationScope.launch(ioDispatcher) {
-                    onDownloadCancelled(
-                        downloadInfo.copy(status = DownloadInfo.Status.Error(reason = e)),
-                        params,
-                        oldParams
-                    )
+                    onException(e, unfinishedLocalUri)
                 }
             } catch (e: SecurityException) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && e is RecoverableSecurityException) {
@@ -391,11 +400,11 @@ class DownloadService : Service() {
                         )
                     )
                 }
-                onException(e)
+                onException(e, unfinishedLocalUri)
             } catch (e: StoreException) {
                 onException(e, e.localUri)
             } catch (e: Exception) {
-                onException(e)
+                onException(e, unfinishedLocalUri)
             } finally {
                 if (params.deleteUnfinished) {
                     unfinishedLocalUri?.delete(contentResolver)
@@ -403,20 +412,6 @@ class DownloadService : Service() {
                 currentJobs.remove(downloadInfo.id)
             }
         }
-//        if (!job.start()) {
-//            notifier.onDownloadNotStarted(params)
-//            applicationScope.launch(ioDispatcher) {
-//                val prevDownload = downloadsRepo.getByNameAndExt(params.resourceNameWithoutExt, params.extension)
-//                val downloadInfo = prevDownload?.copy(status = DownloadInfo.Status.Loading)
-//                    ?: DownloadInfo(
-//                        name = params.resourceNameWithoutExt,
-//                        mimeType = params.resourceMimeType,
-//                        extension = params.extension,
-//                        status = DownloadInfo.Status.Loading,
-//                    )
-//                onDownloadFailed(downloadInfo, params, oldParams, RuntimeException("Coroutine was not started"))
-//            }
-//        }
         return START_REDELIVER_INTENT
     }
 
@@ -470,7 +465,7 @@ class DownloadService : Service() {
         downloadInfo: DownloadInfo,
         params: Params,
     ) {
-        logger.d("Download processing: ${downloadInfo.name}, stateInfo: $stateInfo")
+        logger.d("Download processing: $downloadInfo, stateInfo: $stateInfo")
         notifier.onDownloadProcessing(stateInfo, downloadInfo, params)
 
         params.notificationParams ?: return
@@ -686,6 +681,17 @@ class DownloadService : Service() {
         val deleteUnfinished: Boolean = true,
     ) : BaseDownloadParams(requestParams.url, resourceName) {
 
+        constructor(params: Params) : this(
+            params.requestParams,
+            params.notificationParams,
+            params.resourceName,
+            params.storageType,
+            params.subDirPath,
+            params.targetHashInfo,
+            params.skipIfDownloaded,
+            params.deleteUnfinished
+        )
+
         fun createRequest(): Request = requestParams.createRequest()
 
         override fun equals(other: Any?): Boolean {
@@ -722,10 +728,11 @@ class DownloadService : Service() {
                 preferredFileName: String?,
                 body: RequestParams.Body,
                 ignoreFileName: Boolean = true,
+                ignoreHeaderMimeType: Boolean = false,
+                storeErrorBody: Boolean = false,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
                 subDir: String = EMPTY_STRING,
-                ignoreHeaderMimeType: Boolean = false,
                 targetHashInfo: HashInfo? = null,
                 notificationParams: NotificationParams,
             ): Params {
@@ -747,7 +754,8 @@ class DownloadService : Service() {
                         body,
                         headers = headers,
                         ignoreHeaderMimeType = ignoreHeaderMimeType,
-                        ignoreFileName = targetIgnoreFileName
+                        ignoreFileName = targetIgnoreFileName,
+                        storeErrorBody = storeErrorBody
                     ),
                     notificationParams,
                     fileName,
@@ -769,10 +777,11 @@ class DownloadService : Service() {
                 uri: URL,
                 preferredFileName: String?,
                 ignoreFileName: Boolean = true,
+                ignoreHeaderMimeType: Boolean = false,
+                storeErrorBody: Boolean = false,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
                 subDir: String = EMPTY_STRING,
-                ignoreHeaderMimeType: Boolean = false,
                 targetHashInfo: HashInfo? = null,
                 notificationParams: NotificationParams,
             ): Params {
@@ -793,7 +802,8 @@ class DownloadService : Service() {
                         uri.toString(),
                         headers = headers,
                         ignoreHeaderMimeType = ignoreHeaderMimeType,
-                        ignoreFileName = targetIgnoreFileName
+                        ignoreFileName = targetIgnoreFileName,
+                        storeErrorBody = storeErrorBody
                     ),
                     notificationParams,
                     fileName,
@@ -820,6 +830,7 @@ class DownloadService : Service() {
         val body: Body?,
         val ignoreHeaderMimeType: Boolean,
         val ignoreFileName: Boolean,
+        val storeErrorBody: Boolean,
     ) : Serializable {
 
         fun createRequest(): Request = Request.Builder()
@@ -828,14 +839,16 @@ class DownloadService : Service() {
             .headers(headers.toHeaders())
             .build()
 
-        class Body(val content: Serializable, val mimeType: String? = null): Serializable {
+        class Body(val content: Serializable, val mimeType: String? = null) : Serializable {
 
             fun createRequestBody(): RequestBody {
                 val type = mimeType?.toMediaTypeOrNull()
                 return when (content) {
                     is Uri -> ContentOrFileUriRequestBody(content.toUri(), mimeType)
-                    is File -> content.asRequestBody(type
-                            ?: getMimeTypeFromName(content.name).toMediaTypeOrNull())
+                    is File -> content.asRequestBody(
+                        type
+                            ?: getMimeTypeFromName(content.name).toMediaTypeOrNull()
+                    )
 
                     is ByteArray -> content.toRequestBody(type)
                     is String -> content.toRequestBody(type)
@@ -845,8 +858,8 @@ class DownloadService : Service() {
             }
 
             data class Uri(
-                val value: String
-            ): Serializable {
+                val value: String,
+            ) : Serializable {
 
                 fun toUri() = android.net.Uri.parse(value)
             }
@@ -862,6 +875,7 @@ class DownloadService : Service() {
                 headers: HashMap<String, String> = HashMap(),
                 ignoreHeaderMimeType: Boolean = true,
                 ignoreFileName: Boolean = false,
+                storeErrorBody: Boolean = false,
             ): RequestParams {
                 return RequestParams(
                     url,
@@ -869,7 +883,8 @@ class DownloadService : Service() {
                     headers,
                     body,
                     ignoreHeaderMimeType,
-                    ignoreFileName
+                    ignoreFileName,
+                    storeErrorBody
                 )
             }
 
@@ -880,6 +895,7 @@ class DownloadService : Service() {
                 headers: HashMap<String, String> = HashMap(),
                 ignoreHeaderMimeType: Boolean = true,
                 ignoreFileName: Boolean = false,
+                storeErrorBody: Boolean = false,
                 appendGetParams: ((Uri) -> Uri)? = null,
             ): RequestParams {
                 val targetUrl = if (appendGetParams != null) {
@@ -893,7 +909,8 @@ class DownloadService : Service() {
                     headers,
                     null,
                     ignoreHeaderMimeType,
-                    ignoreFileName
+                    ignoreFileName,
+                    storeErrorBody
                 )
             }
         }
@@ -1043,9 +1060,16 @@ class DownloadService : Service() {
     ) {
 
         val progress = if (totalBytes > 0) ((currentBytes * 100f) / totalBytes).toInt() else 0
+
+        override fun toString(): String {
+            return "DownloadStateInfo(currentBytes=$currentBytes, totalBytes=$totalBytes, speed=$speed, elapsedTime=$elapsedTime, estimatedTime=$estimatedTime, progress=$progress)"
+        }
     }
 
-    private class ContentOrFileUriRequestBody(private val uri: Uri, private val type: String? = null) : RequestBody() {
+    private class ContentOrFileUriRequestBody(
+        private val uri: Uri,
+        private val type: String? = null,
+    ) : RequestBody() {
 
         override fun contentType(): MediaType? {
             val contentType = type ?: uri.mimeTypeOrThrow(baseApplicationContext.contentResolver)
@@ -1079,9 +1103,6 @@ class DownloadService : Service() {
         private const val SORT_KEY_LOADING_ALL = "A"
         private const val SORT_KEY_LOADING = "B"
         private const val SORT_KEY_FINISHED = "C"
-
-        private const val HEADER_CONTENT_TYPE = "Content-Type"
-        private const val HEADER_CONTENT_DISPOSITION = "content-disposition"
 
         private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("DownloadService")
 

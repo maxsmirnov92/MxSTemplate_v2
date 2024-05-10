@@ -24,7 +24,23 @@ class SettingsViewModel @Inject constructor(
 
     val maxDownloadsField: Field<Int> = Field.Builder(0)
         .emptyIf { false }
-        .hint(R.string.settings_hint_field_max_downloads)
+        .hint(R.string.settings_field_hint_max_downloads)
+        .persist(state, KEY_FIELD_MAX_DOWNLOADS)
+        .build()
+
+    val ignoreServerErrorField: Field<Boolean> = Field.Builder(false)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_IGNORE_SERVER_ERROR)
+        .build()
+
+    val deleteUnfinishedField: Field<Boolean> = Field.Builder(false)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_DELETE_UNFINISHED)
+        .build()
+
+    val disableNotificationsField: Field<Boolean> = Field.Builder(false)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_DISABLE_NOTIFICATIONS)
         .build()
 
     private val appSettings by persistableLiveData<AppSettings>()
@@ -46,13 +62,18 @@ class SettingsViewModel @Inject constructor(
                 appSettings.value = settings
                 restoreFields(settings)
             }
-        } else {
-            appSettings.observeOnce {
-                restoreFields(it)
-            }
         }
         maxDownloadsField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(maxDownloads = it)
+        }
+        ignoreServerErrorField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(ignoreServerError = it)
+        }
+        deleteUnfinishedField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(deleteUnfinished = it)
+        }
+        disableNotificationsField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(disableNotifications = it)
         }
     }
 
@@ -87,10 +108,18 @@ class SettingsViewModel @Inject constructor(
     private fun restoreFields(settings: AppSettings) {
         // используется для того, чтобы выставить initial'ы в филды
         maxDownloadsField.value = settings.maxDownloads
+        ignoreServerErrorField.value = settings.ignoreServerError
+        deleteUnfinishedField.value = settings.deleteUnfinished
+        disableNotificationsField.value = settings.disableNotifications
     }
 
     companion object {
 
         const val DIALOG_TAG_CONFIRM = "confirm"
+
+        const val KEY_FIELD_MAX_DOWNLOADS = "max_downloads"
+        const val KEY_FIELD_IGNORE_SERVER_ERROR = "ignore_server_error"
+        const val KEY_FIELD_DELETE_UNFINISHED = "delete_unfinished"
+        const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
     }
 }

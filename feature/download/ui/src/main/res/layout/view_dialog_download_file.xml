@@ -10,7 +10,7 @@
         android:id="@+id/tilUrl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/download_file_url_hint">
+        android:hint="@string/download_url_hint">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etUrl"

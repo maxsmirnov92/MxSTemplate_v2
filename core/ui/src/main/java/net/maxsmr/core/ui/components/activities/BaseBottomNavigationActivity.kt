@@ -14,6 +14,9 @@ import net.maxsmr.core.ui.R
  */
 abstract class BaseBottomNavigationActivity: BaseNavigationActivity() {
 
+    /**
+     * Фрагменты с этими Id должны быть в графе
+     */
     protected abstract val topLevelDestinationIds: Set<Int>
 
     @LayoutRes

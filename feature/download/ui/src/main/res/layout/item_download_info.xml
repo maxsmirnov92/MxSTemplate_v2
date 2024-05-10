@@ -20,6 +20,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_toStartOf="@id/containerActionButtons"
+            android:ellipsize="end"
+            android:lines="1"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             android:textColor="@color/textColorPrimary"
             app:fontFamily="@font/roboto_italic"
@@ -74,6 +76,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
+        android:maxLines="4"
         android:textAppearance="@style/TextAppearance.AppCompat.Small"
         android:textSize="@dimen/textSizeExtraMini"
         tools:text=",status ," />

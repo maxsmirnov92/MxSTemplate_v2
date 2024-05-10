@@ -9,7 +9,7 @@ class MainBottomActivity : BaseBottomNavigationActivity() {
 
     override val navigationGraphResId: Int = R.navigation.navigation_main
 
-    override val topLevelDestinationIds = setOf(R.id.navigationMain, R.id.navigationDownloads, R.id.navigationSettings)
+    override val topLevelDestinationIds = setOf(/*R.id.navigationMain,*/ R.id.navigationDownloads, R.id.navigationSettings)
 
     override fun setupBottomNavigationView() {
         bottomNavigationView.inflateMenu(R.menu.menu_main)

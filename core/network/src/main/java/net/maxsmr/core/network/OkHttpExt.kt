@@ -6,7 +6,8 @@ import net.maxsmr.commonutils.IStreamNotifier
 import net.maxsmr.commonutils.copyStreamOrThrow
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.core.network.exceptions.HttpProtocolException
+import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
 import net.maxsmr.core.utils.charsetForNameOrNull
 import okhttp3.*
 import okio.Buffer
@@ -19,6 +20,13 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("OkHttpExt")
+
+const val HEADER_CONTENT_TYPE = "Content-Type"
+const val HEADER_CONTENT_DISPOSITION = "Content-Disposition"
+private const val ATTACHMENT_FILENAME = "filename"
+
+// TODO move to FileUtils
+const val REG_EX_FILE_NAME = "^[\\w\\-. ]+$"
 
 fun OkHttpClient.executeCall(
     requestConfigurator: ((Request.Builder) -> Any?),
@@ -38,7 +46,7 @@ fun OkHttpClient.executeCallOrThrow(
     return newCall(request.build()).execute()
 }
 
-suspend fun OkHttpClient.newCallSuspended(request: Request): Response = suspendCancellableCoroutine { continuation ->
+suspend fun OkHttpClient.newCallSuspended(request: Request, checkSuccess: Boolean = true): Response = suspendCancellableCoroutine { continuation ->
     val call = newCall(request)
     continuation.invokeOnCancellation {
         call.cancel()
@@ -49,10 +57,10 @@ suspend fun OkHttpClient.newCallSuspended(request: Request): Response = suspendC
         }
 
         override fun onResponse(call: Call, response: Response) {
-            if (response.isSuccessful) {
+            if (!checkSuccess || response.isSuccessful) {
                 continuation.resume(response)
             } else {
-                continuation.resumeWithException(HttpProtocolException.Builder(response).build())
+                continuation.resumeWithException(response.toHttpProtocolException())
             }
         }
     })
@@ -212,7 +220,45 @@ private fun Response.cloneBufferOrThrow(): Buffer? {
 
 fun isResponseOk(responseCode: Int): Boolean = responseCode in 200..299
 
-fun Headers?.headersToMap(): Map<String, String> {
+fun Response.getContentTypeHeader() = header(HEADER_CONTENT_TYPE)
+
+fun Response.getContentDispositionHeader() = header(HEADER_CONTENT_DISPOSITION)
+
+fun Response.hasContentDisposition(type: ContentDispositionType): Boolean {
+    return getContentDispositionHeader().hasContentDisposition(type)
+}
+
+/**
+ * Варианты:
+ * Content-Disposition: inline
+ * Content-Disposition: attachment
+ * Content-Disposition: attachment; filename="filename.jpg"
+ * Content-Disposition: attachment; filename*=UTF-8''CV%20example.docx
+ */
+fun Response.getFileNameFromAttachmentHeader(): String {
+    val disposition = getContentDispositionHeader()
+    if (disposition == null || !disposition.hasContentDisposition(ContentDispositionType.ATTACHMENT)) {
+        return EMPTY_STRING
+    }
+    val encodedName: String = if (disposition.contains("$ATTACHMENT_FILENAME*")) {
+        disposition.substringAfter("''")
+    } else if (disposition.contains(ATTACHMENT_FILENAME)) {
+        disposition.substringAfter("$ATTACHMENT_FILENAME=").trimEnd { it == '"' }
+    } else {
+        EMPTY_STRING
+    }
+    return java.net.URLDecoder.decode(
+        encodedName, Charset.defaultCharset().toString()
+    )
+        .takeIf { REG_EX_FILE_NAME.toRegex().matches(it) }
+        .orEmpty()
+}
+
+private fun String?.hasContentDisposition(type: ContentDispositionType): Boolean {
+    return this?.startsWith(type.value) == true
+}
+
+fun Headers?.toMap(): Map<String, String> {
     val result = mutableMapOf<String, String>()
     if (this != null) {
         for (i in 0 until size) {
@@ -271,4 +317,11 @@ private fun InputStream.copyToOutputStreamOrThrow(
         } else {
             null
         })
+}
+
+enum class ContentDispositionType(val value: String) {
+
+    INLINE("inline"),
+    ATTACHMENT("attachment"),
+    FORM_DATA("form-data")
 }

@@ -14,6 +14,8 @@ import net.maxsmr.commonutils.live.field.observeFrom
 import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
+import net.maxsmr.core.ui.bindHintError
+import net.maxsmr.core.ui.bindValue
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.preferences.ui.databinding.FragmentSettingsBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -55,15 +57,18 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel, NavArgs>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: SettingsViewModel, alertHandler: AlertHandler) {
         super.onViewCreated(view, savedInstanceState, viewModel, alertHandler)
+
         binding.etMaxDownloads.bindTo(viewModel.maxDownloadsField) {
             it.toIntNotNull()
         }
         viewModel.maxDownloadsField.observeFrom(binding.etMaxDownloads, viewLifecycleOwner) {
             it.toString()
         }
-        viewModel.maxDownloadsField.hintLive.observe {
-            binding.tilMaxDownloads.hint = it?.get(requireContext())
-        }
+        viewModel.maxDownloadsField.bindHintError(viewLifecycleOwner, binding.tilMaxDownloads)
+        viewModel.ignoreServerErrorField.bindValue(viewLifecycleOwner, binding.cbIgnoreServerError)
+        viewModel.deleteUnfinishedField.bindValue(viewLifecycleOwner, binding.cbDeleteUnfinished)
+        viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.cbDisableNotifications)
+
         viewModel.hasChanges.observe {
             refreshSaveMenuItem(it)
         }

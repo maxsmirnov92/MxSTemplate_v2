@@ -15,6 +15,7 @@ import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.network.REG_EX_FILE_NAME
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
@@ -29,8 +30,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     val urlField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.toUrlOrNull() == null }
-        .setRequired(R.string.download_file_url_empty_error)
-        .hint(R.string.download_file_url_hint)
+        .setRequired(R.string.download_url_empty_error)
+        .hint(R.string.download_url_hint)
         .persist(state, KEY_FIELD_URL)
         .build()
 
@@ -39,13 +40,14 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         .persist(state, KEY_FIELD_METHOD)
         .build()
 
-    val requestBodyField: Field<RequestBodyContainer> = Field.Builder(RequestBodyContainer())
+    val bodyField: Field<UriBodyContainer> = Field.Builder(UriBodyContainer())
         .emptyIf { it.isEmpty }
         .persist(state, KEY_FIELD_BODY)
         .build()
 
     val fileNameField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
+        .validators(Field.Validator(R.string.download_file_name_error) {Regex(REG_EX_FILE_NAME).matches(it)})
         .hint(R.string.download_file_name_hint)
         .persist(state, KEY_FIELD_FILE_NAME)
         .build()
@@ -60,7 +62,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         .hint(R.string.download_sub_dir_name_hint)
         .persist(state, KEY_FIELD_SUB_DIR_NAME)
         .build()
-
 
     /**
      * Готовые итемы для отображения в адаптере
@@ -79,7 +80,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 fileNameField,
                 fileNameFlagsField,
                 subDirNameField,
-                requestBodyField
+                bodyField
             )
             headerFields.forEach {
                 fields.add(it.header.first.field)
@@ -93,6 +94,12 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         urlField.valueLive.observe {
             urlField.clearError()
         }
+        bodyField.valueLive.observe {
+            bodyField.clearError()
+        }
+        fileNameField.valueLive.observe {
+            fileNameField.clearError()
+        }
         fileNameField.isEmptyLive.observe {
             val flags = if (it) {
                 FileNameFlags(shouldFix = true, isEnabled = false)
@@ -102,29 +109,31 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             fileNameFlagsField.value = flags
         }
         methodField.valueLive.observe {
-            var body = requestBodyField.value ?: RequestBodyContainer()
+            var body = bodyField.value ?: UriBodyContainer()
             body = if (it == Method.POST) {
-                requestBodyField.setRequired(R.string.download_request_body_empty_error)
+                bodyField.setRequired(R.string.download_request_body_empty_error)
                 body.copy(isEnabled = true)
             } else {
-                requestBodyField.setNonRequired()
+                bodyField.setNonRequired()
                 body.copy(isEnabled = false)
             }
-            requestBodyField.value = body
+            bodyField.value = body
         }
-        requestBodyField.valueLive.observe {
-            requestBodyField.clearError()
+        headerItems.observe {
+            if (it.isEmpty()) {
+                headerIdCounter = 0
+            }
         }
     }
 
     fun onRequestBodyUriSelected(uri: Uri) {
-        val body = requestBodyField.value
+        val body = bodyField.value
         if (body == null || !body.isEnabled) return
-        requestBodyField.value = body.copy(body = uri)
+        bodyField.value = body.copy(body = uri)
     }
 
     fun onClearRequestBodyUri() {
-        requestBodyField.value = requestBodyField.value?.copy(body = null)
+        bodyField.value = bodyField.value?.copy(body = null)
     }
 
     fun onFileNameFixChanged(toggle: Boolean) {
@@ -267,10 +276,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             val value = it.header.second.field.value ?: return@forEach
             headers[key] = value
         }
-
         val ignoreFileName = fileNameFlagsField.value?.shouldFix != true
-
-        val bodyUri = requestBodyField.value?.body
+        val bodyUri = bodyField.value?.body
 
         val params = if (method == Method.POST && bodyUri != null) {
             DownloadService.Params.defaultPOSTServiceParamsFor(
@@ -278,7 +285,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 fileName,
                 DownloadService.RequestParams.Body(DownloadService.RequestParams.Body.Uri(bodyUri.toString())),
                 ignoreFileName,
-                headers,
+                headers = headers,
                 subDir = subDirName,
                 notificationParams = notificationParams,
             )
@@ -287,7 +294,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 url,
                 fileName,
                 ignoreFileName,
-                headers,
+                headers = headers,
                 subDir = subDirName,
                 notificationParams = notificationParams,
             )
@@ -350,7 +357,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         val isEnabled: Boolean = false,
     ) : Serializable
 
-    data class RequestBodyContainer(
+    data class UriBodyContainer(
         val body: Uri? = null,
         val isEnabled: Boolean = false,
     ) : Serializable {
@@ -373,10 +380,10 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
         private const val KEY_FIELD_URL = "url"
         private const val KEY_FIELD_METHOD = "method"
+        private const val KEY_FIELD_BODY = "body"
         private const val KEY_FIELD_FILE_NAME = "file_name"
         private const val KEY_FIELD_FILE_FLAGS = "file_flags"
         private const val KEY_FIELD_SUB_DIR_NAME = "sub_dir_name"
-        private const val KEY_FIELD_BODY = "body"
 
         // TODO перенести
         fun String.toUrlOrNull() = try {

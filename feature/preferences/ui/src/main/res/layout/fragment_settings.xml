@@ -39,7 +39,7 @@
             android:id="@+id/tilMaxDownloads"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            tools:hint="@string/settings_hint_field_max_downloads">
+            tools:hint="@string/settings_field_hint_max_downloads">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etMaxDownloads"
@@ -48,9 +48,33 @@
                 android:inputType="text|numberDecimal"
                 android:lines="1"
                 android:maxLines="1"
-                tools:hint="@string/settings_hint_field_max_downloads" />
+                tools:hint="@string/settings_field_hint_max_downloads" />
 
         </com.google.android.material.textfield.TextInputLayout>
+
+        <CheckBox
+            android:id="@+id/cbIgnoreServerError"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/settings_field_name_ignore_server_error"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+        <CheckBox
+            android:id="@+id/cbDeleteUnfinished"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/settings_field_name_delete_unfinished"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+        <CheckBox
+            android:id="@+id/cbDisableNotifications"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/settings_field_name_disable_notifications"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small" />
 
     </LinearLayout>
 

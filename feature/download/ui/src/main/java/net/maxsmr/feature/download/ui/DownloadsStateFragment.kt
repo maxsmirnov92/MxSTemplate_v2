@@ -100,6 +100,11 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        infoAdapter.unregisterItemsEventsListener(this)
+    }
+
     override fun handleAlerts() {
         super.handleAlerts()
         bindAlertDialog(DIALOG_TAG_CLEAR_QUEUE) {

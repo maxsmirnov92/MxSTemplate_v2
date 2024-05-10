@@ -11,14 +11,11 @@ import java.io.Serializable
 
 @kotlinx.serialization.Serializable
 data class AppSettings(
-    val maxDownloads: Int = MAX_DOWNLOADS_DEFAULT,
-): Serializable {
-
-    companion object {
-
-        const val MAX_DOWNLOADS_DEFAULT = 3
-    }
-}
+    val maxDownloads: Int = 3,
+    val ignoreServerError: Boolean = false,
+    val deleteUnfinished: Boolean = true,
+    val disableNotifications: Boolean = false,
+): Serializable
 
 class UserPreferencesSerializer(
     private val json: Json,

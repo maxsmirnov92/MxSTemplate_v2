@@ -19,6 +19,7 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
+import net.maxsmr.core.ui.bindHintError
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -74,12 +75,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
     ) {
         binding.etUrl.bindToTextNotNull(viewModel.urlField)
         viewModel.urlField.observeFromText(binding.etUrl, viewLifecycleOwner)
-        viewModel.urlField.hintLive.observe {
-            binding.tilUrl.hint = it?.get(requireContext())
-        }
-        viewModel.urlField.errorLive.observe {
-            binding.tilUrl.error = it?.get(requireContext())
-        }
+        viewModel.urlField.bindHintError(viewLifecycleOwner, binding.tilUrl)
 
         val adapter = ArrayAdapter.createFromResource(
             requireContext(),
@@ -99,7 +95,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
             binding.spinnerMethod.setSelection(it.ordinal)
         }
 
-        viewModel.requestBodyField.valueLive.observe {
+        viewModel.bodyField.valueLive.observe {
             binding.containerSelectRequestBody.isEnabled = it.isEnabled
             binding.ibSelectRequestBody.isEnabled = it.isEnabled
             binding.ibClearRequestBody.isVisible = !it.isEmpty
@@ -111,15 +107,13 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
                         R.string.download_request_body_non_required_text
                     })
         }
-        viewModel.requestBodyField.errorLive.observe {
+        viewModel.bodyField.errorLive.observe {
             binding.tvRequestBodyError.setTextOrGone(it?.get(requireContext()))
         }
 
         binding.etFileName.bindToTextNotNull(viewModel.fileNameField)
         viewModel.fileNameField.observeFromText(binding.etFileName, viewLifecycleOwner)
-        viewModel.fileNameField.hintLive.observe {
-            binding.tilFileName.hint = it?.get(requireContext())
-        }
+        viewModel.fileNameField.bindHintError(viewLifecycleOwner, binding.tilFileName)
 
         binding.cbFileNameFix.setOnCheckedChangeListener { _, isChecked ->
             viewModel.onFileNameFixChanged(isChecked)
