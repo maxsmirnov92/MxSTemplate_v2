@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.annotation.CallSuper
 import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
+import androidx.annotation.MenuRes
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -18,6 +19,9 @@ abstract class BaseBottomNavigationActivity: BaseNavigationActivity() {
      * Фрагменты с этими Id должны быть в графе
      */
     protected abstract val topLevelDestinationIds: Set<Int>
+
+    @get:MenuRes
+    protected abstract val menuResId: Int
 
     @LayoutRes
     override val contentViewResId: Int = R.layout.activity_navigation_bottom
@@ -41,6 +45,7 @@ abstract class BaseBottomNavigationActivity: BaseNavigationActivity() {
 
     @CallSuper
     protected open fun setupBottomNavigationView() {
+        bottomNavigationView.inflateMenu(menuResId)
         bottomNavigationView.setupWithNavController(navController)
     }
 }

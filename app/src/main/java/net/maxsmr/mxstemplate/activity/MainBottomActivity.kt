@@ -11,8 +11,5 @@ class MainBottomActivity : BaseBottomNavigationActivity() {
 
     override val topLevelDestinationIds = setOf(/*R.id.navigationMain,*/ R.id.navigationDownloads, R.id.navigationSettings)
 
-    override fun setupBottomNavigationView() {
-        bottomNavigationView.inflateMenu(R.menu.menu_main)
-        super.setupBottomNavigationView()
-    }
+    override val menuResId: Int = R.menu.menu_main
 }

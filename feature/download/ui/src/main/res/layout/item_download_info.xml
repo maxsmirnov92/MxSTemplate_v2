@@ -17,6 +17,7 @@
 
         <TextView
             android:id="@+id/tvResourceName"
+            style="@style/NonSelectable"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_toStartOf="@id/containerActionButtons"
@@ -73,6 +74,7 @@
 
     <TextView
         android:id="@+id/tvStatusInfo"
+        style="@style/NonSelectable"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"

@@ -15,6 +15,8 @@ import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.domain.entities.feature.download.HashInfo
+import net.maxsmr.core.domain.entities.feature.download.REG_EX_MD5_ALGORITHM
 import net.maxsmr.core.network.REG_EX_FILE_NAME
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -63,6 +65,13 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         .persist(state, KEY_FIELD_SUB_DIR_NAME)
         .build()
 
+    val targetHashField: Field<String> = Field.Builder(EMPTY_STRING)
+        .emptyIf { it.isEmpty() }
+        .validators(Field.Validator(R.string.download_target_hash_error) {Regex(REG_EX_MD5_ALGORITHM).matches(it)})
+        .hint(R.string.download_target_hash_hint)
+        .persist(state, KEY_FIELD_TARGET_HASH)
+        .build()
+
     /**
      * Готовые итемы для отображения в адаптере
      */
@@ -77,10 +86,11 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             val fields = mutableListOf(
                 urlField,
                 methodField,
+                bodyField,
                 fileNameField,
                 fileNameFlagsField,
                 subDirNameField,
-                bodyField
+                targetHashField
             )
             headerFields.forEach {
                 fields.add(it.header.first.field)
@@ -99,6 +109,9 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
         fileNameField.valueLive.observe {
             fileNameField.clearError()
+        }
+        targetHashField.valueLive.observe {
+            targetHashField.clearError()
         }
         fileNameField.isEmptyLive.observe {
             val flags = if (it) {
@@ -251,7 +264,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
     }
 
-    fun onDownloadStartClick() {
+    fun onStartDownloadClick() {
         val method = methodField.value ?: return
 
         val fields = allFields
@@ -279,6 +292,10 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         val ignoreFileName = fileNameFlagsField.value?.shouldFix != true
         val bodyUri = bodyField.value?.body
 
+        val targetHashInfo = targetHashField.value?.takeIf { it.isNotEmpty() }?.let {
+            HashInfo("MD5", it)
+        }
+
         val params = if (method == Method.POST && bodyUri != null) {
             DownloadService.Params.defaultPOSTServiceParamsFor(
                 url,
@@ -287,6 +304,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 ignoreFileName,
                 headers = headers,
                 subDir = subDirName,
+                targetHashInfo = targetHashInfo,
                 notificationParams = notificationParams,
             )
         } else {
@@ -296,6 +314,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 ignoreFileName,
                 headers = headers,
                 subDir = subDirName,
+                targetHashInfo = targetHashInfo,
                 notificationParams = notificationParams,
             )
         }
@@ -384,6 +403,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         private const val KEY_FIELD_FILE_NAME = "file_name"
         private const val KEY_FIELD_FILE_FLAGS = "file_flags"
         private const val KEY_FIELD_SUB_DIR_NAME = "sub_dir_name"
+        private const val KEY_FIELD_TARGET_HASH = "target_hash"
 
         // TODO перенести
         fun String.toUrlOrNull() = try {

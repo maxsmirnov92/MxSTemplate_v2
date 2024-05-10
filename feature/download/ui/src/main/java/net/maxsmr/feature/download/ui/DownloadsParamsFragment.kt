@@ -11,6 +11,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.bindToTextNotNull
+import net.maxsmr.commonutils.gui.clearFocus
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.alert.AlertHandler
@@ -122,15 +123,14 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
             binding.cbFileNameFix.isEnabled = it.isEnabled
             binding.cbFileNameFix.isChecked = it.shouldFix
         }
-        viewModel.fileNameField.hintLive.observe {
-            binding.tilFileName.hint = it?.get(requireContext())
-        }
 
         binding.etSubDirName.bindToTextNotNull(viewModel.subDirNameField)
         viewModel.subDirNameField.observeFromText(binding.etSubDirName, viewLifecycleOwner)
-        viewModel.subDirNameField.hintLive.observe {
-            binding.tilSubDirName.hint = it?.get(requireContext())
-        }
+        viewModel.subDirNameField.bindHintError(viewLifecycleOwner, binding.tilSubDirName)
+
+        binding.etTargetHash.bindToTextNotNull(viewModel.targetHashField)
+        viewModel.targetHashField.observeFromText(binding.etTargetHash, viewLifecycleOwner)
+        viewModel.targetHashField.bindHintError(viewLifecycleOwner, binding.tilTargetHash)
 
         binding.rvHeaders.adapter = headersAdapter
         binding.rvHeaders.addItemDecoration(
@@ -138,6 +138,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
             .setDivider(Divider.Space(10), DividerItemDecoration.Mode.ALL_EXCEPT_LAST)
             .build())
         viewModel.headerItems.observe {
+            requireActivity().clearFocus()
             headersAdapter.items = it
         }
 
@@ -157,7 +158,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
                 BaseActivity.REQUEST_CODE_DOWNLOAD_PERMISSION,
                 PermissionsHelper.addPostNotificationsByApiVersion(listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
             ) {
-                viewModel.onDownloadStartClick()
+                viewModel.onStartDownloadClick()
             }
         }
     }

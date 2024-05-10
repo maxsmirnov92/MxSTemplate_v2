@@ -29,11 +29,10 @@
 
         <activity
             android:name=".activity.MainBottomActivity"
-            android:windowSoftInputMode="stateHidden|adjustPan"
+            android:windowSoftInputMode="stateHidden|adjustResize"
             android:exported="true"
             android:theme="@style/AppTheme.NoActionBar"
             android:label="@string/app_name">
-            <!--            adjustResize-->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

@@ -287,11 +287,9 @@ class DownloadService : Service() {
                 if (!params.requestParams.storeErrorBody
                         && (!isSuccessful || !response.hasContentDisposition(ContentDispositionType.ATTACHMENT))
                 ) {
-                    val exception = response.toHttpProtocolException(
+                    throw response.toHttpProtocolException(
                         if (isSuccessful) "$HEADER_CONTENT_DISPOSITION header is empty" else null
                     )
-                    onException(exception)
-                    return@launch
                 }
 
                 var wasParamsChanged = false

@@ -32,9 +32,11 @@ fun headersDelegateAdapter(listener: HeaderListener) =
             bind {
 
                 addNameTextList(etName) { s, _, _, _ ->
+                    lastInputEdit = etName
                     listener.onHeaderNameChanged(item.id, s.toString())
                 }
                 addValueTextList(etValue) { s, _, _, _ ->
+                    lastInputEdit = etValue
                     listener.onHeaderValueChanged(item.id, s.toString())
                 }
 
@@ -46,6 +48,11 @@ fun headersDelegateAdapter(listener: HeaderListener) =
                         "$it ${item.id+1}"
                     }
                     setInputError(info.error?.get(context))
+
+                    lastInputEdit?.let {
+                        it.requestFocus()
+                        lastInputEdit = null
+                    }
                 }
 
                 tilName.apply(item.header.first)
@@ -80,6 +87,8 @@ interface HeaderListener {
 }
 
 class HeadersViewHolder(view: View) : AdapterDelegateViewHolder<HeaderInfoAdapterData>(view) {
+
+    internal var lastInputEdit: EditText? = null
 
     private var nameTextListener: TextChangeListener? = null
     private var valueTextListener: TextChangeListener? = null

@@ -4,7 +4,7 @@
     <string name="settings_field_hint_max_downloads">Максимальное число одновременных загрузок</string>
     <string name="settings_field_name_ignore_server_error">Игнорировать ошибки сервера</string>
     <string name="settings_field_name_delete_unfinished">Удалить недокачанный файл</string>
-    <string name="settings_field_name_disable_notifications">Отключить нотификации сервиса загрузок</string>
+    <string name="settings_field_name_disable_notifications">Отключить уведомления сервиса загрузок</string>
     <string name="settings_dialog_confirm_message">Есть изменения</string>
     <string name="settings_dialog_confirm_yes_button">Сохранить</string>
     <string name="settings_dialog_confirm_neutral_button">Не сохранять</string>

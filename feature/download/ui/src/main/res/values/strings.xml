@@ -18,6 +18,8 @@
     <string name="download_file_name_error">Некорректное имя файла</string>
     <string name="download_file_name_fix_checkbox_text">Поменять из заголовка ответа при наличии</string>
     <string name="download_sub_dir_name_hint">Имя подкаталога</string>
+    <string name="download_target_hash_hint">Целевой хэш MD5</string>
+    <string name="download_target_hash_error">Несоответствие формату алгоритма MD5</string>
     <string name="download_header_name_subtitle">Заголовки</string>
     <string name="download_key_name_hint">Название</string>
     <string name="download_key_name_empty_error">Название заголовка не может быть пустым</string>
