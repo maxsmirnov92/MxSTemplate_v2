@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -29,18 +30,19 @@ class CacheDataStoreRepository @Inject constructor(
 
     suspend fun isPostNotificationAsked() = postNotificationAsked.firstOrNull() ?: false
 
-    suspend fun getLastLocation(): Address.Location? {
-        return dataStore.data.mapNotNull { prefs ->
-            prefs[FIELD_LAST_LOCATION]?.let {
-                json.decodeFromStringOrNull(it) as Address.Location?
-            }
-        }.firstOrNull()
-    }
-
     suspend fun setPostNotificationAsked() {
         dataStore.edit { prefs ->
             prefs[FIELD_POST_NOTIFICATION_ASKED] = true
         }
+    }
+
+    // mapNotNull == висяк
+    suspend fun getLastLocation(): Address.Location? {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_LAST_LOCATION]?.let {
+                json.decodeFromStringOrNull(it) as Address.Location?
+            }
+        }.firstOrNull()
     }
 
     suspend fun setLastLocation(location: Address.Location?) {
@@ -53,9 +55,22 @@ class CacheDataStoreRepository @Inject constructor(
 
     }
 
+    suspend fun getLastQueueId(): Int {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_LAST_QUEUE_ID]
+        }.firstOrNull() ?: 0
+    }
+
+    suspend fun setLastQueueId(id: Int) {
+        dataStore.edit { prefs ->
+            prefs[FIELD_LAST_QUEUE_ID] = id
+        }
+    }
+
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
         private val FIELD_LAST_LOCATION = stringPreferencesKey("lastLocation")
+        private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
     }
 }

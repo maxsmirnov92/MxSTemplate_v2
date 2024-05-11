@@ -65,8 +65,6 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel, NavArgs>() {
             it.toString()
         }
         viewModel.maxDownloadsField.bindHintError(viewLifecycleOwner, binding.tilMaxDownloads)
-        viewModel.ignoreServerErrorField.bindValue(viewLifecycleOwner, binding.cbIgnoreServerError)
-        viewModel.deleteUnfinishedField.bindValue(viewLifecycleOwner, binding.cbDeleteUnfinished)
         viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.cbDisableNotifications)
 
         viewModel.hasChanges.observe {

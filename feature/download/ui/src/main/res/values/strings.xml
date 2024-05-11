@@ -20,6 +20,9 @@
     <string name="download_sub_dir_name_hint">Имя подкаталога</string>
     <string name="download_target_hash_hint">Целевой хэш MD5</string>
     <string name="download_target_hash_error">Несоответствие формату алгоритма MD5</string>
+    <string name="download_field_name_ignore_server_error">Игнорировать ошибки сервера</string>
+    <string name="download_field_name_ignore_attachment_error">Игнорировать отсутствие вложения с заголовком \"Content-Disposition\"</string>
+    <string name="download_field_name_delete_unfinished">Удалить недокачанный файл</string>
     <string name="download_header_name_subtitle">Заголовки</string>
     <string name="download_key_name_hint">Название</string>
     <string name="download_key_name_empty_error">Название заголовка не может быть пустым</string>
@@ -37,6 +40,6 @@
     <string name="download_status_time_text_format">прошло времени: %s</string>
     <string name="download_status_requesting">Выполнение запроса…</string>
     <string name="download_status_success">Успех</string>
-    <string name="download_status_failed_format">Ошибка: %s</string>
+    <string name="download_status_failed_format">Ошибка: \"%s\"</string>
     <string name="download_status_cancelled">Отменена</string>
 </resources>

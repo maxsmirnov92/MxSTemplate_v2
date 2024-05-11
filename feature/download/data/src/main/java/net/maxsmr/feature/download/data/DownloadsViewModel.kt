@@ -38,6 +38,7 @@ import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment.Companion.
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultPOSTServiceParamsFor
 import net.maxsmr.feature.download.data.manager.DownloadManager
+import net.maxsmr.feature.download.data.manager.DownloadManager.FailAddReason
 import net.maxsmr.feature.download.data.model.IntentSenderParams
 import java.net.URL
 import javax.inject.Inject
@@ -79,15 +80,46 @@ class DownloadsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            downloadManager.addedToQueueEvent.collect {
-                toastCommands.value = VmEvent(
-                    ToastAction(
-                        TextMessage(
-                            R.string.download_starting_toast_message_format,
-                            it.targetResourceName
+            downloadManager.successAddedToQueueEvent.collect {
+                it.targetResourceName.takeIf { it.isNotEmpty() }?.let { name ->
+                    toastCommands.value = VmEvent(
+                        ToastAction(
+                            TextMessage(
+                                R.string.download_success_add_to_queue_toast_message_format,
+                                name
+                            )
                         )
                     )
-                )
+                }
+            }
+        }
+        viewModelScope.launch {
+            downloadManager.failedAddedToQueueEvent.collect {
+                val name = it.first.targetResourceName
+                val reason = TextMessage.ResArg(when(it.second) {
+                    FailAddReason.NOT_VALID -> R.string.download_fail_add_to_queue_reason_not_valid
+                    FailAddReason.ALREADY_ADDED -> R.string.download_fail_add_to_queue_reason_already_added
+                    FailAddReason.ALREADY_LOADING -> R.string.download_fail_add_to_queue_reason_already_loading
+                })
+                val message: TextMessage? = if (name.isNotEmpty()) {
+                    TextMessage(
+                        R.string.download_fail_add_to_queue_name_toast_message_format,
+                        name,
+                        reason
+                    )
+                } else {
+                    val url = it.first.url
+                    if (url.isNotEmpty()) {
+                        TextMessage(
+                            R.string.download_fail_add_to_queue_url_toast_message_format,
+                            name,
+                            reason
+                        )
+                    } else {
+                        null
+                    }
+                }
+                toastCommands.value = VmEvent(ToastAction(message))
             }
         }
     }
@@ -185,8 +217,8 @@ class DownloadsViewModel @Inject constructor(
         )
     }
 
+    // FIXME исправить логику на notifier
     private fun observeDownload(params: DownloadService.Params): LiveData<LoadState<DownloadInfoWithUri>> {
-        // TODO проверить extension на всех этапах загрузки
         // на этом моменте нет гарантий, что resourceMimeType от клиентского кода совпадёт с тем,
         // что будет в сервисе после получения респонса ->
         // возможен поиск только по имени без расширения

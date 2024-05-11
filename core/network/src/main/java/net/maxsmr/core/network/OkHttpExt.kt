@@ -21,8 +21,8 @@ import kotlin.coroutines.resumeWithException
 
 private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("OkHttpExt")
 
-const val HEADER_CONTENT_TYPE = "Content-Type"
-const val HEADER_CONTENT_DISPOSITION = "Content-Disposition"
+private const val HEADER_CONTENT_TYPE = "Content-Type"
+private const val HEADER_CONTENT_DISPOSITION = "Content-Disposition"
 private const val ATTACHMENT_FILENAME = "filename"
 
 // TODO move to FileUtils
@@ -317,6 +317,11 @@ private fun InputStream.copyToOutputStreamOrThrow(
         } else {
             null
         })
+}
+
+enum class Method(val value: String) {
+
+    POST("POST"), GET("GET")
 }
 
 enum class ContentDispositionType(val value: String) {

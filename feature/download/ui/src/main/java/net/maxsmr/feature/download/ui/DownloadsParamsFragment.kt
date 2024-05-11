@@ -21,6 +21,8 @@ import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.ui.bindHintError
+import net.maxsmr.core.ui.bindValue
+import net.maxsmr.core.ui.bindFlags
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -115,14 +117,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         binding.etFileName.bindToTextNotNull(viewModel.fileNameField)
         viewModel.fileNameField.observeFromText(binding.etFileName, viewLifecycleOwner)
         viewModel.fileNameField.bindHintError(viewLifecycleOwner, binding.tilFileName)
-
-        binding.cbFileNameFix.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.onFileNameFixChanged(isChecked)
-        }
-        viewModel.fileNameFlagsField.valueLive.observe {
-            binding.cbFileNameFix.isEnabled = it.isEnabled
-            binding.cbFileNameFix.isChecked = it.shouldFix
-        }
+        viewModel.fileNameFlagsField.bindFlags(viewLifecycleOwner, binding.cbFileNameFix)
 
         binding.etSubDirName.bindToTextNotNull(viewModel.subDirNameField)
         viewModel.subDirNameField.observeFromText(binding.etSubDirName, viewLifecycleOwner)
@@ -131,6 +126,10 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         binding.etTargetHash.bindToTextNotNull(viewModel.targetHashField)
         viewModel.targetHashField.observeFromText(binding.etTargetHash, viewLifecycleOwner)
         viewModel.targetHashField.bindHintError(viewLifecycleOwner, binding.tilTargetHash)
+
+        viewModel.ignoreServerErrorField.bindValue(viewLifecycleOwner, binding.cbIgnoreServerError)
+        viewModel.ignoreAttachmentFlagsField.bindFlags(viewLifecycleOwner, binding.cbIgnoreAttachment)
+        viewModel.deleteUnfinishedField.bindValue(viewLifecycleOwner, binding.cbDeleteUnfinished)
 
         binding.rvHeaders.adapter = headersAdapter
         binding.rvHeaders.addItemDecoration(
@@ -154,6 +153,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         }
 
         binding.btStart.setOnClickListener {
+            requireActivity().clearFocus()
             doOnPermissionsResult(
                 BaseActivity.REQUEST_CODE_DOWNLOAD_PERMISSION,
                 PermissionsHelper.addPostNotificationsByApiVersion(listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))

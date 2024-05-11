@@ -15,15 +15,16 @@ import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
+import net.maxsmr.core.domain.entities.feature.download.MD5_ALGORITHM
 import net.maxsmr.core.domain.entities.feature.download.REG_EX_MD5_ALGORITHM
 import net.maxsmr.core.network.REG_EX_FILE_NAME
+import net.maxsmr.core.ui.BooleanFieldFlags
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
 import java.io.Serializable
-import java.net.MalformedURLException
-import java.net.URL
 
 class DownloadsParamsViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
@@ -54,7 +55,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         .persist(state, KEY_FIELD_FILE_NAME)
         .build()
 
-    val fileNameFlagsField: Field<FileNameFlags> = Field.Builder(FileNameFlags())
+    val fileNameFlagsField: Field<BooleanFieldFlags> = Field.Builder(BooleanFieldFlags())
         .emptyIf { false }
         .persist(state, KEY_FIELD_FILE_FLAGS)
         .build()
@@ -70,6 +71,21 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         .validators(Field.Validator(R.string.download_target_hash_error) {Regex(REG_EX_MD5_ALGORITHM).matches(it)})
         .hint(R.string.download_target_hash_hint)
         .persist(state, KEY_FIELD_TARGET_HASH)
+        .build()
+
+    val ignoreServerErrorField: Field<Boolean> = Field.Builder(false)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_IGNORE_SERVER_ERROR)
+        .build()
+
+    val ignoreAttachmentFlagsField: Field<BooleanFieldFlags> = Field.Builder(BooleanFieldFlags())
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_IGNORE_ATTACHMENT)
+        .build()
+
+    val deleteUnfinishedField: Field<Boolean> = Field.Builder(true)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_DELETE_UNFINISHED)
         .build()
 
     /**
@@ -90,7 +106,10 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 fileNameField,
                 fileNameFlagsField,
                 subDirNameField,
-                targetHashField
+                targetHashField,
+                ignoreServerErrorField,
+                ignoreAttachmentFlagsField,
+                deleteUnfinishedField
             )
             headerFields.forEach {
                 fields.add(it.header.first.field)
@@ -104,23 +123,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         urlField.valueLive.observe {
             urlField.clearError()
         }
-        bodyField.valueLive.observe {
-            bodyField.clearError()
-        }
-        fileNameField.valueLive.observe {
-            fileNameField.clearError()
-        }
-        targetHashField.valueLive.observe {
-            targetHashField.clearError()
-        }
-        fileNameField.isEmptyLive.observe {
-            val flags = if (it) {
-                FileNameFlags(shouldFix = true, isEnabled = false)
-            } else {
-                fileNameFlagsField.value?.copy(isEnabled = true) ?: FileNameFlags(isEnabled = true)
-            }
-            fileNameFlagsField.value = flags
-        }
         methodField.valueLive.observe {
             var body = bodyField.value ?: UriBodyContainer()
             body = if (it == Method.POST) {
@@ -131,6 +133,30 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 body.copy(isEnabled = false)
             }
             bodyField.value = body
+        }
+        bodyField.valueLive.observe {
+            bodyField.clearError()
+        }
+        fileNameField.valueLive.observe {
+            fileNameField.clearError()
+        }
+        fileNameField.isEmptyLive.observe {
+            fileNameFlagsField.value = if (it) {
+                BooleanFieldFlags(state = true, isEnabled = false)
+            } else {
+                fileNameFlagsField.value?.copy(isEnabled = true) ?: BooleanFieldFlags(isEnabled = true)
+            }
+        }
+        targetHashField.valueLive.observe {
+            targetHashField.clearError()
+        }
+
+        ignoreServerErrorField.valueLive.observe {
+            ignoreAttachmentFlagsField.value = if (it) {
+                BooleanFieldFlags(state = true, isEnabled = false)
+            } else {
+                ignoreAttachmentFlagsField.value?.copy(isEnabled = true) ?: BooleanFieldFlags(isEnabled = true)
+            }
         }
         headerItems.observe {
             if (it.isEmpty()) {
@@ -147,13 +173,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     fun onClearRequestBodyUri() {
         bodyField.value = bodyField.value?.copy(body = null)
-    }
-
-    fun onFileNameFixChanged(toggle: Boolean) {
-        val flags = fileNameFlagsField.value ?: FileNameFlags()
-        if (flags.isEnabled) {
-            fileNameFlagsField.value = flags.copy(shouldFix = toggle)
-        }
     }
 
     fun onAddHeader() {
@@ -289,32 +308,42 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             val value = it.header.second.field.value ?: return@forEach
             headers[key] = value
         }
-        val ignoreFileName = fileNameFlagsField.value?.shouldFix != true
+        val ignoreFileName = fileNameFlagsField.value?.state != true
         val bodyUri = bodyField.value?.body
 
         val targetHashInfo = targetHashField.value?.takeIf { it.isNotEmpty() }?.let {
-            HashInfo("MD5", it)
+            HashInfo(MD5_ALGORITHM, it)
         }
+
+        val ignoreServerError = ignoreServerErrorField.value ?: false
+        val ignoreAttachment = ignoreAttachmentFlagsField.value?.state ?: false
+        val deleteUnfinished = deleteUnfinishedField.value ?: false
 
         val params = if (method == Method.POST && bodyUri != null) {
             DownloadService.Params.defaultPOSTServiceParamsFor(
                 url,
                 fileName,
                 DownloadService.RequestParams.Body(DownloadService.RequestParams.Body.Uri(bodyUri.toString())),
-                ignoreFileName,
+                ignoreAttachment = ignoreAttachment,
+                ignoreFileName = ignoreFileName,
+                storeErrorBody = ignoreServerError,
                 headers = headers,
                 subDir = subDirName,
                 targetHashInfo = targetHashInfo,
+                deleteUnfinished = deleteUnfinished,
                 notificationParams = notificationParams,
             )
         } else {
             DownloadService.Params.defaultGETServiceParamsFor(
                 url,
                 fileName,
-                ignoreFileName,
+                ignoreAttachment = ignoreAttachment,
+                ignoreFileName = ignoreFileName,
+                storeErrorBody = ignoreServerError,
                 headers = headers,
                 subDir = subDirName,
                 targetHashInfo = targetHashInfo,
+                deleteUnfinished = deleteUnfinished,
                 notificationParams = notificationParams,
             )
         }
@@ -371,11 +400,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         )
     }
 
-    data class FileNameFlags(
-        val shouldFix: Boolean = false,
-        val isEnabled: Boolean = false,
-    ) : Serializable
-
     data class UriBodyContainer(
         val body: Uri? = null,
         val isEnabled: Boolean = false,
@@ -404,12 +428,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         private const val KEY_FIELD_FILE_FLAGS = "file_flags"
         private const val KEY_FIELD_SUB_DIR_NAME = "sub_dir_name"
         private const val KEY_FIELD_TARGET_HASH = "target_hash"
-
-        // TODO перенести
-        fun String.toUrlOrNull() = try {
-            URL(this)
-        } catch (e: MalformedURLException) {
-            null
-        }
+        private const val KEY_FIELD_IGNORE_SERVER_ERROR = "ignore_server_error"
+        private const val KEY_FIELD_IGNORE_ATTACHMENT = "ignore_attachment"
+        private const val KEY_FIELD_DELETE_UNFINISHED = "delete_unfinished"
     }
 }

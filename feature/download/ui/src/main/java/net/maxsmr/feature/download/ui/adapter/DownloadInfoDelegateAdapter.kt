@@ -196,6 +196,14 @@ data class DownloadInfoAdapterData(
 
     val state = data.state
 
+    override fun areContentsSame(other: BaseAdapterData): Boolean {
+        return if (other !is DownloadInfoAdapterData) {
+            false
+        } else {
+            this.data == other.data
+        }
+    }
+
     override fun isSame(other: BaseAdapterData): Boolean = id == (other as? DownloadInfoAdapterData)?.id
 }
 

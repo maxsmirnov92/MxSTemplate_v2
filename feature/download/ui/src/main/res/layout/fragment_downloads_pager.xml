@@ -30,18 +30,18 @@
             android:id="@+id/tabLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:tabBackground="@color/colorPrimary"
+            app:tabBackground="@android:color/transparent"
             app:tabGravity="center"
+            app:tabIndicatorColor="@color/colorPrimary"
             app:tabMode="auto"
-            app:tabSelectedTextColor="@color/white"
-            app:tabTextColor="@color/white_alpha_50">
+            app:tabSelectedTextColor="@color/colorPrimary"
+            app:tabTextColor="@color/textColorPrimary">
 
         </com.google.android.material.tabs.TabLayout>
 
         <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/viewPagerFragments"
             android:layout_width="match_parent"
-
             android:layout_height="0dp"
             android:layout_weight="1"
             android:overScrollMode="never" />

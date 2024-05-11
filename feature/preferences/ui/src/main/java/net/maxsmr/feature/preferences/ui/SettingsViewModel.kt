@@ -7,7 +7,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.live.field.Field
-import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.delegates.persistableLiveData
@@ -26,16 +25,6 @@ class SettingsViewModel @Inject constructor(
         .emptyIf { false }
         .hint(R.string.settings_field_hint_max_downloads)
         .persist(state, KEY_FIELD_MAX_DOWNLOADS)
-        .build()
-
-    val ignoreServerErrorField: Field<Boolean> = Field.Builder(false)
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_IGNORE_SERVER_ERROR)
-        .build()
-
-    val deleteUnfinishedField: Field<Boolean> = Field.Builder(false)
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_DELETE_UNFINISHED)
         .build()
 
     val disableNotificationsField: Field<Boolean> = Field.Builder(false)
@@ -66,12 +55,7 @@ class SettingsViewModel @Inject constructor(
         maxDownloadsField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(maxDownloads = it)
         }
-        ignoreServerErrorField.valueLive.observe {
-            appSettings.value = currentAppSettings.copy(ignoreServerError = it)
-        }
-        deleteUnfinishedField.valueLive.observe {
-            appSettings.value = currentAppSettings.copy(deleteUnfinished = it)
-        }
+
         disableNotificationsField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(disableNotifications = it)
         }
@@ -108,18 +92,15 @@ class SettingsViewModel @Inject constructor(
     private fun restoreFields(settings: AppSettings) {
         // используется для того, чтобы выставить initial'ы в филды
         maxDownloadsField.value = settings.maxDownloads
-        ignoreServerErrorField.value = settings.ignoreServerError
-        deleteUnfinishedField.value = settings.deleteUnfinished
         disableNotificationsField.value = settings.disableNotifications
     }
+
 
     companion object {
 
         const val DIALOG_TAG_CONFIRM = "confirm"
 
         const val KEY_FIELD_MAX_DOWNLOADS = "max_downloads"
-        const val KEY_FIELD_IGNORE_SERVER_ERROR = "ignore_server_error"
-        const val KEY_FIELD_DELETE_UNFINISHED = "delete_unfinished"
         const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
     }
 }

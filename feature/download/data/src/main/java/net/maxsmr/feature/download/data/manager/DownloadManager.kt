@@ -28,13 +28,17 @@ import net.maxsmr.commonutils.openInputStream
 import net.maxsmr.commonutils.openOutputStream
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.appendToSet
+import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
+import net.maxsmr.core.network.Method
+import net.maxsmr.core.network.REG_EX_FILE_NAME
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsRepo
 import net.maxsmr.feature.preferences.data.domain.AppSettings
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.File
 import java.io.Serializable
@@ -42,6 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
+import kotlin.math.max
 
 /**
  * Обёртка над вызовом [DownloadService], содержащая свою очередь
@@ -50,6 +55,7 @@ import kotlin.coroutines.resume
 class DownloadManager @Inject constructor(
     private val downloadsRepo: DownloadsRepo,
     private val settingsRepo: SettingsDataStoreRepository,
+    private val cacheRepo: CacheDataStoreRepository,
     @Dispatcher(AppDispatchers.Default)
     private val defaultDispatcher: CoroutineDispatcher,
     private val notifier: DownloadStateNotifier,
@@ -98,9 +104,14 @@ class DownloadManager @Inject constructor(
 
     val failedStartParamsEvent: SharedFlow<DownloadService.Params> = _failedStartParamsEvent.asSharedFlow()
 
-    private val _addedToQueueEvent = MutableSharedFlow<DownloadService.Params>()
+    private val _successAddedToQueueEvent = MutableSharedFlow<DownloadService.Params>()
 
-    val addedToQueueEvent: SharedFlow<DownloadService.Params> = _addedToQueueEvent.asSharedFlow()
+    val successAddedToQueueEvent: SharedFlow<DownloadService.Params> = _successAddedToQueueEvent.asSharedFlow()
+
+    private val _failedAddedToQueueEvent = MutableSharedFlow<Pair<DownloadService.Params, FailAddReason>>()
+
+    val failedAddedToQueueEvent: SharedFlow<Pair<DownloadService.Params, FailAddReason>> =
+        _failedAddedToQueueEvent.asSharedFlow()
 
     private var settings = AppSettings()
 
@@ -115,6 +126,8 @@ class DownloadManager @Inject constructor(
     init {
 
         suspend fun applyFinished(items: MutableSet<QueueItem>) {
+            logger.d("applyFinished")
+            val resultItems = _resultItems.value.toMutableList()
             val iterator = items.iterator()
             while (iterator.hasNext()) {
                 val item = iterator.next()
@@ -122,26 +135,30 @@ class DownloadManager @Inject constructor(
                 item.downloadId?.let {
                     val info = downloadsRepo.getById(it)
                     if (info != null && !info.isLoading) {
+                        // такой DownloadInfo числится в таблице, оставляем итем
                         shouldRemove = false
-                        when (info.status) {
+
+                        val params = item.params
+                        val state: DownloadStateNotifier.DownloadState? = when (info.status) {
                             is DownloadInfo.Status.Success -> {
-                                notifier.onDownloadSuccess(info, item.params, item.params)
+                                DownloadStateNotifier.DownloadState.Success(info, params, params)
                             }
 
                             is DownloadInfo.Status.Error -> {
                                 val reason = info.statusAsError?.reason
                                 if (reason is CancellationException) {
-                                    notifier.onDownloadCancelled(info, item.params, item.params)
+                                    DownloadStateNotifier.DownloadState.Cancelled(info, params, params)
                                 } else {
-                                    notifier.onDownloadFailed(info, item.params, item.params, reason)
+                                    DownloadStateNotifier.DownloadState.Failed(reason, info, params, params)
                                 }
                             }
 
                             else -> {
                                 // Loading'а быть не должно
+                                null
                             }
                         }
-
+                        resultItems.add(DownloadInfoResultData(params, info, state))
                     }
                 }
                 if (shouldRemove) {
@@ -150,6 +167,7 @@ class DownloadManager @Inject constructor(
                 }
             }
             downloadsFinishedQueue.value = items
+            _resultItems.value = resultItems
         }
 
         scope.launch {
@@ -161,11 +179,24 @@ class DownloadManager @Inject constructor(
             val finishedItems = downloadsFinishedStorage.restoreItems(false)
             // объединение выполняющихся незавершённых и ожидающих с прошлого раза
             val items = downloadingItems + pendingItems
-            idCounter.set(items.size)
-            logger.i("restored downloadingItems: $downloadingItems")
-            logger.i("restored pendingItems: $pendingItems")
-            logger.i("restored finishedItems: $finishedItems")
-            logger.i("restored pending/downloading count: ${items.size}, finished count: ${finishedItems.size}")
+            logger.i("Restored downloadingItems: $downloadingItems")
+            logger.i("Restored pendingItems: $pendingItems")
+            logger.i("Restored finishedItems: $finishedItems")
+            logger.i("Restored pending/downloading count: ${items.size}, finished count: ${finishedItems.size}")
+            val totalCount = items.size + finishedItems.size
+            val counter = if (totalCount == 0) {
+                cacheRepo.setLastQueueId(0)
+                0
+            } else {
+                val lastId = cacheRepo.getLastQueueId()
+                if (lastId < totalCount) {
+                    cacheRepo.setLastQueueId(totalCount)
+                    totalCount
+                } else {
+                    lastId
+                }
+            }
+            idCounter.set(counter)
             applyFinished(finishedItems.toMutableSet())
             downloadsPendingQueue.emit(items.sortedBy { it.id }.toSet())
         }
@@ -191,7 +222,7 @@ class DownloadManager @Inject constructor(
                 while (iterator.hasNext()) {
                     val item = iterator.next()
                     if (!item.downloadInfo.isLoading && !finishedQueue.any { it.downloadId == item.id }) {
-                        logger.d("item $item is finished and not in finishedQueue - removing from results")
+                        logger.d("$item is finished and not in finishedQueue - removing from results")
                         iterator.remove()
                     }
                 }
@@ -223,7 +254,7 @@ class DownloadManager @Inject constructor(
                 downloadsLaunchedQueue.emit(newSet)
 
                 startedItem?.let {
-                    logger.d("item $it started, adding to downloadsQueue, removed from downloadsLaunchedQueue")
+                    logger.d("$it started, adding to downloadsQueue, removed from downloadsLaunchedQueue")
                     downloadsQueue.appendToSet(it)
                     downloadsStorage.addItem(it)
                 }
@@ -257,14 +288,23 @@ class DownloadManager @Inject constructor(
 
                             // актуализируем парамсы для завершённого итема
                             val newFinishedItem = item.copy(params = state.params, downloadId = state.downloadInfo.id)
+                            var previousFinishedItem: QueueItem? = null
                             newFinishedSet.refreshWith(newFinishedItem) {
-                                it.downloadId == newFinishedItem.downloadId
+                                if (it.downloadId == newFinishedItem.downloadId) {
+                                    // если был стартован через retry, такого уже не будет
+                                    previousFinishedItem = it
+                                    true
+                                } else {
+                                    false
+                                }
                             }.apply {
                                 newFinishedSet.clear()
                                 newFinishedSet.addAll(this)
                             }
 
-                            downloadsFinishedStorage.removeItem(newFinishedItem.id)
+                            previousFinishedItem?.let {
+                                downloadsFinishedStorage.removeItem(it)
+                            }
                             downloadsFinishedStorage.addItem(newFinishedItem)
                             break
                         }
@@ -333,42 +373,66 @@ class DownloadManager @Inject constructor(
         fun getActualParams(): DownloadService.Params {
             val settings = settings
             return DownloadService.Params(
-                params.requestParams.copy(storeErrorBody = settings.ignoreServerError),
+                params.requestParams,
                 if (settings.disableNotifications) null else params.notificationParams,
                 params.resourceName,
                 params.storageType,
                 params.subDirPath,
                 params.targetHashInfo,
                 params.skipIfDownloaded,
-                settings.deleteUnfinished
+                params.deleteUnfinished
             )
         }
+
         val actualParams = getActualParams()
 
-        if (actualParams.requestParams.url.isEmpty()) return
-        if (downloadsLaunchedQueue.value.map { it.params }.contains(actualParams)) {
-            logger.w("not added to pending queue - already in launched queue")
-            return
+        var failReason: FailAddReason? = null
+        try {
+            if (!actualParams.validate()) {
+                failReason = FailAddReason.NOT_VALID
+                return
+            }
+
+            val targetResourceName = actualParams.targetResourceName
+            if (downloadsLaunchedQueue.value.map { it.params }.any { it.targetResourceName == targetResourceName }) {
+                logger.w("Not added to pending queue - \"$targetResourceName\" already in launched queue")
+                failReason = FailAddReason.ALREADY_ADDED
+                return
+            }
+            if (downloadsPendingQueue.value.map { it.params }.any { it.targetResourceName == targetResourceName }) {
+                logger.w("Not added to pending queue - \"$targetResourceName\" already in pending queue")
+                failReason = FailAddReason.ALREADY_ADDED
+                return
+            }
+            // на этапе loading extension не актуализировалось в таблице, можно искать с исходным расширением
+            // или если это retry - params должны быть актуальные, но не пройдёт по isLoading
+            val prevDownload =
+                downloadsRepo.getByNameAndExt(actualParams.resourceNameWithoutExt, actualParams.extension)
+            if (prevDownload?.isLoading == true) {
+                logger.w("Not added to pending queue - DownloadInfo with \"$targetResourceName\" already loading in service")
+                failReason = FailAddReason.ALREADY_LOADING
+                return
+            }
+            val id = idCounter.incrementAndGet().apply {
+                cacheRepo.setLastQueueId(this)
+            }
+            val item = QueueItem(id, actualParams)
+            downloadsPendingQueue.appendToSet(item)
+            downloadsPendingStorage.addItem(item)
+
+            _successAddedToQueueEvent.emit(actualParams)
+        } finally {
+            failReason?.let {
+                _failedAddedToQueueEvent.emit(Pair(actualParams, it))
+            }
         }
-        if (downloadsPendingQueue.value.map { it.params }.contains(actualParams)) {
-            logger.w("not added to pending queue - already in pending queue")
-            return
-        }
-        // на этапе loading extension не актуализировалось в таблице, можно искать с исходным расширением
-        // или если это retry - params должны быть актуальные!
-        val prevDownload = downloadsRepo.getByNameAndExt(actualParams.resourceNameWithoutExt, actualParams.extension)
-        if (prevDownload?.isLoading == true) {
-            logger.w("DownloadInfo with ${actualParams.targetResourceName} already loading in service")
-            return
-        }
-        val item = QueueItem(idCounter.incrementAndGet(), actualParams)
-        downloadsPendingQueue.appendToSet(item)
-        downloadsPendingStorage.addItem(item)
-        _addedToQueueEvent.emit(actualParams)
     }
 
     private suspend fun retryDownloadInternal(params: DownloadService.Params) {
-        retryDownloadInternal(downloadsFinishedQueue.value.find { it.params.targetResourceName == params.targetResourceName }?.downloadId, params)
+        retryDownloadInternal(
+            downloadsFinishedQueue.value.find { it.params.targetResourceName == params.targetResourceName }?.downloadId,
+            params
+        )
     }
 
     private suspend fun retryDownloadInternal(downloadId: Long?, params: DownloadService.Params) {
@@ -441,7 +505,7 @@ class DownloadManager @Inject constructor(
                     launchedDownloads.add(item)
                 }
             }
-            logger.i("removing item $item from downloadsPendingQueue")
+            logger.i("Removing $item from downloadsPendingQueue")
             iterator.remove()
             downloadsPendingStorage.removeItem(item)
         }
@@ -472,6 +536,21 @@ class DownloadManager @Inject constructor(
             newCollection.add(value)
         }
         return newCollection
+    }
+
+    private fun DownloadService.Params.validate(): Boolean {
+        if (targetResourceName.isEmpty()) return false
+        if (!Regex(REG_EX_FILE_NAME).matches(resourceName)) return false
+        if (requestParams.url.toUrlOrNull() == null) return false
+        if (requestParams.method == Method.POST.value && requestParams.body == null) return false
+        return !requestParams.headers.entries.any { it.key.isEmpty() || it.value.isEmpty() }
+    }
+
+    enum class FailAddReason {
+
+        NOT_VALID,
+        ALREADY_ADDED,
+        ALREADY_LOADING,
     }
 
     /**
@@ -544,7 +623,7 @@ class DownloadManager @Inject constructor(
         }
 
         @Synchronized
-        fun removeItem(itemId: Int): Boolean {
+        private fun removeItem(itemId: Int): Boolean {
             return deleteFile(File(queueDir, FILE_NAME_FORMAT.format(itemId)))
         }
 

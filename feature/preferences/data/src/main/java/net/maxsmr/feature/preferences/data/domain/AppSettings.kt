@@ -12,8 +12,6 @@ import java.io.Serializable
 @kotlinx.serialization.Serializable
 data class AppSettings(
     val maxDownloads: Int = 3,
-    val ignoreServerError: Boolean = false,
-    val deleteUnfinished: Boolean = true,
     val disableNotifications: Boolean = false,
 ): Serializable
 

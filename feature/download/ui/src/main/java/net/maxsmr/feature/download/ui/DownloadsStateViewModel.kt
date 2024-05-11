@@ -18,7 +18,6 @@ class DownloadsStateViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val downloadsViewModel: DownloadsViewModel,
     private val manager: DownloadManager,
-
 ) : BaseViewModel(state) {
 
     val queueNames = MutableLiveData<List<String>>()

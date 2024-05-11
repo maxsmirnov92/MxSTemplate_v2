@@ -49,7 +49,10 @@ open class HttpProtocolException(
     companion object {
 
         @JvmStatic
-        fun Response?.toHttpProtocolException(exceptionMessage: String? = null): HttpProtocolException {
+        fun Response?.toHttpProtocolException(
+            exceptionMessage: String? = null,
+            withBody: Boolean = false
+        ): HttpProtocolException {
             val request = this?.request
             val url = request?.url?.toString().orEmpty()
             val method = request?.method.orEmpty()
@@ -60,27 +63,26 @@ open class HttpProtocolException(
                 url,
                 method,
                 HashMap(request?.headers.toMap()),
-                request.asString().orEmpty(),
+                if (withBody) request.asString().orEmpty() else EMPTY_STRING,
                 code,
                 message,
-                responseBody,
+                if (withBody) responseBody else EMPTY_STRING,
                 HashMap(this?.headers.toMap()),
                 exceptionMessage?.takeIf { it.isNotEmpty() }
                     ?: prepareMessage(
                         url,
                         method,
                         code.toString(),
-                        message,
-                        responseBody
+                        message
                     ))
         }
 
         private fun prepareMessage(vararg parts: String): String {
             val partsList = mutableListOf<String>()
             partsList.addAll(parts)
-            return TextUtils.join(", ", partsList.filter {
+            return partsList.filter {
                 it.isNotEmpty()
-            })
+            }.joinToString(", ")
         }
     }
 }

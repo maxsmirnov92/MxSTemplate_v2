@@ -45,7 +45,7 @@ import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.network.ContentDispositionType
-import net.maxsmr.core.network.HEADER_CONTENT_DISPOSITION
+import net.maxsmr.core.network.Method
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
 import net.maxsmr.core.network.getContentTypeHeader
 import net.maxsmr.core.network.getFileNameFromAttachmentHeader
@@ -272,29 +272,32 @@ class DownloadService : Service() {
 
             suspend fun onException(e: Exception, localUri: Uri? = null) {
                 logger.e("onException: $e, localUri: $localUri")
-                onDownloadFailed(
-                    downloadInfo.copy(
-                        status = DownloadInfo.Status.Error(localUri?.toString(), e)
-                    ), params, oldParams, e
+                val info = downloadInfo.copy(
+                    status = DownloadInfo.Status.Error(localUri?.toString(), e)
                 )
+                if (e is CancellationException) {
+                    onDownloadCancelled(info, params, oldParams)
+                } else {
+                    onDownloadFailed(info, params, oldParams, e)
+                }
             }
 
             try {
                 val response = okHttpClient.newCallSuspended(params.createRequest(), false)
                 logger.i("Response finished with code ${response.code}, message \"${response.message}\"")
 
-                val isSuccessful = response.isSuccessful
-                if (!params.requestParams.storeErrorBody
-                        && (!isSuccessful || !response.hasContentDisposition(ContentDispositionType.ATTACHMENT))
-                ) {
-                    throw response.toHttpProtocolException(
-                        if (isSuccessful) "$HEADER_CONTENT_DISPOSITION header is empty" else null
-                    )
+                if (!params.requestParams.storeErrorBody && !response.isSuccessful) {
+                    throw response.toHttpProtocolException()
+                }
+
+                if (!params.requestParams.storeErrorBody && !params.requestParams.ignoreAttachment
+                        && !response.hasContentDisposition(ContentDispositionType.ATTACHMENT)) {
+                    throw response.toHttpProtocolException("No valid attachment")
                 }
 
                 var wasParamsChanged = false
 
-                if (params.resourceMimeType.isEmpty() || !params.requestParams.ignoreHeaderMimeType) {
+                if (params.resourceMimeType.isEmpty() || !params.requestParams.ignoreContentType) {
                     // при пустом исходном типе или если игнорить заголовок не надо
                     response.getContentTypeHeader()?.takeIf { it.isNotEmpty() }?.let {
                         if (params.resourceMimeType != it) {
@@ -367,7 +370,7 @@ class DownloadService : Service() {
                         unfinishedLocalUri = uri
                         response.toOutputStreamOrThrow(outStream, previousSize, notifier)
                     }
-                val hashInfo = params.targetHashInfo?.also {
+                val hashInfo = params.targetHashInfo?.takeIf { !it.isEmpty }?.also {
                     // проверка с целевым хэшэм при наличии
                     if (!DownloadsHashManager.checkHash(localUri, it)) {
                         throw StoreException(localUri, "Loaded resource hash doesn't match with expected")
@@ -418,16 +421,18 @@ class DownloadService : Service() {
         prevDownload: DownloadInfo?,
     ): DownloadInfo? {
 
-        prevDownload?.statusAsSuccess?.let {
+        val success = prevDownload?.statusAsSuccess
+
+        success?.let {
             //Прошлая загрузка успешно завершена, проверяем совпадения хэша по ее uri с целевым хэшем
             // либо с хэшем на момент загрузки (чтобы убедиться, что файл не менялся с тех пор)
             val expectedHash = params.targetHashInfo ?: it.initialHashInfo
-            if (DownloadsHashManager.checkHash(it.localUri, expectedHash)) return prevDownload
+            if (!expectedHash.isEmpty && DownloadsHashManager.checkHash(it.localUri, expectedHash)) return prevDownload
         }
 
         //Пробуем проверить хэши всех существующих uri с совпадающими именами в целевой папки
-        val expectedHash = params.targetHashInfo
-            ?: prevDownload?.statusAsSuccess?.initialHashInfo
+        val expectedHash = (params.targetHashInfo
+            ?: success?.initialHashInfo)?.takeIf { !it.isEmpty }
             ?: return null
         val alreadyLoadedUris = this.alreadyLoadedUris(params)
         return alreadyLoadedUris
@@ -725,13 +730,15 @@ class DownloadService : Service() {
                 uri: URL,
                 preferredFileName: String?,
                 body: RequestParams.Body,
+                ignoreContentType: Boolean = false,
+                ignoreAttachment: Boolean = false,
                 ignoreFileName: Boolean = true,
-                ignoreHeaderMimeType: Boolean = false,
                 storeErrorBody: Boolean = false,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
                 subDir: String = EMPTY_STRING,
                 targetHashInfo: HashInfo? = null,
+                deleteUnfinished: Boolean = true,
                 notificationParams: NotificationParams,
             ): Params {
                 val baseSubDir = baseAppName
@@ -751,7 +758,8 @@ class DownloadService : Service() {
                         uri.toString(),
                         body,
                         headers = headers,
-                        ignoreHeaderMimeType = ignoreHeaderMimeType,
+                        ignoreContentType = ignoreContentType,
+                        ignoreAttachment = ignoreAttachment,
                         ignoreFileName = targetIgnoreFileName,
                         storeErrorBody = storeErrorBody
                     ),
@@ -761,6 +769,7 @@ class DownloadService : Service() {
                     if (subDir.isEmpty()) baseSubDir else toFile(subDir, baseSubDir)?.absolutePath,
                     targetHashInfo,
                     targetHashInfo != null,
+                    deleteUnfinished =deleteUnfinished
                 ).apply {
                     resourceMimeType = format?.let {
                         format.mimeType
@@ -774,13 +783,15 @@ class DownloadService : Service() {
             fun defaultGETServiceParamsFor(
                 uri: URL,
                 preferredFileName: String?,
+                ignoreContentType: Boolean = false,
+                ignoreAttachment: Boolean = false,
                 ignoreFileName: Boolean = true,
-                ignoreHeaderMimeType: Boolean = false,
                 storeErrorBody: Boolean = false,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
                 subDir: String = EMPTY_STRING,
                 targetHashInfo: HashInfo? = null,
+                deleteUnfinished: Boolean = true,
                 notificationParams: NotificationParams,
             ): Params {
                 val baseSubDir = baseAppName
@@ -799,7 +810,8 @@ class DownloadService : Service() {
                     RequestParams.newGet(
                         uri.toString(),
                         headers = headers,
-                        ignoreHeaderMimeType = ignoreHeaderMimeType,
+                        ignoreContentType = ignoreContentType,
+                        ignoreAttachment = ignoreAttachment,
                         ignoreFileName = targetIgnoreFileName,
                         storeErrorBody = storeErrorBody
                     ),
@@ -809,6 +821,7 @@ class DownloadService : Service() {
                     if (subDir.isEmpty()) baseSubDir else toFile(subDir, baseSubDir)?.absolutePath,
                     targetHashInfo,
                     targetHashInfo != null,
+                    deleteUnfinished =deleteUnfinished
                 ).apply {
                     resourceMimeType = format?.let {
                         format.mimeType
@@ -826,7 +839,8 @@ class DownloadService : Service() {
         val method: String,
         val headers: HashMap<String, String>,
         val body: Body?,
-        val ignoreHeaderMimeType: Boolean,
+        val ignoreContentType: Boolean,
+        val ignoreAttachment: Boolean = false,
         val ignoreFileName: Boolean,
         val storeErrorBody: Boolean,
     ) : Serializable {
@@ -837,6 +851,16 @@ class DownloadService : Service() {
             .headers(headers.toHeaders())
             .build()
 
+        override fun toString(): String {
+            return "RequestParams(url='$url', " +
+                    "method='$method', " +
+                    "headers=$headers, " +
+                    "body=$body, " +
+                    "ignoreContentType=$ignoreContentType, " +
+                    "ignoreAttachment=$ignoreAttachment, " +
+                    "ignoreFileName=$ignoreFileName, " +
+                    "storeErrorBody=$storeErrorBody)"
+        }
         class Body(val content: Serializable, val mimeType: String? = null) : Serializable {
 
             fun createRequestBody(): RequestBody {
@@ -871,16 +895,18 @@ class DownloadService : Service() {
                 url: String,
                 body: Body,
                 headers: HashMap<String, String> = HashMap(),
-                ignoreHeaderMimeType: Boolean = true,
+                ignoreContentType: Boolean = true,
+                ignoreAttachment: Boolean = false,
                 ignoreFileName: Boolean = false,
                 storeErrorBody: Boolean = false,
             ): RequestParams {
                 return RequestParams(
                     url,
-                    "POST",
+                    Method.POST.value,
                     headers,
                     body,
-                    ignoreHeaderMimeType,
+                    ignoreContentType,
+                    ignoreAttachment,
                     ignoreFileName,
                     storeErrorBody
                 )
@@ -891,7 +917,8 @@ class DownloadService : Service() {
             fun newGet(
                 url: String,
                 headers: HashMap<String, String> = HashMap(),
-                ignoreHeaderMimeType: Boolean = true,
+                ignoreContentType: Boolean = true,
+                ignoreAttachment: Boolean = false,
                 ignoreFileName: Boolean = false,
                 storeErrorBody: Boolean = false,
                 appendGetParams: ((Uri) -> Uri)? = null,
@@ -903,10 +930,11 @@ class DownloadService : Service() {
                 }
                 return RequestParams(
                     targetUrl,
-                    "GET",
+                    Method.GET.value,
                     headers,
                     null,
-                    ignoreHeaderMimeType,
+                    ignoreContentType,
+                    ignoreAttachment,
                     ignoreFileName,
                     storeErrorBody
                 )
