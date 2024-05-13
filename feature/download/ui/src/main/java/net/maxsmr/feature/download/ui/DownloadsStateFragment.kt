@@ -88,6 +88,10 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
             infoAdapter.items = it
             binding.ibCancelAll.isVisible = it.any { item -> item.downloadInfo.isLoading }
             binding.ibClearFinished.isVisible = it.any { item -> !item.downloadInfo.isLoading }
+            // FIXME скролл
+            if (!infoAdapter.isEmpty) {
+                binding.rvDownloads.scrollToPosition(infoAdapter.itemCount - 1)
+            }
         }
         binding.ibClearQueue.setOnClickListener {
             viewModel.onClearQueue()

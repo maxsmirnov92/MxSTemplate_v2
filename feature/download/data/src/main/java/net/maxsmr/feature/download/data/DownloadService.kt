@@ -46,6 +46,8 @@ import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.network.ContentDispositionType
 import net.maxsmr.core.network.Method
+import net.maxsmr.core.network.ProgressListener
+import net.maxsmr.core.network.ProgressResponseBody
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
 import net.maxsmr.core.network.getContentTypeHeader
 import net.maxsmr.core.network.getFileNameFromAttachmentHeader
@@ -54,6 +56,7 @@ import net.maxsmr.core.network.newCallSuspended
 import net.maxsmr.core.network.toOutputStreamOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
 import net.maxsmr.feature.download.data.DownloadService.NotificationParams
+import net.maxsmr.feature.download.data.DownloadService.NotificationParams.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
 import net.maxsmr.feature.download.data.DownloadService.Params
 import net.maxsmr.feature.download.data.manager.DownloadsHashManager
 import net.maxsmr.feature.download.data.model.BaseDownloadParams
@@ -70,6 +73,7 @@ import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import okio.BufferedSink
 import okio.ByteString
 import okio.source
@@ -78,6 +82,7 @@ import java.io.*
 import java.net.URL
 import java.util.*
 import javax.inject.Inject
+
 
 /**
  * Foreground сервис для загрузки файлов.
@@ -275,7 +280,7 @@ class DownloadService : Service() {
                 val info = downloadInfo.copy(
                     status = DownloadInfo.Status.Error(localUri?.toString(), e)
                 )
-                if (e is CancellationException) {
+                if (e is CancellationException || e is InterruptedIOException) {
                     onDownloadCancelled(info, params, oldParams)
                 } else {
                     onDownloadFailed(info, params, oldParams, e)
@@ -283,7 +288,26 @@ class DownloadService : Service() {
             }
 
             try {
-                val response = okHttpClient.newCallSuspended(params.createRequest(), false)
+                val client = okHttpClient.newBuilder().addNetworkInterceptor {
+                    val originalResponse: Response = it.proceed(it.request())
+                    originalResponse.newBuilder()
+                        .body(originalResponse.body?.let { body ->
+                            // индикация загрузки + флаг отмены
+                            ProgressResponseBody(body, object : ProgressListener {
+
+                                override val notifyInterval: Long = params.notificationParams?.updateNotificationInterval
+                                    ?: UPDATE_NOTIFICATION_INTERVAL_DEFAULT
+
+                                override fun onProcessing(state: ProgressListener.DownloadStateInfo): Boolean {
+                                    onDownloadProcessing(state, downloadInfo, params)
+                                    return isActive
+                                }
+                            }) }
+                        )
+                        .build()
+                }.build()
+
+                val response = client.newCallSuspended(params.createRequest(), false)
                 logger.i("Response finished with code ${response.code}, message \"${response.message}\"")
 
                 if (!params.requestParams.storeErrorBody && !response.isSuccessful) {
@@ -328,12 +352,10 @@ class DownloadService : Service() {
 //                    downloadsRepo.upsert(downloadInfo)
                 }
 
-                val startTime = System.currentTimeMillis()
                 val notifier = object : IStreamNotifier {
 
                     override val notifyInterval: Long
-                        get() = params.notificationParams?.updateNotificationInterval
-                            ?: NotificationParams.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
+                        get() = UPDATE_NOTIFICATION_INTERVAL_DEFAULT
 
                     //Нужен для того, чтобы можно было отменить сохранение файла, если
                     //юзер нажал "Отменить" в нотификации в тот момент, когда файл уже загружен и сохраняется
@@ -343,28 +365,10 @@ class DownloadService : Service() {
                         bytesWrite: Long,
                         bytesTotal: Long,
                     ): Boolean {
-                        val elapsedTime = System.currentTimeMillis() - startTime
-                        val speed = bytesWrite / elapsedTime.toDouble()
-                        val estimatedTime = if (bytesTotal > 0 && bytesWrite > 0) {
-                            ((bytesTotal - bytesWrite) / speed).toLong()
-                        } else {
-                            0
-                        }
-                        onDownloadProcessing(
-                            DownloadStateInfo(
-                                bytesWrite,
-                                bytesTotal,
-                                speed,
-                                elapsedTime,
-                                estimatedTime
-                            ),
-                            downloadInfo, params
-                        )
                         return isActive
                     }
                 }
 
-                // TODO реализовать докачку
                 val localUri =
                     storage.store(params, prevDownload?.statusAsError?.localUri) { uri, outStream, previousSize ->
                         unfinishedLocalUri = uri
@@ -464,16 +468,16 @@ class DownloadService : Service() {
     }
 
     private fun onDownloadProcessing(
-        stateInfo: DownloadStateInfo,
+        stateInfo: ProgressListener.DownloadStateInfo,
         downloadInfo: DownloadInfo,
         params: Params,
     ) {
-        logger.d("Download processing: $downloadInfo, stateInfo: $stateInfo")
+//        logger.d("Download processing: $downloadInfo, stateInfo: $stateInfo")
         notifier.onDownloadProcessing(stateInfo, downloadInfo, params)
 
         params.notificationParams ?: return
 
-        val progress = stateInfo.progress
+        val progress = stateInfo.progressRounded
         notificationWrapper.show(downloadInfo.id.toInt(), notificationChannel) {
             setDefaults(Notification.DEFAULT_ALL)
             setSmallIcon(params.notificationParams.smallIconResId)
@@ -1073,24 +1077,11 @@ class DownloadService : Service() {
 
         companion object {
 
-            const val UPDATE_NOTIFICATION_INTERVAL_DEFAULT = 500L
+            // TODO в настройки
+            const val UPDATE_NOTIFICATION_INTERVAL_DEFAULT = 1000L
         }
     }
 
-    data class DownloadStateInfo(
-        val currentBytes: Long,
-        val totalBytes: Long,
-        val speed: Double,
-        val elapsedTime: Long,
-        val estimatedTime: Long,
-    ) {
-
-        val progress = if (totalBytes > 0) ((currentBytes * 100f) / totalBytes).toInt() else 0
-
-        override fun toString(): String {
-            return "DownloadStateInfo(currentBytes=$currentBytes, totalBytes=$totalBytes, speed=$speed, elapsedTime=$elapsedTime, estimatedTime=$estimatedTime, progress=$progress)"
-        }
-    }
 
     private class ContentOrFileUriRequestBody(
         private val uri: Uri,
@@ -1112,6 +1103,10 @@ class DownloadService : Service() {
             }
         }
     }
+
+
+
+
 
     companion object {
 

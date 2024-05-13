@@ -8,13 +8,14 @@ import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter.DragAndDropViewHolder.Companion.createWithDraggable
 import net.maxsmr.commonutils.conversion.SizeUnit.BYTES
+import net.maxsmr.commonutils.conversion.roundTime
 import net.maxsmr.commonutils.format.TIME_UNITS_TO_EXCLUDE_DEFAULT
 import net.maxsmr.commonutils.format.TimePluralFormat
 import net.maxsmr.commonutils.format.decomposeSizeFormatted
 import net.maxsmr.commonutils.format.decomposeTimeFormatted
+import net.maxsmr.commonutils.format.formatSpeedSize
 import net.maxsmr.commonutils.gui.setTextOrGone
-import net.maxsmr.commonutils.text.CharCase
-import net.maxsmr.commonutils.text.changeCaseFirstChar
+import net.maxsmr.commonutils.text.capFirstChar
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState
@@ -53,102 +54,140 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                     pbDownload.progress = when (state) {
                         is DownloadState.Loading -> {
                             // contentLength неизвестен - неопределённый ProgressBar
-                            isIndeterminate = state.stateInfo.progress == 0
-                            state.stateInfo.progress
+                            val progress = if (!state.stateInfo.done) {
+                                state.stateInfo.progressRounded.takeIf { it > 0 } ?: 0
+                            } else {
+                                100
+                            }
+                            isIndeterminate = false
+                            progress
                         }
 
                         is DownloadState.Success -> {
                             isIndeterminate = false
                             100
                         }
+
                         else -> 0
                     }
 
                     statusInfo = when (state) {
                         is DownloadState.Loading -> {
-                            val parts = mutableListOf<String>()
+
                             with(state.stateInfo) {
-                                if (progress > 0) {
-                                    parts.add(context.getString(
-                                            R.string.download_status_percent_text_format,
-                                            progress
-                                        ))
-                                }
-                                if (currentBytes > 0) {
-                                    val currentSizeFormatted = decomposeSizeFormatted(
-                                            currentBytes.toDouble(),
+                                if (!done) {
+                                    val parts = mutableListOf<CharSequence>()
+
+                                    if (progress >= 0) {
+                                        parts.add(
+                                            context.getString(
+                                                R.string.download_status_percent_text_format,
+                                                progress
+                                            )
+                                        )
+                                    }
+                                    if (bytesRead > 0) {
+                                        val currentSizeFormatted = decomposeSizeFormatted(
+                                            bytesRead,
                                             BYTES,
-                                            true
+                                            setOf(BYTES),
+                                            formatWithValue = true
                                         ).joinToString { it.get(context) }
 
-                                    val sizePart = if (totalBytes > 0) {
-                                        val totalSizeFormatted = decomposeSizeFormatted(
-                                                totalBytes.toDouble(),
-                                                BYTES,
-                                                true
-                                            ).joinToString { it.get(context) }
-                                        context.getString(
-                                            R.string.download_status_size_with_total_text_format,
-                                            currentSizeFormatted,
-                                            totalSizeFormatted
-                                        )
-                                    } else {
-                                        context.getString(
-                                            R.string.download_status_size_text_format,
-                                            currentSizeFormatted
-                                        )
+                                        if (currentSizeFormatted.isNotEmpty()) {
+                                            val sizePart = if (contentLength > 0) {
+                                                val totalSizeFormatted = decomposeSizeFormatted(
+                                                    contentLength,
+                                                    BYTES,
+                                                    setOf(BYTES),
+                                                    formatWithValue = true
+                                                ).joinToString { it.get(context) }
+                                                if (totalSizeFormatted.isNotEmpty()) {
+                                                    context.getString(
+                                                        R.string.download_status_size_with_total_text_format,
+                                                        currentSizeFormatted,
+                                                        totalSizeFormatted
+                                                    )
+                                                } else {
+                                                    context.getString(
+                                                        R.string.download_status_size_text_format,
+                                                        currentSizeFormatted
+                                                    )
+                                                }
+                                            } else {
+                                                context.getString(
+                                                    R.string.download_status_size_text_format,
+                                                    currentSizeFormatted
+                                                )
+                                            }
+                                            parts.add(sizePart)
+                                        }
                                     }
-                                    parts.add(sizePart)
-                                }
-                                if (speed > 0) {
-                                    val speedFormatted = decomposeSizeFormatted(
-                                        speed,
-                                        BYTES,
-                                        true
-                                    ).joinToString { it.get(context) }
-                                    parts.add(speedFormatted)
-                                }
-                                if (elapsedTime > 0) {
-                                    val elapsedTimeFormatted = decomposeTimeFormatted(
-                                        elapsedTime,
-                                        TimeUnit.MILLISECONDS,
-                                        TimePluralFormat.NORMAL_WITH_VALUE,
-                                        timeUnitsToExclude = TIME_UNITS_TO_EXCLUDE_DEFAULT
-                                    ).joinToString {
-                                        it.get(context)
+                                    if (speed > 0) {
+                                        val speedFormatted = formatSpeedSize(
+                                            speed,
+                                            BYTES,
+                                            setOf(BYTES),
+                                            precision = 2,
+                                            timeUnit = TimeUnit.SECONDS
+                                        )
+                                        speedFormatted?.get(context)?.let {
+                                            parts.add(it)
+                                        }
                                     }
-
-                                    val timePart = if (estimatedTime > 0) {
-                                        val estimatedTimeFormatted = decomposeTimeFormatted(
-                                            estimatedTime,
-                                            TimeUnit.MILLISECONDS,
+                                    if (elapsedTime > 0) {
+                                        val elapsedTimeFormatted = decomposeTimeFormatted(
+                                            roundTime(elapsedTime, TimeUnit.SECONDS),
+                                            TimeUnit.NANOSECONDS,
                                             TimePluralFormat.NORMAL_WITH_VALUE,
                                             timeUnitsToExclude = TIME_UNITS_TO_EXCLUDE_DEFAULT
                                         ).joinToString {
                                             it.get(context)
                                         }
-                                        context.getString(
-                                            R.string.download_status_time_with_estimated_text_format,
-                                            elapsedTimeFormatted,
-                                            estimatedTimeFormatted
-                                        )
-                                    } else {
-                                        context.getString(
-                                            R.string.download_status_time_text_format,
-                                            elapsedTimeFormatted
-                                        )
+
+                                        if (elapsedTimeFormatted.isNotEmpty()) {
+                                            val timePart = if (estimatedTime > 0) {
+                                                val estimatedTimeFormatted = decomposeTimeFormatted(
+                                                    roundTime(estimatedTime, TimeUnit.SECONDS),
+                                                    TimeUnit.NANOSECONDS,
+                                                    TimePluralFormat.NORMAL_WITH_VALUE,
+                                                    timeUnitsToExclude = TIME_UNITS_TO_EXCLUDE_DEFAULT
+                                                ).joinToString {
+                                                    it.get(context)
+                                                }
+                                                if (estimatedTimeFormatted.isNotEmpty()) {
+                                                    context.getString(
+                                                        R.string.download_status_time_with_estimated_text_format,
+                                                        elapsedTimeFormatted,
+                                                        estimatedTimeFormatted
+                                                    )
+                                                } else {
+                                                    context.getString(
+                                                        R.string.download_status_time_text_format,
+                                                        elapsedTimeFormatted
+                                                    )
+                                                }
+                                            } else {
+                                                context.getString(
+                                                    R.string.download_status_time_text_format,
+                                                    elapsedTimeFormatted
+                                                )
+                                            }
+                                            parts.add(timePart)
+                                        }
                                     }
-                                    parts.add(timePart)
+
+                                    parts.mapIndexedNotNull { index, s ->
+                                        (if (index == 0) {
+                                            s.capFirstChar()
+                                        } else {
+                                            s
+                                        }).takeIf { it.isNotEmpty() }
+                                    }.joinToString(separator = " | ")
+                                } else {
+                                    context.getString(R.string.download_status_finalizing)
                                 }
                             }
-                            parts.mapIndexed { index, s ->
-                                if (index == 0) {
-                                    // FIXME
-                                    s.changeCaseFirstChar(isUpperForFirst = true, CharCase.NO_CHANGE)
-                                } else {
-                                    s
-                                }
-                            }.joinToString()
                         }
 
                         is DownloadState.Success -> {
@@ -185,7 +224,7 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
     }
 
 data class DownloadInfoAdapterData(
-    val data: DownloadInfoResultData
+    val data: DownloadInfoResultData,
 ) : BaseAdapterData {
 
     val id = data.id

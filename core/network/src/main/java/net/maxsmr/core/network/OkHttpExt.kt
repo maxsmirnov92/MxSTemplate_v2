@@ -3,6 +3,7 @@ package net.maxsmr.core.network
 import android.text.TextUtils
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.maxsmr.commonutils.IStreamNotifier
+import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.copyStreamOrThrow
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
@@ -12,21 +13,25 @@ import net.maxsmr.core.utils.charsetForNameOrNull
 import okhttp3.*
 import okio.Buffer
 import okio.BufferedSource
+import okio.ForwardingSource
+import okio.Source
+import okio.buffer
 import java.io.IOException
 import java.io.InputStream
+import java.io.InterruptedIOException
 import java.io.OutputStream
+import java.io.Serializable
 import java.nio.charset.Charset
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.math.roundToInt
 
 private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("OkHttpExt")
 
 private const val HEADER_CONTENT_TYPE = "Content-Type"
 private const val HEADER_CONTENT_DISPOSITION = "Content-Disposition"
 private const val ATTACHMENT_FILENAME = "filename"
-
-// TODO move to FileUtils
-const val REG_EX_FILE_NAME = "^[\\w\\-. ]+$"
 
 fun OkHttpClient.executeCall(
     requestConfigurator: ((Request.Builder) -> Any?),
@@ -46,25 +51,26 @@ fun OkHttpClient.executeCallOrThrow(
     return newCall(request.build()).execute()
 }
 
-suspend fun OkHttpClient.newCallSuspended(request: Request, checkSuccess: Boolean = true): Response = suspendCancellableCoroutine { continuation ->
-    val call = newCall(request)
-    continuation.invokeOnCancellation {
-        call.cancel()
-    }
-    call.enqueue(object : Callback {
-        override fun onFailure(call: Call, e: IOException) {
-            continuation.resumeWithException(RuntimeException("Request failed", e))
+suspend fun OkHttpClient.newCallSuspended(request: Request, checkSuccess: Boolean = true): Response =
+    suspendCancellableCoroutine { continuation ->
+        val call = newCall(request)
+        continuation.invokeOnCancellation {
+            call.cancel()
         }
-
-        override fun onResponse(call: Call, response: Response) {
-            if (!checkSuccess || response.isSuccessful) {
-                continuation.resume(response)
-            } else {
-                continuation.resumeWithException(response.toHttpProtocolException())
+        call.enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                continuation.resumeWithException(RuntimeException("Request failed", e))
             }
-        }
-    })
-}
+
+            override fun onResponse(call: Call, response: Response) {
+                if (!checkSuccess || response.isSuccessful) {
+                    continuation.resume(response)
+                } else {
+                    continuation.resumeWithException(response.toHttpProtocolException())
+                }
+            }
+        })
+    }
 
 // region: Request
 
@@ -160,7 +166,7 @@ fun Response?.asByteArrayCopy(): ByteArray? = try {
 @Throws(IOException::class)
 fun Response?.asByteArrayCopyOrThrow(): ByteArray? {
     this ?: return null
-    return cloneBufferOrThrow()?.readByteArray()
+    return cloneBufferOrThrow()?.use { it.readByteArray() }
 }
 
 /**
@@ -177,7 +183,7 @@ fun Response?.asStringCopy(): Pair<String, Charset>? = try {
 fun Response?.asStringCopyOrThrow(): Pair<String, Charset>? {
     this ?: return null
     val charset = header("Content-Encoding").charsetForNameOrNull() ?: Charset.defaultCharset()
-    return cloneBufferOrThrow()?.let {
+    return cloneBufferOrThrow()?.use {
         Pair(it.readString(charset), charset)
     }
 }
@@ -189,14 +195,14 @@ fun Response?.toOutputStreamCopy(
     outputStream: OutputStream?,
     notifier: IStreamNotifier? = null,
 ): ResponseBody? = try {
-    toOutputStreamOrThrow(outputStream, notifier)
+    toOutputStreamCopyOrThrow(outputStream, notifier)
 } catch (e: IOException) {
     logger.e("Copy response body to OutputStream", e)
     null
 }
 
 @Throws(IOException::class)
-fun Response?.toOutputStreamOrThrow(
+fun Response?.toOutputStreamCopyOrThrow(
     outputStream: OutputStream?,
     notifier: IStreamNotifier? = null,
 ): ResponseBody? {
@@ -319,9 +325,11 @@ private fun InputStream.copyToOutputStreamOrThrow(
         })
 }
 
+// TODO to domain
 enum class Method(val value: String) {
 
-    POST("POST"), GET("GET")
+    POST("POST"),
+    GET("GET")
 }
 
 enum class ContentDispositionType(val value: String) {
@@ -329,4 +337,121 @@ enum class ContentDispositionType(val value: String) {
     INLINE("inline"),
     ATTACHMENT("attachment"),
     FORM_DATA("form-data")
+}
+
+class ProgressResponseBody(
+    private val responseBody: ResponseBody,
+    private val listener: ProgressListener,
+) : ResponseBody() {
+
+    private val contentLength = responseBody.contentLength()
+
+    private var bufferedSource: BufferedSource? = null
+
+    override fun contentType(): MediaType? {
+        return responseBody.contentType()
+    }
+
+    override fun contentLength(): Long {
+        return responseBody.contentLength()
+    }
+
+    override fun source(): BufferedSource {
+        return bufferedSource ?: ProgressForwardingSource(responseBody.source()).buffer().apply {
+            bufferedSource = this
+        }
+    }
+
+    private inner class ProgressForwardingSource(source: Source) : ForwardingSource(source) {
+
+        val startTime = System.currentTimeMillis()
+
+        var lastNotifyTime: Long = 0
+
+        var totalBytesRead = 0L
+
+        @Throws(IOException::class)
+        override fun read(sink: Buffer, byteCount: Long): Long {
+            val bytesRead = super.read(sink, byteCount)
+            // read() returns the number of bytes read, or -1 if this source is exhausted.
+            totalBytesRead += if (bytesRead > 0) bytesRead else 0
+
+            val interval = listener.notifyInterval
+            val currentTime = System.currentTimeMillis()
+
+            val done = bytesRead == -1L
+
+            if (done || interval >= 0 && (interval == 0L || lastNotifyTime == 0L || currentTime - lastNotifyTime >= interval)) {
+                with(totalBytesRead) {
+
+                    val elapsedTimeMillis = currentTime - startTime
+                    val elapsedTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(currentTime - startTime)
+
+                    val speedMillis = if (elapsedTimeSeconds > 0) {
+                        this.toDouble() / elapsedTimeMillis
+                    } else {
+                        0.0
+                    }
+                    val estimatedTimeSeconds = if (contentLength > this && speedMillis > 0) {
+                        TimeUnit.MILLISECONDS.toSeconds(((contentLength - this) / speedMillis).toLong())
+                    } else {
+                        0
+                    }
+
+                    if (!listener.onProcessing(
+                                ProgressListener.DownloadStateInfo(
+                                    this,
+                                    contentLength,
+                                    speedMillis * 1000,
+                                    elapsedTimeSeconds,
+                                    estimatedTimeSeconds,
+                                    done
+                                )
+                            )
+                    ) {
+                        throw InterruptedIOException("Read source interrupted")
+                    }
+                }
+                lastNotifyTime = System.currentTimeMillis()
+            }
+            return bytesRead
+        }
+    }
+}
+
+interface ProgressListener {
+
+    val notifyInterval: Long get() = 0L
+
+    /**
+     * @return false для прекращения чтения из источника
+     */
+    fun onProcessing(state: DownloadStateInfo): Boolean = true
+
+    /**
+     * @param speed скорость в байт/с
+     * @param elapsedTime пройдённое время в секундах от начала загрузки
+     * @param estimatedTime оцениваемое время в секундах до конца загрузки
+     */
+    data class DownloadStateInfo(
+        val bytesRead: Long,
+        val contentLength: Long,
+        val speed: Double,
+        val elapsedTime: Long,
+        val estimatedTime: Long,
+        val done: Boolean,
+    ) : Serializable {
+
+        val progress: Float = if (contentLength > 0) {
+            (bytesRead * 100f) / contentLength
+        } else {
+            0f
+        }
+
+        val progressRounded: Int = progress.roundToInt()
+
+        override fun toString(): String {
+            return "DownloadStateInfo(bytesRead=$bytesRead, contentLength=$contentLength, speed=$speed, elapsedTime=$elapsedTime, estimatedTime=$estimatedTime, progress=$progress)"
+        }
+    }
 }

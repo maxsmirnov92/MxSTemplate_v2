@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.maxsmr.commonutils.GetMode
 import net.maxsmr.commonutils.IGetNotifier
+import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.createFile
 import net.maxsmr.commonutils.deleteFile
 import net.maxsmr.commonutils.deleteFiles
@@ -33,7 +34,6 @@ import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.network.Method
-import net.maxsmr.core.network.REG_EX_FILE_NAME
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsRepo
@@ -41,12 +41,12 @@ import net.maxsmr.feature.preferences.data.domain.AppSettings
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.File
+import java.io.InterruptedIOException
 import java.io.Serializable
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
-import kotlin.math.max
 
 /**
  * Обёртка над вызовом [DownloadService], содержащая свою очередь
@@ -146,7 +146,7 @@ class DownloadManager @Inject constructor(
 
                             is DownloadInfo.Status.Error -> {
                                 val reason = info.statusAsError?.reason
-                                if (reason is CancellationException) {
+                                if (reason is CancellationException || reason is InterruptedIOException) {
                                     DownloadStateNotifier.DownloadState.Cancelled(info, params, params)
                                 } else {
                                     DownloadStateNotifier.DownloadState.Failed(reason, info, params, params)
@@ -629,7 +629,6 @@ class DownloadManager @Inject constructor(
 
         @Synchronized
         fun clear() {
-            // FIXME depth = 0
             deleteFiles(queueDir, depth = 1)
         }
 

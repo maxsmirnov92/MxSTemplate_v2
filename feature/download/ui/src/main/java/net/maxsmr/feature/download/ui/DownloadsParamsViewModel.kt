@@ -7,6 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.media.name
@@ -19,7 +20,6 @@ import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.download.MD5_ALGORITHM
 import net.maxsmr.core.domain.entities.feature.download.REG_EX_MD5_ALGORITHM
-import net.maxsmr.core.network.REG_EX_FILE_NAME
 import net.maxsmr.core.ui.BooleanFieldFlags
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadsViewModel

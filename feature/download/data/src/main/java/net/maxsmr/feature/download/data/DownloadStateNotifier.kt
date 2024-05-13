@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
+import net.maxsmr.core.network.ProgressListener
 import java.io.Serializable
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -52,7 +53,7 @@ class DownloadStateNotifier @Inject constructor(
     }
 
     fun onDownloadProcessing(
-        stateInfo: DownloadService.DownloadStateInfo,
+        stateInfo: ProgressListener.DownloadStateInfo,
         downloadInfo: DownloadInfo,
         params: DownloadService.Params,
     ) {
@@ -105,32 +106,48 @@ class DownloadStateNotifier @Inject constructor(
     ) : Serializable {
 
         class Loading(
-            val stateInfo: DownloadService.DownloadStateInfo,
+            val stateInfo: ProgressListener.DownloadStateInfo,
             downloadInfo: DownloadInfo,
             params: DownloadService.Params,
-        ) : DownloadState(downloadInfo, params, params)
+        ) : DownloadState(downloadInfo, params, params) {
+
+            override fun toString(): String {
+                return "DownloadState.Loading(stateInfo=$stateInfo, downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"
+            }
+        }
 
         class Success(
             downloadInfo: DownloadInfo,
             params: DownloadService.Params,
             oldParams: DownloadService.Params,
-        ) : DownloadState(downloadInfo, params, oldParams)
+        ) : DownloadState(downloadInfo, params, oldParams) {
+
+            override fun toString(): String {
+                return "DownloadState.Success(downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"
+            }
+        }
 
         class Failed(
             val e: Exception?,
             downloadInfo: DownloadInfo,
             params: DownloadService.Params,
             oldParams: DownloadService.Params,
-        ) : DownloadState(downloadInfo, params, oldParams)
+        ) : DownloadState(downloadInfo, params, oldParams) {
+
+            override fun toString(): String {
+                return "DownloadState.Failed(e=$e, downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"
+            }
+        }
 
         class Cancelled(
             downloadInfo: DownloadInfo,
             params: DownloadService.Params,
             oldParams: DownloadService.Params,
-        ) : DownloadState(downloadInfo, params, oldParams)
+        ) : DownloadState(downloadInfo, params, oldParams) {
 
-        override fun toString(): String {
-            return "DownloadState(downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"
+            override fun toString(): String {
+                return "DownloadState.Cancelled(downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"
+            }
         }
     }
 }

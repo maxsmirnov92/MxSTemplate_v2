@@ -1,6 +1,5 @@
 package net.maxsmr.core.network.exceptions
 
-import android.text.TextUtils
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.network.UNKNOWN_ERROR
 import net.maxsmr.core.network.asString
@@ -42,7 +41,7 @@ open class HttpProtocolException(
                 "requestBodyString='$requestBodyString', " +
                 "responseCode=$responseCode, " +
                 "responseMessage='$responseMessage', " +
-//                "responseBodyString='$responseBodyString', " +
+                "responseBodyString='$responseBodyString', " +
                 "responseBodyHeaders=$responseBodyHeaders)"
     }
 
