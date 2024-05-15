@@ -33,13 +33,23 @@
     <string name="download_clear_queue_alert_message">Очистить очередь ожидающих загрузок?</string>
     <string name="download_queued_count_subtitle">В очереди:</string>
     <string name="download_active_empty_text">Нет активных загрузок</string>
-    <string name="download_status_percent_text_format">процент: %.1f\%%</string>
-    <string name="download_status_size_with_total_text_format">загружено: %s из %s</string>
+
+    <string name="download_status_uploading_percent_format">Процент выгрузки: %.1f\%%</string>
+    <string name="download_status_uploading">Выгрузка…</string>
+    <string name="download_status_downloading_percent_format">Процент загрузки: %.1f\%%</string>
+    <string name="download_status_downloading">Загрузка…</string>
+    <string name="download_status_storing_percent_format">Процент записи в файл: %.1f\%%</string>
+    <string name="download_status_storing">Запись в файл…</string>
+    <string name="download_status_finalize_uploading">Завершение выгрузки…</string>
+    <string name="download_status_finalize_downloading">Завершение загрузки…</string>
+    <string name="download_status_finalize_storing">Завершение записи в файл…</string>
+
+    <string name="download_status_size_with_total_text_format">%s из %s</string>
     <string name="download_status_size_text_format">размер: %s</string>
     <string name="download_status_time_with_estimated_text_format">прошло времени: %s, осталось времени: %s</string>
     <string name="download_status_time_text_format">прошло времени: %s</string>
     <string name="download_status_requesting">Выполнение запроса…</string>
-    <string name="download_status_finalizing">Запись в файл…</string>
+
     <string name="download_status_success">Успех</string>
     <string name="download_status_failed_format">Ошибка: \"%s\"</string>
     <string name="download_status_cancelled">Отменена</string>

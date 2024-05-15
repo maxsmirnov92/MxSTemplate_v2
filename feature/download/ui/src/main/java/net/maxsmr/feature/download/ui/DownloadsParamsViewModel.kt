@@ -168,11 +168,11 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     fun onRequestBodyUriSelected(uri: Uri) {
         val body = bodyField.value
         if (body == null || !body.isEnabled) return
-        bodyField.value = body.copy(body = uri)
+        bodyField.value = body.copy(bodyUri = uri.toString())
     }
 
     fun onClearRequestBodyUri() {
-        bodyField.value = bodyField.value?.copy(body = null)
+        bodyField.value = bodyField.value?.copy(bodyUri = null)
     }
 
     fun onAddHeader() {
@@ -309,7 +309,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             headers[key] = value
         }
         val ignoreFileName = fileNameFlagsField.value?.state != true
-        val bodyUri = bodyField.value?.body
+        val bodyUri = bodyField.value?.bodyUri
 
         val targetHashInfo = targetHashField.value?.takeIf { it.isNotEmpty() }?.let {
             HashInfo(MD5_ALGORITHM, it)
@@ -323,7 +323,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             DownloadService.Params.defaultPOSTServiceParamsFor(
                 url,
                 fileName,
-                DownloadService.RequestParams.Body(DownloadService.RequestParams.Body.Uri(bodyUri.toString())),
+                DownloadService.RequestParams.Body(DownloadService.RequestParams.Body.Uri(bodyUri)),
                 ignoreAttachment = ignoreAttachment,
                 ignoreFileName = ignoreFileName,
                 storeErrorBody = ignoreServerError,
@@ -400,14 +400,17 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         )
     }
 
+    // TODO field container with flag
     data class UriBodyContainer(
-        val body: Uri? = null,
+        val bodyUri: String? = null,
         val isEnabled: Boolean = false,
     ) : Serializable {
 
-        val isEmpty = body == null
+        val isEmpty = bodyUri == null
 
-        fun getName(context: Context) = body?.name(context.contentResolver).orEmpty()
+        fun getName(context: Context): String {
+            return bodyUri?.let { Uri.parse(it).name(context.contentResolver) }.orEmpty()
+        }
     }
 
     @AssistedFactory

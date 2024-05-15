@@ -2,7 +2,9 @@
 <resources>
     <string name="downloads_channel_name">Канал загрузок</string>
     <string name="download_notification_initial_text">Подготовка к загрузке файлов</string>
-    <string name="download_notification_progress_title">Выполняется загрузка файла</string>
+    <string name="download_notification_progress_upload_title">Выполняется выгрузка файла</string>
+    <string name="download_notification_progress_download_title">Выполняется загрузка файла</string>
+    <string name="download_notification_progress_store_title">Выполняется запись файла</string>
     <string name="download_notification_success_title">Файл загружен</string>
     <string name="download_notification_success_view_button">Открыть</string>
     <string name="download_notification_success_share_button">Поделиться</string>

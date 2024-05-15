@@ -75,29 +75,45 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                         is DownloadState.Loading -> {
 
                             with(state.stateInfo) {
+
                                 if (!done) {
+
                                     val parts = mutableListOf<CharSequence>()
 
                                     if (progress >= 0) {
                                         parts.add(
                                             context.getString(
-                                                R.string.download_status_percent_text_format,
+                                                when (state.type) {
+                                                    DownloadState.Loading.Type.UPLOADING -> R.string.download_status_uploading_percent_format
+                                                    DownloadState.Loading.Type.DOWNLOADING -> R.string.download_status_downloading_percent_format
+                                                    DownloadState.Loading.Type.STORING -> R.string.download_status_storing_percent_format
+                                                },
                                                 progress
                                             )
                                         )
+                                    } else {
+                                        parts.add(
+                                            context.getString(
+                                                when (state.type) {
+                                                    DownloadState.Loading.Type.UPLOADING -> R.string.download_status_uploading
+                                                    DownloadState.Loading.Type.DOWNLOADING -> R.string.download_status_downloading
+                                                    DownloadState.Loading.Type.STORING -> R.string.download_status_storing
+                                                }
+                                            )
+                                        )
                                     }
-                                    if (bytesRead > 0) {
+                                    if (currentBytes > 0) {
                                         val currentSizeFormatted = decomposeSizeFormatted(
-                                            bytesRead,
+                                            currentBytes,
                                             BYTES,
                                             setOf(BYTES),
                                             formatWithValue = true
                                         ).joinToString { it.get(context) }
 
                                         if (currentSizeFormatted.isNotEmpty()) {
-                                            val sizePart = if (contentLength > 0) {
+                                            val sizePart = if (totalBytes > 0) {
                                                 val totalSizeFormatted = decomposeSizeFormatted(
-                                                    contentLength,
+                                                    totalBytes,
                                                     BYTES,
                                                     setOf(BYTES),
                                                     formatWithValue = true
@@ -185,7 +201,13 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                                         }).takeIf { it.isNotEmpty() }
                                     }.joinToString(separator = " | ")
                                 } else {
-                                    context.getString(R.string.download_status_finalizing)
+                                    context.getString(
+                                        when (state.type) {
+                                            DownloadState.Loading.Type.UPLOADING -> R.string.download_status_finalize_uploading
+                                            DownloadState.Loading.Type.DOWNLOADING -> R.string.download_status_finalize_downloading
+                                            DownloadState.Loading.Type.STORING -> R.string.download_status_finalize_storing
+                                        }
+                                    )
                                 }
                             }
                         }

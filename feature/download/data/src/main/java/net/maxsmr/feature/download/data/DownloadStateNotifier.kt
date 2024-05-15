@@ -6,10 +6,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
-import net.maxsmr.core.network.ProgressListener
 import java.io.Serializable
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -53,12 +53,13 @@ class DownloadStateNotifier @Inject constructor(
     }
 
     fun onDownloadProcessing(
-        stateInfo: ProgressListener.DownloadStateInfo,
+        type: DownloadState.Loading.Type,
+        stateInfo: ProgressListener.ProgressStateInfo,
         downloadInfo: DownloadInfo,
         params: DownloadService.Params,
     ) {
         scope.launch {
-            _downloadStateEvents.emit(DownloadState.Loading(stateInfo, downloadInfo, params))
+            _downloadStateEvents.emit(DownloadState.Loading(type, stateInfo, downloadInfo, params))
         }
     }
 
@@ -105,14 +106,54 @@ class DownloadStateNotifier @Inject constructor(
         val oldParams: DownloadService.Params,
     ) : Serializable {
 
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is DownloadState) return false
+
+            if (downloadInfo != other.downloadInfo) return false
+            if (params != other.params) return false
+            return oldParams == other.oldParams
+        }
+
+        override fun hashCode(): Int {
+            var result = downloadInfo.hashCode()
+            result = 31 * result + params.hashCode()
+            result = 31 * result + oldParams.hashCode()
+            return result
+        }
+
         class Loading(
-            val stateInfo: ProgressListener.DownloadStateInfo,
+            val type: Type,
+            val stateInfo: ProgressListener.ProgressStateInfo,
             downloadInfo: DownloadInfo,
             params: DownloadService.Params,
         ) : DownloadState(downloadInfo, params, params) {
 
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other !is Loading) return false
+                if (!super.equals(other)) return false
+
+                if (type != other.type) return false
+                return stateInfo == other.stateInfo
+            }
+
+            override fun hashCode(): Int {
+                var result = super.hashCode()
+                result = 31 * result + type.hashCode()
+                result = 31 * result + stateInfo.hashCode()
+                return result
+            }
+
             override fun toString(): String {
-                return "DownloadState.Loading(stateInfo=$stateInfo, downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"
+                return "DownloadState.Loading(type=$type, stateInfo=$stateInfo, downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"
+            }
+
+            enum class Type {
+
+                UPLOADING,
+                DOWNLOADING,
+                STORING
             }
         }
 
@@ -133,6 +174,20 @@ class DownloadStateNotifier @Inject constructor(
             params: DownloadService.Params,
             oldParams: DownloadService.Params,
         ) : DownloadState(downloadInfo, params, oldParams) {
+
+            override fun equals(other: Any?): Boolean {
+                if (this === other) return true
+                if (other !is Failed) return false
+                if (!super.equals(other)) return false
+
+                return e == other.e
+            }
+
+            override fun hashCode(): Int {
+                var result = super.hashCode()
+                result = 31 * result + (e?.hashCode() ?: 0)
+                return result
+            }
 
             override fun toString(): String {
                 return "DownloadState.Failed(e=$e, downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"

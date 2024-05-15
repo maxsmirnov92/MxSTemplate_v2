@@ -28,12 +28,12 @@ class DownloadsStateViewModel @AssistedInject constructor(
         super.onInitialized()
         viewModelScope.launch {
             manager.downloadsPendingParams.collect {
-                queueNames.value = it.map { params -> params.targetResourceName }
+                queueNames.postValue(it.map { params -> params.targetResourceName })
             }
         }
         viewModelScope.launch {
             manager.resultItems.collect {
-                downloadItems.value = it.map { item -> DownloadInfoAdapterData(item) }
+                downloadItems.postValue(it.map { item -> DownloadInfoAdapterData(item) })
             }
         }
     }

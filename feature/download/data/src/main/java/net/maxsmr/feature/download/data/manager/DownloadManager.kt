@@ -36,6 +36,7 @@ import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.network.Method
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
+import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading.Type
 import net.maxsmr.feature.download.data.DownloadsRepo
 import net.maxsmr.feature.preferences.data.domain.AppSettings
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -311,6 +312,12 @@ class DownloadManager @Inject constructor(
                     }
                     downloadsQueue.emit(newDownloadsSet)
                     downloadsFinishedQueue.emit(newFinishedSet)
+                } else if (state.stateInfo.done) {
+                    when (state.type) {
+                        Type.UPLOADING -> logger.d("Done uploading")
+                        Type.DOWNLOADING -> logger.d("Done downloading")
+                        Type.STORING -> logger.d("Done storing")
+                    }
                 }
 
                 DownloadInfoResultData(state.params, state.downloadInfo, state).refreshWith()

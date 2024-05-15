@@ -35,6 +35,7 @@ import net.maxsmr.commonutils.service.withMutabilityFlag
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.toFile
 import net.maxsmr.commonutils.wrapChooser
+import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.android.baseAppName
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.FileFormat
@@ -46,7 +47,7 @@ import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.network.ContentDispositionType
 import net.maxsmr.core.network.Method
-import net.maxsmr.core.network.ProgressListener
+import net.maxsmr.core.network.ProgressRequestBody
 import net.maxsmr.core.network.ProgressResponseBody
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
 import net.maxsmr.core.network.getContentTypeHeader
@@ -58,6 +59,7 @@ import net.maxsmr.feature.download.data.DownloadService.Companion.start
 import net.maxsmr.feature.download.data.DownloadService.NotificationParams
 import net.maxsmr.feature.download.data.DownloadService.NotificationParams.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
 import net.maxsmr.feature.download.data.DownloadService.Params
+import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading
 import net.maxsmr.feature.download.data.manager.DownloadsHashManager
 import net.maxsmr.feature.download.data.model.BaseDownloadParams
 import net.maxsmr.feature.download.data.model.IntentSenderParams
@@ -287,27 +289,41 @@ class DownloadService : Service() {
                 }
             }
 
+            class ServiceProgressListener(val type: Loading.Type) : ProgressListener() {
+
+                override val notifyInterval: Long = params.notificationParams?.updateNotificationInterval?.takeIf { it > 0 }
+                    ?: UPDATE_NOTIFICATION_INTERVAL_DEFAULT
+
+                override fun onProcessing(state: ProgressStateInfo): Boolean {
+                    onDownloadProcessing(type, state, downloadInfo, params)
+                    return isActive
+                }
+
+                override fun notify(currentBytes: Long, totalBytes: Long, done: Boolean, startTime: Long) {
+                    super.notify(currentBytes, totalBytes, done, startTime)
+                    logger.d("$type: notify, currentBytes=$currentBytes, totalBytes=$totalBytes, done=$done, startTime=$startTime")
+                    if (done) {
+                        logger.d("$type: done")
+                    }
+                }
+            }
+
             try {
                 val client = okHttpClient.newBuilder().addNetworkInterceptor {
                     val originalResponse: Response = it.proceed(it.request())
                     originalResponse.newBuilder()
                         .body(originalResponse.body?.let { body ->
                             // индикация загрузки + флаг отмены
-                            ProgressResponseBody(body, object : ProgressListener {
-
-                                override val notifyInterval: Long = params.notificationParams?.updateNotificationInterval
-                                    ?: UPDATE_NOTIFICATION_INTERVAL_DEFAULT
-
-                                override fun onProcessing(state: ProgressListener.DownloadStateInfo): Boolean {
-                                    onDownloadProcessing(state, downloadInfo, params)
-                                    return isActive
-                                }
-                            }) }
+                            ProgressResponseBody(body, ServiceProgressListener(Loading.Type.DOWNLOADING))
+                        }
                         )
                         .build()
                 }.build()
 
-                val response = client.newCallSuspended(params.createRequest(), false)
+                val response = client.newCallSuspended(
+                    params.createRequest(ServiceProgressListener(Loading.Type.UPLOADING)),
+                    false
+                )
                 logger.i("Response finished with code ${response.code}, message \"${response.message}\"")
 
                 if (!params.requestParams.storeErrorBody && !response.isSuccessful) {
@@ -315,7 +331,8 @@ class DownloadService : Service() {
                 }
 
                 if (!params.requestParams.storeErrorBody && !params.requestParams.ignoreAttachment
-                        && !response.hasContentDisposition(ContentDispositionType.ATTACHMENT)) {
+                        && !response.hasContentDisposition(ContentDispositionType.ATTACHMENT)
+                ) {
                     throw response.toHttpProtocolException("No valid attachment")
                 }
 
@@ -354,8 +371,11 @@ class DownloadService : Service() {
 
                 val notifier = object : IStreamNotifier {
 
-                    override val notifyInterval: Long
-                        get() = UPDATE_NOTIFICATION_INTERVAL_DEFAULT
+                    val listener = ServiceProgressListener(Loading.Type.STORING)
+
+                    val startTime = System.currentTimeMillis()
+
+                    override val notifyInterval: Long = listener.notifyInterval
 
                     //Нужен для того, чтобы можно было отменить сохранение файла, если
                     //юзер нажал "Отменить" в нотификации в тот момент, когда файл уже загружен и сохраняется
@@ -365,7 +385,13 @@ class DownloadService : Service() {
                         bytesWrite: Long,
                         bytesTotal: Long,
                     ): Boolean {
+                        listener.notify(bytesWrite, bytesTotal, false, startTime)
                         return isActive
+                    }
+
+                    override fun onStreamEnd(inputStream: InputStream, outputStream: OutputStream, bytesWrite: Long) {
+                        super.onStreamEnd(inputStream, outputStream, bytesWrite)
+                        listener.notify(bytesWrite, bytesWrite, true, startTime)
                     }
                 }
 
@@ -431,7 +457,11 @@ class DownloadService : Service() {
             //Прошлая загрузка успешно завершена, проверяем совпадения хэша по ее uri с целевым хэшем
             // либо с хэшем на момент загрузки (чтобы убедиться, что файл не менялся с тех пор)
             val expectedHash = params.targetHashInfo ?: it.initialHashInfo
-            if (!expectedHash.isEmpty && DownloadsHashManager.checkHash(it.localUri, expectedHash)) return prevDownload
+            if (!expectedHash.isEmpty && DownloadsHashManager.checkHash(
+                        it.localUri,
+                        expectedHash
+                    )
+            ) return prevDownload
         }
 
         //Пробуем проверить хэши всех существующих uri с совпадающими именами в целевой папки
@@ -468,21 +498,27 @@ class DownloadService : Service() {
     }
 
     private fun onDownloadProcessing(
-        stateInfo: ProgressListener.DownloadStateInfo,
+        type: Loading.Type,
+        stateInfo: ProgressListener.ProgressStateInfo,
         downloadInfo: DownloadInfo,
         params: Params,
     ) {
-//        logger.d("Download processing: $downloadInfo, stateInfo: $stateInfo")
-        notifier.onDownloadProcessing(stateInfo, downloadInfo, params)
+        logger.d("Download processing: type: $type, $downloadInfo, stateInfo: $stateInfo")
+        notifier.onDownloadProcessing(type, stateInfo, downloadInfo, params)
 
         params.notificationParams ?: return
+
+        val contentTitleResId = when (type) {
+            Loading.Type.UPLOADING -> R.string.download_notification_progress_upload_title
+            Loading.Type.DOWNLOADING -> R.string.download_notification_progress_download_title
+            Loading.Type.STORING -> R.string.download_notification_progress_store_title
+        }
 
         val progress = stateInfo.progressRounded
         notificationWrapper.show(downloadInfo.id.toInt(), notificationChannel) {
             setDefaults(Notification.DEFAULT_ALL)
             setSmallIcon(params.notificationParams.smallIconResId)
-            setContentTitle(params.notificationParams.loadingTitle.takeIf { it.isNotEmpty() }
-                ?: getString(R.string.download_notification_progress_title))
+            setContentTitle(context.getString(contentTitleResId))
             setProgress(100, progress, progress == 0)
             setContentBigText(params.notificationParams.contentText.takeIf { it.isNotEmpty() }
                 ?: params.targetResourceName)
@@ -699,7 +735,7 @@ class DownloadService : Service() {
             params.deleteUnfinished
         )
 
-        fun createRequest(): Request = requestParams.createRequest()
+        fun createRequest(listener: ProgressListener): Request = requestParams.createRequest(listener)
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -773,7 +809,7 @@ class DownloadService : Service() {
                     if (subDir.isEmpty()) baseSubDir else toFile(subDir, baseSubDir)?.absolutePath,
                     targetHashInfo,
                     targetHashInfo != null,
-                    deleteUnfinished =deleteUnfinished
+                    deleteUnfinished = deleteUnfinished
                 ).apply {
                     resourceMimeType = format?.let {
                         format.mimeType
@@ -825,7 +861,7 @@ class DownloadService : Service() {
                     if (subDir.isEmpty()) baseSubDir else toFile(subDir, baseSubDir)?.absolutePath,
                     targetHashInfo,
                     targetHashInfo != null,
-                    deleteUnfinished =deleteUnfinished
+                    deleteUnfinished = deleteUnfinished
                 ).apply {
                     resourceMimeType = format?.let {
                         format.mimeType
@@ -849,9 +885,12 @@ class DownloadService : Service() {
         val storeErrorBody: Boolean,
     ) : Serializable {
 
-        fun createRequest(): Request = Request.Builder()
+        fun createRequest(listener: ProgressListener): Request = Request.Builder()
             .url(url)
-            .method(method, body?.createRequestBody())
+            .method(method, body?.createRequestBody()?.let {
+                ProgressRequestBody(it, listener)
+            }
+            )
             .headers(headers.toHeaders())
             .build()
 
@@ -865,6 +904,7 @@ class DownloadService : Service() {
                     "ignoreFileName=$ignoreFileName, " +
                     "storeErrorBody=$storeErrorBody)"
         }
+
         class Body(val content: Serializable, val mimeType: String? = null) : Serializable {
 
             fun createRequestBody(): RequestBody {
@@ -951,7 +991,6 @@ class DownloadService : Service() {
      */
     data class NotificationParams @JvmOverloads constructor(
         @DrawableRes val smallIconResId: Int = R.drawable.ic_download,
-        val loadingTitle: String = EMPTY_STRING,
         val successTitle: String = EMPTY_STRING,
         val errorTitle: String = EMPTY_STRING,
         val cancelTitle: String = EMPTY_STRING,
@@ -1078,7 +1117,7 @@ class DownloadService : Service() {
         companion object {
 
             // TODO в настройки
-            const val UPDATE_NOTIFICATION_INTERVAL_DEFAULT = 1000L
+            const val UPDATE_NOTIFICATION_INTERVAL_DEFAULT = 300L
         }
     }
 
@@ -1103,9 +1142,6 @@ class DownloadService : Service() {
             }
         }
     }
-
-
-
 
 
     companion object {

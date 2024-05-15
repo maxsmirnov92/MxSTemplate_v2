@@ -8,24 +8,25 @@ import net.maxsmr.commonutils.copyStreamOrThrow
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
 import net.maxsmr.core.utils.charsetForNameOrNull
 import okhttp3.*
 import okio.Buffer
+import okio.BufferedSink
 import okio.BufferedSource
+import okio.ForwardingSink
 import okio.ForwardingSource
+import okio.Sink
 import okio.Source
 import okio.buffer
 import java.io.IOException
 import java.io.InputStream
-import java.io.InterruptedIOException
 import java.io.OutputStream
-import java.io.Serializable
 import java.nio.charset.Charset
-import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlin.math.roundToInt
+
 
 private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("OkHttpExt")
 
@@ -339,119 +340,98 @@ enum class ContentDispositionType(val value: String) {
     FORM_DATA("form-data")
 }
 
+class ProgressRequestBody(
+    private val delegateBody: RequestBody,
+    private val listener: ProgressListener,
+) : RequestBody() {
+
+    private val contentLength = delegateBody.contentLength()
+
+    private var writeCount = 0
+
+    override fun contentType(): MediaType? {
+        return delegateBody.contentType()
+    }
+
+    override fun contentLength(): Long {
+        return try {
+            delegateBody.contentLength()
+        } catch (e: IOException) {
+            -1L
+        }
+    }
+
+    override fun writeTo(sink: BufferedSink) {
+        writeCount++
+        if (writeCount == 1) {
+            delegateBody.writeTo(sink)
+        } else {
+            val bufferedSink = ProgressForwardingSink(sink).buffer()
+            delegateBody.writeTo(bufferedSink)
+            bufferedSink.flush()
+        }
+    }
+
+    private inner class ProgressForwardingSink(delegate: Sink) : ForwardingSink(delegate) {
+
+        private val startTime = System.currentTimeMillis()
+
+        private var totalBytesWritten: Long = 0
+
+        @Throws(IOException::class)
+        override fun write(source: Buffer, byteCount: Long) {
+            super.write(source, byteCount)
+            totalBytesWritten += byteCount
+            listener.notify(
+                totalBytesWritten,
+                contentLength,
+                if (contentLength >= 0) {
+                    totalBytesWritten >= contentLength
+                } else {
+                    false
+                },
+                startTime
+            )
+        }
+    }
+}
+
 class ProgressResponseBody(
-    private val responseBody: ResponseBody,
+    private val delegateBody: ResponseBody,
     private val listener: ProgressListener,
 ) : ResponseBody() {
 
-    private val contentLength = responseBody.contentLength()
+    private val contentLength = delegateBody.contentLength()
 
     private var bufferedSource: BufferedSource? = null
 
     override fun contentType(): MediaType? {
-        return responseBody.contentType()
+        return delegateBody.contentType()
     }
 
     override fun contentLength(): Long {
-        return responseBody.contentLength()
+        return delegateBody.contentLength()
     }
 
     override fun source(): BufferedSource {
-        return bufferedSource ?: ProgressForwardingSource(responseBody.source()).buffer().apply {
+        return bufferedSource ?: ProgressForwardingSource(delegateBody.source()).buffer().apply {
             bufferedSource = this
         }
     }
 
     private inner class ProgressForwardingSource(source: Source) : ForwardingSource(source) {
 
-        val startTime = System.currentTimeMillis()
+        private val startTime = System.currentTimeMillis()
 
-        var lastNotifyTime: Long = 0
-
-        var totalBytesRead = 0L
+        private var totalBytesRead = 0L
 
         @Throws(IOException::class)
         override fun read(sink: Buffer, byteCount: Long): Long {
             val bytesRead = super.read(sink, byteCount)
             // read() returns the number of bytes read, or -1 if this source is exhausted.
             totalBytesRead += if (bytesRead > 0) bytesRead else 0
-
-            val interval = listener.notifyInterval
-            val currentTime = System.currentTimeMillis()
-
-            val done = bytesRead == -1L
-
-            if (done || interval >= 0 && (interval == 0L || lastNotifyTime == 0L || currentTime - lastNotifyTime >= interval)) {
-                with(totalBytesRead) {
-
-                    val elapsedTimeMillis = currentTime - startTime
-                    val elapsedTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(currentTime - startTime)
-
-                    val speedMillis = if (elapsedTimeSeconds > 0) {
-                        this.toDouble() / elapsedTimeMillis
-                    } else {
-                        0.0
-                    }
-                    val estimatedTimeSeconds = if (contentLength > this && speedMillis > 0) {
-                        TimeUnit.MILLISECONDS.toSeconds(((contentLength - this) / speedMillis).toLong())
-                    } else {
-                        0
-                    }
-
-                    if (!listener.onProcessing(
-                                ProgressListener.DownloadStateInfo(
-                                    this,
-                                    contentLength,
-                                    speedMillis * 1000,
-                                    elapsedTimeSeconds,
-                                    estimatedTimeSeconds,
-                                    done
-                                )
-                            )
-                    ) {
-                        throw InterruptedIOException("Read source interrupted")
-                    }
-                }
-                lastNotifyTime = System.currentTimeMillis()
-            }
+            listener.notify(totalBytesRead, contentLength, bytesRead == -1L, startTime)
             return bytesRead
-        }
-    }
-}
-
-interface ProgressListener {
-
-    val notifyInterval: Long get() = 0L
-
-    /**
-     * @return false для прекращения чтения из источника
-     */
-    fun onProcessing(state: DownloadStateInfo): Boolean = true
-
-    /**
-     * @param speed скорость в байт/с
-     * @param elapsedTime пройдённое время в секундах от начала загрузки
-     * @param estimatedTime оцениваемое время в секундах до конца загрузки
-     */
-    data class DownloadStateInfo(
-        val bytesRead: Long,
-        val contentLength: Long,
-        val speed: Double,
-        val elapsedTime: Long,
-        val estimatedTime: Long,
-        val done: Boolean,
-    ) : Serializable {
-
-        val progress: Float = if (contentLength > 0) {
-            (bytesRead * 100f) / contentLength
-        } else {
-            0f
-        }
-
-        val progressRounded: Int = progress.roundToInt()
-
-        override fun toString(): String {
-            return "DownloadStateInfo(bytesRead=$bytesRead, contentLength=$contentLength, speed=$speed, elapsedTime=$elapsedTime, estimatedTime=$estimatedTime, progress=$progress)"
         }
     }
 }
