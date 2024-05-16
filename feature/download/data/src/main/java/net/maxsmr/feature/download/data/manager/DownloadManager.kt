@@ -381,7 +381,15 @@ class DownloadManager @Inject constructor(
             val settings = settings
             return DownloadService.Params(
                 params.requestParams,
-                if (settings.disableNotifications) null else params.notificationParams,
+                if (settings.disableNotifications) {
+                    null
+                } else {
+                    params.notificationParams?.copy(
+                        updateNotificationInterval = settings.updateNotificationInterval
+                    ) ?: DownloadService.NotificationParams(
+                        updateNotificationInterval = settings.updateNotificationInterval
+                    )
+                },
                 params.resourceName,
                 params.storageType,
                 params.subDirPath,
@@ -444,7 +452,7 @@ class DownloadManager @Inject constructor(
 
     private suspend fun retryDownloadInternal(downloadId: Long?, params: DownloadService.Params) {
         downloadId?.let {
-            removeFinishedInternal(it)
+            removeFinishedInternal(it, false)
         }
         enqueueDownloadInternal(params)
     }

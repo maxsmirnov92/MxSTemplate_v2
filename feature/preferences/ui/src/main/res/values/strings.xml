@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_title">Настройки</string>
-    <string name="settings_field_hint_max_downloads">Максимальное число одновременных загрузок</string>
-    <string name="settings_field_name_disable_notifications">Отключить уведомления сервиса загрузок</string>
+    <string name="settings_field_empty_error">Поле не заполнено</string>
+    <string name="settings_field_max_downloads_hint">Максимальное число одновременных загрузок</string>
+    <string name="settings_field_max_downloads_error">От одной и более загрузок</string>
+    <string name="settings_field_disable_notifications">Отключить уведомления сервиса загрузок</string>
+    <string name="settings_field_update_notification_interval_hint">Интервал обновления уведомлений с активной загрузкой</string>
+    <string name="settings_field_update_notification_interval_error_format">Значение должно быть от %d и выше</string>
     <string name="settings_dialog_confirm_message">Есть изменения</string>
     <string name="settings_dialog_confirm_yes_button">Сохранить</string>
     <string name="settings_dialog_confirm_neutral_button">Не сохранять</string>

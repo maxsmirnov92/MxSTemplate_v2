@@ -22,7 +22,7 @@ import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.ui.bindHintError
 import net.maxsmr.core.ui.bindValue
-import net.maxsmr.core.ui.bindFlags
+import net.maxsmr.core.ui.bindState
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -105,9 +105,9 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
             binding.tvRequestBodyName.text = it.getName(requireContext()).takeIf { name -> name.isNotEmpty() }
                 ?: getString(
                     if (it.isEnabled) {
-                        R.string.download_request_body_empty_text
+                        R.string.download_field_request_body_empty_text
                     } else {
-                        R.string.download_request_body_non_required_text
+                        R.string.download_field_request_body_non_required_text
                     })
         }
         viewModel.bodyField.errorLive.observe {
@@ -117,7 +117,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         binding.etFileName.bindToTextNotNull(viewModel.fileNameField)
         viewModel.fileNameField.observeFromText(binding.etFileName, viewLifecycleOwner)
         viewModel.fileNameField.bindHintError(viewLifecycleOwner, binding.tilFileName)
-        viewModel.fileNameFlagsField.bindFlags(viewLifecycleOwner, binding.cbFileNameFix)
+        viewModel.fileNameChangeStateField.bindState(viewLifecycleOwner, binding.cbFileNameFix)
 
         binding.etSubDirName.bindToTextNotNull(viewModel.subDirNameField)
         viewModel.subDirNameField.observeFromText(binding.etSubDirName, viewLifecycleOwner)
@@ -128,7 +128,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         viewModel.targetHashField.bindHintError(viewLifecycleOwner, binding.tilTargetHash)
 
         viewModel.ignoreServerErrorField.bindValue(viewLifecycleOwner, binding.cbIgnoreServerError)
-        viewModel.ignoreAttachmentFlagsField.bindFlags(viewLifecycleOwner, binding.cbIgnoreAttachment)
+        viewModel.ignoreAttachmentStateField.bindState(viewLifecycleOwner, binding.cbIgnoreAttachment)
         viewModel.deleteUnfinishedField.bindValue(viewLifecycleOwner, binding.cbDeleteUnfinished)
 
         binding.rvHeaders.adapter = headersAdapter
@@ -137,7 +137,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
             .setDivider(Divider.Space(10), DividerItemDecoration.Mode.ALL_EXCEPT_LAST)
             .build())
         viewModel.headerItems.observe {
-            requireActivity().clearFocus()
+//            requireActivity().clearFocus()
             headersAdapter.items = it
         }
 

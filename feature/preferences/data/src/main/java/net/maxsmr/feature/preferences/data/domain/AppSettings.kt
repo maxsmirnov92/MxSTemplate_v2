@@ -13,7 +13,15 @@ import java.io.Serializable
 data class AppSettings(
     val maxDownloads: Int = 3,
     val disableNotifications: Boolean = false,
-): Serializable
+    val updateNotificationInterval: Long = 300,
+): Serializable {
+
+    companion object {
+
+        const val UPDATE_NOTIFICATION_INTERVAL_MIN = 100
+        const val UPDATE_NOTIFICATION_INTERVAL_DEFAULT = 300L
+    }
+}
 
 class UserPreferencesSerializer(
     private val json: Json,
@@ -23,7 +31,7 @@ class UserPreferencesSerializer(
 
     override suspend fun readFrom(input: InputStream): AppSettings {
         return try {
-            json.decodeFromString(AppSettings.serializer(), input.readStringOrThrow()!!)
+            json.decodeFromString(AppSettings.serializer(), input.readStringOrThrow())
         } catch (e: Exception) {
             throw CorruptionException("Unable to read AppSettings", e)
         }
@@ -32,7 +40,7 @@ class UserPreferencesSerializer(
     override suspend fun writeTo(t: AppSettings, output: OutputStream) {
         try {
             output.writeBytesOrThrow(
-                Json.encodeToString(AppSettings.serializer(), t).encodeToByteArray()
+                json.encodeToString(AppSettings.serializer(), t).encodeToByteArray()
             )
         } catch (e: Exception) {
             throw CorruptionException("Unable to write AppSettings", e)

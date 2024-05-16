@@ -7,6 +7,7 @@ import android.app.RecoverableSecurityException
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -21,6 +22,8 @@ import net.maxsmr.commonutils.IStreamNotifier
 import net.maxsmr.commonutils.NotificationWrapper
 import net.maxsmr.commonutils.NotificationWrapper.Companion.setContentBigText
 import net.maxsmr.commonutils.getSerializableExtraCompat
+import net.maxsmr.commonutils.getUriFromRawResource
+import net.maxsmr.commonutils.isAtLeastOreo
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.media.delete
@@ -57,7 +60,6 @@ import net.maxsmr.core.network.newCallSuspended
 import net.maxsmr.core.network.toOutputStreamOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
 import net.maxsmr.feature.download.data.DownloadService.NotificationParams
-import net.maxsmr.feature.download.data.DownloadService.NotificationParams.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
 import net.maxsmr.feature.download.data.DownloadService.Params
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading
 import net.maxsmr.feature.download.data.manager.DownloadsHashManager
@@ -66,6 +68,8 @@ import net.maxsmr.feature.download.data.model.IntentSenderParams
 import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
 import net.maxsmr.feature.download.data.storage.file.ShareFile
 import net.maxsmr.feature.download.data.storage.file.ViewFile
+import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
+import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.permissionchecker.PermissionsHelper
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.MediaType
@@ -79,7 +83,7 @@ import okhttp3.Response
 import okio.BufferedSink
 import okio.ByteString
 import okio.source
-import ru.rzd.pass.downloads.storage.StoreException
+import net.maxsmr.feature.download.data.storage.StoreException
 import java.io.*
 import java.net.URL
 import java.util.*
@@ -117,8 +121,30 @@ class DownloadService : Service() {
     private val notificationChannel by lazy {
         NotificationWrapper.ChannelParams(
             "$packageName.downloads",
-            getString(R.string.downloads_channel_name)
+            getString(R.string.download_notification_channel_name)
         )
+    }
+
+    private val successSoundUri: Uri by lazy {
+        getUriFromRawResource(context, R.raw.sound_download_success)
+    }
+
+    private val failedSoundUri: Uri by lazy {
+        getUriFromRawResource(context, R.raw.sound_download_failed)
+    }
+
+    private val successNotificationChannel: NotificationWrapper.ChannelParams by lazy {
+        getFinishedNotificationChannel(successSoundUri,
+            R.string.download_success_notification_channel_name,
+            "downloads.success",
+            VIBRATION_PATTERN_SUCCESS)
+    }
+
+    private val failedNotificationChannel: NotificationWrapper.ChannelParams by lazy {
+        getFinishedNotificationChannel(failedSoundUri,
+            R.string.download_failed_notification_channel_name,
+            "downloads.failed",
+            VIBRATION_PATTERN_FAILED)
     }
 
     private val contextJob = Job()
@@ -161,7 +187,7 @@ class DownloadService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        logger.d("Service created")
+        logger.d("onCreate")
         val notification =
             foregroundNotification(getString(R.string.download_notification_initial_text), null)
         startForeground(DOWNLOADING_NOTIFICATION_ID, notification)
@@ -257,10 +283,12 @@ class DownloadService : Service() {
             // не актуализируем парамсы из ранее известной DownloadInfo, т.к. mimeType и само расширение могут отличаться
             val storage = DownloadServiceStorage.create(context, params.storageType)
 
-            if (params.skipIfDownloaded) storage.findAlreadyLoaded(params, prevDownload)?.let {
-                logger.d("Skip download of $params: found already loaded file with same hash")
-                onDownloadSuccess(it, params, oldParams)
-                return@launch
+            if (params.skipIfDownloaded) {
+                storage.findAlreadyLoaded(params, prevDownload)?.let {
+                    logger.d("Skip download of $params: found already loaded file with same hash")
+                    onDownloadSuccess(it, params, oldParams)
+                    return@launch
+                }
             }
 
             var downloadInfo = prevDownload?.copy(status = DownloadInfo.Status.Loading)
@@ -291,7 +319,7 @@ class DownloadService : Service() {
 
             class ServiceProgressListener(val type: Loading.Type) : ProgressListener() {
 
-                override val notifyInterval: Long = params.notificationParams?.updateNotificationInterval?.takeIf { it > 0 }
+                override val notifyInterval: Long = params.notificationParams?.updateNotificationInterval?.takeIf { it >= UPDATE_NOTIFICATION_INTERVAL_MIN }
                     ?: UPDATE_NOTIFICATION_INTERVAL_DEFAULT
 
                 override fun onProcessing(state: ProgressStateInfo): Boolean {
@@ -555,7 +583,8 @@ class DownloadService : Service() {
                 withMutabilityFlag(FLAG_UPDATE_CURRENT, false)
             )
 
-            notificationWrapper.show(downloadInfo.id.toInt(), notificationChannel) {
+            val id = downloadInfo.id.toInt()
+            notificationWrapper.show(id, successNotificationChannel) {
                 setDefaults(Notification.DEFAULT_ALL)
                 setSmallIcon(notificationParams.smallIconResId)
                 setContentTitle(notificationParams.successTitle.takeIf { it.isNotEmpty() }
@@ -564,7 +593,8 @@ class DownloadService : Service() {
                     ?: params.targetResourceName)
                 setGroup(groupKeyLoading)
                 setSortKey(SORT_KEY_FINISHED)
-
+                setSound(successSoundUri)
+                setVibrate(VIBRATION_PATTERN_SUCCESS)
                 setOngoing(false)
                 setAutoCancel(true)
                 val uri = status.localUri
@@ -604,7 +634,8 @@ class DownloadService : Service() {
         notifier.onDownloadFailed(downloadInfo, params, oldParams, e)
 
         params.notificationParams?.let { notificationParams ->
-            notificationWrapper.show(downloadInfo.id.toInt(), notificationChannel) {
+            val id = downloadInfo.id.toInt()
+            notificationWrapper.show(id, failedNotificationChannel) {
                 setDefaults(Notification.DEFAULT_ALL)
                 setSmallIcon(notificationParams.smallIconResId)
                 setContentTitle(notificationParams.errorTitle.takeIf { it.isNotEmpty() }
@@ -613,6 +644,8 @@ class DownloadService : Service() {
                     ?: params.targetResourceName)
                 setGroup(groupKeyLoading)
                 setSortKey(SORT_KEY_FINISHED)
+                setSound(failedSoundUri)
+                setVibrate(VIBRATION_PATTERN_FAILED)
                 setOngoing(false)
                 addRetryAction(downloadInfo.id, params)
             }
@@ -628,7 +661,8 @@ class DownloadService : Service() {
         notifier.onDownloadCancelled(downloadInfo, params, oldParams)
 
         params.notificationParams?.let { notificationParams ->
-            notificationWrapper.show(downloadInfo.id.toInt(), notificationChannel) {
+            val id = downloadInfo.id.toInt()
+            notificationWrapper.show(id, failedNotificationChannel) {
                 setDefaults(Notification.DEFAULT_ALL)
                 setSmallIcon(notificationParams.smallIconResId)
                 setContentTitle(notificationParams.cancelTitle.takeIf { it.isNotEmpty() }
@@ -684,6 +718,8 @@ class DownloadService : Service() {
             setOnlyAlertOnce(true)
             setGroup(groupKeyLoading)
             setSortKey(SORT_KEY_LOADING_ALL)
+            setSound(null)
+            setSilent(true)
             addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
                 getString(R.string.download_notification_cancel_button),
@@ -696,9 +732,31 @@ class DownloadService : Service() {
         }
     }
 
+    private fun getFinishedNotificationChannel(
+        soundUri: Uri,
+        @StringRes titleResId: Int,
+        idPostfix: String,
+        vibrationPattern: LongArray
+    ): NotificationWrapper.ChannelParams {
+        return NotificationWrapper.ChannelParams(
+            "$packageName.$idPostfix",
+            getString(titleResId)
+        ) {
+            if (isAtLeastOreo()) {
+                val att: AudioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                setSound(soundUri, att)
+                enableLights(true)
+                this.vibrationPattern = vibrationPattern
+            }
+        }
+    }
+
     override fun onDestroy() {
         coroutineScope.coroutineContext.cancel()
-        logger.d("Service destroyed")
+        logger.d("onDestroy")
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -999,11 +1057,9 @@ class DownloadService : Service() {
         val successActions: MutableSet<SuccessAction> = mutableSetOf(),
     ) : Serializable {
 
-        init {
-            require(updateNotificationInterval > 0) {
-                throw IllegalArgumentException("Incorrect updateNotificationInterval: $updateNotificationInterval")
-            }
-        }
+//        val successSoundUri: Uri? get() = successSoundResId?.let { baseApplicationContext.rawResourceToUri(it) }
+//
+//        val errorSoundUri: Uri? get() = errorSoundResId?.let { baseApplicationContext.rawResourceToUri(it) }
 
         @JvmOverloads
         fun withOpenAction(
@@ -1113,14 +1169,7 @@ class DownloadService : Service() {
         override fun toString(): String {
             return "NotificationParams(actions=$successActions)"
         }
-
-        companion object {
-
-            // TODO в настройки
-            const val UPDATE_NOTIFICATION_INTERVAL_DEFAULT = 300L
-        }
     }
-
 
     private class ContentOrFileUriRequestBody(
         private val uri: Uri,
@@ -1143,7 +1192,6 @@ class DownloadService : Service() {
         }
     }
 
-
     companion object {
 
         const val EXTRA_NOTIFICATION_ID_RETRY = "download_service_notification_id_retry"
@@ -1160,6 +1208,9 @@ class DownloadService : Service() {
         private const val SORT_KEY_LOADING_ALL = "A"
         private const val SORT_KEY_LOADING = "B"
         private const val SORT_KEY_FINISHED = "C"
+
+        val VIBRATION_PATTERN_SUCCESS = longArrayOf(100L, 100L)
+        val VIBRATION_PATTERN_FAILED = longArrayOf(1000L)
 
         private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("DownloadService")
 

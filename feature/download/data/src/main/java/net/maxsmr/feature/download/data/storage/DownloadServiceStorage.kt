@@ -7,7 +7,6 @@ import android.os.Environment
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.text.getExtension
 import net.maxsmr.feature.download.data.DownloadService
-import ru.rzd.pass.downloads.storage.StoreException
 import java.io.OutputStream
 
 abstract class DownloadServiceStorage(

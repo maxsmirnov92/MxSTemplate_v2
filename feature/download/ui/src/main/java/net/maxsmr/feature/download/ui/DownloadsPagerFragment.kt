@@ -2,6 +2,7 @@ package net.maxsmr.feature.download.ui
 
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import androidx.fragment.app.viewModels
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
@@ -33,7 +34,7 @@ class DownloadsPagerFragment : BaseVmFragment<DownloadsViewModel>() {
         override fun onPageSelected(position: Int) {
             super.onPageSelected(position)
             if (position != 0) {
-                hideKeyboard(requireActivity())
+                hideKeyboard()
             }
         }
     }
@@ -57,8 +58,17 @@ class DownloadsPagerFragment : BaseVmFragment<DownloadsViewModel>() {
         viewModel.handleEvents(this)
     }
 
+    override fun onResume() {
+        super.onResume()
+        hideKeyboard()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         binding.viewPagerFragments.unregisterOnPageChangeCallback(pageChangeCallback)
+    }
+
+    private fun hideKeyboard() {
+        hideKeyboard(requireActivity(), flags = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED)
     }
 }

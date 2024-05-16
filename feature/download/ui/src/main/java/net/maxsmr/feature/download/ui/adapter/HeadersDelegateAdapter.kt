@@ -6,13 +6,13 @@ import com.google.android.material.textfield.TextInputLayout
 import com.hannesdorfmann.adapterdelegates4.dsl.v2.AdapterDelegateViewHolder
 import com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
+import net.maxsmr.commonutils.gui.listeners.AfterTextChangeListener
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setInputError
 import net.maxsmr.commonutils.gui.setTextWithSelectionToEnd
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.core.ui.views.edit.TextChangeListener
 import net.maxsmr.feature.download.ui.R
 import net.maxsmr.feature.download.ui.databinding.ItemHeaderBinding
 
@@ -31,13 +31,13 @@ fun headersDelegateAdapter(listener: HeaderListener) =
 
             bind {
 
-                addNameTextList(etName) { s, _, _, _ ->
+                addNameTextList(etName) { e ->
                     lastInputEdit = etName
-                    listener.onHeaderNameChanged(item.id, s.toString())
+                    listener.onHeaderNameChanged(item.id, e.toString())
                 }
-                addValueTextList(etValue) { s, _, _, _ ->
+                addValueTextList(etValue) { e ->
                     lastInputEdit = etValue
-                    listener.onHeaderValueChanged(item.id, s.toString())
+                    listener.onHeaderValueChanged(item.id, e.toString())
                 }
 
                 fun TextInputLayout.apply(info: HeaderInfoAdapterData.Info) {
@@ -90,8 +90,8 @@ class HeadersViewHolder(view: View) : AdapterDelegateViewHolder<HeaderInfoAdapte
 
     internal var lastInputEdit: EditText? = null
 
-    private var nameTextListener: TextChangeListener? = null
-    private var valueTextListener: TextChangeListener? = null
+    private var nameTextListener: AfterTextChangeListener? = null
+    private var valueTextListener: AfterTextChangeListener? = null
 
     private var nameEdit: EditText? = null
     private var valueEdit: EditText? = null
@@ -104,7 +104,7 @@ class HeadersViewHolder(view: View) : AdapterDelegateViewHolder<HeaderInfoAdapte
         }
     }
 
-    fun addNameTextList(nameEdit: EditText, listener: TextChangeListener) {
+    fun addNameTextList(nameEdit: EditText, listener: AfterTextChangeListener) {
         logger.d("addNameTextList: nameEdit=$nameEdit")
         removeNameTextListener()
         nameTextListener = listener
@@ -112,7 +112,7 @@ class HeadersViewHolder(view: View) : AdapterDelegateViewHolder<HeaderInfoAdapte
         this.nameEdit = nameEdit
     }
 
-    fun addValueTextList(valueEdit: EditText, listener: TextChangeListener) {
+    fun addValueTextList(valueEdit: EditText, listener: AfterTextChangeListener) {
         logger.d("addValueTextList: valueEdit=$valueEdit")
         removeValueTextListener()
         valueTextListener = listener

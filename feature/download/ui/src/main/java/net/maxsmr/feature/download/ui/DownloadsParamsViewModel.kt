@@ -10,6 +10,8 @@ import dagger.assisted.AssistedInject
 import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
+import net.maxsmr.commonutils.live.field.clearErrorOnChange
+import net.maxsmr.commonutils.live.field.validateAndSetByRequired
 import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
@@ -20,7 +22,7 @@ import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.download.MD5_ALGORITHM
 import net.maxsmr.core.domain.entities.feature.download.REG_EX_MD5_ALGORITHM
-import net.maxsmr.core.ui.BooleanFieldFlags
+import net.maxsmr.core.ui.BooleanFieldState
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
@@ -50,26 +52,26 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     val fileNameField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
-        .validators(Field.Validator(R.string.download_file_name_error) {Regex(REG_EX_FILE_NAME).matches(it)})
-        .hint(R.string.download_file_name_hint)
+        .validators(Field.Validator(R.string.download_field_file_name_error) {Regex(REG_EX_FILE_NAME).matches(it)})
+        .hint(R.string.download_field_file_name_hint)
         .persist(state, KEY_FIELD_FILE_NAME)
         .build()
 
-    val fileNameFlagsField: Field<BooleanFieldFlags> = Field.Builder(BooleanFieldFlags())
+    val fileNameChangeStateField: Field<BooleanFieldState> = Field.Builder(BooleanFieldState(false))
         .emptyIf { false }
-        .persist(state, KEY_FIELD_FILE_FLAGS)
+        .persist(state, KEY_FIELD_FILE_NAME_CHANGE_STATE)
         .build()
 
     val subDirNameField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
-        .hint(R.string.download_sub_dir_name_hint)
+        .hint(R.string.download_field_sub_dir_name_hint)
         .persist(state, KEY_FIELD_SUB_DIR_NAME)
         .build()
 
     val targetHashField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
-        .validators(Field.Validator(R.string.download_target_hash_error) {Regex(REG_EX_MD5_ALGORITHM).matches(it)})
-        .hint(R.string.download_target_hash_hint)
+        .validators(Field.Validator(R.string.download_field_target_hash_error) {Regex(REG_EX_MD5_ALGORITHM).matches(it)})
+        .hint(R.string.download_field_target_hash_hint)
         .persist(state, KEY_FIELD_TARGET_HASH)
         .build()
 
@@ -78,9 +80,9 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         .persist(state, KEY_FIELD_IGNORE_SERVER_ERROR)
         .build()
 
-    val ignoreAttachmentFlagsField: Field<BooleanFieldFlags> = Field.Builder(BooleanFieldFlags())
+    val ignoreAttachmentStateField: Field<BooleanFieldState> = Field.Builder(BooleanFieldState(false))
         .emptyIf { false }
-        .persist(state, KEY_FIELD_IGNORE_ATTACHMENT)
+        .persist(state, KEY_FIELD_IGNORE_ATTACHMENT_STATE)
         .build()
 
     val deleteUnfinishedField: Field<Boolean> = Field.Builder(true)
@@ -104,11 +106,11 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 methodField,
                 bodyField,
                 fileNameField,
-                fileNameFlagsField,
+                fileNameChangeStateField,
                 subDirNameField,
                 targetHashField,
                 ignoreServerErrorField,
-                ignoreAttachmentFlagsField,
+                ignoreAttachmentStateField,
                 deleteUnfinishedField
             )
             headerFields.forEach {
@@ -120,13 +122,20 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     override fun onInitialized() {
         super.onInitialized()
-        urlField.valueLive.observe {
-            urlField.clearError()
+
+        fun Field<BooleanFieldState>.toggleState(value: Boolean) {
+            this.value = if (value) {
+                BooleanFieldState(value = true, isEnabled = false)
+            } else {
+                this.value?.copy(isEnabled = true) ?: BooleanFieldState(value = false, isEnabled = true)
+            }
         }
+
+        urlField.clearErrorOnChange(this)
         methodField.valueLive.observe {
             var body = bodyField.value ?: UriBodyContainer()
             body = if (it == Method.POST) {
-                bodyField.setRequired(R.string.download_request_body_empty_error)
+                bodyField.setRequired(R.string.download_field_request_body_empty_error)
                 body.copy(isEnabled = true)
             } else {
                 bodyField.setNonRequired()
@@ -134,29 +143,15 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             }
             bodyField.value = body
         }
-        bodyField.valueLive.observe {
-            bodyField.clearError()
-        }
-        fileNameField.valueLive.observe {
-            fileNameField.clearError()
-        }
+        bodyField.clearErrorOnChange(this)
+        fileNameField.clearErrorOnChange(this)
         fileNameField.isEmptyLive.observe {
-            fileNameFlagsField.value = if (it) {
-                BooleanFieldFlags(state = true, isEnabled = false)
-            } else {
-                fileNameFlagsField.value?.copy(isEnabled = true) ?: BooleanFieldFlags(isEnabled = true)
-            }
+            fileNameChangeStateField.toggleState(it)
         }
-        targetHashField.valueLive.observe {
-            targetHashField.clearError()
-        }
+        targetHashField.clearErrorOnChange(this)
 
         ignoreServerErrorField.valueLive.observe {
-            ignoreAttachmentFlagsField.value = if (it) {
-                BooleanFieldFlags(state = true, isEnabled = false)
-            } else {
-                ignoreAttachmentFlagsField.value?.copy(isEnabled = true) ?: BooleanFieldFlags(isEnabled = true)
-            }
+            ignoreAttachmentStateField.toggleState(it)
         }
         headerItems.observe {
             if (it.isEmpty()) {
@@ -203,14 +198,14 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
         val keyField = Field.Builder(EMPTY_STRING)
             .emptyIf { it.isEmpty() }
-            .setRequired(R.string.download_key_name_empty_error)
-            .hint(R.string.download_key_name_hint)
+            .setRequired(R.string.download_field_header_key_empty_error)
+            .hint(R.string.download_field_header_key_hint)
             .build()
         val keyInfo = keyField.observe(true)
         val valueField = Field.Builder(EMPTY_STRING)
             .emptyIf { it.isEmpty() }
-            .setRequired(R.string.download_value_name_empty_error)
-            .hint(R.string.download_value_name_hint)
+            .setRequired(R.string.download_field_header_value_empty_error)
+            .hint(R.string.download_field_header_value_hint)
             .build()
         val valueInfo = valueField.observe(false)
 
@@ -286,14 +281,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     fun onStartDownloadClick() {
         val method = methodField.value ?: return
 
-        val fields = allFields
-        var hasError = false
-        fields.forEach {
-            if (!it.validateAndSetByRequired()) {
-                hasError = true
-            }
-        }
-        if (hasError) {
+        if (!allFields.validateAndSetByRequired()) {
             return
         }
         val url = urlField.value?.toUrlOrNull() ?: return
@@ -308,7 +296,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             val value = it.header.second.field.value ?: return@forEach
             headers[key] = value
         }
-        val ignoreFileName = fileNameFlagsField.value?.state != true
+        val ignoreFileName = fileNameChangeStateField.value?.value != true
         val bodyUri = bodyField.value?.bodyUri
 
         val targetHashInfo = targetHashField.value?.takeIf { it.isNotEmpty() }?.let {
@@ -316,7 +304,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
 
         val ignoreServerError = ignoreServerErrorField.value ?: false
-        val ignoreAttachment = ignoreAttachmentFlagsField.value?.state ?: false
+        val ignoreAttachment = ignoreAttachmentStateField.value?.value ?: false
         val deleteUnfinished = deleteUnfinishedField.value ?: false
 
         val params = if (method == Method.POST && bodyUri != null) {
@@ -400,13 +388,12 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         )
     }
 
-    // TODO field container with flag
     data class UriBodyContainer(
         val bodyUri: String? = null,
         val isEnabled: Boolean = false,
     ) : Serializable {
 
-        val isEmpty = bodyUri == null
+        val isEmpty = bodyUri.isNullOrEmpty()
 
         fun getName(context: Context): String {
             return bodyUri?.let { Uri.parse(it).name(context.contentResolver) }.orEmpty()
@@ -428,11 +415,11 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         private const val KEY_FIELD_METHOD = "method"
         private const val KEY_FIELD_BODY = "body"
         private const val KEY_FIELD_FILE_NAME = "file_name"
-        private const val KEY_FIELD_FILE_FLAGS = "file_flags"
+        private const val KEY_FIELD_FILE_NAME_CHANGE_STATE = "file_name_change_state"
         private const val KEY_FIELD_SUB_DIR_NAME = "sub_dir_name"
         private const val KEY_FIELD_TARGET_HASH = "target_hash"
         private const val KEY_FIELD_IGNORE_SERVER_ERROR = "ignore_server_error"
-        private const val KEY_FIELD_IGNORE_ATTACHMENT = "ignore_attachment"
+        private const val KEY_FIELD_IGNORE_ATTACHMENT_STATE = "ignore_attachment_state"
         private const val KEY_FIELD_DELETE_UNFINISHED = "delete_unfinished"
     }
 }

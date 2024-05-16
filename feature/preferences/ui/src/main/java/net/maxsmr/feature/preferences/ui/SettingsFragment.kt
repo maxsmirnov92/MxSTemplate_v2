@@ -5,6 +5,7 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavArgs
 import dagger.hilt.android.AndroidEntryPoint
@@ -17,6 +18,7 @@ import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.bindHintError
 import net.maxsmr.core.ui.bindValue
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.toggleFieldState
 import net.maxsmr.feature.preferences.ui.databinding.FragmentSettingsBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
@@ -65,7 +67,17 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel, NavArgs>() {
             it.toString()
         }
         viewModel.maxDownloadsField.bindHintError(viewLifecycleOwner, binding.tilMaxDownloads)
+
         viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.cbDisableNotifications)
+
+        binding.etUpdateNotificationInterval.addTextChangedListener {
+            viewModel.updateNotificationIntervalStateField.toggleFieldState(it.toString().toLongOrNull() ?: 0)
+        }
+        viewModel.updateNotificationIntervalStateField.observeFrom(binding.etUpdateNotificationInterval, viewLifecycleOwner) {
+            binding.etUpdateNotificationInterval.isEnabled = it.isEnabled
+            it.value.toString()
+        }
+        viewModel.updateNotificationIntervalStateField.bindHintError(viewLifecycleOwner, binding.tilUpdateNotificationInterval)
 
         viewModel.hasChanges.observe {
             refreshSaveMenuItem(it)
@@ -74,7 +86,7 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel, NavArgs>() {
 
     override fun handleAlerts() {
         super.handleAlerts()
-        bindAlertDialog(SettingsViewModel.DIALOG_TAG_CONFIRM) {
+        bindAlertDialog(SettingsViewModel.DIALOG_TAG_CONFIRM_EXIT) {
             it.asYesNoNeutralDialog(requireContext())
         }
     }

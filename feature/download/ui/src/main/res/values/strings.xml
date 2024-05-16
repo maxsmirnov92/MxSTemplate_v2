@@ -11,23 +11,24 @@
         <item>GET</item>
         <item>POST</item>
     </string-array>
-    <string name="download_request_body_empty_text">Файл тела запроса не выбран</string>
-    <string name="download_request_body_non_required_text">Файл тела запроса не требуется</string>
-    <string name="download_request_body_empty_error">Тело запроса обязательно</string>
-    <string name="download_file_name_hint">Имя файла</string>
-    <string name="download_file_name_error">Некорректное имя файла</string>
-    <string name="download_file_name_fix_checkbox_text">Поменять из заголовка ответа при наличии</string>
-    <string name="download_sub_dir_name_hint">Имя подкаталога</string>
-    <string name="download_target_hash_hint">Целевой хэш MD5</string>
-    <string name="download_target_hash_error">Несоответствие формату алгоритма MD5</string>
-    <string name="download_field_name_ignore_server_error">Игнорировать ошибки сервера</string>
-    <string name="download_field_name_ignore_attachment_error">Игнорировать отсутствие вложения с заголовком \"Content-Disposition\"</string>
-    <string name="download_field_name_delete_unfinished">Удалить недокачанный файл</string>
+    <string name="download_field_request_body_empty_text">Файл тела запроса не выбран</string>
+    <string name="download_field_request_body_non_required_text">Файл тела запроса не требуется</string>
+    <string name="download_field_request_body_empty_error">Тело запроса обязательно</string>
+    <string name="download_field_file_name_hint">Имя файла</string>
+    <string name="download_field_file_name_error">Некорректное имя файла</string>
+    <string name="download_field_file_name_fix_checkbox_text">Поменять из заголовка ответа при наличии</string>
+    <string name="download_field_sub_dir_name_hint">Имя подкаталога</string>
+    <string name="download_field_target_hash_hint">Целевой хэш MD5</string>
+    <string name="download_field_target_hash_error">Несоответствие формату алгоритма MD5</string>
+    <string name="download_field_ignore_server_errors">Игнорировать ошибки сервера</string>
+    <string name="download_field_ignore_attachment">Игнорировать отсутствие вложения с заголовком \"Content-Disposition\"</string>
+    <string name="download_field_delete_unfinished">Удалить недокачанный файл</string>
+
     <string name="download_header_name_subtitle">Заголовки</string>
-    <string name="download_key_name_hint">Название</string>
-    <string name="download_key_name_empty_error">Название заголовка не может быть пустым</string>
-    <string name="download_value_name_hint">Значение</string>
-    <string name="download_value_name_empty_error">Значение заголовка не может быть пустым</string>
+    <string name="download_field_header_key_hint">Название</string>
+    <string name="download_field_header_key_empty_error">Название заголовка не может быть пустым</string>
+    <string name="download_field_header_value_hint">Значение</string>
+    <string name="download_field_header_value_empty_error">Значение заголовка не может быть пустым</string>
     <string name="download_start_button_text">Начать</string>
 
     <string name="download_clear_queue_alert_message">Очистить очередь ожидающих загрузок?</string>

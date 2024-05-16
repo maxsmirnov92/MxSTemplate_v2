@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="downloads_channel_name">Канал загрузок</string>
+    <string name="download_notification_channel_name">Канал загрузок</string>
+    <string name="download_success_notification_channel_name">Канал успешных загрузок</string>
+    <string name="download_failed_notification_channel_name">Канал неуспешных загрузок</string>
+
     <string name="download_notification_initial_text">Подготовка к загрузке файлов</string>
     <string name="download_notification_progress_upload_title">Выполняется выгрузка файла</string>
     <string name="download_notification_progress_download_title">Выполняется загрузка файла</string>

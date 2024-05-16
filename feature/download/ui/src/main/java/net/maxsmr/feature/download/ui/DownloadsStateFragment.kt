@@ -10,6 +10,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
+import net.maxsmr.commonutils.Predicate
+import net.maxsmr.commonutils.Predicate.Methods.findIndexed
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
@@ -18,6 +20,7 @@ import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.download.data.DownloadService
+import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_CLEAR_QUEUE
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
@@ -73,24 +76,26 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
 //        )
         viewModel.queueNames.observe {
             binding.tvQueueCount.text = it.size.toString()
-            val mergedNames = it.joinToString()
+            val mergedNames = it.joinToString("; ")
             binding.tvQueuedNames.setTextOrGone("[ $mergedNames ]", isEmptyFunc = { mergedNames.isEmpty() })
             binding.ibClearQueue.isVisible = it.isNotEmpty()
         }
-        viewModel.downloadItems.observe {
-            if (it.isNotEmpty()) {
+        viewModel.downloadItems.observe { items ->
+            if (items.isNotEmpty()) {
                 binding.rvDownloads.isVisible = true
                 binding.containerEmpty.isVisible = false
             } else {
                 binding.rvDownloads.isVisible = false
                 binding.containerEmpty.isVisible = true
             }
-            infoAdapter.items = it
-            binding.ibCancelAll.isVisible = it.any { item -> item.downloadInfo.isLoading }
-            binding.ibClearFinished.isVisible = it.any { item -> !item.downloadInfo.isLoading }
+            infoAdapter.items = items
+            binding.ibCancelAll.isVisible = items.any { item -> item.downloadInfo.isLoading }
+            binding.ibClearFinished.isVisible = items.any { item -> !item.downloadInfo.isLoading }
             // FIXME скролл
             if (!infoAdapter.isEmpty) {
-                binding.rvDownloads.scrollToPosition(infoAdapter.itemCount - 1)
+                findIndexed(items) { it.state is DownloadStateNotifier.DownloadState.Loading }?.let {
+                    binding.rvDownloads.scrollToPosition(it.first)
+                }
             }
         }
         binding.ibClearQueue.setOnClickListener {

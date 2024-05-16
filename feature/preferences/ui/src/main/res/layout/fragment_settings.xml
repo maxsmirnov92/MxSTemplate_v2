@@ -39,7 +39,7 @@
             android:id="@+id/tilMaxDownloads"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            tools:hint="@string/settings_field_hint_max_downloads">
+            tools:hint="@string/settings_field_max_downloads_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etMaxDownloads"
@@ -48,7 +48,7 @@
                 android:inputType="text|numberDecimal"
                 android:lines="1"
                 android:maxLines="1"
-                tools:hint="@string/settings_field_hint_max_downloads" />
+                tools:hint="@string/settings_field_max_downloads_hint" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -57,8 +57,26 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="@string/settings_field_name_disable_notifications"
+            android:text="@string/settings_field_disable_notifications"
             android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilUpdateNotificationInterval"
+            android:layout_marginTop="8dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:hint="@string/settings_field_update_notification_interval_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etUpdateNotificationInterval"
+                style="@style/InputText"
+                android:ellipsize="end"
+                android:inputType="text|numberDecimal"
+                android:lines="1"
+                android:maxLines="1"
+                tools:hint="@string/settings_field_update_notification_interval_hint" />
+
+        </com.google.android.material.textfield.TextInputLayout>
 
     </LinearLayout>
 

@@ -1,4 +1,4 @@
-package ru.rzd.pass.downloads.storage
+package net.maxsmr.feature.download.data.storage
 
 import android.net.Uri
 

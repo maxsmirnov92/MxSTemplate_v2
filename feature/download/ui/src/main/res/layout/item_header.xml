@@ -16,7 +16,7 @@
             android:id="@+id/tilName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            tools:hint="@string/download_key_name_hint">
+            tools:hint="@string/download_field_header_key_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etName"
@@ -28,7 +28,7 @@
             android:id="@+id/tilValue"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            tools:hint="@string/download_key_name_hint">
+            tools:hint="@string/download_field_header_key_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etValue"
