@@ -419,8 +419,9 @@ class DownloadManager @Inject constructor(
                 failReason = FailAddReason.ALREADY_ADDED
                 return
             }
-            // на этапе loading extension не актуализировалось в таблице, можно искать с исходным расширением
-            // или если это retry - params должны быть актуальные, но не пройдёт по isLoading
+            // на этапе loading extension не актуализировалось в таблице, можно искать с исходным расширением;
+            // или если это retry - params должны быть актуальные;
+            // не пройдёт, если это был isLoading
             val prevDownload =
                 downloadsRepo.getByNameAndExt(actualParams.resourceNameWithoutExt, actualParams.extension)
             if (prevDownload?.isLoading == true) {

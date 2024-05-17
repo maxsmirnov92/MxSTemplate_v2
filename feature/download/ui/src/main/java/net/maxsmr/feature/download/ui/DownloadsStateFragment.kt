@@ -1,18 +1,31 @@
 package net.maxsmr.feature.download.ui
 
+import android.graphics.drawable.ColorDrawable
+import android.net.Uri
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.widget.PopupWindow
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
-import net.maxsmr.commonutils.Predicate
+import net.maxsmr.commonutils.AppClickableSpan
 import net.maxsmr.commonutils.Predicate.Methods.findIndexed
+import net.maxsmr.commonutils.RangeSpanInfo
+import net.maxsmr.commonutils.copyToClipboard
+import net.maxsmr.commonutils.gui.PopupParams
+import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
+import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
+import net.maxsmr.commonutils.live.event.VmEvent
+import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
@@ -20,13 +33,17 @@ import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.download.data.DownloadService
+import net.maxsmr.feature.download.data.DownloadService.Companion.createShareAction
+import net.maxsmr.feature.download.data.DownloadService.Companion.createViewAction
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_CLEAR_QUEUE
+import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_RETRY_DOWNLOAD_IF_SUCCESS
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapterData
 import net.maxsmr.feature.download.ui.adapter.DownloadListener
 import net.maxsmr.feature.download.ui.databinding.FragmentDownloadsStateBinding
+import net.maxsmr.feature.download.ui.databinding.LayoutPopupDownloadDetailsBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -57,6 +74,8 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
     private val touchHelper: ItemTouchHelper = ItemTouchHelper(DragAndDropTouchHelperCallback(infoAdapter)).also {
         infoAdapter.startDragListener = OnStartDragHelperListener(it)
     }
+
+    private var detailsPopupWindow: PopupWindow? = null
 
     override fun onViewCreated(
         view: View,
@@ -119,14 +138,38 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
         bindAlertDialog(DIALOG_TAG_CLEAR_QUEUE) {
             it.asYesNoDialog(requireContext())
         }
+        bindAlertDialog(DIALOG_TAG_RETRY_DOWNLOAD_IF_SUCCESS) {
+            it.asYesNoDialog(requireContext())
+        }
     }
 
     override fun onCancelDownload(downloadInfo: DownloadInfo) {
         viewModel.onCancelDownload(downloadInfo.id)
     }
 
-    override fun onRetryDownload(downloadInfo: DownloadInfo, params: DownloadService.Params) {
-        viewModel.onRetryDownload(downloadInfo.id, params)
+    override fun onRetryDownload(
+        downloadInfo: DownloadInfo,
+        params: DownloadService.Params,
+        state: DownloadStateNotifier.DownloadState?,
+    ) {
+        viewModel.onRetryDownload(downloadInfo.id, params, state)
+    }
+
+    override fun onShowDownloadDetails(
+        downloadInfo: DownloadInfo,
+        params: DownloadService.Params,
+        state: DownloadStateNotifier.DownloadState?,
+        anchorView: View,
+    ) {
+        showDetailsPopup(params, anchorView)
+    }
+
+    override fun onViewResource(downloadUri: Uri, mimeType: String) {
+        startActivity(createViewAction().intent(downloadUri, mimeType))
+    }
+
+    override fun onShareResource(downloadUri: Uri, mimeType: String) {
+        startActivity(createShareAction().intent(downloadUri, mimeType))
     }
 
     override fun onItemMoved(fromPosition: Int, toPosition: Int, item: DownloadInfoAdapterData) {
@@ -135,5 +178,65 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
 
     override fun onItemRemoved(position: Int, item: DownloadInfoAdapterData) {
         viewModel.onRemoveFinishedDownload(item.id)
+    }
+
+    private fun showDetailsPopup(params: DownloadService.Params, anchorView: View) {
+        detailsPopupWindow = showPopupWindowWithObserver(
+            requireContext(),
+            detailsPopupWindow,
+            PopupParams(anchorView,
+                onDismissed = {
+                    detailsPopupWindow = null
+                    false
+                },
+                windowConfigurator = { window, context ->
+                    with(window) {
+                        width = (context.resources.displayMetrics.widthPixels * 0.8).toInt()
+                        height = ViewGroup.LayoutParams.WRAP_CONTENT
+                        setBackgroundDrawable(
+                            ColorDrawable(
+                                ContextCompat.getColor(
+                                    context,
+                                    android.R.color.transparent
+                                )
+                            )
+                        )
+                        isFocusable = true
+                        isTouchable = true
+                        isOutsideTouchable = true
+                        animationStyle = net.maxsmr.core.ui.R.style.PopupAnimation
+                    }
+                }
+            ),
+            contentViewCreator = {
+                val binding = LayoutPopupDownloadDetailsBinding.inflate(
+                    LayoutInflater.from(requireContext()),
+                    it.parent as ViewGroup,
+                    false
+                ).apply {
+                    ibClose.setOnClickListener {
+                        hideDetailsPopup()
+                    }
+                    tvDetails.setSpanText(params.requestParams.url, RangeSpanInfo(0,
+                        params.requestParams.url.length,
+                        listOf(
+                            AppClickableSpan(
+                                true
+                            ) {
+                                copyToClipboard(requireContext(), "url", params.requestParams.url)
+                                viewModel.showToast(ToastAction(TextMessage(net.maxsmr.core.android.R.string.toast_copied_to_clipboard_message)))
+                            }
+                        )))
+                }
+                return@showPopupWindowWithObserver binding.root
+            }
+        )
+    }
+
+    private fun hideDetailsPopup() {
+        detailsPopupWindow?.let { window ->
+            window.dismiss()
+            detailsPopupWindow = null
+        }
     }
 }

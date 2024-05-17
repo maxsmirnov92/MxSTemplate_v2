@@ -58,11 +58,6 @@ class DownloadsPagerFragment : BaseVmFragment<DownloadsViewModel>() {
         viewModel.handleEvents(this)
     }
 
-    override fun onResume() {
-        super.onResume()
-        hideKeyboard()
-    }
-
     override fun onDestroyView() {
         super.onDestroyView()
         binding.viewPagerFragments.unregisterOnPageChangeCallback(pageChangeCallback)

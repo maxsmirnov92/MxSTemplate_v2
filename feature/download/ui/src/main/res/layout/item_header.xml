@@ -56,6 +56,6 @@
         android:layout_centerVertical="true"
         android:layout_marginStart="10dp"
         android:scaleType="centerCrop"
-        app:srcCompat="@drawable/ic_clear" />
+        app:srcCompat="@drawable/ic_close_clear_cancel" />
 
 </RelativeLayout>

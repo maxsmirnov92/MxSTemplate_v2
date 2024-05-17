@@ -1,6 +1,8 @@
 package net.maxsmr.feature.download.ui.adapter
 
 import android.annotation.SuppressLint
+import android.net.Uri
+import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate
@@ -37,7 +39,20 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                 listener.onCancelDownload(item.downloadInfo)
             }
             ibRetry.setOnClickListener {
-                listener.onRetryDownload(item.downloadInfo, item.params)
+                listener.onRetryDownload(item.downloadInfo, item.params, item.state)
+            }
+            ibDetails.setOnClickListener {
+                listener.onShowDownloadDetails(item.downloadInfo, item.params, item.state, ibDetails)
+            }
+            ibView.setOnClickListener {
+                item.downloadInfo.localUri?.let {
+                    listener.onViewResource(it, item.downloadInfo.mimeType)
+                }
+            }
+            ibShare.setOnClickListener {
+                item.downloadInfo.localUri?.let {
+                    listener.onShareResource(it, item.downloadInfo.mimeType)
+                }
             }
 
             bind {
@@ -240,7 +255,8 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                 tvStatusInfo.setTextColor(ContextCompat.getColor(context, statusColorResId))
 
                 ibCancel.isVisible = state is DownloadState.Loading || state == null // для этапа выполнения запроса
-                ibRetry.isVisible = state is DownloadState.Failed || state is DownloadState.Cancelled
+                ibRetry.isVisible = state !is DownloadState.Loading && state != null
+                containerSuccessButtons.isVisible = state is DownloadState.Success
             }
         }
     }
@@ -274,5 +290,20 @@ interface DownloadListener {
 
     fun onCancelDownload(downloadInfo: DownloadInfo)
 
-    fun onRetryDownload(downloadInfo: DownloadInfo, params: DownloadService.Params)
+    fun onRetryDownload(
+        downloadInfo: DownloadInfo,
+        params: DownloadService.Params,
+        state: DownloadState?
+    )
+
+    fun onShowDownloadDetails(
+        downloadInfo: DownloadInfo,
+        params: DownloadService.Params,
+        state: DownloadState?,
+        anchorView: View
+    )
+
+    fun onViewResource(downloadUri: Uri, mimeType: String)
+
+    fun onShareResource(downloadUri: Uri, mimeType: String)
 }

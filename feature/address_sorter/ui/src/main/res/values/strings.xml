@@ -7,5 +7,5 @@
     <string name="address_sorter_menu_action_pick_from_json">Выбрать из JSON</string>
     <string name="address_sorter_menu_action_clear">Очистить</string>
     <string name="address_sorter_menu_action_download_file">Загрузить файл</string>
-    <string name="address_sorter_address_add_error">Не удалось добавить адреса</string>
+    <string name="address_sorter_toast_address_add_error_message">Не удалось добавить адреса</string>
 </resources>

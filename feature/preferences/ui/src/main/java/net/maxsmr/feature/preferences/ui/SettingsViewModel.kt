@@ -129,15 +129,15 @@ class SettingsViewModel @Inject constructor(
     fun navigateBackWithAlert() {
         if (hasChanges.value == true) {
             AlertBuilder(DIALOG_TAG_CONFIRM_EXIT)
-                .setMessage(R.string.settings_dialog_confirm_message)
+                .setMessage(R.string.settings_alert_confirm_message)
                 .setAnswers(
-                    Alert.Answer(R.string.settings_dialog_confirm_yes_button).onSelect {
+                    Alert.Answer(R.string.settings_alert_confirm_yes_button).onSelect {
                         saveChanges()
                     },
-                    Alert.Answer(R.string.settings_dialog_confirm_neutral_button).onSelect {
+                    Alert.Answer(R.string.settings_alert_confirm_neutral_button).onSelect {
                         navigateBack()
                     },
-                    Alert.Answer(R.string.settings_dialog_confirm_negative_button),
+                    Alert.Answer(R.string.settings_alert_confirm_negative_button),
                 )
                 .build()
         } else {

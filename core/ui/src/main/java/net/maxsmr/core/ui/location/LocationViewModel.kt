@@ -12,7 +12,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.getLocationSettingsIntent
 import net.maxsmr.commonutils.live.event.VmEvent
@@ -43,6 +42,8 @@ class LocationViewModel @AssistedInject constructor(
     private val _currentLocation: MutableLiveData<Location?> = MutableLiveData()
     val currentLocation: LiveData<Location?> = _currentLocation
 
+    private val navigateToLocationSettings: MutableLiveData<VmEvent<Unit>> = MutableLiveData()
+
     private val locationThread: HandlerThread = HandlerThread("LocationHandlerThread")
 
     private val locationDispatcher: CoroutineDispatcher by lazy {
@@ -64,17 +65,17 @@ class LocationViewModel @AssistedInject constructor(
 
     override fun onGpsNotAvailable() {
         AlertBuilder(DIALOG_TAG_GPS_NOT_AVAILABLE)
-            .setMessage(R.string.gps_not_available_alert_message)
+            .setMessage(R.string.alert_gps_not_available_message)
             .setAnswers(Alert.Answer(android.R.string.ok))
             .build()
     }
 
     override fun onGpsProviderNotEnabled() {
         AlertBuilder(DIALOG_TAG_GPS_NOT_ENABLED)
-            .setTitle(R.string.gps_enable_dialog_alert_title)
-            .setMessage(R.string.gps_enable_dialog_alert_message)
+            .setTitle(R.string.alert_gps_enable_dialog_title)
+            .setMessage(R.string.alert_gps_enable_dialog_message)
             .setAnswers(
-                Alert.Answer(R.string.gps_enable_dialog_alert_answer_settings).onSelect {
+                Alert.Answer(R.string.alert_gps_enable_dialog_answer_settings).onSelect {
                     navigateToLocationSettings()
                 },
                 Alert.Answer(android.R.string.cancel)
@@ -105,7 +106,7 @@ class LocationViewModel @AssistedInject constructor(
                 fragment.handleNavigation(it)
             }
         }
-        intentNavigationCommands.observeEvents(fragment.viewLifecycleOwner) { it.doAction(fragment) }
+        navigateToLocationSettings.observeEvents(fragment.viewLifecycleOwner) { fragment.startActivity(getLocationSettingsIntent()) }
         toastCommands.observeEvents { fragment.viewLifecycleOwner }
     }
 
@@ -145,16 +146,8 @@ class LocationViewModel @AssistedInject constructor(
         (mockLocationReceiver ?: locationReceiver).unregisterLocationUpdates()
     }
 
-    @JvmOverloads
-    fun navigateToLocationSettings(requestCode: Int? = null) {
-        intentNavigationCommands.value = VmEvent(
-            IntentNavigationAction(
-                IntentNavigationAction.IntentNavigationInfo(
-                    getLocationSettingsIntent(),
-                    requestCode
-                )
-            )
-        )
+    private fun navigateToLocationSettings() {
+        navigateToLocationSettings.postValue(VmEvent(Unit))
     }
 
     fun hasGpsPermissions(fragment: BaseVmFragment<*>, requireFineLocation: Boolean): Boolean {

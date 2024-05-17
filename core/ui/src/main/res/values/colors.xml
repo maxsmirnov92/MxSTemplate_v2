@@ -104,6 +104,8 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="gray_light">#F4F4F4</color>
+    <color name="gray_medium">#b3b3b3</color>
+    <color name="gray_dark">#4b4b4b</color>
 
     <color name="colorPrimary">@color/purple_500</color>
     <color name="colorPrimaryVariant">@color/purple_500</color>

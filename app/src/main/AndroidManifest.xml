@@ -27,6 +27,7 @@
         android:theme="@style/AppTheme"
         tools:targetApi="31">
 
+        <!--  при  adjustPan проблемы с пустым пространством при отсутствующей клавиатуре остаются   -->
         <activity
             android:name=".activity.MainBottomActivity"
             android:windowSoftInputMode="stateHidden|adjustResize"

@@ -42,4 +42,6 @@
     <string name="error_intent_send">Приложение для отправки не обнаружено</string>
     <string name="error_intent_open_url">Приложение для просмотра ссылки не обнаружено</string>
     <string name="error_intent_open_document">Приложение для выбора документа не обнаружено</string>
+
+    <string name="toast_copied_to_clipboard_message">Скопировано в буфер обмена</string>
 </resources>

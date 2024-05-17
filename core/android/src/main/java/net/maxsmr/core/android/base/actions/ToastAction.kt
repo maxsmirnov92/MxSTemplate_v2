@@ -15,24 +15,20 @@ data class ToastAction(
     val yOffset: Int = 0,
     val horizontalMargin: Float? = null,
     val verticalMargin: Float? = null,
-    val duration: Int = Toast.LENGTH_SHORT,
+    val duration: ToastLength = ToastLength.SHORT,
     val customView: View? = null,
 ) : BaseViewModelAction<Context>() {
 
     override fun doAction(actor: Context) {
         super.doAction(actor)
         val toast: Toast
-        var duration = duration
-        if (duration != Toast.LENGTH_SHORT && duration != Toast.LENGTH_LONG) {
-            duration = Toast.LENGTH_SHORT
-        }
         if (customView == null) {
             val message = message?.get(actor) ?: throw IllegalStateException("message not specified")
-            toast = Toast.makeText(actor, message, duration)
+            toast = Toast.makeText(actor, message, duration.value)
         } else {
             toast = Toast(actor)
             toast.view = customView
-            toast.duration = duration
+            toast.duration = duration.value
         }
         gravity?.let {
             toast.setGravity(gravity, xOffset, yOffset)
@@ -41,5 +37,10 @@ data class ToastAction(
             toast.setMargin(horizontalMargin, verticalMargin)
         }
         toast.show()
+    }
+
+    enum class ToastLength(val value: Int) {
+        SHORT(Toast.LENGTH_SHORT),
+        LONG(Toast.LENGTH_LONG)
     }
 }

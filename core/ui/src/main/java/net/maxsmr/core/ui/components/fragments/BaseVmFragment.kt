@@ -194,7 +194,6 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment() {
 
     @CallSuper
     protected open fun observeCommands() {
-        viewModel.intentNavigationCommands.observeEvents { it.doAction(this) }
         viewModel.toastCommands.observeEvents { it.doAction(requireContext()) }
     }
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="download_notification_channel_name">Канал загрузок</string>
-    <string name="download_success_notification_channel_name">Канал успешных загрузок</string>
-    <string name="download_failed_notification_channel_name">Канал неуспешных загрузок</string>
+    <string name="download_notification_channel_success_name">Канал успешных загрузок</string>
+    <string name="download_notification_channel_failed_name">Канал неуспешных загрузок</string>
 
     <string name="download_notification_initial_text">Подготовка к загрузке файлов</string>
     <string name="download_notification_progress_upload_title">Выполняется выгрузка файла</string>
@@ -15,13 +15,13 @@
     <string name="download_notification_cancel_button">Отмена</string>
     <string name="download_notification_failed_title">Не удалось загрузить файл</string>
     <string name="download_notification_cancelled_title">Загрузка файла отменена</string>
-    <string name="download_success_add_to_queue_toast_message_format">Загрузка файла \"%s\" добавлена в очередь</string>
-    <string name="download_fail_add_to_queue_name_toast_message_format">Загрузка файла \"%1$s\" не была добавлена в очередь, причина: %2$s</string>
-    <string name="download_fail_add_to_queue_url_toast_message_format">Загрузка файла по URL \"%1$s\" не была добавлена в очередь, причина: %2$s</string>
+    <string name="download_toast_success_add_to_queue_message_format">Загрузка файла \"%s\" добавлена в очередь</string>
+    <string name="download_toast_fail_add_to_queue_name_message_format">Загрузка файла \"%1$s\" не была добавлена в очередь, причина: %2$s</string>
+    <string name="download_toast_fail_add_to_queue_url_message_format">Загрузка файла по URL \"%1$s\" не была добавлена в очередь, причина: %2$s</string>
     <string name="download_fail_add_to_queue_reason_not_valid">некорректные параметры</string>
     <string name="download_fail_add_to_queue_reason_already_added">уже в очереди</string>
     <string name="download_fail_add_to_queue_reason_already_loading">уже загружается</string>
-    <string name="download_start_failed_toast_message_format">Не удалось запустить сервис для загрузки файла %s</string>
+    <string name="download_toast_start_failed_message_format">Не удалось запустить сервис для загрузки файла %s</string>
     <string name="download_error">Ошибка при загрузке файла</string>
 
     <string name="view.choose_client_file_title">Выберите клиент для открытия файла</string>

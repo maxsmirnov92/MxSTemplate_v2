@@ -76,7 +76,8 @@ class MediaStoreStorage(
             val pendingValues = ContentValues().apply {
                 put(MediaStore.Downloads.IS_PENDING, 0)
             }
-            resolver.update(uri, pendingValues, null, null)
+            // code 2067 SQLITE_CONSTRAINT_UNIQUE
+            uri.tryUpdate(pendingValues)
             return uri
         } catch (e: Exception) {
             throw e.wrapIfNeed(uri)

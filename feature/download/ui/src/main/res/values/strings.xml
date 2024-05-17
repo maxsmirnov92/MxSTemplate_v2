@@ -31,7 +31,9 @@
     <string name="download_field_header_value_empty_error">Значение заголовка не может быть пустым</string>
     <string name="download_start_button_text">Начать</string>
 
-    <string name="download_clear_queue_alert_message">Очистить очередь ожидающих загрузок?</string>
+    <string name="download_alert_confirm_title">Подтверждение</string>
+    <string name="download_alert_clear_queue_message">Очистить очередь ожидающих загрузок?</string>
+    <string name="download_alert_retry_download_if_success_message">Данная загрузка завершилась успешно. Всё равно повторить?</string>
     <string name="download_queued_count_subtitle">В очереди:</string>
     <string name="download_active_empty_text">Нет активных загрузок</string>
 

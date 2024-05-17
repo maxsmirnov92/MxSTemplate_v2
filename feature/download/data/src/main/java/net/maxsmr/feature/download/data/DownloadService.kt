@@ -134,17 +134,21 @@ class DownloadService : Service() {
     }
 
     private val successNotificationChannel: NotificationWrapper.ChannelParams by lazy {
-        getFinishedNotificationChannel(successSoundUri,
-            R.string.download_success_notification_channel_name,
+        getFinishedNotificationChannel(
+            successSoundUri,
+            R.string.download_notification_channel_success_name,
             "downloads.success",
-            VIBRATION_PATTERN_SUCCESS)
+            VIBRATION_PATTERN_SUCCESS
+        )
     }
 
     private val failedNotificationChannel: NotificationWrapper.ChannelParams by lazy {
-        getFinishedNotificationChannel(failedSoundUri,
-            R.string.download_failed_notification_channel_name,
+        getFinishedNotificationChannel(
+            failedSoundUri,
+            R.string.download_notification_channel_failed_name,
             "downloads.failed",
-            VIBRATION_PATTERN_FAILED)
+            VIBRATION_PATTERN_FAILED
+        )
     }
 
     private val contextJob = Job()
@@ -319,8 +323,9 @@ class DownloadService : Service() {
 
             class ServiceProgressListener(val type: Loading.Type) : ProgressListener() {
 
-                override val notifyInterval: Long = params.notificationParams?.updateNotificationInterval?.takeIf { it >= UPDATE_NOTIFICATION_INTERVAL_MIN }
-                    ?: UPDATE_NOTIFICATION_INTERVAL_DEFAULT
+                override val notifyInterval: Long =
+                    params.notificationParams?.updateNotificationInterval?.takeIf { it >= UPDATE_NOTIFICATION_INTERVAL_MIN }
+                        ?: UPDATE_NOTIFICATION_INTERVAL_DEFAULT
 
                 override fun onProcessing(state: ProgressStateInfo): Boolean {
                     onDownloadProcessing(type, state, downloadInfo, params)
@@ -736,7 +741,7 @@ class DownloadService : Service() {
         soundUri: Uri,
         @StringRes titleResId: Int,
         idPostfix: String,
-        vibrationPattern: LongArray
+        vibrationPattern: LongArray,
     ): NotificationWrapper.ChannelParams {
         return NotificationWrapper.ChannelParams(
             "$packageName.$idPostfix",
@@ -1061,41 +1066,11 @@ class DownloadService : Service() {
 //
 //        val errorSoundUri: Uri? get() = errorSoundResId?.let { baseApplicationContext.rawResourceToUri(it) }
 
-        @JvmOverloads
-        fun withOpenAction(
-            context: Context = baseApplicationContext,
-            @StringRes chooserTitleRes: Int = R.string.view_choose_client_file_title,
-            @StringRes notificationActionRes: Int = R.string.download_notification_success_view_button,
-            @DrawableRes iconResId: Int = android.R.drawable.ic_menu_view,
-        ) = apply {
-            SuccessAction.View(
-                context.getString(chooserTitleRes),
-                context.getString(notificationActionRes),
-                iconResId
-            ).add()
+        override fun toString(): String {
+            return "NotificationParams(actions=$successActions)"
         }
 
-        @JvmOverloads
-        fun withShareAction(
-            context: Context = baseApplicationContext,
-            @StringRes chooserTitleRes: Int = R.string.view_choose_client_file_title,
-            @StringRes notificationActionRes: Int = R.string.download_notification_success_share_button,
-            @DrawableRes iconResId: Int = android.R.drawable.ic_menu_share,
-            intentSubject: String = EMPTY_STRING,
-            intentText: String = EMPTY_STRING,
-            intentEmails: ArrayList<String> = arrayListOf(),
-        ) = apply {
-            SuccessAction.Share(
-                context.getString(chooserTitleRes),
-                context.getString(notificationActionRes),
-                iconResId,
-                intentSubject,
-                intentText,
-                intentEmails
-            ).add()
-        }
-
-        private fun SuccessAction.add() {
+        fun SuccessAction.add() {
             if (!successActions.add(this)) {
                 successActions.remove(this)
                 successActions.add(this)
@@ -1134,7 +1109,6 @@ class DownloadService : Service() {
                 return id
             }
 
-
             data class View @JvmOverloads constructor(
                 override val chooserTitle: String,
                 override val notificationActionName: String = EMPTY_STRING,
@@ -1142,7 +1116,6 @@ class DownloadService : Service() {
             ) : SuccessAction() {
 
                 override val id: Int = 1
-
 
                 override fun createIntent(uri: Uri, mimeType: String): Intent = ViewFile.intent(
                     ViewFile.Data(uri, mimeType)
@@ -1164,10 +1137,6 @@ class DownloadService : Service() {
                     ShareFile.Data(uri, mimeType, intentText, intentSubject, intentEmails)
                 )
             }
-        }
-
-        override fun toString(): String {
-            return "NotificationParams(actions=$successActions)"
         }
     }
 
@@ -1249,6 +1218,38 @@ class DownloadService : Service() {
                 startForeground = true
             )
         }
+
+        @JvmStatic
+        @JvmOverloads
+        fun createViewAction(
+            context: Context = baseApplicationContext,
+            @StringRes chooserTitleRes: Int = R.string.view_choose_client_file_title,
+            @StringRes notificationActionRes: Int = R.string.download_notification_success_view_button,
+            @DrawableRes iconResId: Int = android.R.drawable.ic_menu_view,
+        ) = NotificationParams.SuccessAction.View(
+            context.getString(chooserTitleRes),
+            context.getString(notificationActionRes),
+            iconResId
+        )
+
+        @JvmStatic
+        @JvmOverloads
+        fun createShareAction(
+            context: Context = baseApplicationContext,
+            @StringRes chooserTitleRes: Int = R.string.view_choose_client_file_title,
+            @StringRes notificationActionRes: Int = R.string.download_notification_success_share_button,
+            @DrawableRes iconResId: Int = android.R.drawable.ic_menu_share,
+            intentSubject: String = EMPTY_STRING,
+            intentText: String = EMPTY_STRING,
+            intentEmails: ArrayList<String> = arrayListOf(),
+        ) = NotificationParams.SuccessAction.Share(
+            context.getString(chooserTitleRes),
+            context.getString(notificationActionRes),
+            iconResId,
+            intentSubject,
+            intentText,
+            intentEmails
+        )
 
         private fun createPendingIntent(
             context: Context,

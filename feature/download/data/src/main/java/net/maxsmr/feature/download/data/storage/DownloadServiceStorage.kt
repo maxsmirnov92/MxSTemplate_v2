@@ -7,6 +7,7 @@ import android.os.Environment
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.text.getExtension
 import net.maxsmr.feature.download.data.DownloadService
+import java.io.File
 import java.io.OutputStream
 
 abstract class DownloadServiceStorage(
@@ -82,7 +83,7 @@ abstract class DownloadServiceStorage(
 
     protected abstract fun namesAt(fullDirPath: String, startsWith: String?): Set<UriAndName>
 
-    private fun baseNamePart(name: String): String {
+    protected fun baseNamePart(name: String): String {
         name.lastIndexOf(UNIQUE_NAME_PREFIX).takeIf { it != -1 }?.let {
             return name.substring(0, it)
         }
@@ -127,16 +128,20 @@ abstract class DownloadServiceStorage(
         SHARED {
 
             override fun rootDirPath(context: Context): String {
-                return if (useMediaStore()) Environment.DIRECTORY_DOWNLOADS
-                else Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+                return if (useMediaStore()) {
+                    Environment.DIRECTORY_DOWNLOADS
+                }
+                else {
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath
+                }
             }
         };
 
         fun dirPath(context: Context, subDirPath: String?): String {
             val rootPath = rootDirPath(context)
-            return subDirPath?.takeIf { it.isNotBlank() }?.let {
-                "$rootPath/$subDirPath/"
-            } ?: "$rootPath/"
+            return subDirPath?.removePrefix(File.separator)?.takeIf { it.isNotBlank() }?.let {
+                rootPath + File.separator + it + File.separator
+            } ?: (rootPath + File.separator)
         }
 
         protected abstract fun rootDirPath(context: Context): String

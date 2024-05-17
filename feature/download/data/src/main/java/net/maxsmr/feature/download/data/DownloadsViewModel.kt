@@ -82,10 +82,10 @@ class DownloadsViewModel @Inject constructor(
         viewModelScope.launch {
             downloadManager.successAddedToQueueEvent.collect {
                 it.targetResourceName.takeIf { it.isNotEmpty() }?.let { name ->
-                    toastCommands.value = VmEvent(
+                    showToast(
                         ToastAction(
                             TextMessage(
-                                R.string.download_success_add_to_queue_toast_message_format,
+                                R.string.download_toast_success_add_to_queue_message_format,
                                 name
                             )
                         )
@@ -96,14 +96,16 @@ class DownloadsViewModel @Inject constructor(
         viewModelScope.launch {
             downloadManager.failedAddedToQueueEvent.collect {
                 val name = it.first.targetResourceName
-                val reason = TextMessage.ResArg(when(it.second) {
-                    FailAddReason.NOT_VALID -> R.string.download_fail_add_to_queue_reason_not_valid
-                    FailAddReason.ALREADY_ADDED -> R.string.download_fail_add_to_queue_reason_already_added
-                    FailAddReason.ALREADY_LOADING -> R.string.download_fail_add_to_queue_reason_already_loading
-                })
+                val reason = TextMessage.ResArg(
+                    when (it.second) {
+                        FailAddReason.NOT_VALID -> R.string.download_fail_add_to_queue_reason_not_valid
+                        FailAddReason.ALREADY_ADDED -> R.string.download_fail_add_to_queue_reason_already_added
+                        FailAddReason.ALREADY_LOADING -> R.string.download_fail_add_to_queue_reason_already_loading
+                    }
+                )
                 val message: TextMessage? = if (name.isNotEmpty()) {
                     TextMessage(
-                        R.string.download_fail_add_to_queue_name_toast_message_format,
+                        R.string.download_toast_fail_add_to_queue_name_message_format,
                         name,
                         reason
                     )
@@ -111,7 +113,7 @@ class DownloadsViewModel @Inject constructor(
                     val url = it.first.url
                     if (url.isNotEmpty()) {
                         TextMessage(
-                            R.string.download_fail_add_to_queue_url_toast_message_format,
+                            R.string.download_toast_fail_add_to_queue_url_message_format,
                             name,
                             reason
                         )
@@ -119,7 +121,7 @@ class DownloadsViewModel @Inject constructor(
                         null
                     }
                 }
-                toastCommands.value = VmEvent(ToastAction(message))
+                showToast(ToastAction(message, duration = ToastAction.ToastLength.LONG))
             }
         }
     }
@@ -131,14 +133,13 @@ class DownloadsViewModel @Inject constructor(
                 fragment.handleNavigation(it)
             }
         }
-        intentNavigationCommands.observeEvents(fragment.viewLifecycleOwner) { it.doAction(fragment) }
         toastCommands.observeEvents(fragment.viewLifecycleOwner) { it.doAction(fragment.requireContext()) }
 
         failedStartParamsEvent.observeEvents {
-            toastCommands.value = VmEvent(
+            showToast(
                 ToastAction(
                     TextMessage(
-                        R.string.download_start_failed_toast_message_format,
+                        R.string.download_toast_start_failed_message_format,
                         it.targetResourceName
                     )
                 )

@@ -77,7 +77,7 @@
                     android:layout_height="26dp"
                     android:layout_marginStart="10dp"
                     android:scaleType="centerCrop"
-                    app:srcCompat="@drawable/ic_clear" />
+                    app:srcCompat="@drawable/ic_close_clear_cancel" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"

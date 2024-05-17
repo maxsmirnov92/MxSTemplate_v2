@@ -115,7 +115,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         viewModelScope.launch {
             uri.openInputStream(context.contentResolver)?.let {
                 if (!repo.addFromStream(it)) {
-                    toastCommands.postValue(VmEvent(ToastAction(message = TextMessage(R.string.address_sorter_address_add_error))))
+                    showToast(ToastAction(message = TextMessage(R.string.address_sorter_toast_address_add_error_message)))
                 }
                 it.close()
             }

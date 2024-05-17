@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.feature.download.data.DownloadService
+import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapterData
@@ -40,13 +41,36 @@ class DownloadsStateViewModel @AssistedInject constructor(
 
     fun onClearQueue() {
         AlertBuilder(DIALOG_TAG_CLEAR_QUEUE)
-            .setMessage(R.string.download_clear_queue_alert_message)
+            .setTitle(R.string.download_alert_confirm_title)
+            .setMessage(R.string.download_alert_clear_queue_message)
             .setAnswers(
                 Alert.Answer(android.R.string.yes).onSelect {
                     manager.removeAllPending()
                 },
-                Alert.Answer(android.R.string.no))
+                Alert.Answer(android.R.string.no)
+            )
             .build()
+    }
+
+    fun onRetryDownload(
+        downloadId: Long,
+        params: DownloadService.Params,
+        state: DownloadStateNotifier.DownloadState?,
+    ) {
+        if (state is DownloadStateNotifier.DownloadState.Success) {
+            AlertBuilder(DIALOG_TAG_RETRY_DOWNLOAD_IF_SUCCESS)
+                .setTitle(R.string.download_alert_confirm_title)
+                .setMessage(R.string.download_alert_retry_download_if_success_message)
+                .setAnswers(
+                    Alert.Answer(android.R.string.yes).onSelect {
+                        manager.retryDownload(downloadId, params)
+                    },
+                    Alert.Answer(android.R.string.no)
+                )
+                .build()
+        } else {
+            manager.retryDownload(downloadId, params)
+        }
     }
 
     fun onClearFinished() {
@@ -61,13 +85,10 @@ class DownloadsStateViewModel @AssistedInject constructor(
         DownloadService.cancel(id)
     }
 
-    fun onRetryDownload(id: Long, params: DownloadService.Params) {
-        manager.retryDownload(id, params)
-    }
-
     fun onRemoveFinishedDownload(id: Long) {
         manager.removeFinished(id)
     }
+
 
     @AssistedFactory
     interface Factory {
@@ -80,6 +101,7 @@ class DownloadsStateViewModel @AssistedInject constructor(
 
     companion object {
 
-        const val DIALOG_TAG_CLEAR_QUEUE = "CLEAR_QUEUE"
+        const val DIALOG_TAG_CLEAR_QUEUE = "clear_queue"
+        const val DIALOG_TAG_RETRY_DOWNLOAD_IF_SUCCESS = "retry_download_if_success"
     }
 }

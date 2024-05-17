@@ -13,7 +13,6 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.core.android.R
 import net.maxsmr.core.android.base.BaseViewModel.*
-import net.maxsmr.core.android.base.actions.IntentNavigationAction
 import net.maxsmr.core.android.base.actions.NavigationCommand
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.alert.Alert
@@ -56,11 +55,13 @@ abstract class BaseViewModel(
      * привязанного к NavHostFragment,
      * в котором имеется данный [BaseNavigationFragment], кто будет обозревать ивенты
      */
-    val navigationCommands: MutableLiveData<VmEvent<NavigationCommand>> = MutableLiveData()
+    val _navigationCommands: MutableLiveData<VmEvent<NavigationCommand>> = MutableLiveData()
 
-    val intentNavigationCommands: MutableLiveData<VmEvent<IntentNavigationAction>> = MutableLiveData()
+    val navigationCommands = _navigationCommands as LiveData<VmEvent<NavigationCommand>>
 
-    val toastCommands: MutableLiveData<VmEvent<ToastAction>> = MutableLiveData()
+    val _toastCommands: MutableLiveData<VmEvent<ToastAction>> = MutableLiveData()
+
+    val toastCommands = _toastCommands as LiveData<VmEvent<ToastAction>>
 
     /**
      * Очередь для показа диалогов
@@ -78,7 +79,6 @@ abstract class BaseViewModel(
     open val connectionManager: ConnectionManager? by lazy { ConnectionManager(snackbarQueue) }
 
     private val lifecycleRegistry: LifecycleRegistry by lazy { LifecycleRegistry(this) }
-
 
     init {
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
@@ -99,7 +99,7 @@ abstract class BaseViewModel(
         lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
     }
 
-    override val lifecycle: LifecycleRegistry
+    final override val lifecycle: LifecycleRegistry
         get() = lifecycleRegistry
 
     override fun onCleared() {
@@ -184,11 +184,15 @@ abstract class BaseViewModel(
     }
 
     fun navigate(command: NavigationCommand.ToDirection) {
-        navigationCommands.postValue(VmEvent(command))
+        _navigationCommands.postValue(VmEvent(command))
     }
 
     fun navigateBack() {
-        navigationCommands.postValue(VmEvent(NavigationCommand.Back))
+        _navigationCommands.postValue(VmEvent(NavigationCommand.Back))
+    }
+
+    fun showToast(action: ToastAction) {
+        _toastCommands.postValue(VmEvent(action))
     }
 
     fun onPickerResultError(error: PickResult.Error) {
