@@ -12,6 +12,7 @@ import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsViewModel
+import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapterData
 
@@ -25,6 +26,8 @@ class DownloadsStateViewModel @AssistedInject constructor(
 
     val downloadItems = MutableLiveData<List<DownloadInfoAdapterData>>()
 
+    val queryNameFilter = MutableLiveData<String>()
+
     override fun onInitialized() {
         super.onInitialized()
         viewModelScope.launch {
@@ -34,8 +37,11 @@ class DownloadsStateViewModel @AssistedInject constructor(
         }
         viewModelScope.launch {
             manager.resultItems.collect {
-                downloadItems.postValue(it.map { item -> DownloadInfoAdapterData(item) })
+                downloadItems.postValue(it.mapWithFilterByName(queryNameFilter.value.orEmpty()))
             }
+        }
+        queryNameFilter.observe {
+            downloadItems.value = manager.resultItems.value.mapWithFilterByName(it)
         }
     }
 
@@ -89,6 +95,20 @@ class DownloadsStateViewModel @AssistedInject constructor(
         manager.removeFinished(id)
     }
 
+    fun onNameQueryFilterChanged(value: String?) {
+        queryNameFilter.value = value.orEmpty()/*.trim()*/
+    }
+
+    private fun List<DownloadInfoResultData>?.mapWithFilterByName(query: String): List<DownloadInfoAdapterData> {
+        val items = this?.map { item -> DownloadInfoAdapterData(item) }.orEmpty()
+        return if (query.isNotEmpty()) {
+            items.filter {
+                it.downloadInfo.nameWithExt.lowercase().contains(query.lowercase())
+            }
+        } else {
+            items
+        }
+    }
 
     @AssistedFactory
     interface Factory {

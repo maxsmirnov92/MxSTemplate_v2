@@ -1221,7 +1221,7 @@ class DownloadService : Service() {
 
         @JvmStatic
         @JvmOverloads
-        fun createViewAction(
+        fun getViewAction(
             context: Context = baseApplicationContext,
             @StringRes chooserTitleRes: Int = R.string.view_choose_client_file_title,
             @StringRes notificationActionRes: Int = R.string.download_notification_success_view_button,
@@ -1234,7 +1234,7 @@ class DownloadService : Service() {
 
         @JvmStatic
         @JvmOverloads
-        fun createShareAction(
+        fun getShareAction(
             context: Context = baseApplicationContext,
             @StringRes chooserTitleRes: Int = R.string.view_choose_client_file_title,
             @StringRes notificationActionRes: Int = R.string.download_notification_success_share_button,

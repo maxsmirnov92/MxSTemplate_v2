@@ -10,4 +10,6 @@
     <string name="alert_gps_enable_dialog_title">Местоположение недоступно</string>
     <string name="alert_gps_enable_dialog_message">Получение текущего местоположения недоступно. Для получения местоположения нужно включить геопозиционирование в настройках.</string>
     <string name="alert_gps_enable_dialog_answer_settings">Настройки</string>
+
+    <string name="search_hint">Поиск</string>
 </resources>

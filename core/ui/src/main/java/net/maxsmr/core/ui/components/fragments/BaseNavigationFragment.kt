@@ -38,13 +38,10 @@ interface INavigationDestination {
     fun onUserInteraction() {}
 }
 
-abstract class BaseNavigationFragment<VM : BaseViewModel, Args : NavArgs> : BaseVmFragment<VM>(),
-        INavigationDestination, MenuProvider {
+abstract class BaseNavigationFragment<VM : BaseViewModel, Args : NavArgs> : BaseMenuFragment<VM>(),
+        INavigationDestination {
 
     protected abstract val argsClass: KClass<Args>?
-
-    @get:MenuRes
-    protected open val menuResId: Int = 0
 
     protected val args: Args get() = getNavArgsOrThrow()
 
@@ -70,23 +67,12 @@ abstract class BaseNavigationFragment<VM : BaseViewModel, Args : NavArgs> : Base
 
     @CallSuper
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM, alertHandler: AlertHandler) {
+        super.onViewCreated(view, savedInstanceState, viewModel, alertHandler)
         val host = navigationHost ?: return
         view.findViewById<Toolbar>(R.id.toolbar)?.let {
             host.registerToolbarWithNavigation(it, this)
         }
-        val menuResId = menuResId
-        if (menuResId != 0) {
-            val menuHost: MenuHost = requireActivity()
-            menuHost.addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
-        }
     }
-
-    @CallSuper
-    override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(menuResId, menu)
-    }
-
-    override fun onMenuItemSelected(menuItem: MenuItem): Boolean = false
 
     override fun onDetach() {
         super.onDetach()

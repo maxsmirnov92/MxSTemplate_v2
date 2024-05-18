@@ -59,30 +59,28 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                 tvResourceName.text = item.downloadInfo.nameWithExt
                 val state = item.state
 
-                var isIndeterminate = true
+                val hasProgress: Boolean
+                val progress: Int
+                val isIndeterminate: Boolean
+
                 val statusInfo: String
                 var statusColorResId: Int = net.maxsmr.core.ui.R.color.textColorPrimary
 
                 if (state != null) {
-                    pbDownload.isVisible = state is DownloadState.Loading || state is DownloadState.Success
+                    hasProgress = state is DownloadState.Loading || state is DownloadState.Success
+                    isIndeterminate = false
 
-                    pbDownload.progress = when (state) {
+                    progress = when (state) {
                         is DownloadState.Loading -> {
                             // contentLength неизвестен - неопределённый ProgressBar
-                            val progress = if (!state.stateInfo.done) {
+                            if (!state.stateInfo.done) {
                                 state.stateInfo.progressRounded.takeIf { it > 0 } ?: 0
                             } else {
                                 100
                             }
-                            isIndeterminate = false
-                            progress
                         }
 
-                        is DownloadState.Success -> {
-                            isIndeterminate = false
-                            100
-                        }
-
+                        is DownloadState.Success -> 100
                         else -> 0
                     }
 
@@ -95,7 +93,7 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
 
                                     val parts = mutableListOf<CharSequence>()
 
-                                    if (progress >= 0) {
+                                    if (this.progress >= 0) {
                                         parts.add(
                                             context.getString(
                                                 when (state.type) {
@@ -103,7 +101,7 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                                                     DownloadState.Loading.Type.DOWNLOADING -> R.string.download_status_downloading_percent_format
                                                     DownloadState.Loading.Type.STORING -> R.string.download_status_storing_percent_format
                                                 },
-                                                progress
+                                                this.progress
                                             )
                                         )
                                     } else {
@@ -247,10 +245,16 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                         }
                     }
                 } else {
-                    pbDownload.isVisible = true
+                    hasProgress = true
+                    progress = 0
+                    isIndeterminate = true
                     statusInfo = context.getString(R.string.download_status_requesting)
                 }
+
+                pbDownload.isVisible = hasProgress
+                pbDownload.progress = progress
                 pbDownload.isIndeterminate = isIndeterminate
+
                 tvStatusInfo.setTextOrGone(statusInfo)
                 tvStatusInfo.setTextColor(ContextCompat.getColor(context, statusColorResId))
 
@@ -293,14 +297,14 @@ interface DownloadListener {
     fun onRetryDownload(
         downloadInfo: DownloadInfo,
         params: DownloadService.Params,
-        state: DownloadState?
+        state: DownloadState?,
     )
 
     fun onShowDownloadDetails(
         downloadInfo: DownloadInfo,
         params: DownloadService.Params,
         state: DownloadState?,
-        anchorView: View
+        anchorView: View,
     )
 
     fun onViewResource(downloadUri: Uri, mimeType: String)

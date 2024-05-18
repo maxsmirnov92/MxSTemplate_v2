@@ -4,9 +4,12 @@ import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupWindow
+import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
@@ -24,17 +27,16 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
-import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.feature.download.data.DownloadService
-import net.maxsmr.feature.download.data.DownloadService.Companion.createShareAction
-import net.maxsmr.feature.download.data.DownloadService.Companion.createViewAction
+import net.maxsmr.feature.download.data.DownloadService.Companion.getShareAction
+import net.maxsmr.feature.download.data.DownloadService.Companion.getViewAction
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_CLEAR_QUEUE
@@ -48,8 +50,9 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
-        DownloadListener, BaseDraggableDelegationAdapter.ItemsEventsListener<DownloadInfoAdapterData> {
+class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
+        DownloadListener, BaseDraggableDelegationAdapter.ItemsEventsListener<DownloadInfoAdapterData>,
+        SearchView.OnQueryTextListener {
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -65,6 +68,8 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
         }
     }
 
+    override val menuResId: Int = R.menu.menu_downloads_pager
+
     private val downloadsViewModel: DownloadsViewModel by viewModels()
 
     private val binding by viewBinding(FragmentDownloadsStateBinding::bind)
@@ -77,12 +82,15 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
 
     private var detailsPopupWindow: PopupWindow? = null
 
+    private var searchView: SearchView? = null
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
         viewModel: DownloadsStateViewModel,
         alertHandler: AlertHandler,
     ) {
+        super.onViewCreated(view, savedInstanceState, viewModel, alertHandler)
         binding.rvDownloads.adapter = infoAdapter
         touchHelper.attachToRecyclerView(binding.rvDownloads)
         infoAdapter.registerItemsEventsListener(this)
@@ -133,6 +141,27 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
         infoAdapter.unregisterItemsEventsListener(this)
     }
 
+    override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateMenu(menu, inflater)
+        val filterItem = menu.findItem(R.id.action_filter)
+        searchView = (filterItem.actionView as SearchView).apply {
+            queryHint = getString(R.string.download_menu_action_filter)
+            setOnQueryTextListener(this@DownloadsStateFragment)
+        }
+    }
+
+    override fun onPrepareMenu(menu: Menu) {
+        super.onPrepareMenu(menu)
+        searchView?.setQuery(viewModel.queryNameFilter.value.orEmpty(), false)
+    }
+
+    override fun onQueryTextSubmit(query: String?): Boolean = true
+
+    override fun onQueryTextChange(newText: String?): Boolean {
+        viewModel.onNameQueryFilterChanged(newText)
+        return true
+    }
+
     override fun handleAlerts() {
         super.handleAlerts()
         bindAlertDialog(DIALOG_TAG_CLEAR_QUEUE) {
@@ -165,11 +194,11 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
     }
 
     override fun onViewResource(downloadUri: Uri, mimeType: String) {
-        startActivity(createViewAction().intent(downloadUri, mimeType))
+        startActivity(getViewAction().intent(downloadUri, mimeType))
     }
 
     override fun onShareResource(downloadUri: Uri, mimeType: String) {
-        startActivity(createShareAction().intent(downloadUri, mimeType))
+        startActivity(getShareAction().intent(downloadUri, mimeType))
     }
 
     override fun onItemMoved(fromPosition: Int, toPosition: Int, item: DownloadInfoAdapterData) {
@@ -204,7 +233,7 @@ class DownloadsStateFragment : BaseVmFragment<DownloadsStateViewModel>(),
                         isFocusable = true
                         isTouchable = true
                         isOutsideTouchable = true
-                        animationStyle = net.maxsmr.core.ui.R.style.PopupAnimation
+                        animationStyle = net.maxsmr.core.ui.R.style.PopupAnimationStyle
                     }
                 }
             ),

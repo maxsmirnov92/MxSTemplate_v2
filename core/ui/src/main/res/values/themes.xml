@@ -23,6 +23,8 @@
         <item name="textInputStyle">@style/AppTextInputLayout</item>
         <item name="editTextStyle">@style/AppEditText</item>
         <item name="checkboxStyle">?android:attr/checkboxStyle</item>
+        <item name="searchViewStyle">@style/AppSearchViewStyle</item>
+        <item name="autoCompleteTextViewStyle">@style/AppAutoCompleteStyle</item>
     </style>
 
     <style name="AppTheme.NoActionBar">

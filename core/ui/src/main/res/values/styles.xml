@@ -43,8 +43,22 @@
         <item name="titleTextAppearance">@style/ToolbarTextAppearance</item>
     </style>
 
-    <style name="PopupAnimation">
+    <style name="PopupAnimationStyle">
         <item name="android:windowEnterAnimation">@anim/anim_window_in</item>
         <item name="android:windowExitAnimation">@anim/anim_window_out</item>
+    </style>
+
+    <style name="AppSearchViewStyle" parent="Widget.AppCompat.SearchView">
+        <item name="android:textCursorDrawable">@drawable/shape_cursor</item>
+        <item name="queryBackground">@android:color/transparent</item>
+        <item name="searchIcon">@android:drawable/ic_search_category_default</item>
+        <item name="closeIcon">@android:drawable/ic_menu_close_clear_cancel</item>
+        <item name="queryHint">@string/search_hint</item>
+        <item name="android:imeActionId">6</item>
+        <item name="fontFamily">@font/roboto_regular</item>
+    </style>
+
+    <style name="AppAutoCompleteStyle" parent="Widget.AppCompat.AutoCompleteTextView">
+        <item name="android:textCursorDrawable">@drawable/shape_cursor</item>
     </style>
 </resources>

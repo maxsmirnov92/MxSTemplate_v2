@@ -56,4 +56,6 @@
     <string name="download_status_success">Успех</string>
     <string name="download_status_failed_format">Ошибка: \"%s\"</string>
     <string name="download_status_cancelled">Отменена</string>
+
+    <string name="download_menu_action_filter">Фильтр по названию</string>
 </resources>
