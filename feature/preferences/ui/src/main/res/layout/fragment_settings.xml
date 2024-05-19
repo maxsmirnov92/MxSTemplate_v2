@@ -37,6 +37,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilMaxDownloads"
+            style="@style/TextInputLayoutNoStrokeStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:hint="@string/settings_field_max_downloads_hint">
@@ -62,9 +63,10 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilUpdateNotificationInterval"
-            android:layout_marginTop="8dp"
+            style="@style/TextInputLayoutNoStrokeStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             tools:hint="@string/settings_field_update_notification_interval_hint">
 
             <com.google.android.material.textfield.TextInputEditText

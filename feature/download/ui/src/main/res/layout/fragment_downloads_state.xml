@@ -104,7 +104,7 @@
             android:layout_height="60dp"
             android:layout_marginTop="16dp"
             app:srcCompat="@drawable/ic_download"
-            app:tint="@color/textColorHighlight" />
+            app:tint="@color/textColorHint" />
 
     </LinearLayout>
 

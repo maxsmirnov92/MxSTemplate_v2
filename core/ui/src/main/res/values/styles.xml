@@ -33,7 +33,7 @@
 
 
     <style name="BottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
-        <item name="android:background">@drawable/background_bottom_sheet</item>
+        <item name="android:background">@drawable/shape_background_bottom_sheet</item>
     </style>
 
     <style name="ToolbarStyle" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
