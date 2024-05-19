@@ -4,6 +4,7 @@
     <string name="settings_field_empty_error">Поле не заполнено</string>
     <string name="settings_field_max_downloads_hint">Максимальное число одновременных загрузок</string>
     <string name="settings_field_max_downloads_error">От одной и более загрузок</string>
+    <string name="settings_field_retry_failed_downloads">Повторять неудавшиеся из-за сети загрузки при её появлении</string>
     <string name="settings_field_disable_notifications">Отключить уведомления сервиса загрузок</string>
     <string name="settings_field_update_notification_interval_hint">Интервал обновления уведомлений с активной загрузкой</string>
     <string name="settings_field_update_notification_interval_error_format">Значение должно быть от %d и выше</string>

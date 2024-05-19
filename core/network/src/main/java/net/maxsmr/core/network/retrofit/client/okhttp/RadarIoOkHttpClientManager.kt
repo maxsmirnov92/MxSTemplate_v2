@@ -6,7 +6,6 @@ import net.maxsmr.core.network.SessionStorage
 import net.maxsmr.core.network.retrofit.interceptors.ApiLoggingInterceptor
 import net.maxsmr.core.network.retrofit.interceptors.Authorization
 import net.maxsmr.core.network.retrofit.interceptors.ConnectivityChecker
-import net.maxsmr.core.network.retrofit.interceptors.NetworkConnectionInterceptor
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request

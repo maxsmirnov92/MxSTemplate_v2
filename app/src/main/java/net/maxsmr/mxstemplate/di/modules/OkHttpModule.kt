@@ -6,14 +6,17 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import net.maxsmr.core.android.network.NetworkConnectivityChecker
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.RadarIoSessionStorage
 import net.maxsmr.core.network.SessionStorage
+import net.maxsmr.core.network.retrofit.client.okhttp.DownloadOkHttpClientManager
+import net.maxsmr.core.network.retrofit.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.retrofit.client.okhttp.RadarIoOkHttpClientManager
-import net.maxsmr.core.network.retrofit.interceptors.ConnectivityChecker
+import net.maxsmr.core.network.retrofit.interceptors.NetworkConnectionInterceptor
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.Cache
 import okhttp3.CacheControl
@@ -69,36 +72,30 @@ class OkHttpModule {
         if (!cacheDir.exists()) {
             cacheDir.mkdirs()
         }
-        return OkHttpClient.Builder().apply {
-            connectTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
-            readTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
-            writeTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
-            cache(Cache(cacheDir, PICASSO_DISK_CACHE_SIZE))
-            addInterceptor(forceCacheInterceptor)
-            addInterceptor(httpLoggingInterceptor)
-        }.build()
+        return PicassoOkHttpClientManager(
+            forceCacheInterceptor,
+            httpLoggingInterceptor,
+            NETWORK_TIMEOUT
+        ).build()
     }
 
     @[Provides Singleton DownloaderOkHttpClient]
     fun provideDownloaderOkHttpClient(
         httpLoggingInterceptor: HttpLoggingInterceptor,
-    ): OkHttpClient {
-        return OkHttpClient.Builder().apply {
-            connectTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
-            readTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
-            writeTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
-            addInterceptor(httpLoggingInterceptor)
-        }.build()
-    }
+    ): OkHttpClient = DownloadOkHttpClientManager(
+        NetworkConnectionInterceptor(NetworkConnectivityChecker),
+        httpLoggingInterceptor,
+        NETWORK_TIMEOUT
+    ).build()
 
     @[Provides Singleton RadarIoOkHttpClient]
     fun provideRadarIoOkHttpClient(
         @RadarIoSessionStorage
-        sessionStorage: SessionStorage,
+        sessionStorage: SessionStorage
     ): OkHttpClient {
-        return RadarIoOkHttpClientManager(object : ConnectivityChecker {
-            override fun isConnected() = NetworkStateManager.hasConnection()
-        }, sessionStorage,
+        return RadarIoOkHttpClientManager(
+            NetworkConnectivityChecker,
+            sessionStorage,
             NETWORK_TIMEOUT
         ).build()
     }

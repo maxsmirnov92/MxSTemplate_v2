@@ -13,6 +13,7 @@ import java.io.Serializable
 data class AppSettings(
     val maxDownloads: Int = 3,
     val disableNotifications: Boolean = false,
+    val retryDownloads: Boolean = true,
     val updateNotificationInterval: Long = 300,
 ): Serializable {
 

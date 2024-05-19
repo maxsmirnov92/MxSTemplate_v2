@@ -68,6 +68,7 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel, NavArgs>() {
         }
         viewModel.maxDownloadsField.bindHintError(viewLifecycleOwner, binding.tilMaxDownloads)
 
+        viewModel.retryDownloadsField.bindValue(viewLifecycleOwner, binding.cbRetryDownloads)
         viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.cbDisableNotifications)
 
         binding.etUpdateNotificationInterval.addTextChangedListener {

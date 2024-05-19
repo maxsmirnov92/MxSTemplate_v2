@@ -103,7 +103,7 @@ class DownloadsStateViewModel @AssistedInject constructor(
         val items = this?.map { item -> DownloadInfoAdapterData(item) }.orEmpty()
         return if (query.isNotEmpty()) {
             items.filter {
-                it.downloadInfo.nameWithExt.lowercase().contains(query.lowercase())
+                it.downloadInfo.nameWithExt.contains(query, ignoreCase = true)
             }
         } else {
             items

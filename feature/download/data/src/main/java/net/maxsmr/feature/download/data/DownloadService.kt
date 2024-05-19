@@ -249,7 +249,7 @@ class DownloadService : Service() {
             notifier.onDownloadNotStarted(params)
             return START_NOT_STICKY
         } else {
-            if (isForRetry) {
+            if (isForRetry && params.retryWithNotifier) {
                 // повтор делегируем в другое место
                 notifier.onDownloadRetry(params)
 //                stopIfAllLoaded()
@@ -775,6 +775,7 @@ class DownloadService : Service() {
      * @param targetHashInfo целевой (ожидаемый) хэш файла, либо null, если заранее неизвестен
      * @param skipIfDownloaded пропуск загрузки, если ресурс уже был успешно загружен ранее и его хэш совпадает
      * @param notificationParams параметры показа нотификаций и действий к ним; null, если нотификации по каждой загрузке не нужны
+     * @param retryWithNotifier если true, повтор загрузки по действию в нотификации будет происходить через [DownloadStateNotifier]
      */
     class Params @JvmOverloads constructor(
         val requestParams: RequestParams,
@@ -785,6 +786,7 @@ class DownloadService : Service() {
         val targetHashInfo: HashInfo? = null,
         val skipIfDownloaded: Boolean = true,
         val deleteUnfinished: Boolean = true,
+        val retryWithNotifier: Boolean = true,
     ) : BaseDownloadParams(requestParams.url, resourceName) {
 
         constructor(params: Params) : this(

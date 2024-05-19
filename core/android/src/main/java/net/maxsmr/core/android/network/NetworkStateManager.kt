@@ -10,11 +10,14 @@ import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.stateIn
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.android.network.NetworkStateManager.asLiveData
+import net.maxsmr.core.android.network.NetworkStateManager.hasConnection
 
 /**
  * Менеджер доступности сетевого подключения.
@@ -24,8 +27,8 @@ object NetworkStateManager {
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(NetworkStateManager::class.java)
 
-    private val connectivityManager = baseApplicationContext
-        .getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private val connectivityManager = baseApplicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
     private val connectionLiveData: ConnectionLiveData = ConnectionLiveData()
 
     private val callback = object : ConnectivityManager.NetworkCallback() {
@@ -48,7 +51,9 @@ object NetworkStateManager {
         }
     }
 
-    suspend fun observeConnectivity(scope: CoroutineScope) = callbackFlow {
+    fun asLiveData(): LiveData<Boolean> = connectionLiveData
+
+    fun asFlow(scope: CoroutineScope): StateFlow<Boolean> = callbackFlow {
         var isConnected = hasConnection()
 
         val callback = object : ConnectivityManager.NetworkCallback() {
@@ -86,9 +91,8 @@ object NetworkStateManager {
         connectionLiveData.postValue(hasConnection())
     }
 
-    fun asLiveData(): LiveData<Boolean> = connectionLiveData
 
-    @JvmStatic
+
     fun hasConnection(): Boolean {
         val capabilities = connectivityManager
             .getNetworkCapabilities(connectivityManager.activeNetwork) ?: return false

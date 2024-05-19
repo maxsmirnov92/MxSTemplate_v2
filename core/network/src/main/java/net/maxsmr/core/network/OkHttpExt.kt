@@ -60,7 +60,7 @@ suspend fun OkHttpClient.newCallSuspended(request: Request, checkSuccess: Boolea
         }
         call.enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                continuation.resumeWithException(RuntimeException("Request failed", e))
+                continuation.resumeWithException(e) // RuntimeException("Request failed", e)
             }
 
             override fun onResponse(call: Call, response: Response) {

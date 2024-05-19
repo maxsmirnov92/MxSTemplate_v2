@@ -37,11 +37,19 @@ class SettingsViewModel @Inject constructor(
         .persist(state, KEY_FIELD_MAX_DOWNLOADS)
         .build()
 
+    val retryDownloadsField: Field<Boolean> = Field.Builder(false)
+        .emptyIf { false }
+        .setRequired(R.string.settings_field_retry_failed_downloads)
+        .persist(state, KEY_FIELD_RETRY_DOWNLOADS)
+        .build()
+
     val disableNotificationsField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
         .setRequired(R.string.settings_field_empty_error)
         .persist(state, KEY_FIELD_DISABLE_NOTIFICATIONS)
         .build()
+
+
 
     val updateNotificationIntervalStateField: Field<LongFieldState> = Field.Builder(LongFieldState(0))
         .emptyIf { false }
@@ -56,7 +64,7 @@ class SettingsViewModel @Inject constructor(
         .build()
 
     private val allFields =
-        listOf<Field<*>>(maxDownloadsField, disableNotificationsField, updateNotificationIntervalStateField)
+        listOf<Field<*>>(maxDownloadsField, retryDownloadsField, disableNotificationsField, updateNotificationIntervalStateField)
 
     private val appSettings by persistableLiveData<AppSettings>()
 
@@ -81,6 +89,10 @@ class SettingsViewModel @Inject constructor(
 
         maxDownloadsField.clearErrorOnChange(this) {
             appSettings.value = currentAppSettings.copy(maxDownloads = it)
+        }
+
+        retryDownloadsField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(retryDownloads = it)
         }
 
         disableNotificationsField.valueLive.observe {
@@ -117,6 +129,7 @@ class SettingsViewModel @Inject constructor(
                     AppSettings(
                         maxDownloadsField.getIfRequired() ?: initialSettings.maxDownloads,
                         disableNotificationsField.getIfRequired() ?: initialSettings.disableNotifications,
+                        retryDownloadsField.getIfRequired() ?: initialSettings.retryDownloads,
                         updateNotificationIntervalStateField.getIfRequired()?.value
                             ?: initialSettings.updateNotificationInterval
                     )
@@ -148,6 +161,7 @@ class SettingsViewModel @Inject constructor(
     private fun restoreFields(settings: AppSettings) {
         // используется для того, чтобы выставить initial'ы в филды
         maxDownloadsField.value = settings.maxDownloads
+        retryDownloadsField.value = settings.retryDownloads
         disableNotificationsField.value = settings.disableNotifications
         updateNotificationIntervalStateField.value =
             LongFieldState(settings.updateNotificationInterval, !settings.disableNotifications)
@@ -158,6 +172,7 @@ class SettingsViewModel @Inject constructor(
         const val DIALOG_TAG_CONFIRM_EXIT = "confirm_exit"
 
         const val KEY_FIELD_MAX_DOWNLOADS = "max_downloads"
+        const val KEY_FIELD_RETRY_DOWNLOADS = "retry_downloads"
         const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
         const val KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE = "update_notification_interval_state"
     }

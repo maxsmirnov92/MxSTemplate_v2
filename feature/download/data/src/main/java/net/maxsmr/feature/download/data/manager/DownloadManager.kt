@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -29,11 +30,13 @@ import net.maxsmr.commonutils.openInputStream
 import net.maxsmr.commonutils.openOutputStream
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.appendToSet
+import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.network.Method
+import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading.Type
@@ -44,6 +47,7 @@ import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepositor
 import java.io.File
 import java.io.InterruptedIOException
 import java.io.Serializable
+import java.net.SocketException
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -329,9 +333,21 @@ class DownloadManager @Inject constructor(
                 retryDownloadInternal(it)
             }
         }
+
         scope.launch {
             settingsRepo.settings.collect {
                 settings = it
+            }
+        }
+
+        scope.launch {
+            combine(
+                NetworkStateManager.asFlow(scope),
+                settingsRepo.settings
+            ) { hasConnection: Boolean, settings: AppSettings ->
+                Pair(hasConnection, settings.retryDownloads)
+            }.collectLatest {
+                retryFailedByNetwork(it.first, it.second)
             }
         }
     }
@@ -456,6 +472,21 @@ class DownloadManager @Inject constructor(
             removeFinishedInternal(it, false)
         }
         enqueueDownloadInternal(params)
+    }
+
+    private suspend fun retryFailedByNetwork(hasConnection: Boolean, shouldRetry: Boolean) {
+        if (hasConnection && shouldRetry) {
+            val downloads = downloadsRepo.getRaw().filter {
+                val reason = it.statusAsError?.reason
+                reason is NoConnectivityException || reason is SocketException
+            }
+            val finishedItems = downloadsFinishedQueue.value
+            downloads.forEach {
+                finishedItems.find { item -> item.downloadId == it.id }?.let {
+                    retryDownloadInternal(it.params)
+                }
+            }
+        }
     }
 
     private suspend fun removeFinishedInternal(downloadId: Long, withDb: Boolean = true) {
