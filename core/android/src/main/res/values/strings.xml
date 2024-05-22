@@ -2,14 +2,15 @@
     <string name="yes">Да</string>
     <string name="no">Нет</string>
 
-    <string name="no_internet">Проверьте настройки интернет-соединения. Если включен VPN - отключите его и повторите попытку</string>
-    <string name="server_unavailable">Сервер не отвечает</string>
-    <string name="no_connection">Нет соединения</string>
+    <string name="error_no_internet">Проверьте настройки интернет-соединения. Если включен VPN - отключите его и повторите попытку</string>
+    <string name="error_server_unavailable">Сервер не отвечает</string>
+    <string name="error_no_connection">Отсутствует соединение</string>
+    <string name="error_unknown">Неизвестная ошибка</string>
+    <string name="error_unexpected_try_again">Произошла непредвиденная ошибка, попробуйте повторить операцию позже</string>
+
     <string name="no_data">Нет данных</string>
     <string name="try_again_internet">Проверить снова</string>
     <string name="try_again_connect">Попробовать снова</string>
-
-    <string name="unexpected_error_try_again">Произошла непредвиденная ошибка, попробуйте повторить операцию позже</string>
 
     <string name="pick_no_permissions">Не получено необходимых разрешений</string>
     <string name="pick_no_apps">Не найдено подходящих приложений</string>
@@ -30,9 +31,6 @@
     <string name="delete">Удалить</string>
     <string name="close">Закрыть</string>
     <string name="understand">Понятно</string>
-
-    <string name="continue_caps">ПРОДОЛЖИТЬ</string>
-    <string name="download">Скачать</string>
 
     <string name="choose_app_title">Выберите приложение</string>
     <string name="choose_app_title_email">Выберите приложение для отправки письма</string>

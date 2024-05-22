@@ -12,15 +12,15 @@ import java.io.*
  * Абстракция хранилища с использованием File API для доступа к ресурсам
  */
 abstract class FileContentStorage(
-    protected val storageType: Type,
+    override val context: Context,
 ) : ContentStorage<File> {
 
-    override fun exists(name: String, path: String?, context: Context): Result<Boolean, Exception> = Result.of {
-        get(name, path, context).get().exists()
+    override fun exists(name: String, path: String?): Result<Boolean, Exception> = Result.of {
+        get(name, path).get().exists()
     }
 
-    override fun create(name: String, path: String?, context: Context): Result<File, Exception> = Result.of {
-        val file = get(name, path, context).get()
+    override fun create(name: String, path: String?): Result<File, Exception> = Result.of {
+        val file = get(name, path).get()
         if (file.exists()) {
             file.delete()
         }
@@ -28,7 +28,7 @@ abstract class FileContentStorage(
         file
     }
 
-    abstract override fun get(name: String, path: String?, context: Context): Result<File, NoException>
+    abstract override fun get(name: String, path: String?): Result<File, NoException>
 
     override fun write(resource: File, content: String): Result<Unit, Exception> = write(resource, content, false)
 
@@ -48,7 +48,7 @@ abstract class FileContentStorage(
         String(bytes)
     }
 
-    override fun delete(resource: File, context: Context): Result<Boolean, Exception> = Result.of {
+    override fun delete(resource: File): Result<Boolean, Exception> = Result.of {
         if (resource.exists()) resource.delete() else true
     }
 
@@ -60,8 +60,8 @@ abstract class FileContentStorage(
         FileOutputStream(resource)
     }
 
-    override fun shareUri(name: String, path: String?, context: Context): Result<Uri?, Exception> = Result.of {
-        get(name, path, context).get().toContentUri(context)
+    override fun shareUri(name: String, path: String?): Result<Uri?, Exception> = Result.of {
+        get(name, path).get().toContentUri(context)
     }
 
     override fun requiredPermissions(read: Boolean, write: Boolean): Array<String> = emptyArray()
@@ -83,10 +83,9 @@ abstract class FileContentStorage(
         }.getOrNull() ?: root
     }
 
-
     enum class Type {
 
         PERSISTENT,
-        CACHE;
+        CACHE
     }
 }

@@ -6,11 +6,26 @@ const val MD5_ALGORITHM = "MD5"
 const val REG_EX_MD5_ALGORITHM = "^[a-f0-9]{32}$"
 
 @kotlinx.serialization.Serializable
-data class HashInfo(
+class HashInfo(
     val algorithm: String,
     // лучше в виде строки, т.к. проще сравнивать с приходящим извне
     val hash: String,
 ) : Serializable {
 
-    val isEmpty = algorithm.isNotEmpty() && hash.isNotEmpty()
+    val isEmpty get() = algorithm.isEmpty() || hash.isEmpty()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is HashInfo) return false
+
+        // data class не подходит, т.к. надо без учёта регистра
+        if (!algorithm.equals(other.algorithm, true)) return false
+        return hash.equals(other.hash, true)
+    }
+
+    override fun hashCode(): Int {
+        var result = algorithm.lowercase().hashCode()
+        result = 31 * result + hash.lowercase().hashCode()
+        return result
+    }
 }

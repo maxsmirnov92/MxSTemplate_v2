@@ -15,13 +15,13 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import java.util.Date
 
-val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("KotlinxUtils")
+val kotlinxLogger: BaseLogger = BaseLoggerHolder.instance.getLogger("KotlinxExt")
 
 inline fun <reified T> Json.encodeToStringOrNull(data: T): String? {
     return try {
         encodeToString(serializersModule.serializer(), data)
     } catch (e: Exception) {
-        logger.e(e)
+        kotlinxLogger.e(e)
         null
     }
 }
@@ -31,7 +31,7 @@ inline fun <reified T> Json.decodeFromStringOrNull(data: String?): T? {
     return try {
         decodeFromString<T>(serializersModule.serializer(), data)
     } catch (e: Exception) {
-        logger.e(e)
+        kotlinxLogger.e(e)
         null
     }
 }

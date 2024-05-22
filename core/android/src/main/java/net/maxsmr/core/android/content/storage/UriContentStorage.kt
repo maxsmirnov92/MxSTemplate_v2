@@ -14,11 +14,13 @@ import java.io.OutputStream
  * Абстракция хранилища с использованием content [Uri] для доступа к ресурсам
  */
 abstract class UriContentStorage(
-    protected val resolver: ContentResolver,
+    override val context: Context,
 ) : ContentStorage<Uri> {
 
-    override fun exists(name: String, path: String?, context: Context): Result<Boolean, Exception> {
-        return get(name, path, context).mapEither({ true }, { it })
+    protected val resolver: ContentResolver by lazy { context.contentResolver }
+
+    override fun exists(name: String, path: String?): Result<Boolean, Exception> {
+        return get(name, path).mapEither({ true }, { it })
     }
 
     override fun write(resource: Uri, content: String): Result<Unit, Exception> = Result.of {
@@ -28,9 +30,8 @@ abstract class UriContentStorage(
         }
     }
 
-    override fun read(name: String, path: String?, context: Context): Result<String, Exception> =
-        get(name, path, context)
-            .flatMap { read(it) }
+    override fun read(name: String, path: String?): Result<String, Exception> =
+        get(name, path).flatMap { read(it) }
 
     override fun read(resource: Uri): Result<String, Exception> = Result.of {
         openInputStream(resource).get().use {
@@ -38,7 +39,7 @@ abstract class UriContentStorage(
         }
     }
 
-    override fun delete(resource: Uri, context: Context): Result<Boolean, Exception> = Result.of {
+    override fun delete(resource: Uri): Result<Boolean, Exception> = Result.of {
         resolver.delete(resource, null, null) > 0
     }
 
@@ -50,6 +51,6 @@ abstract class UriContentStorage(
         resolver.openOutputStream(resource) ?: throw IOException("Can't open stream from $resource")
     }
 
-    override fun shareUri(name: String, path: String?, context: Context): Result<Uri?, Exception> =
-        get(name, path, context)
+    override fun shareUri(name: String, path: String?): Result<Uri?, Exception> =
+        get(name, path)
 }

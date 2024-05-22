@@ -1,9 +1,11 @@
 package net.maxsmr.feature.download.data
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -15,13 +17,17 @@ import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.message.TextMessageException
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.mapNotNull
 import net.maxsmr.commonutils.live.unsubscribeIf
+import net.maxsmr.commonutils.media.readString
+import net.maxsmr.commonutils.media.takePersistableReadPermission
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.Status
@@ -32,10 +38,18 @@ import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
+import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.Dispatcher
+import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
+import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel.Method.*
+import net.maxsmr.core.domain.entities.feature.download.HashInfo
+import net.maxsmr.core.domain.entities.feature.download.MD5_ALGORITHM
+import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment.Companion.handleNavigation
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.utils.decodeFromStringOrNull
+import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultGETServiceParamsFor
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultPOSTServiceParamsFor
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.data.manager.DownloadManager.FailAddReason
@@ -56,6 +70,8 @@ class DownloadsViewModel @Inject constructor(
     private val downloadManager: DownloadManager,
     @Dispatcher(AppDispatchers.IO)
     private val ioDispatcher: CoroutineDispatcher,
+    @BaseJson
+    private val json: Json,
     state: SavedStateHandle,
 ) : BaseViewModel(state) {
 
@@ -124,17 +140,6 @@ class DownloadsViewModel @Inject constructor(
                 showToast(ToastAction(message, duration = ToastAction.ToastLength.LONG))
             }
         }
-    }
-
-    // вызвать на используемом фрагменте
-    fun handleEvents(fragment: BaseVmFragment<*>) {
-        if (fragment is BaseNavigationFragment<*, *>) {
-            navigationCommands.observeEvents {
-                fragment.handleNavigation(it)
-            }
-        }
-        toastCommands.observeEvents(fragment.viewLifecycleOwner) { it.doAction(fragment.requireContext()) }
-
         failedStartParamsEvent.observeEvents {
             showToast(
                 ToastAction(
@@ -144,6 +149,86 @@ class DownloadsViewModel @Inject constructor(
                     )
                 )
             )
+        }
+    }
+
+    fun handleEvents(fragment: BaseVmFragment<*>) {
+        if (fragment is BaseNavigationFragment<*, *>) {
+            navigationCommands.observeEvents {
+                fragment.handleNavigation(it)
+            }
+        }
+        toastCommands.observeEvents(fragment.viewLifecycleOwner) { it.doAction(fragment.requireContext()) }
+    }
+
+    /**
+     * Вызвать на используемом фрагменте;
+     * не вызывать, если эта VM уже где-то используется в кач-ве базы
+     */
+    fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<DownloadsViewModel>) {
+        delegate.handleCommonAlerts(context)
+    }
+
+    fun downloadFromJson(uri: Uri, contentResolver: ContentResolver) {
+        viewModelScope.launch(ioDispatcher) {
+            json.decodeFromStringOrNull<List<DownloadParamsModel>>(uri.readString(contentResolver)).orEmpty().let { list ->
+                if (list.isNotEmpty()) {
+                    list.forEach {
+                        it.bodyUri?.toUri()?.takePersistableReadPermission(contentResolver)
+                        download(it)
+                        // delay необходим из-за особенности кривых suspend'ов:
+                        // следом за незавершённым enqueueDownloadInternal пойдёт ещё один
+                        delay(100)
+                    }
+                } else {
+                    showToast(ToastAction(TextMessage(R.string.download_toast_no_valid_params)))
+                }
+            }
+        }
+    }
+
+    fun download(paramsModel: DownloadParamsModel) {
+        with(paramsModel) {
+
+            val bodyUri = bodyUri
+            val targetHashInfo = targetMd5Hash?.takeIf { it.isNotEmpty() }?.let {
+                HashInfo(MD5_ALGORITHM, it)
+            }
+
+            val notificationParams = DownloadService.NotificationParams(
+                successActions = defaultNotificationActions(baseApplicationContext)
+            )
+
+            val params = if (method == POST && bodyUri != null) {
+                defaultPOSTServiceParamsFor(
+                    url,
+                    fileName,
+                    DownloadService.RequestParams.Body(DownloadService.RequestParams.Body.Uri(bodyUri)),
+                    ignoreAttachment = ignoreAttachment,
+                    ignoreFileName = ignoreFileName,
+                    storeErrorBody = ignoreServerErrors,
+                    headers = headers,
+                    subDir = subDirName,
+                    targetHashInfo = targetHashInfo,
+                    deleteUnfinished = deleteUnfinished,
+                    notificationParams = notificationParams,
+                )
+            } else {
+                defaultGETServiceParamsFor(
+                    url,
+                    fileName,
+                    ignoreAttachment = ignoreAttachment,
+                    ignoreFileName = ignoreFileName,
+                    storeErrorBody = ignoreServerErrors,
+                    headers = headers,
+                    subDir = subDirName,
+                    targetHashInfo = targetHashInfo,
+                    deleteUnfinished = deleteUnfinished,
+                    notificationParams = notificationParams,
+                )
+            }
+
+            download(params)
         }
     }
 
@@ -179,7 +264,7 @@ class DownloadsViewModel @Inject constructor(
         uri ?: return MutableLiveData(resource.copyOf())
         return observeDownload(
             defaultPOSTServiceParamsFor(
-                uri,
+                uri.toString(),
                 fileName,
                 body,
                 format = format,
@@ -209,8 +294,8 @@ class DownloadsViewModel @Inject constructor(
         )
         uri ?: return MutableLiveData(resource.copyOf())
         return observeDownload(
-            DownloadService.Params.defaultGETServiceParamsFor(
-                uri,
+            defaultGETServiceParamsFor(
+                uri.toString(),
                 fileName,
                 format = format,
                 notificationParams = notification

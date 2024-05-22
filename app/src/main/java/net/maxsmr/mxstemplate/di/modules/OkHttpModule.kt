@@ -6,6 +6,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import net.maxsmr.commonutils.logger.BaseLogger
+import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.network.NetworkConnectivityChecker
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.di.DownloaderOkHttpClient
@@ -23,14 +25,10 @@ import okhttp3.CacheControl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import timber.log.Timber
 import java.io.File
-import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 private const val NETWORK_TIMEOUT = 30L //sec
-
-private const val HTTP_LOG_TAG = "OkHttp"
 
 // Размер дискового кеша пикассо = 250 Мб
 private const val PICASSO_DISK_CACHE_SIZE = (1024 * 1024 * 250).toLong()
@@ -53,11 +51,13 @@ class OkHttpModule {
 
     @[Provides Singleton]
     fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
-        return HttpLoggingInterceptor { message -> Timber.d("$HTTP_LOG_TAG $message") }.apply {
-            level = if (BuildConfig.DEBUG)
+        val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("HttpLoggingInterceptor")
+        return HttpLoggingInterceptor { message -> logger.d("OkHttp $message") }.apply {
+            level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
-            else
+            } else {
                 HttpLoggingInterceptor.Level.BASIC
+            }
         }
     }
 

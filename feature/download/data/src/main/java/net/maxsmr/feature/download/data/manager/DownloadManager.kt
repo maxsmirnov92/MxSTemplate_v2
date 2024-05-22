@@ -4,7 +4,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -24,8 +23,6 @@ import net.maxsmr.commonutils.deleteFiles
 import net.maxsmr.commonutils.getFiles
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.commonutils.model.SerializationUtils.fromInputStream
-import net.maxsmr.commonutils.model.SerializationUtils.toOutputStream
 import net.maxsmr.commonutils.openInputStream
 import net.maxsmr.commonutils.openOutputStream
 import net.maxsmr.core.android.baseApplicationContext
@@ -35,8 +32,10 @@ import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
-import net.maxsmr.core.network.Method
+import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel.Method
 import net.maxsmr.core.network.exceptions.NoConnectivityException
+import net.maxsmr.core.utils.readObject
+import net.maxsmr.core.utils.writeObject
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading.Type
@@ -277,44 +276,81 @@ class DownloadManager @Inject constructor(
                 logger.d("downloadStateEvent: $state")
                 if (state !is DownloadStateNotifier.DownloadState.Loading) {
                     val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
+
                     // после перехода в завершённое состояние убираем из очереди текущих загрузок
                     val newDownloadsSet = downloadsQueue.value.toMutableSet()
-                    val iterator = newDownloadsSet.iterator()
-                    while (iterator.hasNext()) {
-                        val item = iterator.next()
+                    val downloadsIterator = newDownloadsSet.iterator()
+
+                    var finishedItem: QueueItem? = null
+
+                    while (downloadsIterator.hasNext()) {
+                        val item = downloadsIterator.next()
                         // на этом этапе можно сравнивать только по id в DownloadInfo, если он был правильный;
                         // по targetResourceName в предыдущих неизменённых парамсах остаётся, на случай если id = 0
                         if (item.params.targetResourceName == state.oldParams.targetResourceName
                                 || item.downloadId == state.downloadInfo.id
                         ) {
                             logger.d("$item finished, removing from downloadsQueue")
-                            iterator.remove()
+                            downloadsIterator.remove()
                             downloadsStorage.removeItem(item)
-
-                            // актуализируем парамсы для завершённого итема
-                            val newFinishedItem = item.copy(params = state.params, downloadId = state.downloadInfo.id)
-                            var previousFinishedItem: QueueItem? = null
-                            newFinishedSet.refreshWith(newFinishedItem) {
-                                if (it.downloadId == newFinishedItem.downloadId) {
-                                    // если был стартован через retry, такого уже не будет
-                                    previousFinishedItem = it
-                                    true
-                                } else {
-                                    false
-                                }
-                            }.apply {
-                                newFinishedSet.clear()
-                                newFinishedSet.addAll(this)
-                            }
-
-                            previousFinishedItem?.let {
-                                downloadsFinishedStorage.removeItem(it)
-                            }
-                            downloadsFinishedStorage.addItem(newFinishedItem)
+                            finishedItem = item
                             break
                         }
                     }
-                    downloadsQueue.emit(newDownloadsSet)
+
+                    if (finishedItem == null) {
+                        // если вдруг не нашли item в downloadsQueue -
+                        // downloadStartEvent был скипнут, попали сразу в этот коллектор
+
+                        val newLaunchedDownloadsSet = downloadsLaunchedQueue.value.toMutableSet()
+                        val launchedDownloadsIterator = newLaunchedDownloadsSet.iterator()
+
+                        while (launchedDownloadsIterator.hasNext()) {
+                            val item = launchedDownloadsIterator.next()
+                            if (item.params.targetResourceName == state.oldParams.targetResourceName
+                                    || item.downloadId == state.downloadInfo.id
+                            ) {
+                                logger.d("$item finished, removing from downloadsLaunchedQueue")
+                                launchedDownloadsIterator.remove()
+                                finishedItem = item
+                                break
+                            }
+                        }
+
+                        if (finishedItem != null) {
+                            downloadsLaunchedQueue.emit(newLaunchedDownloadsSet)
+                        }
+                    } else {
+                        // итем был найден downloadsQueue как и предполагалось
+                        downloadsQueue.emit(newDownloadsSet)
+                    }
+
+                    finishedItem?.let {
+                        // актуализируем парамсы для завершённого итема
+                        val newFinishedItem =
+                            finishedItem.copy(params = state.params, downloadId = state.downloadInfo.id)
+
+                        var previousFinishedItem: QueueItem? = null
+                        newFinishedSet.refreshWith(newFinishedItem) {
+                            if (it.id == newFinishedItem.id
+                                    || it.downloadId == newFinishedItem.downloadId) {
+                                // если был стартован через retry, такого уже не будет
+                                previousFinishedItem = it
+                                true
+                            } else {
+                                false
+                            }
+                        }.apply {
+                            newFinishedSet.clear()
+                            newFinishedSet.addAll(this)
+                        }
+
+                        previousFinishedItem?.let {
+                            downloadsFinishedStorage.removeItem(it)
+                        }
+                        downloadsFinishedStorage.addItem(newFinishedItem)
+                    }
+
                     downloadsFinishedQueue.emit(newFinishedSet)
                 } else if (state.stateInfo.done) {
                     when (state.type) {
@@ -468,6 +504,7 @@ class DownloadManager @Inject constructor(
     }
 
     private suspend fun retryDownloadInternal(downloadId: Long?, params: DownloadService.Params) {
+        logger.d("retryDownloadInternal, downloadId: $downloadId, params: $params")
         downloadId?.let {
             removeFinishedInternal(it, false)
         }
@@ -517,8 +554,6 @@ class DownloadManager @Inject constructor(
      * @param currentDownloads текущие DownloadInfo из таблицы для понимания кол-ва загрузок в данный момент
      */
     private suspend fun refreshQueue() { // state: DownloadState
-        logger.d("refreshQueue changed")
-
         // есть проблемы с актуальностью значений из-за suspend'ов, читаем вручную по месту
         // при этом getRaw() suspend - ставим его на первое место
         val maxDownloadsCount = settings.maxDownloads
@@ -562,7 +597,7 @@ class DownloadManager @Inject constructor(
 
     private fun DownloadInfoResultData.refreshWith() {
         _resultItems.value = _resultItems.value.refreshWith(this) {
-            it.downloadInfo.id == this.downloadInfo.id
+            it.id == this.id
         }
     }
 
@@ -571,7 +606,7 @@ class DownloadManager @Inject constructor(
      */
     private fun <T> Collection<T>.refreshWith(value: T, isSameWithFunc: (T) -> Boolean): List<T> {
         var has = false
-        val newCollection = this.map { item ->
+        val newList = this.map { item ->
             if (isSameWithFunc(item)) {
                 has = true
                 value
@@ -580,16 +615,16 @@ class DownloadManager @Inject constructor(
             }
         }.toMutableList()
         if (!has) {
-            newCollection.add(value)
+            newList.add(value)
         }
-        return newCollection
+        return newList
     }
 
     private fun DownloadService.Params.validate(): Boolean {
+        if (requestParams.url.toUrlOrNull() == null) return false
+        if (requestParams.method == Method.POST.value && requestParams.body?.isEmpty != false) return false
         if (targetResourceName.isEmpty()) return false
         if (!Regex(REG_EX_FILE_NAME).matches(resourceName)) return false
-        if (requestParams.url.toUrlOrNull() == null) return false
-        if (requestParams.method == Method.POST.value && requestParams.body == null) return false
         return !requestParams.headers.entries.any { it.key.isEmpty() || it.value.isEmpty() }
     }
 
@@ -639,7 +674,7 @@ class DownloadManager @Inject constructor(
                 ).filter { it.name.split(FILE_NAME_PREFIX).size == 2 && it.extension == FILE_NAME_EXT }
 
                 val result: List<Pair<QueueItem, File>> = files.mapNotNull {
-                    val item = fromInputStream(QueueItem::class.java, it.openInputStream())
+                    val item = it.openInputStream()?.readObject<QueueItem>()
                     if (item != null) {
                         Pair(item, it)
                     } else {
@@ -659,7 +694,7 @@ class DownloadManager @Inject constructor(
         @Synchronized
         fun addItem(item: QueueItem): Boolean {
             createFile(FILE_NAME_FORMAT.format(item.id), queueDir.absolutePath).openOutputStream()?.let {
-                return toOutputStream(item, it)
+                return it.writeObject(item)
             }
             return false
         }

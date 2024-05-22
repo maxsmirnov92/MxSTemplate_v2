@@ -44,9 +44,7 @@ class PickRequest private constructor(
         if (this === other) return true
         if (other !is PickRequest) return false
 
-        if (requestCode != other.requestCode) return false
-
-        return true
+        return requestCode == other.requestCode
     }
 
     override fun hashCode(): Int {

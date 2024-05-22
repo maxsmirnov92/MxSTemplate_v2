@@ -19,7 +19,7 @@ import java.io.OutputStream
 abstract class AbsSharedStorage(
     protected val contentType: ContentType,
     context: Context,
-) : UriContentStorage(context.contentResolver) {
+) : UriContentStorage(context) {
 
     /**
      * Название приложения в качестве поддиректории основной директории расшариваемых файлов.
@@ -27,36 +27,36 @@ abstract class AbsSharedStorage(
      */
     val appDir by lazy { baseAppName }
 
-    override fun exists(name: String, path: String?, context: Context): Result<Boolean, Exception> {
-        return super.exists(name, path(), context)
+    override fun exists(name: String, path: String?): Result<Boolean, Exception> {
+        return super.exists(name, this.path)
     }
 
-    override fun read(name: String, path: String?, context: Context): Result<String, Exception> {
-        return super.read(name, path(), context)
+    override fun read(name: String, path: String?): Result<String, Exception> {
+        return super.read(name, this.path)
     }
 
-    override fun shareUri(name: String, path: String?, context: Context): Result<Uri?, Exception> {
-        return super.shareUri(name, path(), context)
+    override fun shareUri(name: String, path: String?): Result<Uri?, Exception> {
+        return super.shareUri(name, this.path)
     }
 
-    override fun getOrCreate(name: String, path: String?, context: Context): Result<Uri, Exception> {
-        return super.getOrCreate(name, path(), context)
+    override fun getOrCreate(name: String, path: String?): Result<Uri, Exception> {
+        return super.getOrCreate(name, this.path)
     }
 
-    override fun write(content: String, name: String, path: String?, context: Context): Result<Unit, Exception> {
-        return super.write(content, name, path(), context)
+    override fun write(content: String, name: String, path: String?): Result<Unit, Exception> {
+        return super.write(content, name, this.path)
     }
 
-    override fun delete(name: String, path: String?, context: Context): Result<Boolean, Exception> {
-        return super.delete(name, path(), context)
+    override fun delete(name: String, path: String?): Result<Boolean, Exception> {
+        return super.delete(name, this.path)
     }
 
-    override fun openInputStream(name: String, path: String?, context: Context): Result<InputStream, Exception> {
-        return super.openInputStream(name, path(), context)
+    override fun openInputStream(name: String, path: String?): Result<InputStream, Exception> {
+        return super.openInputStream(name, this.path)
     }
 
-    override fun openOutputStream(name: String, path: String?, context: Context): Result<OutputStream, Exception> {
-        return super.openOutputStream(name, path(), context)
+    override fun openOutputStream(name: String, path: String?): Result<OutputStream, Exception> {
+        return super.openOutputStream(name, this.path)
     }
 
     override fun copy(
@@ -65,11 +65,8 @@ abstract class AbsSharedStorage(
         dstStorage: ContentStorage<*>,
         dstName: String,
         dstPath: String?,
-        context: Context,
     ): Result<Unit, Exception> {
-        return super.copy(srcName, path(), dstStorage, dstName, dstPath, context)
+        return super.copy(srcName, path, dstStorage, dstName, dstPath)
     }
-
-    abstract fun path(): String
 
 }

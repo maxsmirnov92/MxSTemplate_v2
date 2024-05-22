@@ -11,6 +11,7 @@ android {
 dependencies {
     api(project(":feature:download:data"))
 
+    implementation(project(":feature:preferences:ui"))
     implementation(project(":core:di"))
     implementation(project(":core:domain"))
     implementation(project(":core:database"))

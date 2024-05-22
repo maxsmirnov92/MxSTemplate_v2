@@ -4,34 +4,50 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
+import com.github.kittinunf.result.getOrNull
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
 import net.maxsmr.commonutils.live.field.validateAndSetByRequired
 import net.maxsmr.commonutils.media.name
+import net.maxsmr.commonutils.media.writeFromStream
+import net.maxsmr.commonutils.openRawResource
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.base.BaseViewModel
+import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
+import net.maxsmr.core.android.baseAppName
 import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.android.content.ContentType
+import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.network.toUrlOrNull
-import net.maxsmr.core.domain.entities.feature.download.HashInfo
-import net.maxsmr.core.domain.entities.feature.download.MD5_ALGORITHM
+import net.maxsmr.core.di.AppDispatchers
+import net.maxsmr.core.di.Dispatcher
+import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
+import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel.Method
 import net.maxsmr.core.domain.entities.feature.download.REG_EX_MD5_ALGORITHM
 import net.maxsmr.core.ui.BooleanFieldState
-import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.ui.BaseCachedViewModel
 import java.io.Serializable
 
 class DownloadsParamsViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val viewModel: DownloadsViewModel,
-) : BaseViewModel(state) {
+    @Dispatcher(AppDispatchers.IO)
+    private val ioDispatcher: CoroutineDispatcher,
+    repo: CacheDataStoreRepository,
+) : BaseCachedViewModel(repo, state) {
 
     val urlField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.toUrlOrNull() == null }
@@ -75,9 +91,9 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         .persist(state, KEY_FIELD_TARGET_HASH)
         .build()
 
-    val ignoreServerErrorField: Field<Boolean> = Field.Builder(false)
+    val ignoreServerErrorsField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
-        .persist(state, KEY_FIELD_IGNORE_SERVER_ERROR)
+        .persist(state, KEY_FIELD_IGNORE_SERVER_ERRORS)
         .build()
 
     val ignoreAttachmentStateField: Field<BooleanFieldState> = Field.Builder(BooleanFieldState(false))
@@ -99,6 +115,10 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     private var headerIdCounter by persistableValueInitial(0)
 
+    private val storage: ContentStorage<Uri> by lazy {
+        ContentStorage.createUriStorage(ContentStorage.StorageType.SHARED, ContentType.DOCUMENT, baseApplicationContext)
+    }
+
     private val allFields: List<Field<*>>
         get() {
             val fields = mutableListOf(
@@ -109,7 +129,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 fileNameChangeStateField,
                 subDirNameField,
                 targetHashField,
-                ignoreServerErrorField,
+                ignoreServerErrorsField,
                 ignoreAttachmentStateField,
                 deleteUnfinishedField
             )
@@ -150,7 +170,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
         targetHashField.clearErrorOnChange(this)
 
-        ignoreServerErrorField.valueLive.observe {
+        ignoreServerErrorsField.valueLive.observe {
             ignoreAttachmentStateField.toggleState(it)
         }
         headerItems.observe {
@@ -160,7 +180,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
     }
 
-    fun onRequestBodyUriSelected(uri: Uri) {
+    fun onBodyUriSelected(uri: Uri) {
         val body = bodyField.value
         if (body == null || !body.isEnabled) return
         bodyField.value = body.copy(bodyUri = uri.toString())
@@ -278,65 +298,66 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
     }
 
-    fun onStartDownloadClick() {
-        val method = methodField.value ?: return
+    fun onLoadFromJsonClick(context: Context, onPickAction: () -> Unit) {
+        viewModelScope.launch {
+            if (!cacheRepo.hasDownloadParamsModelSample()) {
+                withContext(ioDispatcher) {
+                    val subDir = baseAppName
+                    val resource = storage.getOrCreate(RESOURCE_NAME_DOWNLOAD_PARAMS_MODEL, subDir)
+                    resource.getOrNull()?.let {
+                        // ассеты не допускаются в либах
+                        openRawResource(context, R.raw.download_params_model_sample)?.let { assetStream ->
+                            if (it.writeFromStream(context.contentResolver, assetStream)) {
+                                showToast(ToastAction(TextMessage(R.string.download_alert_params_sample_copied_format, storage.path)))
+                            }
+                        }
+                    }
+                }
+                cacheRepo.setHasDownloadParamsModelSample()
+            } else {
+                onPickAction()
+            }
+        }
+    }
 
+    fun onStartDownloadClick() {
         if (!allFields.validateAndSetByRequired()) {
             return
         }
-        val url = urlField.value?.toUrlOrNull() ?: return
+        val url = urlField.value ?: return
+        val method = methodField.value ?: return
+        val bodyUri = bodyField.value?.bodyUri
+
         val fileName = fileNameField.value
         val subDirName = subDirNameField.value.orEmpty()
-        val notificationParams = DownloadService.NotificationParams(
-            successActions = DownloadsViewModel.defaultNotificationActions(baseApplicationContext)
-        )
+        val ignoreFileName = fileNameChangeStateField.value?.value != true
+
         val headers = hashMapOf<String, String>()
         headerFields.forEach {
             val key = it.header.first.field.value ?: return@forEach
             val value = it.header.second.field.value ?: return@forEach
             headers[key] = value
         }
-        val ignoreFileName = fileNameChangeStateField.value?.value != true
-        val bodyUri = bodyField.value?.bodyUri
 
-        val targetHashInfo = targetHashField.value?.takeIf { it.isNotEmpty() }?.let {
-            HashInfo(MD5_ALGORITHM, it)
-        }
+        val targetHash = targetHashField.value
 
-        val ignoreServerError = ignoreServerErrorField.value ?: false
+        val ignoreServerErrors = ignoreServerErrorsField.value ?: false
         val ignoreAttachment = ignoreAttachmentStateField.value?.value ?: false
         val deleteUnfinished = deleteUnfinishedField.value ?: false
 
-        val params = if (method == Method.POST && bodyUri != null) {
-            DownloadService.Params.defaultPOSTServiceParamsFor(
-                url,
-                fileName,
-                DownloadService.RequestParams.Body(DownloadService.RequestParams.Body.Uri(bodyUri)),
-                ignoreAttachment = ignoreAttachment,
-                ignoreFileName = ignoreFileName,
-                storeErrorBody = ignoreServerError,
-                headers = headers,
-                subDir = subDirName,
-                targetHashInfo = targetHashInfo,
-                deleteUnfinished = deleteUnfinished,
-                notificationParams = notificationParams,
-            )
-        } else {
-            DownloadService.Params.defaultGETServiceParamsFor(
-                url,
-                fileName,
-                ignoreAttachment = ignoreAttachment,
-                ignoreFileName = ignoreFileName,
-                storeErrorBody = ignoreServerError,
-                headers = headers,
-                subDir = subDirName,
-                targetHashInfo = targetHashInfo,
-                deleteUnfinished = deleteUnfinished,
-                notificationParams = notificationParams,
-            )
-        }
-
-        viewModel.download(params)
+        viewModel.download(DownloadParamsModel(
+            url,
+            method,
+            bodyUri,
+            fileName,
+            ignoreFileName,
+            subDirName,
+            targetHash,
+            ignoreServerErrors,
+            ignoreAttachment,
+            deleteUnfinished,
+            headers
+        ))
     }
 
     private fun updateHeaderItem(
@@ -368,11 +389,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         if (hasChanged) {
             headerItems.value = newItems
         }
-    }
-
-    enum class Method {
-        GET,
-        POST
     }
 
     class HeaderInfoFields(
@@ -418,8 +434,10 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         private const val KEY_FIELD_FILE_NAME_CHANGE_STATE = "file_name_change_state"
         private const val KEY_FIELD_SUB_DIR_NAME = "sub_dir_name"
         private const val KEY_FIELD_TARGET_HASH = "target_hash"
-        private const val KEY_FIELD_IGNORE_SERVER_ERROR = "ignore_server_error"
+        private const val KEY_FIELD_IGNORE_SERVER_ERRORS = "ignore_server_errors"
         private const val KEY_FIELD_IGNORE_ATTACHMENT_STATE = "ignore_attachment_state"
         private const val KEY_FIELD_DELETE_UNFINISHED = "delete_unfinished"
+
+        private const val RESOURCE_NAME_DOWNLOAD_PARAMS_MODEL = "download_params_model_sample.json"
     }
 }

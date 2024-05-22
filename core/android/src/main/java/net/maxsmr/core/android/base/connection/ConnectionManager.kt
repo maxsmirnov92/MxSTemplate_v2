@@ -54,7 +54,7 @@ class ConnectionManager() {
             } else {
                 builder?.build()
                     ?: AlertQueueItem.Builder(TAG_CONNECTIVITY, queue)
-                        .setTitle(R.string.no_connection)
+                        .setTitle(R.string.error_no_connection)
                         .setAnswers(Alert.Answer(R.string.try_again_internet).also { it.select = ::check })
                         .setUniqueStrategy(AlertQueueItem.UniqueStrategy.Ignore)
                         .build()

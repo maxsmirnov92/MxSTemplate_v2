@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+<!--    Application requires some permissions-->
     <string name="get_permission">Для корректной работы приложения требуются некоторые разрешения</string>
 
     <string name="pick_settings">настройках</string>

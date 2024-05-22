@@ -45,7 +45,7 @@ abstract class BaseViewModel(
     val state: SavedStateHandle,
 ) : ViewModel(), LifecycleOwner {
 
-    val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
+    protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
     protected val KProperty<*>.persistableKey: String
         get() = this@BaseViewModel.getPersistableKey(this)
@@ -132,8 +132,8 @@ abstract class BaseViewModel(
      */
     fun showNoInternetDialog() {
         AlertBuilder(DIALOG_TAG_NO_INTERNET)
-            .setTitle(R.string.server_unavailable)
-            .setMessage(R.string.no_internet)
+            .setTitle(R.string.error_server_unavailable)
+            .setMessage(R.string.error_no_internet)
             .setAnswers(Alert.Answer(R.string.understand))
             .build()
     }

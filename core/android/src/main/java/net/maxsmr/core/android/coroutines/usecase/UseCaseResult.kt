@@ -134,28 +134,28 @@ fun Throwable.asUseCaseResult() = when (this) {
         UseCaseResult.Error(this)
     }
     is NetworkException -> {
-        UseCaseResult.Error(this, R.string.no_internet)
+        UseCaseResult.Error(this, R.string.error_no_internet)
     }
     is NoConnectivityException -> {
-        UseCaseResult.Error(this, R.string.no_internet)
+        UseCaseResult.Error(this, R.string.error_no_internet)
     }
     is SocketException -> {
-        UseCaseResult.Error(this, R.string.no_internet)
+        UseCaseResult.Error(this, R.string.error_no_internet)
     }
     is UnknownHostException -> {
-        UseCaseResult.Error(this, R.string.no_internet)
+        UseCaseResult.Error(this, R.string.error_no_internet)
     }
     is SSLException -> {
-        UseCaseResult.Error(this, R.string.no_internet)
+        UseCaseResult.Error(this, R.string.error_no_internet)
     }
     is SocketTimeoutException -> {
-        UseCaseResult.Error(this, R.string.no_internet)
+        UseCaseResult.Error(this, R.string.error_no_internet)
     }
     is IOException -> {
-        UseCaseResult.Error(this, R.string.no_internet)
+        UseCaseResult.Error(this, R.string.error_no_internet)
     }
     is retrofit2.HttpException -> {
-        UseCaseResult.Error(this, R.string.no_internet)
+        UseCaseResult.Error(this, R.string.error_no_internet)
     }
     else -> {
         if (BuildConfig.CRASH_ON_UNEXPECTED_ERROR) {

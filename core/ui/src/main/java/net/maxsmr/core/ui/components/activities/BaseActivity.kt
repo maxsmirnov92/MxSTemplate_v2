@@ -49,7 +49,7 @@ open class BaseActivity: AppCompatActivity() {
 
         // во избежание пересечений кодов разрешений
         // (в отношении остального пользовать ResultLauncher'ы)
-        // все базовые юзкейсы объявлять здесь
+        // все объявлять здесь
 
         const val REQUEST_CODE_NOTIFICATIONS_PERMISSION = 1
         const val REQUEST_CODE_GPS_PERMISSION = 2

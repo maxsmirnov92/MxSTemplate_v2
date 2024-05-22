@@ -38,12 +38,12 @@ internal class CameraPicker(
         params: CameraPickerParams,
         uri: Uri?,
         needPersistableAccess: Boolean,
-        context: Context,
+        context: Context
     ): Uri? {
         return viewModel.onPickResult(params, uri)
     }
 
-    override fun onPickCancelled(context: Context) {
-        viewModel.onPickCancelled(context)
+    override fun onPickCancelled() {
+        viewModel.onPickCancelled()
     }
 }

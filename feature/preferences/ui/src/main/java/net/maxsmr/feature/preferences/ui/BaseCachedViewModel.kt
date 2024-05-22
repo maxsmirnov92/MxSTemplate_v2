@@ -12,7 +12,7 @@ import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 
 abstract class BaseCachedViewModel(
-    private val cacheRepo: CacheDataStoreRepository,
+    protected val cacheRepo: CacheDataStoreRepository,
     state: SavedStateHandle,
 ) : BaseViewModel(state) {
 

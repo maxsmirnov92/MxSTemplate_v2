@@ -34,6 +34,7 @@
     <string name="download_alert_confirm_title">Подтверждение</string>
     <string name="download_alert_clear_queue_message">Очистить очередь ожидающих загрузок?</string>
     <string name="download_alert_retry_download_if_success_message">Данная загрузка завершилась успешно. Всё равно повторить?</string>
+    <string name="download_alert_params_sample_copied_format">Пример JSON-файла был скопирован в %s</string>
     <string name="download_queued_count_subtitle">В очереди:</string>
     <string name="download_active_empty_text">Нет активных загрузок</string>
 
@@ -54,8 +55,9 @@
     <string name="download_status_requesting">Выполнение запроса…</string>
 
     <string name="download_status_success">Успех</string>
-    <string name="download_status_failed_format">Ошибка: \"%s\"</string>
+    <string name="download_status_failed_format">Произошла ошибка: \"%s\"</string>
     <string name="download_status_cancelled">Отменена</string>
 
     <string name="download_menu_action_filter">Фильтр по названию</string>
+    <string name="download_menu_action_load_params_from_json">Загрузить список из JSON</string>
 </resources>

@@ -326,13 +326,6 @@ private fun InputStream.copyToOutputStreamOrThrow(
         })
 }
 
-// TODO to domain
-enum class Method(val value: String) {
-
-    POST("POST"),
-    GET("GET")
-}
-
 enum class ContentDispositionType(val value: String) {
 
     INLINE("inline"),

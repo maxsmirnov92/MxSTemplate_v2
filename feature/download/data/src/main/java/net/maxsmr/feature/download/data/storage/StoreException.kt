@@ -1,15 +1,15 @@
 package net.maxsmr.feature.download.data.storage
 
-import android.net.Uri
+import androidx.core.net.toUri
 
 /**
  * Исключение, возникающее при выполнении операции с [localUri]
  */
-class StoreException(
-    val localUri: Uri,
+class StoreException @JvmOverloads constructor(
+    private val _localUri: String,
     cause: Exception? = null,
     message: String = cause?.message.orEmpty()
 ) : RuntimeException(message, cause) {
 
-    constructor(localUri: Uri, message: String) : this(localUri, null, message)
+    val localUri get() = _localUri.toUri()
 }

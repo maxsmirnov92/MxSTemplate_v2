@@ -18,7 +18,7 @@ class RadarIoOkHttpClientManager(
     callTimeout: Long,
 ) : BaseOkHttpClientManager(callTimeout) {
 
-    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("ApiRequest")
+    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("RadarIoOkHttpClientManager")
 
     override fun OkHttpClient.Builder.configureBuild() {
 //        addInterceptor(NetworkConnectionInterceptor(connectivityChecker))

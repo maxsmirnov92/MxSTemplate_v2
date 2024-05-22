@@ -53,12 +53,12 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel, NavArgs>() {
             viewModel.saveChanges()
             true
         } else {
-            false
+            super.onMenuItemSelected(menuItem)
         }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: SettingsViewModel, alertHandler: AlertHandler) {
-        super.onViewCreated(view, savedInstanceState, viewModel, alertHandler)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: SettingsViewModel) {
+        super.onViewCreated(view, savedInstanceState, viewModel)
 
         binding.etMaxDownloads.bindTo(viewModel.maxDownloadsField) {
             it.toIntNotNull()

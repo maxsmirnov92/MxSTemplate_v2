@@ -47,9 +47,9 @@ import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.ApplicationScope
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.di.DownloaderOkHttpClient
+import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.network.ContentDispositionType
-import net.maxsmr.core.network.Method
 import net.maxsmr.core.network.ProgressRequestBody
 import net.maxsmr.core.network.ProgressResponseBody
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
@@ -85,8 +85,7 @@ import okio.ByteString
 import okio.source
 import net.maxsmr.feature.download.data.storage.StoreException
 import java.io.*
-import java.net.URL
-import java.util.*
+import java.util.Collections
 import javax.inject.Inject
 
 
@@ -151,7 +150,7 @@ class DownloadService : Service() {
         )
     }
 
-    private val contextJob = Job()
+    private val contextJob by lazy { Job() }
 
     private val coroutineScope: CoroutineScope by lazy {
         CoroutineScope(ioDispatcher + contextJob)
@@ -399,6 +398,15 @@ class DownloadService : Service() {
                         mimeType = params.resourceMimeType,
                         extension = params.extension,
                     )
+
+                    if (params.skipIfDownloaded) {
+                        storage.findAlreadyLoaded(params, downloadInfo)?.let {
+                            logger.d("Skip storing of $params: found already loaded file with same hash")
+                            onDownloadSuccess(it, params, oldParams)
+                            return@launch
+                        }
+                    }
+
 //                    downloadsRepo.upsert(downloadInfo)
                 }
 
@@ -436,7 +444,7 @@ class DownloadService : Service() {
                 val hashInfo = params.targetHashInfo?.takeIf { !it.isEmpty }?.also {
                     // проверка с целевым хэшэм при наличии
                     if (!DownloadsHashManager.checkHash(localUri, it)) {
-                        throw StoreException(localUri, "Loaded resource hash doesn't match with expected")
+                        throw StoreException(localUri.toString(), message = "Loaded resource hash doesn't match with expected")
                     }
                 } ?: DownloadsHashManager.getHash(localUri)
 
@@ -497,7 +505,7 @@ class DownloadService : Service() {
             ) return prevDownload
         }
 
-        //Пробуем проверить хэши всех существующих uri с совпадающими именами в целевой папки
+        // Пробуем проверить хэши всех существующих uri с совпадающими именами в целевой папки
         val expectedHash = (params.targetHashInfo
             ?: success?.initialHashInfo)?.takeIf { !it.isEmpty }
             ?: return null
@@ -506,6 +514,7 @@ class DownloadService : Service() {
             .find { DownloadsHashManager.checkHash(it, expectedHash) }
             ?.let {
                 DownloadInfo(
+                    id = prevDownload?.id ?: 0,
                     name = params.resourceNameWithoutExt,
                     mimeType = params.resourceMimeType,
                     extension = params.extension,
@@ -525,9 +534,9 @@ class DownloadService : Service() {
 
     private suspend fun onDownloadStarting(downloadInfo: DownloadInfo, params: Params) {
         logger.d("Download starting: ${downloadInfo.name}")
-        notifier.onDownloadStarting(downloadInfo, params)
         downloadsRepo.upsert(downloadInfo)
         updateForegroundNotification()
+        notifier.onDownloadStarting(downloadInfo, params)
     }
 
     private fun onDownloadProcessing(
@@ -577,7 +586,6 @@ class DownloadService : Service() {
     private suspend fun onDownloadSuccess(downloadInfo: DownloadInfo, params: Params, oldParams: Params) {
         val status = downloadInfo.statusAsSuccess ?: return
         logger.d("Download success: $downloadInfo, params: $params, oldParams: $oldParams")
-        notifier.onDownloadSuccess(downloadInfo, params, oldParams)
 
         params.notificationParams?.let { notificationParams ->
 
@@ -627,6 +635,8 @@ class DownloadService : Service() {
         downloadsRepo.upsert(downloadInfo)
         currentDownloads.remove(params.requestParams.url)
         updateForegroundNotification()
+
+        notifier.onDownloadSuccess(downloadInfo, params, oldParams)
     }
 
     private suspend fun onDownloadFailed(
@@ -636,7 +646,6 @@ class DownloadService : Service() {
         e: Exception?,
     ) {
         logger.e("Download failed: $downloadInfo, params: $params, oldParams: $oldParams", e)
-        notifier.onDownloadFailed(downloadInfo, params, oldParams, e)
 
         params.notificationParams?.let { notificationParams ->
             val id = downloadInfo.id.toInt()
@@ -659,11 +668,12 @@ class DownloadService : Service() {
         downloadsRepo.upsert(downloadInfo)
         currentDownloads.remove(params.requestParams.url)
         updateForegroundNotification()
+
+        notifier.onDownloadFailed(downloadInfo, params, oldParams, e)
     }
 
     private suspend fun onDownloadCancelled(downloadInfo: DownloadInfo, params: Params, oldParams: Params) {
         logger.d("Download cancelled by user: $downloadInfo, params: $params, oldParams: $oldParams")
-        notifier.onDownloadCancelled(downloadInfo, params, oldParams)
 
         params.notificationParams?.let { notificationParams ->
             val id = downloadInfo.id.toInt()
@@ -685,6 +695,8 @@ class DownloadService : Service() {
 //        downloadsRepo.remove(downloadInfo)
         downloadsRepo.upsert(downloadInfo)
         updateForegroundNotification()
+
+        notifier.onDownloadCancelled(downloadInfo, params, oldParams)
     }
 
     private fun NotificationCompat.Builder.addRetryAction(downloadId: Long, params: Params) {
@@ -832,7 +844,7 @@ class DownloadService : Service() {
 
             @JvmOverloads
             fun defaultPOSTServiceParamsFor(
-                uri: URL,
+                uri: String,
                 preferredFileName: String?,
                 body: RequestParams.Body,
                 ignoreContentType: Boolean = false,
@@ -852,7 +864,7 @@ class DownloadService : Service() {
                 if (preferredFileName.isNullOrEmpty()) {
                     // желаемое не указано - подбираем из урлы,
                     // но не игнорируем после получения ответа в заголовке
-                    fileName = getContentName(preferredFileName.orEmpty(), uri.toString())
+                    fileName = getContentName(preferredFileName.orEmpty(), uri)
                     targetIgnoreFileName = false
                 } else {
                     fileName = preferredFileName
@@ -886,7 +898,7 @@ class DownloadService : Service() {
 
             @JvmOverloads
             fun defaultGETServiceParamsFor(
-                uri: URL,
+                uri: String,
                 preferredFileName: String?,
                 ignoreContentType: Boolean = false,
                 ignoreAttachment: Boolean = false,
@@ -905,7 +917,7 @@ class DownloadService : Service() {
                 if (preferredFileName.isNullOrEmpty()) {
                     // желаемое не указано - подбираем из урлы,
                     // но не игнорируем после получения ответа в заголовке
-                    fileName = getContentName(preferredFileName.orEmpty(), uri.toString())
+                    fileName = getContentName(preferredFileName.orEmpty(), uri)
                     targetIgnoreFileName = false
                 } else {
                     fileName = preferredFileName
@@ -952,10 +964,9 @@ class DownloadService : Service() {
 
         fun createRequest(listener: ProgressListener): Request = Request.Builder()
             .url(url)
-            .method(method, body?.createRequestBody()?.let {
+            .method(method, body?.takeIf { !it.isEmpty }?.createRequestBody()?.let {
                 ProgressRequestBody(it, listener)
-            }
-            )
+            })
             .headers(headers.toHeaders())
             .build()
 
@@ -971,6 +982,15 @@ class DownloadService : Service() {
         }
 
         class Body(val content: Serializable, val mimeType: String? = null) : Serializable {
+
+            val isEmpty: Boolean = when (content) {
+                is Uri -> content.value.isEmpty()
+                is File -> content.length() == 0L
+                is ByteArray -> content.isEmpty()
+                is String -> content.isEmpty()
+                is ByteString -> content.size == 0
+                else -> true
+            }
 
             fun createRequestBody(): RequestBody {
                 val type = mimeType?.toMediaTypeOrNull()
@@ -1011,7 +1031,7 @@ class DownloadService : Service() {
             ): RequestParams {
                 return RequestParams(
                     url,
-                    Method.POST.value,
+                    DownloadParamsModel.Method.POST.value,
                     headers,
                     body,
                     ignoreContentType,
@@ -1039,7 +1059,7 @@ class DownloadService : Service() {
                 }
                 return RequestParams(
                     targetUrl,
-                    Method.GET.value,
+                    DownloadParamsModel.Method.GET.value,
                     headers,
                     null,
                     ignoreContentType,

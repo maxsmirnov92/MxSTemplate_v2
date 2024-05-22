@@ -21,7 +21,7 @@ abstract class BaseMenuFragment<VM : BaseViewModel> : BaseVmFragment<VM>(), Menu
     protected var menu: Menu? = null
 
     @CallSuper
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM, alertHandler: AlertHandler) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         val menuResId = menuResId
         if (menuResId != 0) {
             val menuHost: MenuHost = requireActivity()

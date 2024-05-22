@@ -8,7 +8,6 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.DataStoreType
@@ -67,10 +66,23 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
+    suspend fun hasDownloadParamsModelSample(): Boolean {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE]
+        }.firstOrNull() ?: false
+    }
+
+    suspend fun setHasDownloadParamsModelSample() {
+        dataStore.edit { prefs ->
+            prefs[FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE] = true
+        }
+    }
+
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
         private val FIELD_LAST_LOCATION = stringPreferencesKey("lastLocation")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
+        private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
     }
 }

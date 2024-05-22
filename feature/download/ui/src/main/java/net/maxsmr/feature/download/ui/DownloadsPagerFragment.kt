@@ -3,13 +3,13 @@ package net.maxsmr.feature.download.ui
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.navigation.NavArgs
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.gui.hideKeyboard
-import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -24,7 +24,7 @@ class DownloadsPagerFragment : BaseNavigationFragment<DownloadsViewModel, NavArg
 
     override val layoutId: Int = R.layout.fragment_downloads_pager
 
-    override val viewModel: DownloadsViewModel by viewModels()
+    override val viewModel: DownloadsViewModel by activityViewModels()
 
     override val argsClass: KClass<NavArgs>? = null
 
@@ -46,9 +46,8 @@ class DownloadsPagerFragment : BaseNavigationFragment<DownloadsViewModel, NavArg
         view: View,
         savedInstanceState: Bundle?,
         viewModel: DownloadsViewModel,
-        alertHandler: AlertHandler,
     ) {
-        super.onViewCreated(view, savedInstanceState, viewModel, alertHandler)
+        super.onViewCreated(view, savedInstanceState, viewModel)
         with(binding) {
             val pagerAdapter = DownloadsPagerAdapter(this@DownloadsPagerFragment)
             viewPagerFragments.adapter = pagerAdapter
@@ -58,15 +57,12 @@ class DownloadsPagerFragment : BaseNavigationFragment<DownloadsViewModel, NavArg
             viewPagerFragments.isUserInputEnabled = false
             viewPagerFragments.registerOnPageChangeCallback(pageChangeCallback)
         }
-
-        viewModel.handleEvents(this)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         binding.viewPagerFragments.unregisterOnPageChangeCallback(pageChangeCallback)
     }
-
 
     private fun hideKeyboard() {
         hideKeyboard(requireActivity(), flags = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED)

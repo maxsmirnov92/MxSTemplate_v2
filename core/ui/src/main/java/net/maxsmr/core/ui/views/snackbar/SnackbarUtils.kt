@@ -23,7 +23,7 @@ fun showNoInternetSnackbar(parentView: View, onActionClickListener: View.OnClick
  * @param onActionClickListener коллбек, который вызовится при нажатии на "проверить снова"
  */
 fun View.showNoInternetSnackbar(onActionClickListener: View.OnClickListener?, callback: BaseTransientBottomBar.BaseCallback<Snackbar?>?): Snackbar {
-    return showSnackbar(net.maxsmr.core.android.R.string.no_connection, net.maxsmr.core.android.R.string.try_again_internet, onActionClickListener, callback)
+    return showSnackbar(net.maxsmr.core.android.R.string.error_no_connection, net.maxsmr.core.android.R.string.try_again_internet, onActionClickListener, callback)
 }
 
 fun View.showSnackbar(@StringRes message: Int, @StringRes button: Int, onActionClickListener: View.OnClickListener?): Snackbar {

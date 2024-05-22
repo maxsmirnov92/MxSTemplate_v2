@@ -1,0 +1,17 @@
+[
+  {
+    "url": "https://getfile.dokpub.com/",
+    "method": "POST",
+    "bodyContentUri": "content://media/external/downloads/21",
+    "fileName": "abc.txt",
+    "ignoreFileName": false,
+    "subDirName": "downloads_sample",
+    "targetMd5Hash": "C59C1023F85566F804016104ADC53BB3",
+    "ignoreServerErrors": false,
+    "ignoreAttachment": false,
+    "deleteUnfinished": true,
+    "headers": {
+      "name1": "value1"
+    }
+  }
+]

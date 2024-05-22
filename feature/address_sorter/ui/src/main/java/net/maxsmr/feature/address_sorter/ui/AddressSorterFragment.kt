@@ -19,6 +19,7 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
+import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_GPS_PERMISSION
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_NOTIFICATIONS_PERMISSION
@@ -50,7 +51,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, Nav
 
     private val locationViewModel: LocationViewModel by viewModels {
         AbstractSavedStateViewModelFactory(this) {
-            locationFactory.create(it, AlertQueue(), null)
+            locationFactory.create(it, null)
         }
     }
 
@@ -99,11 +100,14 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, Nav
 
             ).build()
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: AddressSorterViewModel, alertHandler: AlertHandler) {
-        super.onViewCreated(view, savedInstanceState, viewModel, alertHandler)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: AddressSorterViewModel) {
+        super.onViewCreated(view, savedInstanceState, viewModel)
 
         with(locationViewModel) {
-            handleAlerts(requireContext(), alertHandler)
+            handleAlerts(
+                requireContext(),
+                AlertFragmentDelegate(this@AddressSorterFragment, this)
+            )
             handleEvents(this@AddressSorterFragment)
         }
 

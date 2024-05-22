@@ -66,8 +66,8 @@ abstract class BaseNavigationFragment<VM : BaseViewModel, Args : NavArgs> : Base
     }
 
     @CallSuper
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM, alertHandler: AlertHandler) {
-        super.onViewCreated(view, savedInstanceState, viewModel, alertHandler)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
+        super.onViewCreated(view, savedInstanceState, viewModel)
         val host = navigationHost ?: return
         view.findViewById<Toolbar>(R.id.toolbar)?.let {
             host.registerToolbarWithNavigation(it, this)

@@ -16,10 +16,8 @@ import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.getLocationSettingsIntent
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.actions.IntentNavigationAction
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.base.alert.AlertHandler
-import net.maxsmr.core.android.base.alert.queue.AlertQueue
+
 import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.android.baseApplicationContext
@@ -28,13 +26,13 @@ import net.maxsmr.core.android.location.LocationCallback
 import net.maxsmr.core.android.location.receiver.ILocationReceiver
 import net.maxsmr.core.android.location.receiver.LocationParams
 import net.maxsmr.core.ui.R
+import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment.Companion.handleNavigation
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 
 class LocationViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
-    @Assisted override val dialogQueue: AlertQueue,
     @Assisted private val mockLocationReceiver: ILocationReceiver?,
     private val locationReceiver: ILocationReceiver,
 ) : BaseViewModel(state), LocationCallback {
@@ -91,13 +89,16 @@ class LocationViewModel @AssistedInject constructor(
     /**
      * Вызов для показа алертов о проблемах определения местоположения при необходимости
      */
-    fun handleAlerts(context: Context, handler: AlertHandler) {
-        handler.handle(dialogQueue, DIALOG_TAG_GPS_NOT_AVAILABLE) {
+    fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<LocationViewModel>) {
+        delegate.handleCommonAlerts(context)
+
+        delegate.bindAlertDialog(DIALOG_TAG_GPS_NOT_AVAILABLE) {
             it.asOkDialog(context, true)
         }
-        handler.handle(dialogQueue, DIALOG_TAG_GPS_NOT_ENABLED) { alert ->
+        delegate.bindAlertDialog(DIALOG_TAG_GPS_NOT_ENABLED) { alert ->
             alert.asYesNoDialog(context, false)
         }
+
     }
 
     fun handleEvents(fragment: BaseVmFragment<*>) {
@@ -254,7 +255,6 @@ class LocationViewModel @AssistedInject constructor(
          */
         fun create(
             state: SavedStateHandle,
-            dialogQueue: AlertQueue,
             mockLocationReceiver: ILocationReceiver?,
         ): LocationViewModel
     }

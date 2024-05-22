@@ -19,5 +19,5 @@ internal interface ConcretePicker<P : ConcretePickerParams> {
 
     fun onPickResult(params: P, uri: Uri?, needPersistableAccess: Boolean, context: Context): Uri?
 
-    fun onPickCancelled(context: Context) {}
+    fun onPickCancelled() {}
 }

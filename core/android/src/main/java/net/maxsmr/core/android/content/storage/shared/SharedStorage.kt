@@ -34,22 +34,24 @@ import java.io.IOException
  */
 @RequiresApi(Build.VERSION_CODES.Q)
 class SharedStorage private constructor(
-        contentType: ContentType,
-        context: Context,
+    contentType: ContentType,
+    context: Context,
 ) : AbsSharedStorage(contentType, context) {
 
-    override fun get(name: String, path: String?, context: Context): Result<Uri, Exception> = Result.of {
+    override val path: String = "${contentType.rootDir}${File.separator}$appDir${File.separator}"
+
+    override fun get(name: String, path: String?): Result<Uri, Exception> = Result.of {
         val projection = arrayOf(contentType.mediaStoreId)
 
         val selection = "${contentType.mediaStoreDisplayName} = ? AND ${MediaStore.MediaColumns.RELATIVE_PATH} = ?"
-        val selectionArgs = arrayOf(name, path())
+        val selectionArgs = arrayOf(name, path)
 
         val query = resolver.query(
-                contentType.contentUri(false),
-                projection,
-                selection,
-                selectionArgs,
-                null
+            contentType.contentUri(false),
+            projection,
+            selection,
+            selectionArgs,
+            null
         )
         query?.use { cursor ->
             // Cache column indices.
@@ -63,8 +65,8 @@ class SharedStorage private constructor(
         throw IOException("Cannot get content with `$name`")
     }
 
-    override fun create(name: String, path: String?, context: Context): Result<Uri, Exception> = Result.of {
-        val pathHardcoded = path()
+    override fun create(name: String, path: String?): Result<Uri, Exception> = Result.of {
+        val pathHardcoded = this.path
         val values = ContentValues().apply {
             put(contentType.mediaStoreDisplayName, name)
             put(MediaStore.MediaColumns.RELATIVE_PATH, pathHardcoded)
@@ -78,17 +80,13 @@ class SharedStorage private constructor(
             arrayOf(pathHardcoded, name)
         )
         resolver.insert(contentUri, values)
-                ?: throw IOException("Cannot create content with `$name`")
-    }
-
-    override fun path(): String {
-        return "${contentType.rootDir}${File.separator}$appDir${File.separator}"
+            ?: throw IOException("Cannot create content with `$name`")
     }
 
     override fun requiredPermissions(read: Boolean, write: Boolean): Array<String> {
         return listOfNotNull(
-                Manifest.permission.READ_EXTERNAL_STORAGE.takeIf { read },
-                Manifest.permission.WRITE_EXTERNAL_STORAGE.takeIf { write },
+            Manifest.permission.READ_EXTERNAL_STORAGE.takeIf { read },
+            Manifest.permission.WRITE_EXTERNAL_STORAGE.takeIf { write },
         ).toTypedArray()
     }
 

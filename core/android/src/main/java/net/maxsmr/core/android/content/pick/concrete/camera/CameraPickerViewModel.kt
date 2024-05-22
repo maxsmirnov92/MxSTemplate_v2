@@ -9,12 +9,10 @@ import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.media.toContentUri
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.delegates.persistableValue
-import net.maxsmr.core.android.content.storage.FileContentStorage
+import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.android.content.storage.ContentStorage
+import net.maxsmr.core.android.content.storage.ContentStorage.Companion.createUriStorage
 import net.maxsmr.core.android.content.storage.UriContentStorage
-import net.maxsmr.core.android.content.storage.UriStorageAdapter
-import net.maxsmr.core.android.content.storage.app_private.ExternalFileStorage
-import net.maxsmr.core.android.content.storage.app_private.InternalFileStorage
-import net.maxsmr.core.android.content.storage.shared.SharedStorage
 import java.util.Date
 
 internal class CameraPickerViewModel(
@@ -24,27 +22,18 @@ internal class CameraPickerViewModel(
     private var photoResultUri: Uri? by persistableValue()
     private var videoResultUri: Uri? by persistableValue()
 
-    private var storage: UriContentStorage? = null
-    private var storageType: CameraPickerParams.StorageType? = null
+    private var storage: ContentStorage<Uri>? = null
+    private var storageType: ContentStorage.StorageType? = null
 
     fun init(params: CameraPickerParams, context: Context) {
         if (storageType != null && storageType == params.storageType) return
         storageType = params.storageType
         val contentType = params.pickType.toContentType()
-        storage = when (params.storageType) {
-            CameraPickerParams.StorageType.INTERNAL ->
-                UriStorageAdapter(InternalFileStorage(FileContentStorage.Type.PERSISTENT), context = context)
-            CameraPickerParams.StorageType.EXTERNAL ->
-                UriStorageAdapter(
-                    ExternalFileStorage(FileContentStorage.Type.PERSISTENT, contentType, context),
-                    context = context)
-            CameraPickerParams.StorageType.SHARED ->
-                SharedStorage.create(contentType, context)
-        }
+        storage = createUriStorage(params.storageType, contentType, context)
     }
 
     fun createCameraBox(params: CameraPickerParams, context: Context): Uri? {
-        return storage?.create(params.fileName(), params.subPath, context)?.onSuccess {
+        return storage?.create(params.fileName(), params.subPath)?.onSuccess {
             when (params.pickType) {
                 CameraPickerParams.PickType.PHOTO -> photoResultUri = it
                 CameraPickerParams.PickType.VIDEO -> videoResultUri = it
@@ -59,10 +48,10 @@ internal class CameraPickerViewModel(
         CameraPickerParams.PickType.VIDEO -> uri
     }
 
-    fun onPickCancelled(context: Context) {
+    fun onPickCancelled() {
         storage?.let { storage ->
-            photoResultUri?.let { storage.delete(it, context) }
-            videoResultUri?.let { storage.delete(it, context) }
+            photoResultUri?.let { storage.delete(it) }
+            videoResultUri?.let { storage.delete(it) }
         }
     }
 

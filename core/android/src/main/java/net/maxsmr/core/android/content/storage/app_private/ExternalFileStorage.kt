@@ -23,34 +23,36 @@ import java.io.IOException
  * 1. Доступность хранилища - может быть недоступно, например, если физически располагается на извлекаемой SD карте.
  */
 class ExternalFileStorage internal constructor(
-    storageType: Type,
     private val rootDir: File?,
-) : FileContentStorage(storageType) {
+    context: Context,
+) : FileContentStorage(context) {
 
     constructor(
         storageType: Type,
         contentType: ContentType,
         context: Context,
     ) : this(
-        storageType,
         when (storageType) {
             Type.PERSISTENT -> context.getExternalFilesDir(contentType.rootDir)
             Type.CACHE -> context.externalCacheDir
-        }
+        },
+        context,
     )
 
-    override fun get(name: String, path: String?, context: Context): Result<File, NoException> = Result.success(
+    override val path: String = rootDir?.absolutePath.orEmpty()
+
+    override fun get(name: String, path: String?): Result<File, NoException> = Result.success(
         File(targetDir(rootDir, path), name)
     )
 
-    override fun getOrCreate(name: String, path: String?, context: Context): Result<File, Exception> {
+    override fun getOrCreate(name: String, path: String?): Result<File, Exception> {
         if (!writable()) throw IOException("External storage not writable")
-        return super.getOrCreate(name, path, context)
+        return super.getOrCreate(name, path)
     }
 
-    override fun write(content: String, name: String, path: String?, context: Context): Result<Unit, Exception> {
+    override fun write(content: String, name: String, path: String?): Result<Unit, Exception> {
         if (!writable()) throw IOException("External storage not writable")
-        return super.write(content, name, path, context)
+        return super.write(content, name, path)
     }
 
     override fun write(resource: File, content: String): Result<Unit, Exception> {
@@ -58,9 +60,9 @@ class ExternalFileStorage internal constructor(
         return super.write(resource, content)
     }
 
-    override fun read(name: String, path: String?, context: Context): Result<String, Exception> {
+    override fun read(name: String, path: String?): Result<String, Exception> {
         if (!readable()) throw IOException("External storage not readable")
-        return super.read(name, path, context)
+        return super.read(name, path)
     }
 
     override fun read(resource: File): Result<String, Exception> {
@@ -68,19 +70,19 @@ class ExternalFileStorage internal constructor(
         return super.read(resource)
     }
 
-    override fun delete(name: String, path: String?, context: Context): Result<Boolean, Exception> {
+    override fun delete(name: String, path: String?): Result<Boolean, Exception> {
         if (!writable()) throw IOException("External storage not writable")
-        return super.delete(name, path, context)
+        return super.delete(name, path)
     }
 
-    override fun delete(resource: File, context: Context): Result<Boolean, Exception> {
+    override fun delete(resource: File): Result<Boolean, Exception> {
         if (!writable()) throw IOException("External storage not writable")
-        return super.delete(resource, context)
+        return super.delete(resource)
     }
 
-    override fun shareUri(name: String, path: String?, context: Context): Result<Uri?, Exception> {
+    override fun shareUri(name: String, path: String?): Result<Uri?, Exception> {
         if (!readable()) throw IOException("External storage not readable")
-        return super.shareUri(name, path, context)
+        return super.shareUri(name, path)
     }
 
 

@@ -100,7 +100,7 @@ abstract class DownloadServiceStorage(
      */
     protected fun Exception.wrapIfNeed(uri: Uri?): Exception {
         uri ?: return this
-        return if (uri.delete(contentResolver)) this else StoreException(uri, this)
+        return if (uri.delete(contentResolver)) this else StoreException(uri.toString(), this)
     }
 
     protected data class UriAndName(

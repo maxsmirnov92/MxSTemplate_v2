@@ -39,8 +39,9 @@ class ContentPicker private constructor(
     private val fragment: Fragment,
     private val requests: Set<PickRequest>,
     private val permissionHandler: PermissionHandler,
-    private val showChooserAction: (Int, TextMessage, Map<ConcretePickerParams, IntentWithPermissions>) -> Unit
+    private val showChooserAction: (Int, TextMessage, Map<ConcretePickerParams, IntentWithPermissions>) -> Unit,
 ) {
+
     private val viewModel: ContentPickerViewModel by lazy {
         // VM шарится между ContentPicker и AppIntentChooser
         ViewModelProvider(fragment.requireActivity())[ContentPickerViewModel::class.java]
@@ -55,12 +56,15 @@ class ContentPicker private constructor(
     init {
         // регистрируем launcher'ы для всех реквестов в этом пикере
         requests.forEach {
-            val launcher = fragment.registerForActivityResult(ActivityResultContracts.StartActivityForResult(), PickerResultHandler(it))
+            val launcher = fragment.registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult(),
+                PickerResultHandler(it)
+            )
             resultLaunchers[it.requestCode] = launcher
         }
     }
 
-    private inner class PickerResultHandler(val request: PickRequest): ActivityResultCallback<ActivityResult> {
+    private inner class PickerResultHandler(val request: PickRequest) : ActivityResultCallback<ActivityResult> {
 
         /**
          * Метод обработки результата. **Важно**! Срабатывает для result != [Activity.RESULT_OK],
@@ -72,26 +76,42 @@ class ContentPicker private constructor(
             val data = result.data
             if (resultCode != Activity.RESULT_OK) {
                 when (pickerType) {
-                    request.takePhotoParams?.type, request.takeVideoParams?.type -> cameraPicker.onPickCancelled(fragment.requireContext())
-                    request.mediaParams?.type -> mediaPicker.onPickCancelled(fragment.requireContext())
-                    request.safParams?.type -> safPicker.onPickCancelled(fragment.requireContext())
+                    request.takePhotoParams?.type, request.takeVideoParams?.type -> cameraPicker.onPickCancelled()
+                    request.mediaParams?.type -> mediaPicker.onPickCancelled()
+                    request.safParams?.type -> safPicker.onPickCancelled()
                     else -> throw IllegalStateException("Unexpected params type $pickerType")
                 }
                 return
             }
             val uri = when (pickerType) {
-                request.takePhotoParams?.type -> cameraPicker.onPickResult(request.takePhotoParams,
+                request.takePhotoParams?.type -> cameraPicker.onPickResult(
+                    request.takePhotoParams,
                     data?.data,
-                    request.needPersistableUriAccess, fragment.requireContext())
-                request.takeVideoParams?.type -> cameraPicker.onPickResult(request.takeVideoParams,
+                    request.needPersistableUriAccess,
+                    fragment.requireContext()
+                )
+
+                request.takeVideoParams?.type -> cameraPicker.onPickResult(
+                    request.takeVideoParams,
                     data?.data,
-                    request.needPersistableUriAccess, fragment.requireContext())
-                request.mediaParams?.type -> mediaPicker.onPickResult(request.mediaParams,
+                    request.needPersistableUriAccess,
+                    fragment.requireContext()
+                )
+
+                request.mediaParams?.type -> mediaPicker.onPickResult(
+                    request.mediaParams,
                     data?.data,
-                    request.needPersistableUriAccess, fragment.requireContext())
-                request.safParams?.type -> safPicker.onPickResult(request.safParams,
+                    request.needPersistableUriAccess,
+                    fragment.requireContext()
+                )
+
+                request.safParams?.type -> safPicker.onPickResult(
+                    request.safParams,
                     data?.data,
-                    request.needPersistableUriAccess, fragment.requireContext())
+                    request.needPersistableUriAccess,
+                    fragment.requireContext()
+                )
+
                 else -> throw IllegalStateException("Unexpected params type $pickerType")
             }
             if (uri == null) {
@@ -135,6 +155,7 @@ class ContentPicker private constructor(
                                 result.reason.get(fragment.requireContext()),
                                 Toast.LENGTH_SHORT
                             ).show()
+
                         else -> {}
                     }
                 }
@@ -160,8 +181,10 @@ class ContentPicker private constructor(
         //Чузер также надо показать, если приложение 1, но оно не может быть использовано из-за запрета
         // разрешения с опцией "Больше не спрашивать", т.к. на чузере есть возможность перехода к настройкам для дачи разрешения
         val needShowChooser = flatIntents.size > 1 ||
-                permissionHandler.filterDeniedNotAskAgain(fragment.requireContext(),
-                    flatIntents.first().second.permissions.toList()).isNotEmpty()
+                permissionHandler.filterDeniedNotAskAgain(
+                    fragment.requireContext(),
+                    flatIntents.first().second.permissions.toList()
+                ).isNotEmpty()
         if (needShowChooser) {
             showChooserAction(requestCode, request.chooserTitle, intents)
         } else {
@@ -217,7 +240,7 @@ class ContentPicker private constructor(
     open class Builder(
         private val fragment: Fragment,
         private val permissionHandler: PermissionHandler,
-        private val showChooserAction: (Int, TextMessage, Map<ConcretePickerParams, IntentWithPermissions>) -> Unit
+        private val showChooserAction: (Int, TextMessage, Map<ConcretePickerParams, IntentWithPermissions>) -> Unit,
     ) {
 
         private val requests: MutableSet<PickRequest> = mutableSetOf()

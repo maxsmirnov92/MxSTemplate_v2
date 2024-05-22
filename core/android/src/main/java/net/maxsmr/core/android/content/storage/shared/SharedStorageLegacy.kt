@@ -5,11 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Environment
-import com.github.kittinunf.result.onSuccess
 import com.github.kittinunf.result.Result
+import com.github.kittinunf.result.onSuccess
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.rootDir
-import net.maxsmr.core.android.content.storage.FileContentStorage
 import net.maxsmr.core.android.content.storage.UriStorageAdapter
 import net.maxsmr.core.android.content.storage.app_private.ExternalFileStorage
 
@@ -28,25 +27,27 @@ internal class SharedStorageLegacy(
     context: Context,
 ) : AbsSharedStorage(contentType, context) {
 
+    override val path: String = appDir
+
     private val srcStorage = UriStorageAdapter(
         ExternalFileStorage(
-            FileContentStorage.Type.PERSISTENT,
-            Environment.getExternalStoragePublicDirectory(contentType.rootDir)
+            Environment.getExternalStoragePublicDirectory(contentType.rootDir),
+            context,
         ), context = context
     )
 
-    override fun get(name: String, path: String?, context: Context): Result<Uri, Exception> {
-        return srcStorage.get(name, path(), context)
+    override fun get(name: String, path: String?): Result<Uri, Exception> {
+        return srcStorage.get(name, this.path)
     }
 
-    override fun create(name: String, path: String?, context: Context): Result<Uri, Exception> {
-        return srcStorage.create(name, path(), context).onSuccess {
+    override fun create(name: String, path: String?): Result<Uri, Exception> {
+        return srcStorage.create(name, this.path).onSuccess {
             it.notifyChange(context)
         }
     }
 
-    override fun delete(resource: Uri, context: Context): Result<Boolean, Exception> {
-        return srcStorage.delete(resource, context).onSuccess {
+    override fun delete(resource: Uri): Result<Boolean, Exception> {
+        return srcStorage.delete(resource).onSuccess {
             resource.notifyChange(context)
         }
     }
@@ -62,6 +63,4 @@ internal class SharedStorageLegacy(
         val scanFileIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, this)
         context.sendBroadcast(scanFileIntent)
     }
-
-    override fun path(): String = appDir
 }

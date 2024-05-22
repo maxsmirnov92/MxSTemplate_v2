@@ -2,10 +2,12 @@ package net.maxsmr.feature.download.ui
 
 import android.Manifest
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.core.view.isVisible
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.views.decoration.Divider
@@ -14,17 +16,17 @@ import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.clearFocus
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.live.field.observeFromText
-import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
+import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.ui.bindHintError
 import net.maxsmr.core.ui.bindValue
 import net.maxsmr.core.ui.bindState
 import net.maxsmr.core.ui.components.activities.BaseActivity
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderListener
 import net.maxsmr.feature.download.ui.adapter.HeadersAdapter
@@ -33,7 +35,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), HeaderListener {
+class DownloadsParamsFragment: BaseMenuFragment<DownloadsParamsViewModel>(), HeaderListener {
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -49,7 +51,9 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         }
     }
 
-    private val downloadsViewModel: DownloadsViewModel by viewModels()
+    override val menuResId: Int = R.menu.menu_downloads_params
+
+    private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
     private val binding by viewBinding(FragmentDownloadsParamsBinding::bind)
 
@@ -57,25 +61,38 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
 
     private val contentPicker: ContentPicker = FragmentContentPickerBuilder()
         .addRequest(
-            PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_REQUEST_BODY_RESOURCE)
+            PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_BODY)
                 .addSafParams(SafPickerParams.any())
                 .needPersistableUriAccess(true)
                 .onSuccess {
-                    viewModel.onRequestBodyUriSelected(it.uri)
+                    viewModel.onBodyUriSelected(it.uri)
                 }
                 .onError {
                     viewModel.onPickerResultError(it)
                 }
                 .build()
-
-        ).build()
+        )
+        .addRequest(
+            PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_PARAMS_JSON)
+                .addSafParams(SafPickerParams.json())
+                .needPersistableUriAccess(true)
+                .onSuccess {
+                    downloadsViewModel.downloadFromJson(it.uri, requireContext().contentResolver)
+                }
+                .onError {
+                    downloadsViewModel.onPickerResultError(it)
+                }
+                .build()
+        )
+        .build()
 
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
         viewModel: DownloadsParamsViewModel,
-        alertHandler: AlertHandler,
     ) {
+        super.onViewCreated(view, savedInstanceState, viewModel)
+
         binding.etUrl.bindToTextNotNull(viewModel.urlField)
         viewModel.urlField.observeFromText(binding.etUrl, viewLifecycleOwner)
         viewModel.urlField.bindHintError(viewLifecycleOwner, binding.tilUrl)
@@ -89,7 +106,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         binding.spinnerMethod.adapter = adapter
         binding.spinnerMethod.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.methodField.value = DownloadsParamsViewModel.Method.entries[position]
+                viewModel.methodField.value = DownloadParamsModel.Method.entries[position]
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -127,7 +144,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         viewModel.targetHashField.observeFromText(binding.etTargetHash, viewLifecycleOwner)
         viewModel.targetHashField.bindHintError(viewLifecycleOwner, binding.tilTargetHash)
 
-        viewModel.ignoreServerErrorField.bindValue(viewLifecycleOwner, binding.cbIgnoreServerError)
+        viewModel.ignoreServerErrorsField.bindValue(viewLifecycleOwner, binding.cbIgnoreServerError)
         viewModel.ignoreAttachmentStateField.bindState(viewLifecycleOwner, binding.cbIgnoreAttachment)
         viewModel.deleteUnfinishedField.bindValue(viewLifecycleOwner, binding.cbDeleteUnfinished)
 
@@ -142,7 +159,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
         }
 
         binding.ibSelectRequestBody.setOnClickListener {
-            contentPicker.pick(REQUEST_CODE_CHOOSE_REQUEST_BODY_RESOURCE, requireContext())
+            contentPicker.pick(REQUEST_CODE_CHOOSE_BODY, requireContext())
         }
         binding.ibClearRequestBody.setOnClickListener {
             viewModel.onClearRequestBodyUri()
@@ -161,6 +178,19 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
                 viewModel.onStartDownloadClick()
             }
         }
+
+        viewModel.observePostNotificationPermissionAsked(this, BaseActivity.REQUEST_CODE_NOTIFICATIONS_PERMISSION)
+    }
+
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        return if (menuItem.itemId == R.id.action_pick_json) {
+            viewModel.onLoadFromJsonClick(requireContext()) {
+                contentPicker.pick(REQUEST_CODE_CHOOSE_PARAMS_JSON, requireContext())
+            }
+            true
+        } else {
+            super.onMenuItemSelected(menuItem)
+        }
     }
 
     override fun onHeaderNameChanged(id: Int, value: String) {
@@ -177,6 +207,7 @@ class DownloadsParamsFragment: BaseVmFragment<DownloadsParamsViewModel>(), Heade
 
     companion object {
 
-        private const val REQUEST_CODE_CHOOSE_REQUEST_BODY_RESOURCE = 1
+        private const val REQUEST_CODE_CHOOSE_BODY = 1
+        private const val REQUEST_CODE_CHOOSE_PARAMS_JSON = 2
     }
 }

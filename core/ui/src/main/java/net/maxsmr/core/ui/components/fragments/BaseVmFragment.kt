@@ -25,7 +25,6 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_PROGRESS
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
 import net.maxsmr.core.android.base.connection.ConnectionHandler
@@ -34,8 +33,6 @@ import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.permissions.formatDeniedPermissionsMessage
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.asOkDialog
-import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.content.pick.chooser.AppIntentChooserData
 import net.maxsmr.core.ui.content.pick.chooser.AppIntentChooserDialog
@@ -73,7 +70,7 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment() {
         DialogDeniedPermissionsHandler()
     }
 
-    private var alertFragmentDelegate: AlertFragmentDelegate? = null
+    private var alertFragmentDelegate: AlertFragmentDelegate<VM>? = null
 
     final override fun onCreateView(
         inflater: LayoutInflater,
@@ -90,7 +87,7 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment() {
         handleAlerts()
         observeCommands()
 
-        onViewCreated(view, savedInstanceState, viewModel, delegate.alertHandler)
+        onViewCreated(view, savedInstanceState, viewModel)
     }
 
     @CallSuper
@@ -106,7 +103,6 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment() {
         view: View,
         savedInstanceState: Bundle?,
         viewModel: VM,
-        alertHandler: AlertHandler,
     )
 
     @JvmOverloads
@@ -180,16 +176,7 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment() {
 
     @CallSuper
     protected open fun handleAlerts() {
-        bindDefaultProgress()
-        bindAlertDialog(BaseViewModel.DIALOG_TAG_NO_INTERNET) { it.asOkDialog(requireContext()) }
-        bindAlertDialog(BaseViewModel.DIALOG_TAG_SERVER_ERROR) { it.asOkDialog(requireContext()) }
-        bindAlertDialog(BaseViewModel.DIALOG_TAG_UNKNOWN_ERROR) { it.asOkDialog(requireContext()) }
-        bindAlertDialog(BaseViewModel.DIALOG_TAG_PERMISSION_YES_NO) {
-            it.asYesNoDialog(requireContext())
-        }
-        bindAlertDialog(BaseViewModel.DIALOG_TAG_PICKER_ERROR) {
-            it.asOkDialog(requireContext())
-        }
+        alertFragmentDelegate?.handleCommonAlerts(requireContext())
     }
 
     @CallSuper

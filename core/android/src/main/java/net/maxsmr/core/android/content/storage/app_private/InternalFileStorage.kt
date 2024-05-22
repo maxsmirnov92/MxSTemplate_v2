@@ -17,14 +17,19 @@ import java.io.File
  */
 class InternalFileStorage(
     storageType: Type,
-) : FileContentStorage(storageType) {
+    context: Context,
+) : FileContentStorage(context) {
 
-    override fun get(name: String, path: String?, context: Context): Result<File, NoException> = Result.success(
-        File(targetDir(storageType.rootDir(context), path), name)
-    )
-
-    private fun Type.rootDir(context: Context): File = when (this) {
+    val rootDir: File = when (storageType) {
         Type.PERSISTENT -> context.filesDir
         Type.CACHE -> context.cacheDir
     }
+
+    override val path: String = rootDir.absolutePath
+
+    override fun get(name: String, path: String?): Result<File, NoException> = Result.success(
+        File(targetDir(rootDir, path), name)
+    )
+
+
 }

@@ -22,6 +22,7 @@
     <string name="download_fail_add_to_queue_reason_already_added">уже в очереди</string>
     <string name="download_fail_add_to_queue_reason_already_loading">уже загружается</string>
     <string name="download_toast_start_failed_message_format">Не удалось запустить сервис для загрузки файла %s</string>
+    <string name="download_toast_no_valid_params">Отсутствуют корректные параметры</string>
     <string name="download_error">Ошибка при загрузке файла</string>
 
     <string name="view.choose_client_file_title">Выберите клиент для открытия файла</string>

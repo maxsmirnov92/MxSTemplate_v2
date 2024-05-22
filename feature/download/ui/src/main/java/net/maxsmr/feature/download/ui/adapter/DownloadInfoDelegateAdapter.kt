@@ -17,8 +17,11 @@ import net.maxsmr.commonutils.format.decomposeSizeFormatted
 import net.maxsmr.commonutils.format.decomposeTimeFormatted
 import net.maxsmr.commonutils.format.formatSpeedSize
 import net.maxsmr.commonutils.gui.setTextOrGone
+import net.maxsmr.commonutils.text.CharCase
 import net.maxsmr.commonutils.text.capFirstChar
+import net.maxsmr.commonutils.text.changeCaseFirstChar
 import net.maxsmr.core.database.model.download.DownloadInfo
+import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState
 import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
@@ -35,6 +38,7 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
         val binding = ItemDownloadInfoBinding.bind(itemView)
 
         with(binding) {
+
             ibCancel.setOnClickListener {
                 listener.onCancelDownload(item.downloadInfo)
             }
@@ -63,7 +67,7 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                 val progress: Int
                 val isIndeterminate: Boolean
 
-                val statusInfo: String
+                val statusInfoText: String
                 var statusColorResId: Int = net.maxsmr.core.ui.R.color.textColorPrimary
 
                 if (state != null) {
@@ -84,7 +88,7 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                         else -> 0
                     }
 
-                    statusInfo = when (state) {
+                    statusInfoText = when (state) {
                         is DownloadState.Loading -> {
 
                             with(state.stateInfo) {
@@ -232,7 +236,15 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
 
                         is DownloadState.Failed -> {
                             statusColorResId = R.color.textColorDownloadFailed
-                            context.getString(R.string.download_status_failed_format, state.e?.message)
+                            context.getString(R.string.download_status_failed_format,
+                                if (state.e is NoConnectivityException) {
+                                    context.getString(net.maxsmr.core.android.R.string.error_no_connection)
+                                } else {
+                                    state.e?.message?.takeIf { it.isNotEmpty() }
+                                        ?: context.getString(net.maxsmr.core.android.R.string.error_unknown)
+                                            .changeCaseFirstChar(false, CharCase.NO_CHANGE)
+                                }
+                            )
                         }
 
                         is DownloadState.Cancelled -> {
@@ -248,14 +260,14 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                     hasProgress = true
                     progress = 0
                     isIndeterminate = true
-                    statusInfo = context.getString(R.string.download_status_requesting)
+                    statusInfoText = context.getString(R.string.download_status_requesting)
                 }
 
                 pbDownload.isVisible = hasProgress
                 pbDownload.progress = progress
                 pbDownload.isIndeterminate = isIndeterminate
 
-                tvStatusInfo.setTextOrGone(statusInfo)
+                tvStatusInfo.setTextOrGone(statusInfoText)
                 tvStatusInfo.setTextColor(ContextCompat.getColor(context, statusColorResId))
 
                 ibCancel.isVisible = state is DownloadState.Loading || state == null // для этапа выполнения запроса
