@@ -22,6 +22,7 @@
     <string name="download_field_target_hash_error">Несоответствие формату алгоритма MD5</string>
     <string name="download_field_ignore_server_errors">Игнорировать ошибки сервера</string>
     <string name="download_field_ignore_attachment">Игнорировать отсутствие вложения с заголовком \"Content-Disposition\"</string>
+    <string name="download_field_replace_file">Заменить существующий целевой файл</string>
     <string name="download_field_delete_unfinished">Удалить недокачанный файл</string>
 
     <string name="download_header_name_subtitle">Заголовки</string>

@@ -175,10 +175,10 @@ class DownloadsViewModel @Inject constructor(
                 if (list.isNotEmpty()) {
                     list.forEach {
                         it.bodyUri?.toUri()?.takePersistableReadPermission(contentResolver)
-                        download(it)
+                        downloadManager.enqueueDownloadSuspended(it.toParams())
                         // delay необходим из-за особенности кривых suspend'ов:
-                        // следом за незавершённым enqueueDownloadInternal пойдёт ещё один
-                        delay(100)
+                        // следом за незавершённым enqueueDownloadSuspended пойдёт ещё один
+                        delay(500)
                     }
                 } else {
                     showToast(ToastAction(TextMessage(R.string.download_toast_no_valid_params)))
@@ -188,48 +188,7 @@ class DownloadsViewModel @Inject constructor(
     }
 
     fun download(paramsModel: DownloadParamsModel) {
-        with(paramsModel) {
-
-            val bodyUri = bodyUri
-            val targetHashInfo = targetMd5Hash?.takeIf { it.isNotEmpty() }?.let {
-                HashInfo(MD5_ALGORITHM, it)
-            }
-
-            val notificationParams = DownloadService.NotificationParams(
-                successActions = defaultNotificationActions(baseApplicationContext)
-            )
-
-            val params = if (method == POST && bodyUri != null) {
-                defaultPOSTServiceParamsFor(
-                    url,
-                    fileName,
-                    DownloadService.RequestParams.Body(DownloadService.RequestParams.Body.Uri(bodyUri)),
-                    ignoreAttachment = ignoreAttachment,
-                    ignoreFileName = ignoreFileName,
-                    storeErrorBody = ignoreServerErrors,
-                    headers = headers,
-                    subDir = subDirName,
-                    targetHashInfo = targetHashInfo,
-                    deleteUnfinished = deleteUnfinished,
-                    notificationParams = notificationParams,
-                )
-            } else {
-                defaultGETServiceParamsFor(
-                    url,
-                    fileName,
-                    ignoreAttachment = ignoreAttachment,
-                    ignoreFileName = ignoreFileName,
-                    storeErrorBody = ignoreServerErrors,
-                    headers = headers,
-                    subDir = subDirName,
-                    targetHashInfo = targetHashInfo,
-                    deleteUnfinished = deleteUnfinished,
-                    notificationParams = notificationParams,
-                )
-            }
-
-            download(params)
-        }
+        download(paramsModel.toParams())
     }
 
     /**
@@ -384,5 +343,51 @@ class DownloadsViewModel @Inject constructor(
                 viewIconResId
             ),
         )
+
+        @JvmStatic
+        private fun DownloadParamsModel.toParams(): DownloadService.Params = with(this) {
+
+            val bodyUri = bodyUri
+            val targetHashInfo = targetMd5Hash?.takeIf { it.isNotEmpty() }?.let {
+                HashInfo(MD5_ALGORITHM, it)
+            }
+
+            val notificationParams = DownloadService.NotificationParams(
+                successActions = defaultNotificationActions(baseApplicationContext)
+            )
+
+            if (method == net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel.Method.POST && bodyUri != null) {
+                defaultPOSTServiceParamsFor(
+                    url,
+                    fileName,
+                    DownloadService.RequestParams.Body(
+                        DownloadService.RequestParams.Body.Uri(bodyUri)
+                    ),
+                    ignoreAttachment = ignoreAttachment,
+                    ignoreFileName = ignoreFileName,
+                    storeErrorBody = ignoreServerErrors,
+                    headers = headers,
+                    subDir = subDirName,
+                    targetHashInfo = targetHashInfo,
+                    replaceFile = replaceFile,
+                    deleteUnfinished = deleteUnfinished,
+                    notificationParams = notificationParams,
+                )
+            } else {
+                defaultGETServiceParamsFor(
+                    url,
+                    fileName,
+                    ignoreAttachment = ignoreAttachment,
+                    ignoreFileName = ignoreFileName,
+                    storeErrorBody = ignoreServerErrors,
+                    headers = headers,
+                    subDir = subDirName,
+                    targetHashInfo = targetHashInfo,
+                    replaceFile = replaceFile,
+                    deleteUnfinished = deleteUnfinished,
+                    notificationParams = notificationParams,
+                )
+            }
+        }
     }
 }

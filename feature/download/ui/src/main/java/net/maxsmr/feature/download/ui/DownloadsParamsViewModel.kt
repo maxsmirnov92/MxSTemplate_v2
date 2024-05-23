@@ -68,7 +68,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     val fileNameField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
-        .validators(Field.Validator(R.string.download_field_file_name_error) {Regex(REG_EX_FILE_NAME).matches(it)})
+        .validators(Field.Validator(R.string.download_field_file_name_error) { Regex(REG_EX_FILE_NAME).matches(it) })
         .hint(R.string.download_field_file_name_hint)
         .persist(state, KEY_FIELD_FILE_NAME)
         .build()
@@ -86,7 +86,11 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     val targetHashField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
-        .validators(Field.Validator(R.string.download_field_target_hash_error) {Regex(REG_EX_MD5_ALGORITHM).matches(it)})
+        .validators(Field.Validator(R.string.download_field_target_hash_error) {
+            Regex(REG_EX_MD5_ALGORITHM).matches(
+                it
+            )
+        })
         .hint(R.string.download_field_target_hash_hint)
         .persist(state, KEY_FIELD_TARGET_HASH)
         .build()
@@ -99,6 +103,11 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     val ignoreAttachmentStateField: Field<BooleanFieldState> = Field.Builder(BooleanFieldState(false))
         .emptyIf { false }
         .persist(state, KEY_FIELD_IGNORE_ATTACHMENT_STATE)
+        .build()
+
+    val replaceFileField: Field<Boolean> = Field.Builder(false)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_REPLACE_FILE)
         .build()
 
     val deleteUnfinishedField: Field<Boolean> = Field.Builder(true)
@@ -116,7 +125,11 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     private var headerIdCounter by persistableValueInitial(0)
 
     private val storage: ContentStorage<Uri> by lazy {
-        ContentStorage.createUriStorage(ContentStorage.StorageType.SHARED, ContentType.DOCUMENT, baseApplicationContext)
+        ContentStorage.createUriStorage(
+            ContentStorage.StorageType.SHARED,
+            ContentType.DOCUMENT,
+            baseApplicationContext
+        )
     }
 
     private val allFields: List<Field<*>>
@@ -131,6 +144,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 targetHashField,
                 ignoreServerErrorsField,
                 ignoreAttachmentStateField,
+                replaceFileField,
                 deleteUnfinishedField
             )
             headerFields.forEach {
@@ -308,7 +322,14 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                         // ассеты не допускаются в либах
                         openRawResource(context, R.raw.download_params_model_sample)?.let { assetStream ->
                             if (it.writeFromStream(context.contentResolver, assetStream)) {
-                                showToast(ToastAction(TextMessage(R.string.download_alert_params_sample_copied_format, storage.path)))
+                                showToast(
+                                    ToastAction(
+                                        TextMessage(
+                                            R.string.download_alert_params_sample_copied_format,
+                                            storage.path
+                                        )
+                                    )
+                                )
                             }
                         }
                     }
@@ -343,21 +364,25 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
         val ignoreServerErrors = ignoreServerErrorsField.value ?: false
         val ignoreAttachment = ignoreAttachmentStateField.value?.value ?: false
+        val replaceFile = replaceFileField.value ?: false
         val deleteUnfinished = deleteUnfinishedField.value ?: false
 
-        viewModel.download(DownloadParamsModel(
-            url,
-            method,
-            bodyUri,
-            fileName,
-            ignoreFileName,
-            subDirName,
-            targetHash,
-            ignoreServerErrors,
-            ignoreAttachment,
-            deleteUnfinished,
-            headers
-        ))
+        viewModel.download(
+            DownloadParamsModel(
+                url,
+                method,
+                bodyUri,
+                fileName,
+                ignoreFileName,
+                subDirName,
+                targetHash,
+                ignoreServerErrors,
+                ignoreAttachment,
+                replaceFile,
+                deleteUnfinished,
+                headers
+            )
+        )
     }
 
     private fun updateHeaderItem(
@@ -436,6 +461,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         private const val KEY_FIELD_TARGET_HASH = "target_hash"
         private const val KEY_FIELD_IGNORE_SERVER_ERRORS = "ignore_server_errors"
         private const val KEY_FIELD_IGNORE_ATTACHMENT_STATE = "ignore_attachment_state"
+        private const val KEY_FIELD_REPLACE_FILE = "replace_file"
         private const val KEY_FIELD_DELETE_UNFINISHED = "delete_unfinished"
 
         private const val RESOURCE_NAME_DOWNLOAD_PARAMS_MODEL = "download_params_model_sample.json"

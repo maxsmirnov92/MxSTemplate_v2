@@ -398,15 +398,6 @@ class DownloadService : Service() {
                         mimeType = params.resourceMimeType,
                         extension = params.extension,
                     )
-
-                    if (params.skipIfDownloaded) {
-                        storage.findAlreadyLoaded(params, downloadInfo)?.let {
-                            logger.d("Skip storing of $params: found already loaded file with same hash")
-                            onDownloadSuccess(it, params, oldParams)
-                            return@launch
-                        }
-                    }
-
 //                    downloadsRepo.upsert(downloadInfo)
                 }
 
@@ -673,7 +664,7 @@ class DownloadService : Service() {
     }
 
     private suspend fun onDownloadCancelled(downloadInfo: DownloadInfo, params: Params, oldParams: Params) {
-        logger.d("Download cancelled by user: $downloadInfo, params: $params, oldParams: $oldParams")
+        logger.w("Download cancelled by user: $downloadInfo, params: $params, oldParams: $oldParams")
 
         params.notificationParams?.let { notificationParams ->
             val id = downloadInfo.id.toInt()
@@ -797,6 +788,7 @@ class DownloadService : Service() {
         val subDirPath: String? = null,
         val targetHashInfo: HashInfo? = null,
         val skipIfDownloaded: Boolean = true,
+        val replaceFile: Boolean = false,
         val deleteUnfinished: Boolean = true,
         val retryWithNotifier: Boolean = true,
     ) : BaseDownloadParams(requestParams.url, resourceName) {
@@ -855,6 +847,7 @@ class DownloadService : Service() {
                 format: FileFormat? = null,
                 subDir: String = EMPTY_STRING,
                 targetHashInfo: HashInfo? = null,
+                replaceFile: Boolean = false,
                 deleteUnfinished: Boolean = true,
                 notificationParams: NotificationParams,
             ): Params {
@@ -872,7 +865,7 @@ class DownloadService : Service() {
                 }
                 return Params(
                     RequestParams.newPost(
-                        uri.toString(),
+                        uri,
                         body,
                         headers = headers,
                         ignoreContentType = ignoreContentType,
@@ -886,6 +879,7 @@ class DownloadService : Service() {
                     if (subDir.isEmpty()) baseSubDir else toFile(subDir, baseSubDir)?.absolutePath,
                     targetHashInfo,
                     targetHashInfo != null,
+                    replaceFile = replaceFile,
                     deleteUnfinished = deleteUnfinished
                 ).apply {
                     resourceMimeType = format?.let {
@@ -908,6 +902,7 @@ class DownloadService : Service() {
                 format: FileFormat? = null,
                 subDir: String = EMPTY_STRING,
                 targetHashInfo: HashInfo? = null,
+                replaceFile: Boolean = false,
                 deleteUnfinished: Boolean = true,
                 notificationParams: NotificationParams,
             ): Params {
@@ -925,7 +920,7 @@ class DownloadService : Service() {
                 }
                 return Params(
                     RequestParams.newGet(
-                        uri.toString(),
+                        uri,
                         headers = headers,
                         ignoreContentType = ignoreContentType,
                         ignoreAttachment = ignoreAttachment,
@@ -938,6 +933,7 @@ class DownloadService : Service() {
                     if (subDir.isEmpty()) baseSubDir else toFile(subDir, baseSubDir)?.absolutePath,
                     targetHashInfo,
                     targetHashInfo != null,
+                    replaceFile = replaceFile,
                     deleteUnfinished = deleteUnfinished
                 ).apply {
                     resourceMimeType = format?.let {

@@ -13,7 +13,8 @@ data class DownloadParamsModel(
     val targetMd5Hash: String? = null,
     val ignoreServerErrors: Boolean = false,
     val ignoreAttachment: Boolean = false,
-    val deleteUnfinished: Boolean = false,
+    val replaceFile: Boolean = false,
+    val deleteUnfinished: Boolean = true,
     val headers: HashMap<String, String> = hashMapOf(),
 ) {
 

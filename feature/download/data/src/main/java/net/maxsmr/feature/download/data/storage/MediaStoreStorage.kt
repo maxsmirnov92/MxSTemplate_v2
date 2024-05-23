@@ -23,12 +23,9 @@ class MediaStoreStorage(
 
     private val resolver get() = context.contentResolver
 
-    private val idColumn: String
-        get() = MediaStore.Downloads._ID
-    private val nameColumn: String
-        get() = MediaStore.Downloads.DISPLAY_NAME
-    private val pathColumn: String
-        get() = MediaStore.Downloads.RELATIVE_PATH
+    private val idColumn: String = MediaStore.Downloads._ID
+    private val nameColumn: String = MediaStore.Downloads.DISPLAY_NAME
+    private val pathColumn: String = MediaStore.Downloads.RELATIVE_PATH
 
     private val uriWritable
         get() = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
@@ -51,9 +48,25 @@ class MediaStoreStorage(
         var uri: Uri? = null
         try {
             val dirPath = type.dirPath(context, params.subDirPath)
-            val uniqueName = uniqueNameFor(dirPath, params.targetResourceName)
+
+            fun delete(name: String) {
+                resolver.delete(
+                    uriWritable,
+                    "$pathColumn = ? AND $nameColumn = ?",
+                    arrayOf(dirPath, name)
+                )
+            }
+
+            val targetName = if (!params.replaceFile) {
+                uniqueNameFor(dirPath, params.targetResourceName)
+            } else {
+                namesAt(dirPath, params.targetResourceName).forEach { existing ->
+                    delete(existing.name)
+                }
+                params.targetResourceName
+            }
             val values = ContentValues().apply {
-                put(MediaStore.Downloads.DISPLAY_NAME, uniqueName)
+                put(nameColumn, targetName)
                 val mimeType = params.resourceMimeType
                 if (mimeType.isNotEmpty()) {
                     put(MediaStore.Downloads.MIME_TYPE, mimeType)
@@ -64,11 +77,7 @@ class MediaStoreStorage(
             }
             uri = targetUri?.tryUpdate(values) ?: resolver.insert(uriWritable, values)
             if (uri == null) {
-                resolver.delete(
-                    uriWritable,
-                    "$pathColumn = ? AND $nameColumn = ?",
-                    arrayOf(dirPath, uniqueName)
-                )
+                delete(targetName)
                 uri = resolver.insert(uriWritable, values)
             }
             uri ?: throw KotlinNullPointerException("Cannot insert uri to MediaStore")
@@ -76,7 +85,7 @@ class MediaStoreStorage(
             val pendingValues = ContentValues().apply {
                 put(MediaStore.Downloads.IS_PENDING, 0)
             }
-            // code 2067 SQLITE_CONSTRAINT_UNIQUE
+            // code 2067 SQLITE_CONSTRAINT_UNIQUE, если файл был удалён без оповещения MediaStore
             uri.tryUpdate(pendingValues)
             return uri
         } catch (e: Exception) {

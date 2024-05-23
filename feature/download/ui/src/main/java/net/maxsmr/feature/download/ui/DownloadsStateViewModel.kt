@@ -50,10 +50,10 @@ class DownloadsStateViewModel @AssistedInject constructor(
             .setTitle(R.string.download_alert_confirm_title)
             .setMessage(R.string.download_alert_clear_queue_message)
             .setAnswers(
-                Alert.Answer(android.R.string.yes).onSelect {
+                Alert.Answer(net.maxsmr.core.android.R.string.yes).onSelect {
                     manager.removeAllPending()
                 },
-                Alert.Answer(android.R.string.no)
+                Alert.Answer(net.maxsmr.core.android.R.string.no)
             )
             .build()
     }
@@ -68,10 +68,10 @@ class DownloadsStateViewModel @AssistedInject constructor(
                 .setTitle(R.string.download_alert_confirm_title)
                 .setMessage(R.string.download_alert_retry_download_if_success_message)
                 .setAnswers(
-                    Alert.Answer(android.R.string.yes).onSelect {
+                    Alert.Answer(net.maxsmr.core.android.R.string.yes).onSelect {
                         manager.retryDownload(downloadId, params)
                     },
-                    Alert.Answer(android.R.string.no)
+                    Alert.Answer(net.maxsmr.core.android.R.string.no)
                 )
                 .build()
         } else {

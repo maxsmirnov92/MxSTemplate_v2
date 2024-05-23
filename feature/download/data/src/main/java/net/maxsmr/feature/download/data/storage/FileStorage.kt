@@ -43,29 +43,39 @@ class FileStorage(
             var uri: Uri? = null
             try {
                 val dirPath = type.dirPath(context, params.subDirPath)
-                val uniqueName = uniqueNameFor(dirPath, params.targetResourceName)
+                val targetName = if (!params.replaceFile) {
+                    uniqueNameFor(dirPath, params.targetResourceName)
+                } else {
+                    params.targetResourceName
+                }
 
-                val tempFileName = "$uniqueName.$EXT_TEMP_FILE"
+                val tempFileName = "$targetName.$EXT_TEMP_FILE"
                 val tempFile = createFileOrThrow(tempFileName, dirPath, true)
                 tempLock = tempFile.lock()
 
                 uri = tempFile.toContentUri(context)
                 writeStreamFunc(uri, uri.openOutputStreamOrThrow(contentResolver), uri.lengthOrThrow(contentResolver))
                 tempLock?.releaseSafe()
+                tempLock = null
+
                 // стрим затянут до конца -> переименовываем файл в исходный
                 // (или с номером, если уже существует)
                 val newFile = renameFileOrThrow(
                     tempFile,
                     tempFile.parent,
-                    uniqueName,
-                    false,
+                    targetName,
+                    params.replaceFile,
                     false
                 )
                 scanFiles(context, listOf(newFile))
                 newFile.toContentUri(context)
             } catch (e: Exception) {
-                tempLock?.releaseSafe()
                 throw e.wrapIfNeed(uri)
+            } finally {
+                tempLock?.let {
+                    it.releaseSafe()
+                    tempLock = null
+                }
             }
         }
     }

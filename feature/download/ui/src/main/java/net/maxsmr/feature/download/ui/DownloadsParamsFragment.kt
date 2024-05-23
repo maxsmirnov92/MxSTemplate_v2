@@ -146,6 +146,7 @@ class DownloadsParamsFragment: BaseMenuFragment<DownloadsParamsViewModel>(), Hea
 
         viewModel.ignoreServerErrorsField.bindValue(viewLifecycleOwner, binding.cbIgnoreServerError)
         viewModel.ignoreAttachmentStateField.bindState(viewLifecycleOwner, binding.cbIgnoreAttachment)
+        viewModel.replaceFileField.bindValue(viewLifecycleOwner, binding.cbReplaceFile)
         viewModel.deleteUnfinishedField.bindValue(viewLifecycleOwner, binding.cbDeleteUnfinished)
 
         binding.rvHeaders.adapter = headersAdapter

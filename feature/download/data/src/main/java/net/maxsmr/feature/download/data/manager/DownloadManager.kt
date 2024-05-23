@@ -366,7 +366,7 @@ class DownloadManager @Inject constructor(
         scope.launch {
             notifier.downloadRetryEvents.collect {
                 logger.d("downloadRetryEvent: $it")
-                retryDownloadInternal(it)
+                retryDownloadSuspended(it)
             }
         }
 
@@ -392,14 +392,14 @@ class DownloadManager @Inject constructor(
      * Использовать этот метод вместо [DownloadService.start], если нужна логика с отложенной очередью
      */
     fun enqueueDownload(params: DownloadService.Params) {
-        scope.launch { // без ioDispatcher, get room'а всё равно не падает на main...
-            enqueueDownloadInternal(params)
+        scope.launch {
+            enqueueDownloadSuspended(params)
         }
     }
 
     fun retryDownload(downloadId: Long, params: DownloadService.Params) {
         scope.launch {
-            retryDownloadInternal(downloadId, params)
+            retryDownloadSuspended(downloadId, params)
         }
     }
 
@@ -422,12 +422,12 @@ class DownloadManager @Inject constructor(
 
     fun removeFinished(downloadId: Long, withDb: Boolean = true) {
         scope.launch {
-            removeFinishedInternal(downloadId, withDb)
+            removeFinishedSuspended(downloadId, withDb)
         }
     }
 
-    private suspend fun enqueueDownloadInternal(params: DownloadService.Params) {
-        logger.i("enqueueDownloadInternal, params: $params")
+    suspend fun enqueueDownloadSuspended(params: DownloadService.Params) {
+        logger.i("enqueueDownloadSuspended, params: $params")
 
         fun getActualParams(): DownloadService.Params {
             val settings = settings
@@ -447,6 +447,7 @@ class DownloadManager @Inject constructor(
                 params.subDirPath,
                 params.targetHashInfo,
                 params.skipIfDownloaded,
+                params.replaceFile,
                 params.deleteUnfinished
             )
         }
@@ -496,37 +497,40 @@ class DownloadManager @Inject constructor(
         }
     }
 
-    private suspend fun retryDownloadInternal(params: DownloadService.Params) {
-        retryDownloadInternal(
+    private suspend fun retryDownloadSuspended(params: DownloadService.Params) {
+        retryDownloadSuspended(
             downloadsFinishedQueue.value.find { it.params.targetResourceName == params.targetResourceName }?.downloadId,
             params
         )
     }
 
-    private suspend fun retryDownloadInternal(downloadId: Long?, params: DownloadService.Params) {
-        logger.d("retryDownloadInternal, downloadId: $downloadId, params: $params")
+    private suspend fun retryDownloadSuspended(downloadId: Long?, params: DownloadService.Params) {
+        logger.d("retryDownloadSuspended, downloadId: $downloadId, params: $params")
         downloadId?.let {
-            removeFinishedInternal(it, false)
+            removeFinishedSuspended(it, false)
         }
-        enqueueDownloadInternal(params)
+        enqueueDownloadSuspended(params)
     }
 
     private suspend fun retryFailedByNetwork(hasConnection: Boolean, shouldRetry: Boolean) {
         if (hasConnection && shouldRetry) {
-            val downloads = downloadsRepo.getRaw().filter {
+            val failedDownloads = downloadsRepo.getRaw().filter {
                 val reason = it.statusAsError?.reason
                 reason is NoConnectivityException || reason is SocketException
             }
-            val finishedItems = downloadsFinishedQueue.value
-            downloads.forEach {
-                finishedItems.find { item -> item.downloadId == it.id }?.let {
-                    retryDownloadInternal(it.params)
+            if (failedDownloads.isNotEmpty()) {
+                logger.i("Has connection, retrying previous failed by connectivity...")
+                val finishedItems = downloadsFinishedQueue.value
+                failedDownloads.forEach {
+                    finishedItems.find { item -> item.downloadId == it.id }?.let {
+                        retryDownloadSuspended(it.downloadId, it.params)
+                    }
                 }
             }
         }
     }
 
-    private suspend fun removeFinishedInternal(downloadId: Long, withDb: Boolean = true) {
+    private suspend fun removeFinishedSuspended(downloadId: Long, withDb: Boolean = true) {
         // поиск только в завершённых
         val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
         val iterator = newFinishedSet.iterator()
@@ -554,6 +558,8 @@ class DownloadManager @Inject constructor(
      * @param currentDownloads текущие DownloadInfo из таблицы для понимания кол-ва загрузок в данный момент
      */
     private suspend fun refreshQueue() { // state: DownloadState
+        logger.d("refreshQueue")
+
         // есть проблемы с актуальностью значений из-за suspend'ов, читаем вручную по месту
         // при этом getRaw() suspend - ставим его на первое место
         val maxDownloadsCount = settings.maxDownloads

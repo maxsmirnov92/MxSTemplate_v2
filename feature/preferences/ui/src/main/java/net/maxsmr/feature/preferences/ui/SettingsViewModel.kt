@@ -39,7 +39,7 @@ class SettingsViewModel @Inject constructor(
 
     val retryDownloadsField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
-        .setRequired(R.string.settings_field_retry_failed_downloads)
+        .setRequired(R.string.settings_field_empty_error)
         .persist(state, KEY_FIELD_RETRY_DOWNLOADS)
         .build()
 
@@ -48,8 +48,6 @@ class SettingsViewModel @Inject constructor(
         .setRequired(R.string.settings_field_empty_error)
         .persist(state, KEY_FIELD_DISABLE_NOTIFICATIONS)
         .build()
-
-
 
     val updateNotificationIntervalStateField: Field<LongFieldState> = Field.Builder(LongFieldState(0))
         .emptyIf { false }
