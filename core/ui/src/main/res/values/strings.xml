@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-<!--    Application requires some permissions-->
-    <string name="get_permission">Для корректной работы приложения требуются некоторые разрешения</string>
+    <string name="get_permission">Application requires some permissions to functioning properly</string>
 
-    <string name="pick_settings">настройках</string>
-    <string name="pick_more_permission">Вы можете предоставить разрешение %s в %s, чтобы увидеть больше вариантов.</string>
-    <string name="pick_more_permissions">Вы можете предоставить разрешения %s в %s, чтобы увидеть больше вариантов.</string>
+    <string name="pick_settings">settings</string>
+    <string name="pick_more_permission">You may grant permission %s to %s to see more variants.</string>
+    <string name="pick_more_permissions">You may grant permissions %s to %s to see more variants.</string>
 
-    <string name="alert_gps_not_available_message">К сожалению, ваше мобильное устройство не снабжено функцией определения местоположения.</string>
-    <string name="alert_gps_enable_dialog_title">Местоположение недоступно</string>
-    <string name="alert_gps_enable_dialog_message">Получение текущего местоположения недоступно. Для получения местоположения нужно включить геопозиционирование в настройках.</string>
-    <string name="alert_gps_enable_dialog_answer_settings">Настройки</string>
+    <string name="alert_gps_not_available_message">Unfortunately your device does not have geolocation detection function</string>
+    <string name="alert_gps_enable_dialog_title">Geolocation is unavailable</string>
+    <string name="alert_gps_enable_dialog_message">Getting your current location is not available. To get the location you need to enable this option in the settings</string>
+    <string name="alert_gps_enable_dialog_answer_settings">Settings</string>
 
-    <string name="search_hint">Поиск</string>
+    <string name="search_hint">Search</string>
+
+    <string name="field_empty_error">Field is empty</string>
+    <string name="field_not_valid_error">Field is not valid</string>
 </resources>

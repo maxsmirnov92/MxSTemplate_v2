@@ -17,7 +17,7 @@
             style="@style/ToolbarStyle"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            app:title="@string/address_sorter_screen_title" />
+            app:title="@string/address_sorter_feature_title" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

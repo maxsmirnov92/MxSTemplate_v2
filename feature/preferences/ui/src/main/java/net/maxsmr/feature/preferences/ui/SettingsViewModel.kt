@@ -29,7 +29,7 @@ class SettingsViewModel @Inject constructor(
 
     val maxDownloadsField: Field<Int> = Field.Builder(0)
         .emptyIf { false }
-        .setRequired(R.string.settings_field_empty_error)
+        .setRequired(net.maxsmr.core.ui.R.string.field_empty_error)
         .validators(Field.Validator(R.string.settings_field_max_downloads_error) {
             it > 0
         })
@@ -39,19 +39,19 @@ class SettingsViewModel @Inject constructor(
 
     val retryDownloadsField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
-        .setRequired(R.string.settings_field_empty_error)
+        .setRequired(net.maxsmr.core.ui.R.string.field_empty_error)
         .persist(state, KEY_FIELD_RETRY_DOWNLOADS)
         .build()
 
     val disableNotificationsField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
-        .setRequired(R.string.settings_field_empty_error)
+        .setRequired(net.maxsmr.core.ui.R.string.field_empty_error)
         .persist(state, KEY_FIELD_DISABLE_NOTIFICATIONS)
         .build()
 
     val updateNotificationIntervalStateField: Field<LongFieldState> = Field.Builder(LongFieldState(0))
         .emptyIf { false }
-        .setRequired(R.string.settings_field_empty_error)
+        .setRequired(net.maxsmr.core.ui.R.string.field_empty_error)
         .validators(Field.Validator({
             return@Validator TextMessage(R.string.settings_field_update_notification_interval_error_format, UPDATE_NOTIFICATION_INTERVAL_MIN)
         }) {
@@ -97,7 +97,7 @@ class SettingsViewModel @Inject constructor(
             appSettings.value = currentAppSettings.copy(disableNotifications = it)
             updateNotificationIntervalStateField.toggleRequiredFieldState(
                 !it,
-                R.string.settings_field_empty_error,
+                net.maxsmr.core.ui.R.string.field_empty_error,
                 LongFieldState(0)
             )
         }

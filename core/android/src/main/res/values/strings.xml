@@ -1,45 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="yes">Да</string>
-    <string name="no">Нет</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="delete">Delete</string>
+    <string name="close">Close</string>
+    <string name="understand">Understood</string>
 
-    <string name="error_no_internet">Проверьте настройки интернет-соединения. Если включен VPN - отключите его и повторите попытку</string>
-    <string name="error_server_unavailable">Сервер не отвечает</string>
-    <string name="error_no_connection">Отсутствует соединение</string>
-    <string name="error_unknown">Неизвестная ошибка</string>
-    <string name="error_unexpected_try_again">Произошла непредвиденная ошибка, попробуйте повторить операцию позже</string>
+    <string name="error_no_internet">There is no internet connection, check the Internet connection settings.</string>
+    <string name="error_server_unavailable">Server not responding</string>
+    <string name="error_no_connection">No connection</string>
+    <string name="error_unknown">Unknown error</string>
+    <string name="error_unexpected_try_again">An unexpected error occurred, please try again later</string>
+    <string name="error_bad_gateway">Request timeout is expired. Try again later</string>
+    <string name="error_unexpected">Unexpected error occurred</string>
 
-    <string name="no_data">Нет данных</string>
-    <string name="try_again_internet">Проверить снова</string>
-    <string name="try_again_connect">Попробовать снова</string>
+    <string name="no_data">No data</string>
+    <string name="try_again_internet">Check again</string>
+    <string name="try_again_connect">Try again</string>
 
-    <string name="pick_no_permissions">Не получено необходимых разрешений</string>
-    <string name="pick_no_apps">Не найдено подходящих приложений</string>
-    <string name="image_picker_title">Приложение для выбора изображения</string>
-    <string name="image_picker_error">Не удалось получить изображение</string>
-    <string name="document_picker_title">Приложение для выбора файла</string>
-    <string name="document_picker_error">Не удалось получить файл</string>
-    <string name="audio_picker_title">Приложение для выбора аудио файла</string>
-    <string name="audio_picker_error">Не удалось получить аудио файл</string>
-    <string name="video_picker_title">Приложение для выбора видеозаписи</string>
-    <string name="video_picker_error">Не удалось получить видеозапись</string>
-    <string name="pick_result_error_format">Не удалось выбрать файл, причина: %s</string>
+    <string name="pick_no_permissions">Necessary permissions was not acquired</string>
+    <string name="pick_no_apps">No appropriate apps</string>
+    <string name="image_picker_title">App for select image</string>
+    <string name="image_picker_error">Cannot get image</string>
+    <string name="document_picker_title">App for select file</string>
+    <string name="document_picker_error">Cannot get file</string>
+    <string name="audio_picker_title">App for select audio file</string>
+    <string name="audio_picker_error">Cannot get audio file</string>
+    <string name="video_picker_title">App for choose video file</string>
+    <string name="video_picker_error">Cannot get video file</string>
+    <string name="pick_result_error_format">Cannot get audio file, reason: %s</string>
 
-    <string name="empty" translatable="false"/>
-    <string name="bad_gateway">Время ожидания ответа РЖД истекло. Попробуйте повторить запрос позже</string>
-    <string name="unexpected_error">Произошла неизвестная ошибка</string>
+    <string name="choose_app_title">Choose app</string>
+    <string name="choose_app_title_email">Choose app for sending email</string>
+    <string name="choose_app_title_email_support">Contact application technical support</string>
+    <string name="error_intent_email">Install any email application to send a letter</string>
+    <string name="error_intent_email_support">Install any email application to contact technical support</string>
+    <string name="error_intent_send">No apps for sending found</string>
+    <string name="error_intent_open_url">No apps for viewing links found</string>
+    <string name="error_intent_open_document">No apps for opening document found</string>
 
-    <string name="delete">Удалить</string>
-    <string name="close">Закрыть</string>
-    <string name="understand">Понятно</string>
-
-    <string name="choose_app_title">Выберите приложение</string>
-    <string name="choose_app_title_email">Выберите приложение для отправки письма</string>
-    <string name="choose_app_title_email_support">Обращение в службу технической поддержки приложения</string>
-    <string name="error_intent_email">Для отправки письма установите любое приложение для работы с электронной почтой</string>
-    <string name="error_intent_email_support">Для обращения в службу технической поддержки установите любое приложение для работы с электронной почтой</string>
-    <string name="error_intent_send">Приложение для отправки не обнаружено</string>
-    <string name="error_intent_open_url">Приложение для просмотра ссылки не обнаружено</string>
-    <string name="error_intent_open_document">Приложение для выбора документа не обнаружено</string>
-
-    <string name="toast_copied_to_clipboard_message">Скопировано в буфер обмена</string>
+    <string name="toast_copied_to_clipboard_message">Copied to clipboard</string>
 </resources>

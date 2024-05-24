@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="permission_request">Application requires some permissions: %1$s. Do you want to open app settings?</string>
-    <string name="permission_camera">Camera</string>
-    <string name="permission_location">Location</string>
-    <string name="permission_microphone">Microphone</string>
-    <string name="permission_storage">Storage</string>
-    <string name="permission_calendar">Calendar</string>
-</resources>

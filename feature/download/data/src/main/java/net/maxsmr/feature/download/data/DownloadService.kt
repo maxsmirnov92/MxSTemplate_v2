@@ -1,5 +1,6 @@
 package net.maxsmr.feature.download.data
 
+import android.app.Activity
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
@@ -26,6 +27,7 @@ import net.maxsmr.commonutils.getUriFromRawResource
 import net.maxsmr.commonutils.isAtLeastOreo
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.media.getContentName
 import net.maxsmr.commonutils.media.getMimeTypeFromName
@@ -45,6 +47,7 @@ import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.ApplicationScope
+import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
@@ -87,6 +90,7 @@ import net.maxsmr.feature.download.data.storage.StoreException
 import java.io.*
 import java.util.Collections
 import javax.inject.Inject
+import javax.inject.Named
 
 
 /**
@@ -104,7 +108,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class DownloadService : Service() {
 
-    private val context: Context get() = this
+    private val context: Context by lazy { this }
 
     private val groupKeyLoading by lazy { "${context.packageName}.LOADING" }
 
@@ -168,6 +172,16 @@ class DownloadService : Service() {
     private val currentJobs: MutableMap<Long, Job> =
         Collections.synchronizedMap(mutableMapOf())
 
+    private val mainActivityClass: Class<Activity>? by lazy {
+        try {
+            @Suppress("UNCHECKED_CAST")
+            Class.forName(mainActivityClassName) as? Class<Activity>
+        } catch (e: Exception) {
+            logger.e(formatException(e, "Class.forName"))
+            null
+        }
+    }
+
     @[Inject DownloaderOkHttpClient]
     lateinit var okHttpClient: OkHttpClient
 
@@ -187,6 +201,10 @@ class DownloadService : Service() {
     @Inject
     @ApplicationScope
     lateinit var applicationScope: CoroutineScope
+
+    @Inject
+    @Named(DI_NAME_MAIN_ACTIVITY_CLASS)
+    lateinit var mainActivityClassName: String
 
     override fun onCreate() {
         super.onCreate()
@@ -571,6 +589,7 @@ class DownloadService : Service() {
                     bundleOf(EXTRA_CANCEL_DOWNLOAD_ID to downloadInfo.id)
                 )
             )
+            setContentIntent()
         }
     }
 
@@ -620,6 +639,7 @@ class DownloadService : Service() {
                         it.intent(uri, mimeType).toPendingIntent()
                     )
                 }
+                setContentIntent()
             }
         }
 
@@ -653,6 +673,7 @@ class DownloadService : Service() {
                 setVibrate(VIBRATION_PATTERN_FAILED)
                 setOngoing(false)
                 addRetryAction(downloadInfo.id, params)
+                setContentIntent()
             }
         }
 
@@ -737,6 +758,7 @@ class DownloadService : Service() {
                     bundleOf(EXTRA_CANCEL_ALL to true)
                 )
             )
+            setContentIntent()
         }
     }
 
@@ -759,6 +781,17 @@ class DownloadService : Service() {
                 enableLights(true)
                 this.vibrationPattern = vibrationPattern
             }
+        }
+    }
+
+    private fun NotificationCompat.Builder.setContentIntent() {
+        mainActivityClass?.let {
+            setContentIntent(PendingIntent.getActivity(
+                context,
+                0,
+                Intent(context, it),
+                withMutabilityFlag(FLAG_UPDATE_CURRENT, false)
+            ))
         }
     }
 

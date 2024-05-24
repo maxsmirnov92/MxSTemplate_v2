@@ -59,7 +59,6 @@ import kotlin.coroutines.resume
 class DownloadManager @Inject constructor(
     private val downloadsRepo: DownloadsRepo,
     private val settingsRepo: SettingsDataStoreRepository,
-    private val cacheRepo: CacheDataStoreRepository,
     @Dispatcher(AppDispatchers.Default)
     private val defaultDispatcher: CoroutineDispatcher,
     private val notifier: DownloadStateNotifier,
@@ -118,8 +117,6 @@ class DownloadManager @Inject constructor(
         _failedAddedToQueueEvent.asSharedFlow()
 
     private var settings = AppSettings()
-
-    private val idCounter = AtomicInteger(0)
 
     val downloadsPendingParams by lazy {
         downloadsPendingQueue.map {
@@ -188,19 +185,7 @@ class DownloadManager @Inject constructor(
             logger.i("Restored finishedItems: $finishedItems")
             logger.i("Restored pending/downloading count: ${items.size}, finished count: ${finishedItems.size}")
             val totalCount = items.size + finishedItems.size
-            val counter = if (totalCount == 0) {
-                cacheRepo.setLastQueueId(0)
-                0
-            } else {
-                val lastId = cacheRepo.getLastQueueId()
-                if (lastId < totalCount) {
-                    cacheRepo.setLastQueueId(totalCount)
-                    totalCount
-                } else {
-                    lastId
-                }
-            }
-            idCounter.set(counter)
+            downloadsRepo.setItemIdCounterByItemsCount(totalCount)
             applyFinished(finishedItems.toMutableSet())
             downloadsPendingQueue.emit(items.sortedBy { it.id }.toSet())
         }
@@ -403,6 +388,15 @@ class DownloadManager @Inject constructor(
         }
     }
 
+    fun cancelAllDownloads() {
+        removeAllPending()
+        downloadsQueue.value.toList().forEach {
+            it.downloadId?.let { downloadId ->
+                DownloadService.cancel(downloadId)
+            }
+        }
+    }
+
     fun removeAllPending() {
         scope.launch {
             downloadsPendingQueue.value = emptySet()
@@ -482,9 +476,7 @@ class DownloadManager @Inject constructor(
                 failReason = FailAddReason.ALREADY_LOADING
                 return
             }
-            val id = idCounter.incrementAndGet().apply {
-                cacheRepo.setLastQueueId(this)
-            }
+            val id = downloadsRepo.nextItemId()
             val item = QueueItem(id, actualParams)
             downloadsPendingQueue.appendToSet(item)
             downloadsPendingStorage.addItem(item)

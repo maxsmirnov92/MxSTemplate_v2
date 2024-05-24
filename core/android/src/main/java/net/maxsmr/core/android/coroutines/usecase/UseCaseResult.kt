@@ -161,7 +161,7 @@ fun Throwable.asUseCaseResult() = when (this) {
         if (BuildConfig.CRASH_ON_UNEXPECTED_ERROR) {
             throw this
         } else {
-            UseCaseResult.Error(Exception(this), R.string.unexpected_error)
+            UseCaseResult.Error(Exception(this), R.string.error_unexpected)
         }
     }
 }

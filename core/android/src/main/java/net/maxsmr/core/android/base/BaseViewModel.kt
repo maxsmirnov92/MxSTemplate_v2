@@ -151,10 +151,10 @@ abstract class BaseViewModel(
             is NoConnectivityException -> showNoInternetDialog()
             is ApiException -> showOkDialog(
                 DIALOG_TAG_SERVER_ERROR,
-                message ?: TextMessage(R.string.unexpected_error)
+                message ?: TextMessage(R.string.error_unexpected)
             )
 //            is EkmpException -> showOkDialog(DIALOG_TAG_UNKNOWN_ERROR, message ?: error.textMessage)
-            else -> showOkDialog(DIALOG_TAG_UNKNOWN_ERROR, message ?: TextMessage(R.string.unexpected_error))
+            else -> showOkDialog(DIALOG_TAG_UNKNOWN_ERROR, message ?: TextMessage(R.string.error_unexpected))
         }
     }
 

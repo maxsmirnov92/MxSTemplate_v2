@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation_address_sorter"
+    app:startDestination="@+id/navigationMain">
+
+    <fragment
+        android:id="@+id/navigationMain"
+        android:name="net.maxsmr.feature.address_sorter.ui.AddressSorterFragment"
+        android:label="@string/address_sorter_feature_title"
+        tools:layout="@layout/fragment_address_sorter">
+
+    </fragment>
+</navigation>

@@ -10,17 +10,23 @@ import net.maxsmr.core.database.dao.download.DownloadsDao
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.feature.download.data.manager.DownloadsHashManager
 import net.maxsmr.feature.download.data.model.IntentSenderParams
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.random.Random
 
 @Singleton
-class DownloadsRepo @Inject constructor(private val dao: DownloadsDao) {
+class DownloadsRepo @Inject constructor(
+    private val dao: DownloadsDao,
+    private val cacheRepo: CacheDataStoreRepository
+    ) {
 
     private val intentSenderFlow = MutableStateFlow<VmEvent<IntentSenderParams>?>(null)
 
     private val notificationRequestCode = AtomicInteger(Random.nextInt(Int.MAX_VALUE / 2))
+
+    private val itemIdCounter = AtomicInteger(0)
 
     fun get() = dao.getAll()
 
@@ -105,4 +111,26 @@ class DownloadsRepo @Inject constructor(private val dao: DownloadsDao) {
     }
 
     fun nextNotificationRequestCode(): Int = notificationRequestCode.incrementAndGet()
+
+    suspend fun setItemIdCounterByItemsCount(count: Int) {
+        val counter = if (count == 0) {
+            cacheRepo.setLastQueueId(0)
+            0
+        } else {
+            val lastId = cacheRepo.getLastQueueId()
+            if (lastId < count) {
+                cacheRepo.setLastQueueId(count)
+                count
+            } else {
+                lastId
+            }
+        }
+        itemIdCounter.set(counter)
+    }
+
+    suspend fun nextItemId(): Int {
+        return itemIdCounter.incrementAndGet().apply {
+            cacheRepo.setLastQueueId(this)
+        }
+    }
 }

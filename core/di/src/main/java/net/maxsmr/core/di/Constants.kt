@@ -3,6 +3,7 @@ package net.maxsmr.core.di
 import javax.inject.Qualifier
 
 const val DI_NAME_VERSION_NAME = "version_name"
+const val DI_NAME_MAIN_ACTIVITY_CLASS = "main_activity_class"
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)

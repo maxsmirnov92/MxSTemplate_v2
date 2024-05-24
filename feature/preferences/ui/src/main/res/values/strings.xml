@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="settings_title">Настройки</string>
-    <string name="settings_field_empty_error">Поле не заполнено</string>
-    <string name="settings_field_max_downloads_hint">Максимальное число одновременных загрузок (0 - неограничено)</string>
-    <string name="settings_field_max_downloads_error">От одной и более загрузок</string>
-    <string name="settings_field_retry_failed_downloads">Повторять неудавшиеся из-за сети загрузки при её появлении</string>
-    <string name="settings_field_disable_notifications">Отключить уведомления сервиса загрузок</string>
-    <string name="settings_field_update_notification_interval_hint">Интервал обновления уведомлений с активной загрузкой (мс)</string>
-    <string name="settings_field_update_notification_interval_error_format">Значение должно быть от %d и выше</string>
-    <string name="settings_alert_confirm_message">Есть изменения</string>
-    <string name="settings_alert_confirm_yes_button">Сохранить</string>
-    <string name="settings_alert_confirm_neutral_button">Не сохранять</string>
-    <string name="settings_alert_confirm_negative_button">Отмена</string>
-    <string name="settings_menu_action_save">Сохранить</string>
+    <string name="settings_feature_title">Settings</string>
+    <string name="settings_field_max_downloads_hint">Max simultaneous downloads count (0 - unlimited)</string>
+    <string name="settings_field_max_downloads_error">One or more downloads</string>
+    <string name="settings_field_retry_failed_downloads">Repeat downloads that failed due to the network when it appears</string>
+    <string name="settings_field_disable_notifications">Disable notifications from download service</string>
+    <string name="settings_field_update_notification_interval_hint">Notification update interval for active download (ms)</string>
+    <string name="settings_field_update_notification_interval_error_format">Value must be %d and over</string>
+    <string name="settings_alert_confirm_message">There are some changes</string>
+    <string name="settings_alert_confirm_yes_button">Save</string>
+    <string name="settings_alert_confirm_neutral_button">Don\'t save</string>
+    <string name="settings_alert_confirm_negative_button">@android:string/cancel</string>
+    <string name="settings_menu_action_save">Save</string>
 </resources>

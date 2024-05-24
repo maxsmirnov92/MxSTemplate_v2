@@ -1,64 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="download_pager_title">Загрузки</string>
-    <string name="download_params_title">Параметры</string>
-    <string name="download_state_title">Состояние</string>
+    <string name="download_feature_title">Downloads</string>
+    <string name="download_params_title">Parameters</string>
+    <string name="download_state_title">State</string>
 
-    <string name="download_url_hint">URL для загрузки</string>
-    <string name="download_url_empty_error">URL некорректный</string>
-    <string name="download_method_name">Метод</string>
-    <string-array name="download_method_names">
+    <string name="download_url_hint">URL for loading</string>
+    <string name="download_url_empty_error">URL is not valid</string>
+    <string name="download_method_name">Method</string>
+    <string-array name="download_method_names" translatable="false">
         <item>GET</item>
         <item>POST</item>
     </string-array>
-    <string name="download_field_request_body_empty_text">Файл тела запроса не выбран</string>
-    <string name="download_field_request_body_non_required_text">Файл тела запроса не требуется</string>
-    <string name="download_field_request_body_empty_error">Тело запроса обязательно</string>
-    <string name="download_field_file_name_hint">Имя файла</string>
-    <string name="download_field_file_name_error">Некорректное имя файла</string>
-    <string name="download_field_file_name_fix_checkbox_text">Поменять из заголовка ответа при наличии</string>
-    <string name="download_field_sub_dir_name_hint">Имя подкаталога</string>
-    <string name="download_field_target_hash_hint">Целевой хэш MD5</string>
-    <string name="download_field_target_hash_error">Несоответствие формату алгоритма MD5</string>
-    <string name="download_field_ignore_server_errors">Игнорировать ошибки сервера</string>
-    <string name="download_field_ignore_attachment">Игнорировать отсутствие вложения с заголовком \"Content-Disposition\"</string>
-    <string name="download_field_replace_file">Заменить существующий целевой файл</string>
-    <string name="download_field_delete_unfinished">Удалить недокачанный файл</string>
+    <string name="download_field_request_body_empty_text">Request body file not selected</string>
+    <string name="download_field_request_body_non_required_text">Request body file not required</string>
+    <string name="download_field_request_body_empty_error">Request body file is required</string>
+    <string name="download_field_file_name_hint">File name</string>
+    <string name="download_field_file_name_error">Not valid file name</string>
+    <string name="download_field_file_name_fix_checkbox_text">Change by header name if available</string>
+    <string name="download_field_sub_dir_name_hint">Sub folder name</string>
+    <string name="download_field_target_hash_hint">Target MD5 hash</string>
+    <string name="download_field_target_hash_error">Not valid MD5 format</string>
+    <string name="download_field_ignore_server_errors">Ignore server errors</string>
+    <string name="download_field_ignore_attachment">Ignore attachment with header \"Content-Disposition\"</string>
+    <string name="download_field_replace_file">Replace existing target file</string>
+    <string name="download_field_delete_unfinished">Delete unfinished file</string>
 
-    <string name="download_header_name_subtitle">Заголовки</string>
-    <string name="download_field_header_key_hint">Название</string>
-    <string name="download_field_header_key_empty_error">Название заголовка не может быть пустым</string>
-    <string name="download_field_header_value_hint">Значение</string>
-    <string name="download_field_header_value_empty_error">Значение заголовка не может быть пустым</string>
-    <string name="download_start_button_text">Начать</string>
+    <string name="download_header_name_subtitle">Headers</string>
+    <string name="download_field_header_key_hint">Name</string>
+    <string name="download_field_header_key_empty_error">Header name cannot be empty</string>
+    <string name="download_field_header_value_hint">Value</string>
+    <string name="download_field_header_value_empty_error">Header value cannot be empty</string>
+    <string name="download_start_button_text">Start</string>
 
-    <string name="download_alert_confirm_title">Подтверждение</string>
-    <string name="download_alert_clear_queue_message">Очистить очередь ожидающих загрузок?</string>
-    <string name="download_alert_retry_download_if_success_message">Данная загрузка завершилась успешно. Всё равно повторить?</string>
-    <string name="download_alert_params_sample_copied_format">Пример JSON-файла был скопирован в %s</string>
-    <string name="download_queued_count_subtitle">В очереди:</string>
-    <string name="download_active_empty_text">Нет активных загрузок</string>
+    <string name="download_alert_confirm_title">Confirm</string>
+    <string name="download_alert_clear_queue_message">Clear pending loads queue?</string>
+    <string name="download_alert_retry_download_if_success_message">This load was finished successfully. Retry anyway?</string>
+    <string name="download_alert_params_sample_copied_format">Sample JSON-file copied to %s</string>
+    <string name="download_queued_count_subtitle">Queued:</string>
+    <string name="download_active_empty_text">No active loads</string>
 
-    <string name="download_status_uploading_percent_format">Процент выгрузки: %.1f\%%</string>
-    <string name="download_status_uploading">Выгрузка…</string>
-    <string name="download_status_downloading_percent_format">Процент загрузки: %.1f\%%</string>
-    <string name="download_status_downloading">Загрузка…</string>
-    <string name="download_status_storing_percent_format">Процент записи в файл: %.1f\%%</string>
-    <string name="download_status_storing">Запись в файл…</string>
-    <string name="download_status_finalize_uploading">Завершение выгрузки…</string>
-    <string name="download_status_finalize_downloading">Завершение загрузки…</string>
-    <string name="download_status_finalize_storing">Завершение записи в файл…</string>
+    <string name="download_status_uploading_percent_format">Uploading percentage: %.1f\%%</string>
+    <string name="download_status_uploading">Uploading…</string>
+    <string name="download_status_downloading_percent_format">Downloading percentage: %.1f\%%</string>
+    <string name="download_status_downloading">Downloading…</string>
+    <string name="download_status_storing_percent_format">Writing to file percentage: %.1f\%%</string>
+    <string name="download_status_storing">Writing to file…</string>
+    <string name="download_status_finalize_uploading">Finalizing upload…</string>
+    <string name="download_status_finalize_downloading">Finalizing download…</string>
+    <string name="download_status_finalize_storing">Finalizing writing to file…</string>
 
-    <string name="download_status_size_with_total_text_format">%s из %s</string>
-    <string name="download_status_size_text_format">размер: %s</string>
-    <string name="download_status_time_with_estimated_text_format">прошло времени: %s, осталось времени: %s</string>
-    <string name="download_status_time_text_format">прошло времени: %s</string>
-    <string name="download_status_requesting">Выполнение запроса…</string>
+    <string name="download_status_size_with_total_text_format">%s out of %s</string>
+    <string name="download_status_size_text_format">size: %s</string>
+    <string name="download_status_time_with_estimated_text_format">elapsed time: %s, estimated time: %s</string>
+    <string name="download_status_time_text_format">elapsed time: %s</string>
+    <string name="download_status_requesting">Requesting…</string>
 
-    <string name="download_status_success">Успех</string>
-    <string name="download_status_failed_format">Произошла ошибка: \"%s\"</string>
-    <string name="download_status_cancelled">Отменена</string>
+    <string name="download_status_success">Success</string>
+    <string name="download_status_failed_format">Error occurred: \"%s\"</string>
+    <string name="download_status_cancelled">Cancelled</string>
 
-    <string name="download_menu_action_filter">Фильтр по названию</string>
-    <string name="download_menu_action_load_params_from_json">Загрузить список из JSON</string>
+    <string name="download_menu_action_filter">Filter by name</string>
+    <string name="download_menu_action_load_params_from_json">Load params list from JSON</string>
 </resources>
