@@ -4,7 +4,7 @@ import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.network.UNKNOWN_ERROR
 import net.maxsmr.core.network.asString
 import net.maxsmr.core.network.asStringCopy
-import net.maxsmr.core.network.toMap
+import net.maxsmr.core.network.toPairs
 import okhttp3.Response
 
 /**
@@ -13,12 +13,12 @@ import okhttp3.Response
 open class HttpProtocolException(
     val url: String,
     val method: String,
-    val requestHeaders: HashMap<String, String> = hashMapOf(),
+    val requestHeaders: ArrayList<Pair<String, String>> = arrayListOf(),
     val requestBodyString: String = EMPTY_STRING,
     val responseCode: Int = UNKNOWN_ERROR,
     val responseMessage: String = EMPTY_STRING,
     val responseBodyString: String = EMPTY_STRING,
-    val responseBodyHeaders: HashMap<String, String> = hashMapOf(),
+    val responseBodyHeaders: ArrayList<Pair<String, String>> = arrayListOf(),
     message: String?,
 ) : NetworkException(responseCode, message) {
 
@@ -61,12 +61,12 @@ open class HttpProtocolException(
             return HttpProtocolException(
                 url,
                 method,
-                HashMap(request?.headers.toMap()),
+                ArrayList(request?.headers.toPairs()),
                 if (withBody) request.asString().orEmpty() else EMPTY_STRING,
                 code,
                 message,
                 if (withBody) responseBody else EMPTY_STRING,
-                HashMap(this?.headers.toMap()),
+                ArrayList(this?.headers.toPairs()),
                 exceptionMessage?.takeIf { it.isNotEmpty() }
                     ?: prepareMessage(
                         url,

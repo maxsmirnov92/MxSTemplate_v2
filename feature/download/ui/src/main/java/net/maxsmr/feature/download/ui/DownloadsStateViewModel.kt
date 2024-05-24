@@ -24,7 +24,9 @@ class DownloadsStateViewModel @AssistedInject constructor(
 
     val queueNames = MutableLiveData<List<String>>()
 
-    val downloadItems = MutableLiveData<List<DownloadInfoAdapterData>>()
+    val allItems = MutableLiveData<List<DownloadInfoAdapterData>>()
+
+    val currentItems = MutableLiveData<List<DownloadInfoAdapterData>>()
 
     val queryNameFilter = MutableLiveData<String>()
 
@@ -37,11 +39,12 @@ class DownloadsStateViewModel @AssistedInject constructor(
         }
         viewModelScope.launch {
             manager.resultItems.collect {
-                downloadItems.postValue(it.mapWithFilterByName(queryNameFilter.value.orEmpty()))
+                allItems.postValue(it.map { item -> DownloadInfoAdapterData(item) })
+                currentItems.postValue(it.mapWithFilterByName(queryNameFilter.value.orEmpty()))
             }
         }
         queryNameFilter.observe {
-            downloadItems.value = manager.resultItems.value.mapWithFilterByName(it)
+            currentItems.value = manager.resultItems.value.mapWithFilterByName(it)
         }
     }
 

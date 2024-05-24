@@ -608,7 +608,7 @@ class DownloadService : Service() {
 
             val id = downloadInfo.id.toInt()
             notificationWrapper.show(id, successNotificationChannel) {
-                setDefaults(Notification.DEFAULT_ALL)
+                setDefaults(Notification.DEFAULT_ALL and Notification.DEFAULT_SOUND.inv())
                 setSmallIcon(notificationParams.smallIconResId)
                 setContentTitle(notificationParams.successTitle.takeIf { it.isNotEmpty() }
                     ?: getString(R.string.download_notification_success_title))
@@ -661,7 +661,7 @@ class DownloadService : Service() {
         params.notificationParams?.let { notificationParams ->
             val id = downloadInfo.id.toInt()
             notificationWrapper.show(id, failedNotificationChannel) {
-                setDefaults(Notification.DEFAULT_ALL)
+                setDefaults(Notification.DEFAULT_ALL and Notification.DEFAULT_SOUND.inv())
                 setSmallIcon(notificationParams.smallIconResId)
                 setContentTitle(notificationParams.errorTitle.takeIf { it.isNotEmpty() }
                     ?: getString(R.string.download_notification_failed_title))
@@ -690,7 +690,7 @@ class DownloadService : Service() {
         params.notificationParams?.let { notificationParams ->
             val id = downloadInfo.id.toInt()
             notificationWrapper.show(id, failedNotificationChannel) {
-                setDefaults(Notification.DEFAULT_ALL)
+                setDefaults(Notification.DEFAULT_ALL and Notification.DEFAULT_SOUND.inv())
                 setSmallIcon(notificationParams.smallIconResId)
                 setContentTitle(notificationParams.cancelTitle.takeIf { it.isNotEmpty() }
                     ?: getString(R.string.download_notification_cancelled_title))

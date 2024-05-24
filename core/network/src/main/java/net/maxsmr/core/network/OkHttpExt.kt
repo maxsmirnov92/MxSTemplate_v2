@@ -265,12 +265,12 @@ private fun String?.hasContentDisposition(type: ContentDispositionType): Boolean
     return this?.startsWith(type.value) == true
 }
 
-fun Headers?.toMap(): Map<String, String> {
-    val result = mutableMapOf<String, String>()
+fun Headers?.toPairs(): List<Pair<String, String>> {
+    val result = mutableListOf<Pair<String, String>>()
     if (this != null) {
         for (i in 0 until size) {
             val name = name(i)
-            result[name] = this[name] ?: ""
+            result.add(Pair(name, this[name].orEmpty()))
         }
     }
     return result

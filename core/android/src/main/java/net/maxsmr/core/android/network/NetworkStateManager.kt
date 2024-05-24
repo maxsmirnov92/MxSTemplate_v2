@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.stateIn
+import net.maxsmr.commonutils.isAtLeastMarshmallow
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.baseApplicationContext
@@ -31,41 +32,15 @@ object NetworkStateManager {
 
     private val connectionLiveData: ConnectionLiveData = ConnectionLiveData()
 
-    private val callback = object : ConnectivityManager.NetworkCallback() {
-
-        val activeNetworks: MutableSet<Network> = mutableSetOf()
-
-        //Методы могут вызываться не в Main потоке, поэтому post
-        override fun onAvailable(network: Network) {
-            super.onAvailable(network)
-            activeNetworks.add(network)
-            connectionLiveData.postValue(activeNetworks.isNotEmpty())
-            logger.d("connection $network available. Active: ${activeNetworks.joinToString()}")
-        }
-
-        override fun onLost(network: Network) {
-            super.onLost(network)
-            activeNetworks.remove(network)
-            connectionLiveData.postValue(activeNetworks.isNotEmpty())
-            logger.d("connection $network lost. Active: ${activeNetworks.joinToString()}")
-        }
-    }
-
     fun asLiveData(): LiveData<Boolean> = connectionLiveData
 
     fun asFlow(scope: CoroutineScope): StateFlow<Boolean> = callbackFlow {
+
         var isConnected = hasConnection()
 
-        val callback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                onConnectivityChanged(true)
-            }
+        val callback = object : BaseNetworkCallback() {
 
-            override fun onLost(network: Network) {
-                onConnectivityChanged(false)
-            }
-
-            fun onConnectivityChanged(newState: Boolean) {
+            override fun onConnectivityChanged(newState: Boolean) {
                 val wasConnected = isConnected
                 isConnected = newState
                 if (wasConnected != newState) {
@@ -91,31 +66,46 @@ object NetworkStateManager {
         connectionLiveData.postValue(hasConnection())
     }
 
-
-
     fun hasConnection(): Boolean {
-        val capabilities = connectivityManager
-            .getNetworkCapabilities(connectivityManager.activeNetwork) ?: return false
-        val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-        val hasCellular = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-        val hasWifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-        return hasInternet && (hasCellular || hasWifi)
+        return if (isAtLeastMarshmallow()) {
+            val capabilities = connectivityManager
+                .getNetworkCapabilities(connectivityManager.activeNetwork) ?: return false
+            val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            val hasCellular = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+            val hasWifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+            hasInternet && (hasCellular || hasWifi)
+        } else {
+            connectivityManager.activeNetworkInfo?.let { it.isConnected && it.isAvailable } ?: false
+        }
     }
 
     private fun ConnectivityManager.unregisterNetworkCallbackSafe(callback: ConnectivityManager.NetworkCallback) {
         try {
             unregisterNetworkCallback(callback)
-            this@NetworkStateManager.callback.activeNetworks.clear()
         } catch (ignored: IllegalArgumentException) {
         }
     }
 
+
     private class ConnectionLiveData : MutableLiveData<Boolean>(hasConnection()) {
+
+        private val callback = object : BaseNetworkCallback() {
+
+            override fun onConnectivityChanged(newState: Boolean) {
+                //Методы могут вызываться не в Main потоке, поэтому post
+                this@ConnectionLiveData.postValue(newState)
+            }
+        }
 
         override fun onActive() {
             super.onActive()
+
             connectivityManager.unregisterNetworkCallbackSafe(callback)
-            connectivityManager.registerDefaultNetworkCallback(callback)
+            connectivityManager.registerNetworkCallback(NetworkRequest.Builder().run {
+                addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                build()
+            }, callback)
+
             if (callback.activeNetworks.isEmpty()) {
                 //при отсутствии WiFi и Cellular коллбек после регистрации не срабатывает,
                 //на initial тоже нельзя полагаться, т.к. возможен кейс:
@@ -132,11 +122,39 @@ object NetworkStateManager {
         override fun onInactive() {
             super.onInactive()
             connectivityManager.unregisterNetworkCallbackSafe(callback)
+            callback.activeNetworks.clear()
             logger.d("unregisterNetworkCallback")
         }
 
         override fun getValue(): Boolean {
             return super.getValue() ?: false
         }
+    }
+
+    private abstract class BaseNetworkCallback : ConnectivityManager.NetworkCallback() {
+
+        val activeNetworks: MutableSet<Network> = mutableSetOf()
+
+        val hasActiveNetworks: Boolean get() = activeNetworks.isNotEmpty()
+
+        final override fun onAvailable(network: Network) {
+            super.onAvailable(network)
+            synchronized(activeNetworks) {
+                activeNetworks.add(network)
+                logger.d("Connection $network available. Active: ${activeNetworks.joinToString()}")
+                onConnectivityChanged(hasActiveNetworks)
+            }
+        }
+
+        final override fun onLost(network: Network) {
+            super.onLost(network)
+            synchronized(activeNetworks) {
+                activeNetworks.remove(network)
+                logger.d("Connection $network lost. Active: ${activeNetworks.joinToString()}")
+                onConnectivityChanged(hasActiveNetworks)
+            }
+        }
+
+        abstract fun onConnectivityChanged(newState: Boolean)
     }
 }

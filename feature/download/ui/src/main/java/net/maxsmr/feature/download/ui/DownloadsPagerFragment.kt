@@ -36,9 +36,7 @@ class DownloadsPagerFragment : BaseNavigationFragment<DownloadsViewModel, NavArg
     private val pageChangeCallback: ViewPager2.OnPageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
         override fun onPageSelected(position: Int) {
             super.onPageSelected(position)
-            if (position != 0) {
-                hideKeyboard()
-            }
+            hideKeyboard()
         }
     }
 

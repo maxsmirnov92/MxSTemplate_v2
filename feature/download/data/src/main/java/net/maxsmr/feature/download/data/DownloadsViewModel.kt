@@ -347,6 +347,7 @@ class DownloadsViewModel @Inject constructor(
         @JvmStatic
         private fun DownloadParamsModel.toParams(): DownloadService.Params = with(this) {
 
+            val url = url.trim()
             val bodyUri = bodyUri
             val targetHashInfo = targetMd5Hash?.takeIf { it.isNotEmpty() }?.let {
                 HashInfo(MD5_ALGORITHM, it)
@@ -356,12 +357,12 @@ class DownloadsViewModel @Inject constructor(
                 successActions = defaultNotificationActions(baseApplicationContext)
             )
 
-            if (method == net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel.Method.POST && bodyUri != null) {
+            if (method == POST && bodyUri != null) {
                 defaultPOSTServiceParamsFor(
                     url,
                     fileName,
                     DownloadService.RequestParams.Body(
-                        DownloadService.RequestParams.Body.Uri(bodyUri)
+                        DownloadService.RequestParams.Body.Uri(bodyUri.trim())
                     ),
                     ignoreAttachment = ignoreAttachment,
                     ignoreFileName = ignoreFileName,

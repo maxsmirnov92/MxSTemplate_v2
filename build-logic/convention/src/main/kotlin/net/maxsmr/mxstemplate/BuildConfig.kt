@@ -7,7 +7,7 @@ object BuildConfig {
     const val compileSdk = 34
 
     const val targetSdk = 33
-    const val minSdk = 24
+    const val minSdk = 21
 
     val SOURCE_COMPATIBILITY_VERSION = JavaVersion.VERSION_17
 }

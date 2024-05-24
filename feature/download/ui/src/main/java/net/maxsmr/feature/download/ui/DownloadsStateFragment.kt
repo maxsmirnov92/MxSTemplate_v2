@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.PopupWindow
@@ -82,6 +83,8 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
 
     private var detailsPopupWindow: PopupWindow? = null
 
+    private var filterItem: MenuItem? = null
+
     private var searchView: SearchView? = null
 
     override fun onViewCreated(
@@ -106,7 +109,10 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
             binding.tvQueuedNames.setTextOrGone("[ $mergedNames ]", isEmptyFunc = { mergedNames.isEmpty() })
             binding.ibClearQueue.isVisible = it.isNotEmpty()
         }
-        viewModel.downloadItems.observe { items ->
+        viewModel.allItems.observe {
+            filterItem?.isVisible = it.isNotEmpty()
+        }
+        viewModel.currentItems.observe { items ->
             if (items.isNotEmpty()) {
                 binding.rvDownloads.isVisible = true
                 binding.containerEmpty.isVisible = false
@@ -115,6 +121,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
                 binding.containerEmpty.isVisible = true
             }
             infoAdapter.items = items
+
             binding.ibCancelAll.isVisible = items.any { item -> item.downloadInfo.isLoading }
             binding.ibClearFinished.isVisible = items.any { item -> !item.downloadInfo.isLoading }
             // FIXME скролл
@@ -142,10 +149,12 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
 
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
-        val filterItem = menu.findItem(R.id.action_filter)
-        searchView = (filterItem.actionView as SearchView).apply {
-            queryHint = getString(R.string.download_menu_action_filter)
-            setOnQueryTextListener(this@DownloadsStateFragment)
+        with(menu.findItem(R.id.action_filter)) {
+            filterItem = this
+            searchView = (actionView as SearchView).apply {
+                queryHint = getString(R.string.download_menu_action_filter)
+                setOnQueryTextListener(this@DownloadsStateFragment)
+            }
         }
     }
 
