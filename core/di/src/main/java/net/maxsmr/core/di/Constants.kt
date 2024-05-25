@@ -56,4 +56,12 @@ annotation class RadarIoOkHttpClient
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
+annotation class DownloadHttpLoggingInterceptor
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class PicassoHttpLoggingInterceptor
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
 annotation class RadarIoRetrofit

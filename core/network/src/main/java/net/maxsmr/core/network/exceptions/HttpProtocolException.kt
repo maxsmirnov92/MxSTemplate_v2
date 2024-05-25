@@ -3,7 +3,7 @@ package net.maxsmr.core.network.exceptions
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.network.UNKNOWN_ERROR
 import net.maxsmr.core.network.asString
-import net.maxsmr.core.network.asStringCopy
+import net.maxsmr.core.network.asStringCloned
 import net.maxsmr.core.network.toPairs
 import okhttp3.Response
 
@@ -37,12 +37,13 @@ open class HttpProtocolException(
     override fun toString(): String {
         return "HttpProtocolException(url='$url', " +
                 "method='$method', " +
-                "requestHeaders=$requestHeaders, " +
-                "requestBodyString='$requestBodyString', " +
+                "requestHeaders=${requestHeaders.headersToString()}, " +
+                "requestBodyString='$requestBodyString.toSt', " +
                 "responseCode=$responseCode, " +
                 "responseMessage='$responseMessage', " +
                 "responseBodyString='$responseBodyString', " +
-                "responseBodyHeaders=$responseBodyHeaders)"
+                "responseBodyHeaders=${responseBodyHeaders.headersToString()}, " +
+                "message=$message)"
     }
 
     companion object {
@@ -57,7 +58,7 @@ open class HttpProtocolException(
             val method = request?.method.orEmpty()
             val code = this?.code ?: UNKNOWN_ERROR
             val message = this?.message.orEmpty()
-            val responseBody = this.asStringCopy()?.first.orEmpty()
+            val responseBody =  if (withBody) this.asStringCloned()?.first.orEmpty() else EMPTY_STRING
             return HttpProtocolException(
                 url,
                 method,
@@ -65,7 +66,7 @@ open class HttpProtocolException(
                 if (withBody) request.asString().orEmpty() else EMPTY_STRING,
                 code,
                 message,
-                if (withBody) responseBody else EMPTY_STRING,
+                responseBody,
                 ArrayList(this?.headers.toPairs()),
                 exceptionMessage?.takeIf { it.isNotEmpty() }
                     ?: prepareMessage(
@@ -82,6 +83,10 @@ open class HttpProtocolException(
             return partsList.filter {
                 it.isNotEmpty()
             }.joinToString(", ")
+        }
+
+        private fun ArrayList<Pair<String, String>>.headersToString(): String {
+            return joinToString(", ") { "${it.first}=${it.second}" }
         }
     }
 }

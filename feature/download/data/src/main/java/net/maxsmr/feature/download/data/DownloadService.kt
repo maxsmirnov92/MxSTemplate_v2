@@ -19,7 +19,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.os.bundleOf
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-import net.maxsmr.commonutils.IStreamNotifier
 import net.maxsmr.commonutils.NotificationWrapper
 import net.maxsmr.commonutils.NotificationWrapper.Companion.setContentBigText
 import net.maxsmr.commonutils.getSerializableExtraCompat
@@ -58,9 +57,10 @@ import net.maxsmr.core.network.ProgressResponseBody
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
 import net.maxsmr.core.network.getContentTypeHeader
 import net.maxsmr.core.network.getFileNameFromAttachmentHeader
+import net.maxsmr.core.network.hasBytesAcceptRanges
 import net.maxsmr.core.network.hasContentDisposition
 import net.maxsmr.core.network.newCallSuspended
-import net.maxsmr.core.network.toOutputStreamOrThrow
+import net.maxsmr.core.network.writeBufferedOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
 import net.maxsmr.feature.download.data.DownloadService.NotificationParams
 import net.maxsmr.feature.download.data.DownloadService.Params
@@ -328,13 +328,21 @@ class DownloadService : Service() {
 
             suspend fun onException(e: Exception, localUri: Uri? = null) {
                 logger.e("onException: $e, localUri: $localUri")
-                val info = downloadInfo.copy(
-                    status = DownloadInfo.Status.Error(localUri?.toString(), e)
-                )
-                if (e is CancellationException || e is InterruptedIOException) {
-                    onDownloadCancelled(info, params, oldParams)
-                } else {
-                    onDownloadFailed(info, params, oldParams, e)
+                    val info = downloadInfo.copy(
+                        status = DownloadInfo.Status.Error(localUri?.toString(), e)
+                    )
+                    if (e is CancellationException || e is InterruptedIOException) {
+                        onDownloadCancelled(info, params, oldParams)
+                    } else {
+                        onDownloadFailed(info, params, oldParams, e)
+                    }
+            }
+
+            fun onCancellationException(e: Exception) {
+                applicationScope.launch(ioDispatcher) {
+                    // после отмены корутины на вызове suspend функций будет брошен эксепшн ->
+                    // надо запустить в другом неотменённом скопе
+                    onException(e, unfinishedLocalUri)
                 }
             }
 
@@ -380,8 +388,10 @@ class DownloadService : Service() {
                     throw response.toHttpProtocolException()
                 }
 
-                if (!params.requestParams.storeErrorBody && !params.requestParams.ignoreAttachment
+                if (!params.requestParams.storeErrorBody
+                        && !params.requestParams.ignoreAttachment
                         && !response.hasContentDisposition(ContentDispositionType.ATTACHMENT)
+                        && !response.hasBytesAcceptRanges()
                 ) {
                     throw response.toHttpProtocolException("No valid attachment")
                 }
@@ -419,41 +429,18 @@ class DownloadService : Service() {
 //                    downloadsRepo.upsert(downloadInfo)
                 }
 
-                val notifier = object : IStreamNotifier {
-
-                    val listener = ServiceProgressListener(Loading.Type.STORING)
-
-                    val startTime = System.currentTimeMillis()
-
-                    override val notifyInterval: Long = listener.notifyInterval
-
-                    //Нужен для того, чтобы можно было отменить сохранение файла, если
-                    //юзер нажал "Отменить" в нотификации в тот момент, когда файл уже загружен и сохраняется
-                    override fun onProcessing(
-                        inputStream: InputStream,
-                        outputStream: OutputStream,
-                        bytesWrite: Long,
-                        bytesTotal: Long,
-                    ): Boolean {
-                        listener.notify(bytesWrite, bytesTotal, false, startTime)
-                        return isActive
-                    }
-
-                    override fun onStreamEnd(inputStream: InputStream, outputStream: OutputStream, bytesWrite: Long) {
-                        super.onStreamEnd(inputStream, outputStream, bytesWrite)
-                        listener.notify(bytesWrite, bytesWrite, true, startTime)
-                    }
+                val localUri = storage.store(params, prevDownload?.statusAsError?.localUri) { uri, outStream, _ ->
+                    unfinishedLocalUri = uri
+                    response.writeBufferedOrThrow(outStream)
                 }
 
-                val localUri =
-                    storage.store(params, prevDownload?.statusAsError?.localUri) { uri, outStream, previousSize ->
-                        unfinishedLocalUri = uri
-                        response.toOutputStreamOrThrow(outStream, previousSize, notifier)
-                    }
                 val hashInfo = params.targetHashInfo?.takeIf { !it.isEmpty }?.also {
                     // проверка с целевым хэшэм при наличии
                     if (!DownloadsHashManager.checkHash(localUri, it)) {
-                        throw StoreException(localUri.toString(), message = "Loaded resource hash doesn't match with expected")
+                        throw StoreException(
+                            localUri.toString(),
+                            message = "Loaded resource hash doesn't match with expected"
+                        )
                     }
                 } ?: DownloadsHashManager.getHash(localUri)
 
@@ -465,11 +452,9 @@ class DownloadService : Service() {
                     ), params, oldParams
                 )
             } catch (e: CancellationException) {
-                // после отмены корутины на вызове suspend функций будет брошен эксепшн ->
-                // надо запустить в другом неотменённом скопе
-                applicationScope.launch(ioDispatcher) {
-                    onException(e, unfinishedLocalUri)
-                }
+                onCancellationException(e)
+            } catch (e: InterruptedIOException) {
+                onCancellationException(e)
             } catch (e: SecurityException) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && e is RecoverableSecurityException) {
                     downloadsRepo.notifyIntentSender(
@@ -554,7 +539,7 @@ class DownloadService : Service() {
         downloadInfo: DownloadInfo,
         params: Params,
     ) {
-        logger.d("Download processing: type: $type, $downloadInfo, stateInfo: $stateInfo")
+//        logger.d("Download processing: type: $type, $downloadInfo, stateInfo: $stateInfo")
         notifier.onDownloadProcessing(type, stateInfo, downloadInfo, params)
 
         params.notificationParams ?: return
@@ -786,12 +771,14 @@ class DownloadService : Service() {
 
     private fun NotificationCompat.Builder.setContentIntent() {
         mainActivityClass?.let {
-            setContentIntent(PendingIntent.getActivity(
-                context,
-                0,
-                Intent(context, it),
-                withMutabilityFlag(FLAG_UPDATE_CURRENT, false)
-            ))
+            setContentIntent(
+                PendingIntent.getActivity(
+                    context,
+                    0,
+                    Intent(context, it),
+                    withMutabilityFlag(FLAG_UPDATE_CURRENT, false)
+                )
+            )
         }
     }
 

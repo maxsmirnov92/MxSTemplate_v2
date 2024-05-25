@@ -258,8 +258,8 @@ class DownloadManager @Inject constructor(
         }
         scope.launch {
             notifier.downloadStateEvents.collect { state ->
-                logger.d("downloadStateEvent: $state")
                 if (state !is DownloadStateNotifier.DownloadState.Loading) {
+                    logger.d("Finished downloadStateEvent: $state")
                     val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
 
                     // после перехода в завершённое состояние убираем из очереди текущих загрузок

@@ -2,6 +2,7 @@ package net.maxsmr.feature.download.ui
 
 import android.content.Context
 import android.net.Uri
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -49,8 +50,11 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     repo: CacheDataStoreRepository,
 ) : BaseCachedViewModel(repo, state) {
 
-    val urlField: Field<String> = Field.Builder(EMPTY_STRING)
-        .emptyIf { it.toUrlOrNull() == null }
+    val urlField: Field<String> = object:  Field.Builder<String>(EMPTY_STRING) {
+        override fun valueGetter(fieldValue: MutableLiveData<String>): () -> String = {
+            fieldValue.value.orEmpty().trim()
+        }
+    }.emptyIf { it.toUrlOrNull() == null }
         .setRequired(R.string.download_url_empty_error)
         .hint(R.string.download_url_hint)
         .persist(state, KEY_FIELD_URL)

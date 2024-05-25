@@ -20,6 +20,7 @@ import okio.ForwardingSource
 import okio.Sink
 import okio.Source
 import okio.buffer
+import okio.sink
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -32,6 +33,7 @@ private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("OkHttpExt"
 
 private const val HEADER_CONTENT_TYPE = "Content-Type"
 private const val HEADER_CONTENT_DISPOSITION = "Content-Disposition"
+private const val HEADER_ACCEPT_RANGES = "Accept-Ranges"
 private const val ATTACHMENT_FILENAME = "filename"
 
 fun OkHttpClient.executeCall(
@@ -82,7 +84,7 @@ fun Request?.asString(charset: Charset = Charset.defaultCharset()): String? {
     return try {
         asStringOrThrow(charset)
     } catch (e: IOException) {
-        logger.e("Read request body to String", e)
+        logger.e("Read request body as String", e)
         null
     }
 }
@@ -104,7 +106,7 @@ fun Request?.asStringOrThrow(charset: Charset = Charset.defaultCharset()): Strin
 fun Response?.asByteArray(previousDownloadedSize: Long? = null): ByteArray? = try {
     asByteArrayOrThrow(previousDownloadedSize)
 } catch (e: IOException) {
-    logger.e("Read response body to ByteArray", e)
+    logger.e("Read response body as ByteArray", e)
     null
 }
 
@@ -117,7 +119,7 @@ fun Response?.asByteArrayOrThrow(previousDownloadedSize: Long? = null): ByteArra
 fun Response?.asString(previousDownloadedSize: Long? = null): String? = try {
     asStringOrThrow(previousDownloadedSize)
 } catch (e: IOException) {
-    logger.e("Read response body to String", e)
+    logger.e("Read response body as String", e)
     null
 }
 
@@ -127,19 +129,19 @@ fun Response?.asStringOrThrow(previousDownloadedSize: Long? = null): String? {
     return this?.body?.string()
 }
 
-fun Response?.toOutputStream(
+fun Response?.write(
     outputStream: OutputStream,
     previousDownloadedSize: Long? = null,
     notifier: IStreamNotifier? = null,
 ): ResponseBody? = try {
-    toOutputStreamOrThrow(outputStream, previousDownloadedSize, notifier)
+    writeOrThrow(outputStream, previousDownloadedSize, notifier)
 } catch (e: IOException) {
-    logger.e("Read response body to OutputStream", e)
+    logger.e("Write response body to OutputStream", e)
     null
 }
 
 @Throws(IOException::class)
-fun Response?.toOutputStreamOrThrow(
+fun Response?.writeOrThrow(
     outputStream: OutputStream,
     previousDownloadedSize: Long? = null,
     notifier: IStreamNotifier? = null,
@@ -150,22 +152,45 @@ fun Response?.toOutputStreamOrThrow(
     return responseBody
 }
 
-// endregion
-
-// region Response: COPY
-
-/**
- * Вычитывает тело запроса в массив байт, не изменяя исходный [InputStream]
- */
-fun Response?.asByteArrayCopy(): ByteArray? = try {
-    asByteArrayCopyOrThrow()
+fun Response?.writeBuffered(
+    outputStream: OutputStream,
+    previousDownloadedSize: Long? = null,
+): ResponseBody? = try {
+    writeBufferedOrThrow(outputStream, previousDownloadedSize)
 } catch (e: IOException) {
-    logger.e("Copy response body to ByteArray", e)
+    logger.e("Buffered write response body to OutputStream", e)
     null
 }
 
 @Throws(IOException::class)
-fun Response?.asByteArrayCopyOrThrow(): ByteArray? {
+fun Response?.writeBufferedOrThrow(
+    outputStream: OutputStream,
+    previousDownloadedSize: Long? = null,
+): ResponseBody {
+    val responseBody = this?.body ?: throw RuntimeException("Response body is missing")
+    skipBytesIfSupportedOrThrow(previousDownloadedSize)
+    val sink: BufferedSink = outputStream.sink().buffer()
+    sink.writeAll(responseBody.source());
+    sink.close()
+    return responseBody
+}
+
+// endregion
+
+// region Response: cloned
+
+/**
+ * Вычитывает тело запроса в массив байт, не изменяя исходный [InputStream]
+ */
+fun Response?.asByteArrayCloned(): ByteArray? = try {
+    asByteArrayClonedOrThrow()
+} catch (e: IOException) {
+    logger.e("Clone response body to ByteArray", e)
+    null
+}
+
+@Throws(IOException::class)
+fun Response?.asByteArrayClonedOrThrow(): ByteArray? {
     this ?: return null
     return cloneBufferOrThrow()?.use { it.readByteArray() }
 }
@@ -173,15 +198,15 @@ fun Response?.asByteArrayCopyOrThrow(): ByteArray? {
 /**
  * Вычитывает тело запроса в строку, не изменяя исходный [InputStream]
  */
-fun Response?.asStringCopy(): Pair<String, Charset>? = try {
-    asStringCopyOrThrow()
+fun Response?.asStringCloned(): Pair<String, Charset>? = try {
+    asStringClonedOrThrow()
 } catch (e: IOException) {
-    logger.e("Copy response body to String", e)
+    logger.e("Clone response body to String", e)
     null
 }
 
 @Throws(IOException::class)
-fun Response?.asStringCopyOrThrow(): Pair<String, Charset>? {
+fun Response?.asStringClonedOrThrow(): Pair<String, Charset>? {
     this ?: return null
     val charset = header("Content-Encoding").charsetForNameOrNull() ?: Charset.defaultCharset()
     return cloneBufferOrThrow()?.use {
@@ -192,18 +217,18 @@ fun Response?.asStringCopyOrThrow(): Pair<String, Charset>? {
 /**
  * Вычитывает тело запроса в [OutputStream], не изменяя исходный [InputStream]
  */
-fun Response?.toOutputStreamCopy(
+fun Response?.writeCloned(
     outputStream: OutputStream?,
     notifier: IStreamNotifier? = null,
 ): ResponseBody? = try {
-    toOutputStreamCopyOrThrow(outputStream, notifier)
+    writeClonedOrThrow(outputStream, notifier)
 } catch (e: IOException) {
-    logger.e("Copy response body to OutputStream", e)
+    logger.e("Clone response body to OutputStream", e)
     null
 }
 
 @Throws(IOException::class)
-fun Response?.toOutputStreamCopyOrThrow(
+fun Response?.writeClonedOrThrow(
     outputStream: OutputStream?,
     notifier: IStreamNotifier? = null,
 ): ResponseBody? {
@@ -231,8 +256,14 @@ fun Response.getContentTypeHeader() = header(HEADER_CONTENT_TYPE)
 
 fun Response.getContentDispositionHeader() = header(HEADER_CONTENT_DISPOSITION)
 
+fun Response.getAcceptRangesHeader() = header(HEADER_ACCEPT_RANGES)
+
 fun Response.hasContentDisposition(type: ContentDispositionType): Boolean {
     return getContentDispositionHeader().hasContentDisposition(type)
+}
+
+fun Response.hasBytesAcceptRanges(): Boolean {
+    return getAcceptRangesHeader().equals("bytes", ignoreCase = true)
 }
 
 /**

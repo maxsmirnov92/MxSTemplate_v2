@@ -21,7 +21,7 @@
     <string name="download_field_target_hash_hint">Target MD5 hash</string>
     <string name="download_field_target_hash_error">Not valid MD5 format</string>
     <string name="download_field_ignore_server_errors">Ignore server errors</string>
-    <string name="download_field_ignore_attachment">Ignore attachment with header \"Content-Disposition\"</string>
+    <string name="download_field_ignore_attachment">Ignore missing attachment by headers</string>
     <string name="download_field_replace_file">Replace existing target file</string>
     <string name="download_field_delete_unfinished">Delete unfinished file</string>
 

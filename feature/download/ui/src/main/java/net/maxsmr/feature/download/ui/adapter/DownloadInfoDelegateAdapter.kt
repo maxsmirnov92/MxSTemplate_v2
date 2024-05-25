@@ -124,6 +124,8 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                                             currentBytes,
                                             BYTES,
                                             setOf(BYTES),
+                                            precision = 2,
+                                            singleResult = true,
                                             formatWithValue = true
                                         ).joinToString { it.get(context) }
 
@@ -133,6 +135,8 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                                                     totalBytes,
                                                     BYTES,
                                                     setOf(BYTES),
+                                                    precision = 2,
+                                                    singleResult = true,
                                                     formatWithValue = true
                                                 ).joinToString { it.get(context) }
                                                 if (totalSizeFormatted.isNotEmpty()) {

@@ -15,6 +15,7 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.feature.download.ui.R
 import net.maxsmr.feature.download.ui.databinding.ItemHeaderBinding
+import java.io.Serializable
 
 val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("HeadersDelegateAdapter")
 
@@ -65,16 +66,15 @@ fun headersDelegateAdapter(listener: HeaderListener) =
 data class HeaderInfoAdapterData(
     val id: Int,
     val header: Pair<Info, Info>,
-) : BaseAdapterData/*, Serializable*/ {
+) : BaseAdapterData, Serializable {
 
     override fun isSame(other: BaseAdapterData): Boolean = id == (other as? HeaderInfoAdapterData)?.id
 
-    // TODO Field.Hint Serializable
     data class Info(
         val value: String,
         val hint: Field.Hint?,
         val error: TextMessage?,
-    ) /*: Serializable*/
+    ): Serializable
 }
 
 interface HeaderListener {

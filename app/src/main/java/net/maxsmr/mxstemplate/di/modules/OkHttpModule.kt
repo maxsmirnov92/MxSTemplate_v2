@@ -10,7 +10,9 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.network.NetworkConnectivityChecker
 import net.maxsmr.core.android.network.NetworkStateManager
+import net.maxsmr.core.di.DownloadHttpLoggingInterceptor
 import net.maxsmr.core.di.DownloaderOkHttpClient
+import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
 import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.RadarIoSessionStorage
@@ -20,7 +22,6 @@ import net.maxsmr.core.network.retrofit.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.retrofit.client.okhttp.RadarIoOkHttpClientManager
 import net.maxsmr.core.network.retrofit.interceptors.NetworkConnectionInterceptor
 import net.maxsmr.mxstemplate.BuildConfig
-import okhttp3.Cache
 import okhttp3.CacheControl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -49,14 +50,23 @@ class OkHttpModule {
         }
     }
 
-    @[Provides Singleton]
-    fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
-        val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("HttpLoggingInterceptor")
+    @[Provides Singleton DownloadHttpLoggingInterceptor]
+    fun provideDownloadHttpLoggingInterceptor(): HttpLoggingInterceptor {
+        val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("DownloadHttpLoggingInterceptor")
+        return HttpLoggingInterceptor { message -> logger.d("OkHttp $message") }.apply {
+            // логирование body при тяжёлых ответах будет приводить к OOM
+            level = HttpLoggingInterceptor.Level.HEADERS
+        }
+    }
+
+    @[Provides Singleton PicassoHttpLoggingInterceptor]
+    fun providePicassoHttpLoggingInterceptor(): HttpLoggingInterceptor {
+        val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("CommonHttpLoggingInterceptor")
         return HttpLoggingInterceptor { message -> logger.d("OkHttp $message") }.apply {
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BODY
             } else {
-                HttpLoggingInterceptor.Level.BASIC
+                HttpLoggingInterceptor.Level.HEADERS
             }
         }
     }
@@ -65,6 +75,7 @@ class OkHttpModule {
     fun providePicassoOkHttpClient(
         @ApplicationContext context: Context,
         forceCacheInterceptor: Interceptor,
+        @PicassoHttpLoggingInterceptor
         httpLoggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient {
         // Каталог кэша Picasso
@@ -81,6 +92,7 @@ class OkHttpModule {
 
     @[Provides Singleton DownloaderOkHttpClient]
     fun provideDownloaderOkHttpClient(
+        @DownloadHttpLoggingInterceptor
         httpLoggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient = DownloadOkHttpClientManager(
         NetworkConnectionInterceptor(NetworkConnectivityChecker),
