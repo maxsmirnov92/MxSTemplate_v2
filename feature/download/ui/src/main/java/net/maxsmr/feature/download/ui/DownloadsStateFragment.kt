@@ -40,8 +40,9 @@ import net.maxsmr.feature.download.data.DownloadService.Companion.getShareAction
 import net.maxsmr.feature.download.data.DownloadService.Companion.getViewAction
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsViewModel
+import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_CANCEL_ALL
 import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_CLEAR_QUEUE
-import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_RETRY_DOWNLOAD_IF_SUCCESS
+import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_RETRY_IF_SUCCESS
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapterData
 import net.maxsmr.feature.download.ui.adapter.DownloadListener
@@ -122,7 +123,6 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
             }
             infoAdapter.items = items
 
-            binding.ibCancelAll.isVisible = items.any { item -> item.downloadInfo.isLoading }
             binding.ibClearFinished.isVisible = items.any { item -> !item.downloadInfo.isLoading }
             // FIXME скролл
             if (!infoAdapter.isEmpty) {
@@ -130,6 +130,9 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
                     binding.rvDownloads.scrollToPosition(it.first)
                 }
             }
+        }
+        viewModel.anyCanBeCancelled.observe {
+            binding.ibCancelAll.isVisible = it
         }
         binding.ibClearQueue.setOnClickListener {
             viewModel.onClearQueue()
@@ -175,7 +178,10 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         bindAlertDialog(DIALOG_TAG_CLEAR_QUEUE) {
             it.asYesNoDialog(requireContext())
         }
-        bindAlertDialog(DIALOG_TAG_RETRY_DOWNLOAD_IF_SUCCESS) {
+        bindAlertDialog(DIALOG_TAG_CANCEL_ALL) {
+            it.asYesNoDialog(requireContext())
+        }
+        bindAlertDialog(DIALOG_TAG_RETRY_IF_SUCCESS) {
             it.asYesNoDialog(requireContext())
         }
     }

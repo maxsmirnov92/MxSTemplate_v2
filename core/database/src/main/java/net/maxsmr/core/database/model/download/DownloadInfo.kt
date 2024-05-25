@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
-import net.maxsmr.commonutils.text.appendOrReplaceExtension
+import net.maxsmr.commonutils.text.appendExtension
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import java.io.Serializable
 
@@ -26,7 +26,7 @@ data class DownloadInfo(
 ) : Serializable {
 
     @Ignore
-    val nameWithExt = appendOrReplaceExtension(name, extension)
+    val nameWithExt = appendExtension(name, extension, false)
 
     @Ignore
     val localUri = status.localUri

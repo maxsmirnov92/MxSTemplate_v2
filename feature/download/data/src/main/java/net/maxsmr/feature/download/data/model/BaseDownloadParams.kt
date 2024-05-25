@@ -4,7 +4,7 @@ import net.maxsmr.commonutils.media.getExtensionFromMimeType
 import net.maxsmr.commonutils.media.getMimeTypeFromName
 import net.maxsmr.commonutils.media.getMimeTypeFromUrl
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.commonutils.text.appendOrReplaceExtension
+import net.maxsmr.commonutils.text.appendExtension
 import net.maxsmr.commonutils.text.getExtension
 import java.io.Serializable
 
@@ -31,7 +31,7 @@ open class BaseDownloadParams(
     /**
      * @return целевое имя ресурса с [extension]
      */
-    val targetResourceName get() = appendOrReplaceExtension(resourceName, extension)
+    val targetResourceName get() = appendExtension(resourceName, extension)
 
     /**
      * опциональное MimeType ресурса, задаётся как запасной при отсутствии [HEADER_CONTENT_TYPE]

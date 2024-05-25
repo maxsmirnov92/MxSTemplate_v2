@@ -30,7 +30,8 @@
 
     <string name="download_alert_confirm_title">Подтверждение</string>
     <string name="download_alert_clear_queue_message">Очистить очередь ожидающих загрузок?</string>
-    <string name="download_alert_retry_download_if_success_message">Данная загрузка завершилась успешно. Всё равно повторить?</string>
+    <string name="download_alert_cancel_all_message">Отменить все текущие загрузки?</string>
+    <string name="download_alert_retry_if_success_message">Данная загрузка завершилась успешно. Всё равно повторить?</string>
     <string name="download_alert_params_sample_copied_format">Пример JSON-файла был скопирован в %s</string>
     <string name="download_queued_count_subtitle">В очереди:</string>
     <string name="download_active_empty_text">Нет активных загрузок</string>
@@ -45,7 +46,7 @@
     <string name="download_status_finalize_downloading">Завершение загрузки…</string>
     <string name="download_status_finalize_storing">Завершение записи в файл…</string>
 
-    <string name="download_status_size_with_total_text_format">%s из %s</string>
+    <string name="download_status_size_with_total_text_format">размер: %s из %s</string>
     <string name="download_status_size_text_format">размер: %s</string>
     <string name="download_status_time_with_estimated_text_format">прошло времени: %s, осталось времени: %s</string>
     <string name="download_status_time_text_format">прошло времени: %s</string>

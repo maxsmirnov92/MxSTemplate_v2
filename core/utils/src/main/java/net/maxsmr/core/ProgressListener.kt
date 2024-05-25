@@ -58,6 +58,7 @@ abstract class ProgressListener {
     }
 
     /**
+     * @param totalBytes неотрицательный общий размер
      * @param speed скорость в байт/с
      * @param elapsedTime пройдённое время в секундах от начала загрузки
      * @param estimatedTime оцениваемое время в секундах до конца загрузки
@@ -80,7 +81,12 @@ abstract class ProgressListener {
         val progressRounded: Int = progress.roundToInt()
 
         override fun toString(): String {
-            return "ProgressStateInfo(currentBytes=$currentBytes, totalBytes=$totalBytes, speed=$speed, elapsedTime=$elapsedTime, estimatedTime=$estimatedTime, progress=$progress)"
+            return "ProgressStateInfo(currentBytes=$currentBytes, " +
+                    "totalBytes=$totalBytes, " +
+                    "speed=$speed, " +
+                    "elapsedTime=$elapsedTime, " +
+                    "estimatedTime=$estimatedTime, " +
+                    "progress=$progress)"
         }
     }
 }

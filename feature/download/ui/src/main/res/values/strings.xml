@@ -34,7 +34,8 @@
 
     <string name="download_alert_confirm_title">Confirm</string>
     <string name="download_alert_clear_queue_message">Clear pending loads queue?</string>
-    <string name="download_alert_retry_download_if_success_message">This load was finished successfully. Retry anyway?</string>
+    <string name="download_alert_cancel_all_message">Cancel all currently running downloads?</string>
+    <string name="download_alert_retry_if_success_message">This load was finished successfully. Retry anyway?</string>
     <string name="download_alert_params_sample_copied_format">Sample JSON-file copied to %s</string>
     <string name="download_queued_count_subtitle">Queued:</string>
     <string name="download_active_empty_text">No active loads</string>
@@ -49,7 +50,7 @@
     <string name="download_status_finalize_downloading">Finalizing download…</string>
     <string name="download_status_finalize_storing">Finalizing writing to file…</string>
 
-    <string name="download_status_size_with_total_text_format">%s out of %s</string>
+    <string name="download_status_size_with_total_text_format">size: %s out of %s</string>
     <string name="download_status_size_text_format">size: %s</string>
     <string name="download_status_time_with_estimated_text_format">elapsed time: %s, estimated time: %s</string>
     <string name="download_status_time_text_format">elapsed time: %s</string>

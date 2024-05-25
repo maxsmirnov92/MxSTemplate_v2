@@ -13,8 +13,8 @@ import net.maxsmr.commonutils.conversion.SizeUnit.BYTES
 import net.maxsmr.commonutils.conversion.roundTime
 import net.maxsmr.commonutils.format.TIME_UNITS_TO_EXCLUDE_DEFAULT
 import net.maxsmr.commonutils.format.TimePluralFormat
-import net.maxsmr.commonutils.format.decomposeSizeFormatted
 import net.maxsmr.commonutils.format.decomposeTimeFormatted
+import net.maxsmr.commonutils.format.formatSizeSingle
 import net.maxsmr.commonutils.format.formatSpeedSize
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.text.CharCase
@@ -72,11 +72,11 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
 
                 if (state != null) {
                     hasProgress = state is DownloadState.Loading || state is DownloadState.Success
-                    isIndeterminate = false
+                    // contentLength неизвестен - неопределённый ProgressBar
+                    isIndeterminate = state is DownloadState.Loading && state.stateInfo.totalBytes == 0L
 
                     progress = when (state) {
                         is DownloadState.Loading -> {
-                            // contentLength неизвестен - неопределённый ProgressBar
                             if (!state.stateInfo.done) {
                                 state.stateInfo.progressRounded.takeIf { it > 0 } ?: 0
                             } else {
@@ -120,41 +120,37 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                                         )
                                     }
                                     if (currentBytes > 0) {
-                                        val currentSizeFormatted = decomposeSizeFormatted(
+                                        val currentSizeFormatted = formatSizeSingle(
                                             currentBytes,
                                             BYTES,
                                             setOf(BYTES),
                                             precision = 2,
-                                            singleResult = true,
-                                            formatWithValue = true
-                                        ).joinToString { it.get(context) }
+                                        )
 
-                                        if (currentSizeFormatted.isNotEmpty()) {
+                                        if (currentSizeFormatted != null) {
                                             val sizePart = if (totalBytes > 0) {
-                                                val totalSizeFormatted = decomposeSizeFormatted(
+                                                val totalSizeFormatted = formatSizeSingle(
                                                     totalBytes,
                                                     BYTES,
                                                     setOf(BYTES),
                                                     precision = 2,
-                                                    singleResult = true,
-                                                    formatWithValue = true
-                                                ).joinToString { it.get(context) }
-                                                if (totalSizeFormatted.isNotEmpty()) {
+                                                )
+                                                if (totalSizeFormatted != null) {
                                                     context.getString(
                                                         R.string.download_status_size_with_total_text_format,
-                                                        currentSizeFormatted,
-                                                        totalSizeFormatted
+                                                        currentSizeFormatted.get(context),
+                                                        totalSizeFormatted.get(context)
                                                     )
                                                 } else {
                                                     context.getString(
                                                         R.string.download_status_size_text_format,
-                                                        currentSizeFormatted
+                                                        currentSizeFormatted.get(context)
                                                     )
                                                 }
                                             } else {
                                                 context.getString(
                                                     R.string.download_status_size_text_format,
-                                                    currentSizeFormatted
+                                                    currentSizeFormatted.get(context)
                                                 )
                                             }
                                             parts.add(sizePart)

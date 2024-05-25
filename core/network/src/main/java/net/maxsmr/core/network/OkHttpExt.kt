@@ -408,7 +408,7 @@ class ProgressRequestBody(
             totalBytesWritten += byteCount
             listener.notify(
                 totalBytesWritten,
-                contentLength,
+                contentLength.takeIf { it >= 0 } ?: 0L,
                 if (contentLength >= 0) {
                     totalBytesWritten >= contentLength
                 } else {
@@ -454,7 +454,12 @@ class ProgressResponseBody(
             val bytesRead = super.read(sink, byteCount)
             // read() returns the number of bytes read, or -1 if this source is exhausted.
             totalBytesRead += if (bytesRead > 0) bytesRead else 0
-            listener.notify(totalBytesRead, contentLength, bytesRead == -1L, startTime)
+            listener.notify(
+                totalBytesRead,
+                contentLength.takeIf { it >= 0 } ?: 0L,
+                bytesRead == -1L,
+                startTime
+            )
             return bytesRead
         }
     }
