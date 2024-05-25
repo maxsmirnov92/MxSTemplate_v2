@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.navigation.NavArgs
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
@@ -36,7 +35,7 @@ class DownloadsPagerFragment : BaseNavigationFragment<DownloadsViewModel, NavArg
     private val pageChangeCallback: ViewPager2.OnPageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
         override fun onPageSelected(position: Int) {
             super.onPageSelected(position)
-            hideKeyboard()
+            hideKeyboard(requireActivity(), flags = WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
         }
     }
 
@@ -60,9 +59,5 @@ class DownloadsPagerFragment : BaseNavigationFragment<DownloadsViewModel, NavArg
     override fun onDestroyView() {
         super.onDestroyView()
         binding.viewPagerFragments.unregisterOnPageChangeCallback(pageChangeCallback)
-    }
-
-    private fun hideKeyboard() {
-        hideKeyboard(requireActivity(), flags = WindowManager.LayoutParams.SOFT_INPUT_STATE_UNSPECIFIED)
     }
 }

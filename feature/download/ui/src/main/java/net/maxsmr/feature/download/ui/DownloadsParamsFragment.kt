@@ -4,6 +4,7 @@ import android.Manifest
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.core.view.isVisible
@@ -14,7 +15,9 @@ import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.clearFocus
+import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.gui.setTextOrGone
+import net.maxsmr.commonutils.gui.showKeyboard
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
@@ -23,8 +26,8 @@ import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.ui.bindHintError
-import net.maxsmr.core.ui.bindValue
 import net.maxsmr.core.ui.bindState
+import net.maxsmr.core.ui.bindValue
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -35,7 +38,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DownloadsParamsFragment: BaseMenuFragment<DownloadsParamsViewModel>(), HeaderListener {
+class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), HeaderListener {
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -86,6 +89,8 @@ class DownloadsParamsFragment: BaseMenuFragment<DownloadsParamsViewModel>(), Hea
         )
         .build()
 
+    private var wasResumedOnce = false
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -125,7 +130,8 @@ class DownloadsParamsFragment: BaseMenuFragment<DownloadsParamsViewModel>(), Hea
                         R.string.download_field_request_body_empty_text
                     } else {
                         R.string.download_field_request_body_non_required_text
-                    })
+                    }
+                )
         }
         viewModel.bodyField.errorLive.observe {
             binding.tvRequestBodyError.setTextOrGone(it?.get(requireContext()))
@@ -152,8 +158,9 @@ class DownloadsParamsFragment: BaseMenuFragment<DownloadsParamsViewModel>(), Hea
         binding.rvHeaders.adapter = headersAdapter
         binding.rvHeaders.addItemDecoration(
             DividerItemDecoration.Builder(requireContext())
-            .setDivider(Divider.Space(10), DividerItemDecoration.Mode.ALL_EXCEPT_LAST)
-            .build())
+                .setDivider(Divider.Space(10), DividerItemDecoration.Mode.ALL_EXCEPT_LAST)
+                .build()
+        )
         viewModel.headerItems.observe {
 //            requireActivity().clearFocus()
             headersAdapter.items = it
@@ -181,6 +188,19 @@ class DownloadsParamsFragment: BaseMenuFragment<DownloadsParamsViewModel>(), Hea
         }
 
         viewModel.observePostNotificationPermissionAsked(this, BaseActivity.REQUEST_CODE_NOTIFICATIONS_PERMISSION)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (wasResumedOnce) {
+            if (requireActivity().currentFocus == null) {
+                // костыль для борьбы с пустым пространством на месте клавиатуры
+                showKeyboard(binding.etUrl)
+                hideKeyboard(requireActivity(), flags = WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
+            }
+        } else {
+            wasResumedOnce = true
+        }
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
