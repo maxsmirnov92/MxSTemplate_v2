@@ -30,9 +30,11 @@ import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
 import net.maxsmr.core.android.base.actions.ToastAction
+import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.download.DownloadInfo
+import net.maxsmr.core.ui.alert.representation.asIndefiniteSnackbar
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.feature.download.data.DownloadService
@@ -55,6 +57,10 @@ import javax.inject.Inject
 class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         DownloadListener, BaseDraggableDelegationAdapter.ItemsEventsListener<DownloadInfoAdapterData>,
         SearchView.OnQueryTextListener {
+
+    override val connectionHandler: ConnectionHandler = ConnectionHandler.Builder().mapAlerts {
+        it.asIndefiniteSnackbar(requireView())
+    }.build()
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -171,19 +177,6 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
     override fun onQueryTextChange(newText: String?): Boolean {
         viewModel.onNameQueryFilterChanged(newText)
         return true
-    }
-
-    override fun handleAlerts() {
-        super.handleAlerts()
-        bindAlertDialog(DIALOG_TAG_CLEAR_QUEUE) {
-            it.asYesNoDialog(requireContext())
-        }
-        bindAlertDialog(DIALOG_TAG_CANCEL_ALL) {
-            it.asYesNoDialog(requireContext())
-        }
-        bindAlertDialog(DIALOG_TAG_RETRY_IF_SUCCESS) {
-            it.asYesNoDialog(requireContext())
-        }
     }
 
     override fun onCancelDownload(downloadInfo: DownloadInfo) {

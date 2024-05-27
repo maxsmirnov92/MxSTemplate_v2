@@ -6,5 +6,5 @@
     <string name="address_sorter_input_hint_format">Enter address %d</string>
     <string name="address_sorter_menu_action_pick_from_json">Select from JSON</string>
     <string name="address_sorter_menu_action_clear">Clear</string>
-    <string name="address_sorter_toast_address_add_error_message">Cannot add addresses</string>
+    <string name="address_sorter_snackbar_address_add_error_message">Cannot add addresses</string>
 </resources>

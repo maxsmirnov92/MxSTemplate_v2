@@ -50,10 +50,10 @@ class ConnectionManager() {
         this.queue = queue
         asLiveData.observeForever {
             if (it) {
-                queue.removeAllWithTag(TAG_CONNECTIVITY)
+                queue.removeAllWithTag(SNACKBAR_TAG_CONNECTIVITY)
             } else {
                 builder?.build()
-                    ?: AlertQueueItem.Builder(TAG_CONNECTIVITY, queue)
+                    ?: AlertQueueItem.Builder(SNACKBAR_TAG_CONNECTIVITY, queue)
                         .setTitle(R.string.error_no_connection)
                         .setAnswers(Alert.Answer(R.string.try_again_internet).also { it.select = ::check })
                         .setUniqueStrategy(AlertQueueItem.UniqueStrategy.Ignore)
@@ -72,6 +72,6 @@ class ConnectionManager() {
 
     companion object {
 
-        const val TAG_CONNECTIVITY = "TAG_CONNECTIVITY"
+        const val SNACKBAR_TAG_CONNECTIVITY = "connectivity"
     }
 }

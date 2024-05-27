@@ -9,27 +9,17 @@ import net.maxsmr.commonutils.gui.message.TextMessage
  * Действие для показа тоста
  */
 data class ToastAction(
-    val message: TextMessage? = null,
+    val message: TextMessage,
     val gravity: Int? = null,
     val xOffset: Int = 0,
     val yOffset: Int = 0,
     val horizontalMargin: Float? = null,
     val verticalMargin: Float? = null,
-    val duration: ToastLength = ToastLength.SHORT,
-    val customView: View? = null,
-) : BaseViewModelAction<Context>() {
+    val duration: ToastDuration = ToastDuration.SHORT,
+) : BaseViewModelAction<ToastAction.IToastActor>() {
 
-    override fun doAction(actor: Context) {
-        super.doAction(actor)
-        val toast: Toast
-        if (customView == null) {
-            val message = message?.get(actor) ?: throw IllegalStateException("message not specified")
-            toast = Toast.makeText(actor, message, duration.value)
-        } else {
-            toast = Toast(actor)
-            toast.view = customView
-            toast.duration = duration.value
-        }
+    override fun doAction(actor: IToastActor) {
+        val toast: Toast = actor.createToast(message, duration)
         gravity?.let {
             toast.setGravity(gravity, xOffset, yOffset)
         }
@@ -39,8 +29,13 @@ data class ToastAction(
         toast.show()
     }
 
-    enum class ToastLength(val value: Int) {
+    enum class ToastDuration(val value: Int) {
         SHORT(Toast.LENGTH_SHORT),
         LONG(Toast.LENGTH_LONG)
+    }
+
+    interface IToastActor {
+
+        fun createToast(message: TextMessage, duration: ToastDuration): Toast
     }
 }

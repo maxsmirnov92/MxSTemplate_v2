@@ -9,7 +9,9 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.gui.hideKeyboard
+import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
+import net.maxsmr.core.ui.alert.representation.asIndefiniteSnackbar
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.DownloadsPagerAdapter

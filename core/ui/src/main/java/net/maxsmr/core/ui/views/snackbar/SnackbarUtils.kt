@@ -1,58 +1,53 @@
 package net.maxsmr.core.ui.views.snackbar
 
+import android.util.TypedValue
 import android.view.View
-import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import android.view.ViewTreeObserver
 import android.widget.TextView
-import androidx.annotation.StringRes
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
+import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.core.android.base.actions.SnackbarAction.SnackbarLength
 import net.maxsmr.core.ui.R
 
-
-fun showNoInternetSnackbar(parentView: View, onActionClickListener: View.OnClickListener?): Snackbar {
-    return parentView.showNoInternetSnackbar(onActionClickListener, null)
+fun View.showSnackbar(
+    message: TextMessage,
+    length: SnackbarLength,
+    callback: BaseTransientBottomBar.BaseCallback<Snackbar>? = null,
+): Snackbar {
+    check(length != SnackbarLength.INDEFINITE) {
+        "Snackbar length cannot be INDEFINITE for that case"
+    }
+    val snackbar = createSnackbar(message, length, callback)
+    snackbar.show()
+    return snackbar
 }
 
-/**
- * Метод для показа snackbar - ра об отсутствии интернета
- *
- * @receiver вью родитель снизу которого должно показаться уведомление
- * @param onActionClickListener коллбек, который вызовится при нажатии на "проверить снова"
- */
-fun View.showNoInternetSnackbar(onActionClickListener: View.OnClickListener?, callback: BaseTransientBottomBar.BaseCallback<Snackbar?>?): Snackbar {
-    return showSnackbar(net.maxsmr.core.android.R.string.error_no_connection, net.maxsmr.core.android.R.string.try_again_internet, onActionClickListener, callback)
-}
+fun View.createSnackbar(
+    message: TextMessage,
+    length: SnackbarLength,
+    callback: BaseTransientBottomBar.BaseCallback<Snackbar>? = null,
+): Snackbar {
 
-fun View.showSnackbar(@StringRes message: Int, @StringRes button: Int, onActionClickListener: View.OnClickListener?): Snackbar {
-    return showSnackbar(message, button, onActionClickListener, null)
-}
+    val snackbar = Snackbar.make(this, message.get(context), length.value)
+    snackbar.isGestureInsetBottomIgnored = true
 
-fun View.showSnackbar(@StringRes message: Int, @StringRes button: Int, onActionClickListener: View.OnClickListener?, callback: BaseTransientBottomBar.BaseCallback<Snackbar?>?): Snackbar {
-    val snackbar = Snackbar.make(this, message, Snackbar.LENGTH_INDEFINITE)
-    // текст вью с текстом основного сообщения
     val snackbarView = snackbar.view
-    val snackbarTextView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-    // текст вью с текстом кнопки действия ( проверить снова в данном случаи )
-    val snackbarActionTextView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_action)
-    // устнавливаем размер текста кнопки действия в 12sp
-    snackbarActionTextView.textSize = 12f
-    val font = ResourcesCompat.getFont(context, net.maxsmr.designsystem.shared_res.R.font.roboto_light)
-    // устанавливаем стиль основного текста
-    snackbarTextView.setTypeface(font)
-    // устнавливаем размер основного текста в 12sp
-    snackbarTextView.textSize = 12f
-    snackbar.setAction(button, onActionClickListener)
-    snackbar.setActionTextColor(ContextCompat.getColor(context, R.color.snackbarActionColor))
+    snackbarView.fitsSystemWindows = false
     snackbarView.setBackgroundColor(ContextCompat.getColor(context, R.color.snackbarBackground))
-    if (callback != null) {
+
+    val snackbarTextView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+    snackbarTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.resources.getDimensionPixelSize(R.dimen.snackbarMessageTextSize).toFloat())
+
+    callback?.let {
         snackbar.addCallback(callback)
     }
-    snackbar.show()
-    //убираем возможность закрыть снэкбар свайпом, которая появляется автоматически, если снэкбар находится в CoordinatorLayout
-    snackbarView.viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
+
+    // убираем возможность закрыть снэкбар свайпом, которая появляется автоматически, если снэкбар находится в CoordinatorLayout
+    snackbarView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
         override fun onGlobalLayout() {
             val lp = snackbarView.layoutParams
             if (lp is CoordinatorLayout.LayoutParams) {
@@ -62,5 +57,6 @@ fun View.showSnackbar(@StringRes message: Int, @StringRes button: Int, onActionC
             snackbarView.viewTreeObserver.removeOnGlobalLayoutListener(this)
         }
     })
+
     return snackbar
 }

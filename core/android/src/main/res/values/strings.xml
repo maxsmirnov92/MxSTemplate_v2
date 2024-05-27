@@ -28,7 +28,7 @@
     <string name="audio_picker_error">Cannot get audio file</string>
     <string name="video_picker_title">App for choose video file</string>
     <string name="video_picker_error">Cannot get video file</string>
-    <string name="pick_result_error_format">Cannot get audio file, reason: %s</string>
+    <string name="pick_result_error_format">Cannot pick file, reason: %s</string>
 
     <string name="choose_app_title">Choose app</string>
     <string name="choose_app_title_email">Choose app for sending email</string>

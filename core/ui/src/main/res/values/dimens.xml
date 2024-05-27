@@ -25,4 +25,7 @@
     <dimen name="app_chooser_item_width_min">100dp</dimen>
 
     <dimen name="textInputCornersRadius">4dp</dimen>
+
+    <dimen name="snackbarMessageTextSize">12sp</dimen>
+    <dimen name="snackbarActionTextSize">12sp</dimen>
 </resources>

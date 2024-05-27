@@ -1,5 +1,6 @@
 package net.maxsmr.feature.download.ui
 
+import android.content.Context
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
@@ -8,8 +9,11 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.launch
-import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
+import net.maxsmr.core.android.base.connection.ConnectionManager
+import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.alert.representation.asYesNoDialog
+import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -21,7 +25,9 @@ class DownloadsStateViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val downloadsViewModel: DownloadsViewModel,
     private val manager: DownloadManager,
-) : BaseViewModel(state) {
+) : BaseHandleableViewModel(state) {
+
+    override val connectionManager: ConnectionManager = ConnectionManager(snackbarQueue)
 
     val queueNames = MutableLiveData<List<String>>()
 
@@ -63,6 +69,19 @@ class DownloadsStateViewModel @AssistedInject constructor(
         }
         queryNameFilter.observe {
             currentItems.value = manager.resultItems.value.mapWithFilterByName(it)
+        }
+    }
+
+    override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(context, delegate)
+        delegate.bindAlertDialog(DIALOG_TAG_CLEAR_QUEUE) {
+            it.asYesNoDialog(context)
+        }
+        delegate.bindAlertDialog(DIALOG_TAG_CANCEL_ALL) {
+            it.asYesNoDialog(context)
+        }
+        delegate.bindAlertDialog(DIALOG_TAG_RETRY_IF_SUCCESS) {
+            it.asYesNoDialog(context)
         }
     }
 

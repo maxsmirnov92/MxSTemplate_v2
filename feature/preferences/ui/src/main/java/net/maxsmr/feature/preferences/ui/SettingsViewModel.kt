@@ -1,5 +1,6 @@
 package net.maxsmr.feature.preferences.ui
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
@@ -15,6 +16,9 @@ import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableValue
 import net.maxsmr.core.ui.LongFieldState
+import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
+import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.toggleRequiredFieldState
 import net.maxsmr.feature.preferences.data.domain.AppSettings
 import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
@@ -25,7 +29,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsDataStoreRepository,
     state: SavedStateHandle,
-) : BaseViewModel(state) {
+) : BaseHandleableViewModel(state) {
 
     val maxDownloadsField: Field<Int> = Field.Builder(0)
         .emptyIf { false }
@@ -104,6 +108,13 @@ class SettingsViewModel @Inject constructor(
 
         updateNotificationIntervalStateField.clearErrorOnChange(this) {
             appSettings.value = currentAppSettings.copy(updateNotificationInterval = it.value)
+        }
+    }
+
+    override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(context, delegate)
+        delegate.bindAlertDialog(DIALOG_TAG_CONFIRM_EXIT) {
+            it.asYesNoNeutralDialog(context)
         }
     }
 

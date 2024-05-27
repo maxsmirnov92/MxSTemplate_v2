@@ -33,6 +33,7 @@ import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.permissions.formatDeniedPermissionsMessage
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.content.pick.chooser.AppIntentChooserData
 import net.maxsmr.core.ui.content.pick.chooser.AppIntentChooserDialog
@@ -44,7 +45,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 /**
  * Фрагмент с конкретным типом VM и базовыми методами для подписки
  */
-abstract class BaseVmFragment<VM : BaseViewModel> : Fragment() {
+abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("BaseVmFragment")
 
@@ -80,12 +81,12 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment() {
 
     final override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        observeNetworkConnectionHandler()
-
         val delegate = AlertFragmentDelegate(this, viewModel)
         alertFragmentDelegate = delegate
-        handleAlerts()
-        observeCommands()
+
+        observeNetworkConnectionHandler()
+        viewModel.handleAlerts(requireContext(), delegate)
+        viewModel.handleEvents(this@BaseVmFragment)
 
         onViewCreated(view, savedInstanceState, viewModel)
     }
@@ -174,16 +175,6 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment() {
         )
     }
 
-    @CallSuper
-    protected open fun handleAlerts() {
-        alertFragmentDelegate?.handleCommonAlerts(requireContext())
-    }
-
-    @CallSuper
-    protected open fun observeCommands() {
-        viewModel.toastCommands.observeEvents { it.doAction(requireContext()) }
-    }
-
     protected fun <T : Any> Flow<T>.collect(
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
         action: suspend (value: T) -> Unit,
@@ -217,7 +208,8 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment() {
         }
         connectionHandler?.alertsMapper?.let { mapper ->
             viewModel.connectionManager?.queue?.let {
-                bindAlertDialog(it, ConnectionManager.TAG_CONNECTIVITY) { alert ->
+                // queue разные: snackbarQueue вместо dialogQueue
+                bindAlertDialog(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
                     mapper(alert)
                 }
             }

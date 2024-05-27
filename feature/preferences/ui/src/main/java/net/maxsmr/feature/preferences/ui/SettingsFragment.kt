@@ -85,13 +85,6 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel, NavArgs>() {
         }
     }
 
-    override fun handleAlerts() {
-        super.handleAlerts()
-        bindAlertDialog(SettingsViewModel.DIALOG_TAG_CONFIRM_EXIT) {
-            it.asYesNoNeutralDialog(requireContext())
-        }
-    }
-
     override fun onUpPressed(): Boolean {
         viewModel.navigateBackWithAlert()
         return true

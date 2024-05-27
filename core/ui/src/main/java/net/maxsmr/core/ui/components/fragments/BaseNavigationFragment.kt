@@ -21,6 +21,7 @@ import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.NavigationCommand
 import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.ui.R
+import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import kotlin.reflect.KClass
 
 
@@ -38,7 +39,7 @@ interface INavigationDestination {
     fun onUserInteraction() {}
 }
 
-abstract class BaseNavigationFragment<VM : BaseViewModel, Args : NavArgs> : BaseMenuFragment<VM>(),
+abstract class BaseNavigationFragment<VM : BaseHandleableViewModel, Args : NavArgs> : BaseMenuFragment<VM>(),
         INavigationDestination {
 
     protected abstract val argsClass: KClass<Args>?
@@ -77,13 +78,6 @@ abstract class BaseNavigationFragment<VM : BaseViewModel, Args : NavArgs> : Base
     override fun onDetach() {
         super.onDetach()
         navigationHost = null
-    }
-
-    override fun observeCommands() {
-        super.observeCommands()
-        viewModel.navigationCommands.observeEvents {
-            handleNavigation(it)
-        }
     }
 
     fun <T> getNavigationResult(key: String = KEY_FRAGMENT_RESULT) =

@@ -32,8 +32,8 @@ import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.Status
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.actions.ToastAction
+import net.maxsmr.core.android.base.actions.SnackbarAction
+import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.database.model.download.DownloadInfo
@@ -41,13 +41,12 @@ import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
-import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel.Method.*
+import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel.Method.POST
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.download.MD5_ALGORITHM
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment.Companion.handleNavigation
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.alert.representation.asOkDialog
+import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultGETServiceParamsFor
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultPOSTServiceParamsFor
@@ -73,7 +72,7 @@ class DownloadsViewModel @Inject constructor(
     @BaseJson
     private val json: Json,
     state: SavedStateHandle,
-) : BaseViewModel(state) {
+) : BaseHandleableViewModel(state) {
 
     val downloadsInfos: LiveData<List<DownloadInfo>> = downloadRepo.get().asLiveData()
 
@@ -98,8 +97,8 @@ class DownloadsViewModel @Inject constructor(
         viewModelScope.launch {
             downloadManager.successAddedToQueueEvent.collect {
                 it.targetResourceName.takeIf { it.isNotEmpty() }?.let { name ->
-                    showToast(
-                        ToastAction(
+                    showSnackbar(
+                        SnackbarAction(
                             TextMessage(
                                 R.string.download_toast_success_add_to_queue_message_format,
                                 name
@@ -114,14 +113,14 @@ class DownloadsViewModel @Inject constructor(
                 val name = it.first.targetResourceName
                 val reason = TextMessage.ResArg(
                     when (it.second) {
-                        FailAddReason.NOT_VALID -> R.string.download_fail_add_to_queue_reason_not_valid
-                        FailAddReason.ALREADY_ADDED -> R.string.download_fail_add_to_queue_reason_already_added
-                        FailAddReason.ALREADY_LOADING -> R.string.download_fail_add_to_queue_reason_already_loading
+                        FailAddReason.NOT_VALID -> R.string.download_failed_add_to_queue_reason_not_valid
+                        FailAddReason.ALREADY_ADDED -> R.string.download_failed_add_to_queue_reason_already_added
+                        FailAddReason.ALREADY_LOADING -> R.string.download_failed_add_to_queue_reason_already_loading
                     }
                 )
                 val message: TextMessage? = if (name.isNotEmpty()) {
                     TextMessage(
-                        R.string.download_toast_fail_add_to_queue_name_message_format,
+                        R.string.download_alert_failed_add_to_queue_name_message_format,
                         name,
                         reason
                     )
@@ -129,7 +128,7 @@ class DownloadsViewModel @Inject constructor(
                     val url = it.first.url
                     if (url.isNotEmpty()) {
                         TextMessage(
-                            R.string.download_toast_fail_add_to_queue_url_message_format,
+                            R.string.download_alert_failed_add_to_queue_url_message_format,
                             name,
                             reason
                         )
@@ -137,36 +136,33 @@ class DownloadsViewModel @Inject constructor(
                         null
                     }
                 }
-                showToast(ToastAction(message, duration = ToastAction.ToastLength.LONG))
+                message?.let {
+                    AlertBuilder(DIALOG_TAG_FAILED_ADD_TO_QUEUE)
+                        .setMessage(message)
+                        .setAnswers(Alert.Answer((android.R.string.ok)))
+                        .build()
+                }
             }
         }
         failedStartParamsEvent.observeEvents {
-            showToast(
-                ToastAction(
-                    TextMessage(
-                        R.string.download_toast_start_failed_message_format,
-                        it.targetResourceName
-                    )
-                )
-            )
+            AlertBuilder(DIALOG_TAG_FAILED_START)
+                .setMessage(TextMessage(
+                    R.string.download_alert_failed_start_message_format,
+                    it.targetResourceName
+                ))
+                .setAnswers(Alert.Answer((android.R.string.ok)))
+                .build()
         }
     }
 
-    fun handleEvents(fragment: BaseVmFragment<*>) {
-        if (fragment is BaseNavigationFragment<*, *>) {
-            navigationCommands.observeEvents {
-                fragment.handleNavigation(it)
-            }
+    override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(context, delegate)
+        delegate.bindAlertDialog(DIALOG_TAG_FAILED_ADD_TO_QUEUE) {
+            it.asOkDialog(context)
         }
-        toastCommands.observeEvents(fragment.viewLifecycleOwner) { it.doAction(fragment.requireContext()) }
-    }
-
-    /**
-     * Вызвать на используемом фрагменте;
-     * не вызывать, если эта VM уже где-то используется в кач-ве базы
-     */
-    fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<DownloadsViewModel>) {
-        delegate.handleCommonAlerts(context)
+        delegate.bindAlertDialog(DIALOG_TAG_FAILED_START) {
+            it.asOkDialog(context)
+        }
     }
 
     fun downloadFromJson(uri: Uri, contentResolver: ContentResolver) {
@@ -181,7 +177,7 @@ class DownloadsViewModel @Inject constructor(
                         delay(500)
                     }
                 } else {
-                    showToast(ToastAction(TextMessage(R.string.download_toast_no_valid_params)))
+                    showSnackbar(SnackbarAction(TextMessage(R.string.download_snackbar_no_valid_params)))
                 }
             }
         }
@@ -316,6 +312,9 @@ class DownloadsViewModel @Inject constructor(
     )
 
     companion object {
+
+        const val DIALOG_TAG_FAILED_ADD_TO_QUEUE = "failed_add_to_queue"
+        const val DIALOG_TAG_FAILED_START = "failed_start"
 
         @JvmStatic
         @JvmOverloads

@@ -14,12 +14,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.postRecharge
 import net.maxsmr.commonutils.live.recharge
 import net.maxsmr.commonutils.media.openInputStream
 import net.maxsmr.commonutils.states.LoadState
-import net.maxsmr.core.android.base.actions.ToastAction
+import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.coroutines.usecase.asState
 import net.maxsmr.core.android.coroutines.usecase.mapData
@@ -34,7 +33,7 @@ import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.C
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.feature.preferences.ui.BaseCachedViewModel
+import net.maxsmr.feature.preferences.ui.BasePostNotificationViewModel
 import java.io.Serializable
 
 class AddressSorterViewModel @AssistedInject constructor(
@@ -45,7 +44,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     private val ioDispatcher: CoroutineDispatcher,
     private val repo: AddressRepo,
     private val addressSuggestUseCase: AddressSuggestUseCase,
-) : BaseCachedViewModel(cacheRepo, state) {
+) : BasePostNotificationViewModel(cacheRepo, state) {
 
     // сразу нельзя получить из
     // repo.sortedAddress.asLiveData(),
@@ -115,7 +114,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         viewModelScope.launch {
             uri.openInputStream(context.contentResolver)?.let {
                 if (!repo.addFromStream(it)) {
-                    showToast(ToastAction(message = TextMessage(R.string.address_sorter_toast_address_add_error_message)))
+                    showSnackbar(SnackbarAction(message = TextMessage(R.string.address_sorter_snackbar_address_add_error_message)))
                 }
                 it.close()
             }

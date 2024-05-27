@@ -22,7 +22,7 @@ import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStream
 import net.maxsmr.commonutils.openRawResource
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.base.actions.ToastAction
+import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.android.baseAppName
@@ -39,7 +39,7 @@ import net.maxsmr.core.ui.BooleanFieldState
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.feature.preferences.ui.BaseCachedViewModel
+import net.maxsmr.feature.preferences.ui.BasePostNotificationViewModel
 import java.io.Serializable
 
 class DownloadsParamsViewModel @AssistedInject constructor(
@@ -48,7 +48,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     @Dispatcher(AppDispatchers.IO)
     private val ioDispatcher: CoroutineDispatcher,
     repo: CacheDataStoreRepository,
-) : BaseCachedViewModel(repo, state) {
+) : BasePostNotificationViewModel(repo, state) {
 
     val urlField: Field<String> = object:  Field.Builder<String>(EMPTY_STRING) {
         override fun valueGetter(fieldValue: MutableLiveData<String>): () -> String = {
@@ -326,12 +326,13 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                         // ассеты не допускаются в либах
                         openRawResource(context, R.raw.download_params_model_sample)?.let { assetStream ->
                             if (it.writeFromStream(context.contentResolver, assetStream)) {
-                                showToast(
-                                    ToastAction(
+                                showSnackbar(
+                                    SnackbarAction(
                                         TextMessage(
                                             R.string.download_alert_params_sample_copied_format,
                                             storage.path
-                                        )
+                                        ),
+                                        SnackbarAction.SnackbarLength.LONG
                                     )
                                 )
                             }

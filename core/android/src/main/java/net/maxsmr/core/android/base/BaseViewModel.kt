@@ -4,6 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.doOnNext
@@ -14,6 +15,7 @@ import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.core.android.R
 import net.maxsmr.core.android.base.BaseViewModel.*
 import net.maxsmr.core.android.base.actions.NavigationCommand
+import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
@@ -55,13 +57,17 @@ abstract class BaseViewModel(
      * привязанного к NavHostFragment,
      * в котором имеется данный [BaseNavigationFragment], кто будет обозревать ивенты
      */
-    val _navigationCommands: MutableLiveData<VmEvent<NavigationCommand>> = MutableLiveData()
+    private val _navigationCommands: MutableLiveData<VmEvent<NavigationCommand>> = MutableLiveData()
 
     val navigationCommands = _navigationCommands as LiveData<VmEvent<NavigationCommand>>
 
-    val _toastCommands: MutableLiveData<VmEvent<ToastAction>> = MutableLiveData()
+    private val _toastCommands: MutableLiveData<VmEvent<ToastAction>> = MutableLiveData()
 
     val toastCommands = _toastCommands as LiveData<VmEvent<ToastAction>>
+
+    private val _snackbarCommands: MutableLiveData<VmEvent<SnackbarAction>> = MutableLiveData()
+
+    val snackbarCommands = _snackbarCommands as LiveData<VmEvent<SnackbarAction>>
 
     /**
      * Очередь для показа диалогов
@@ -76,7 +82,7 @@ abstract class BaseViewModel(
     /**
      * Определяет логику обработки событий состояния сети. Переопределите, если требуется обработка.
      */
-    open val connectionManager: ConnectionManager? by lazy { ConnectionManager(snackbarQueue) }
+    open val connectionManager: ConnectionManager? = null
 
     private val lifecycleRegistry: LifecycleRegistry by lazy { LifecycleRegistry(this) }
 
@@ -175,6 +181,8 @@ abstract class BaseViewModel(
             .build()
     }
 
+
+
     fun <T : Any> checkConnectionAndRun(targetAction: () -> T?): T? {
         return if (checkConnection()) targetAction() else null
     }
@@ -193,6 +201,10 @@ abstract class BaseViewModel(
 
     fun showToast(action: ToastAction) {
         _toastCommands.postValue(VmEvent(action))
+    }
+
+    fun showSnackbar(action: SnackbarAction) {
+        _snackbarCommands.postValue(VmEvent(action))
     }
 
     fun onPickerResultError(error: PickResult.Error) {
@@ -236,7 +248,7 @@ abstract class BaseViewModel(
     }
 
     @JvmOverloads
-    protected inline fun <T> LiveData<VmEvent<T>>.observeEvents(
+    inline fun <T> LiveData<VmEvent<T>>.observeEvents(
         owner: LifecycleOwner = this@BaseViewModel,
         crossinline onNext: (T) -> Unit,
     ): Observer<VmEvent<T>> {

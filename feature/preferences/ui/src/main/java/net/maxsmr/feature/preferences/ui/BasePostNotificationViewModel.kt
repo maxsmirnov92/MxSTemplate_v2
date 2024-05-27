@@ -7,25 +7,16 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.isAtLeastTiramisu
-import net.maxsmr.core.android.base.BaseViewModel
+import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 
-abstract class BaseCachedViewModel(
+abstract class BasePostNotificationViewModel(
     protected val cacheRepo: CacheDataStoreRepository,
     state: SavedStateHandle,
-) : BaseViewModel(state) {
+) : BaseHandleableViewModel(state) {
 
     private val postNotificationAskedLiveData: LiveData<Boolean> = cacheRepo.postNotificationAsked.asLiveData()
-
-    /**
-     * после получения разрешения или отказа пользователя получать уведомления - не показывать этот запрос снова
-     */
-    private fun onPostNotificationPermissionAsked() {
-        viewModelScope.launch {
-            cacheRepo.setPostNotificationAsked()
-        }
-    }
 
     fun observePostNotificationPermissionAsked(fragment: BaseVmFragment<*>, requestCode: Int) {
         if (isAtLeastTiramisu()) {
@@ -42,6 +33,15 @@ abstract class BaseCachedViewModel(
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * после получения разрешения или отказа пользователя получать уведомления - не показывать этот запрос снова
+     */
+    private fun onPostNotificationPermissionAsked() {
+        viewModelScope.launch {
+            cacheRepo.setPostNotificationAsked()
         }
     }
 }
