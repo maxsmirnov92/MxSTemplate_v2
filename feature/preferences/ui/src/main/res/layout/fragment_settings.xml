@@ -37,7 +37,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilMaxDownloads"
-            style="@style/TextInputLayoutNoStrokeStyle"
+            style="@style/TextInputOutlinedWithCornersStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:hint="@string/settings_field_max_downloads_hint">
@@ -51,6 +51,26 @@
                 android:maxLength="10"
                 android:maxLines="1"
                 tools:hint="@string/settings_field_max_downloads_hint" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilConnectTimeout"
+            style="@style/TextInputOutlinedWithCornersStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            tools:hint="@string/settings_field_connect_timeout_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etConnectTimeout"
+                style="@style/InputText"
+                android:ellipsize="end"
+                android:inputType="text|numberDecimal"
+                android:lines="1"
+                android:maxLength="10"
+                android:maxLines="1"
+                tools:hint="@string/settings_field_connect_timeout_hint" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -72,7 +92,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilUpdateNotificationInterval"
-            style="@style/TextInputLayoutNoStrokeStyle"
+            style="@style/TextInputOutlinedWithCornersStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"

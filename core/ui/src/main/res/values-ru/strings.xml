@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-<!--    Application requires some permissions-->
     <string name="get_permission">Для корректной работы приложения требуются некоторые разрешения</string>
 
     <string name="pick_settings">настройках</string>
@@ -14,6 +13,9 @@
 
     <string name="search_hint">Поиск</string>
 
-    <string name="field_empty_error">Поле не заполнено</string>
-    <string name="field_not_valid_error">Поле заполнено некорретно</string>
+    <string name="field_error_empty">Поле не заполнено</string>
+    <string name="field_error_not_valid">Поле заполнено некорретно</string>
+    <string name="field_error_value_more_or_equal_format">Значение должно быть от %d и выше</string>
+    <string name="field_error_value_zero">Значение должно быть ненулевым</string>
+    <string name="field_error_value_negative">Значение должно быть неотрицательным</string>
 </resources>

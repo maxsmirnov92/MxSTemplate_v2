@@ -2,24 +2,15 @@ package net.maxsmr.core.ui.components.fragments
 
 import android.content.Context
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuInflater
-import android.view.MenuItem
 import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.CallSuper
 import androidx.annotation.MainThread
-import androidx.annotation.MenuRes
 import androidx.appcompat.widget.Toolbar
-import androidx.core.view.MenuHost
-import androidx.core.view.MenuProvider
-import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavArgs
 import androidx.navigation.NavArgsLazy
 import androidx.navigation.fragment.findNavController
-import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.NavigationCommand
-import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import kotlin.reflect.KClass

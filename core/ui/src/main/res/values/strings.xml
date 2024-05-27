@@ -13,6 +13,9 @@
 
     <string name="search_hint">Search</string>
 
-    <string name="field_empty_error">Field is empty</string>
-    <string name="field_not_valid_error">Field is not valid</string>
+    <string name="field_error_empty">Field is empty</string>
+    <string name="field_error_not_valid">Field is not valid</string>
+	<string name="field_error_value_more_or_equal_format">Value must be %d and over</string>
+	<string name="field_error_value_zero">Value must be not zero</string>
+	<string name="field_error_value_negative">Value must be non negative</string>
 </resources>

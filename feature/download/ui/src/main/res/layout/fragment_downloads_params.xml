@@ -20,7 +20,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilUrl"
-                style="@style/TextInputLayoutNoStrokeStyle"
+                style="@style/TextInputOutlinedWithCornersStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:hint="@string/download_url_hint">
@@ -112,7 +112,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilFileName"
-                style="@style/TextInputLayoutNoStrokeStyle"
+                style="@style/TextInputOutlinedWithCornersStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -134,7 +134,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilSubDirName"
-                style="@style/TextInputLayoutNoStrokeStyle"
+                style="@style/TextInputOutlinedWithCornersStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -148,7 +148,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilTargetHash"
-                style="@style/TextInputLayoutNoStrokeStyle"
+                style="@style/TextInputOutlinedWithCornersStyle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"

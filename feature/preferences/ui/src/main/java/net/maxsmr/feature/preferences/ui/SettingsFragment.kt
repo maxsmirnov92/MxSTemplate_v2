@@ -10,9 +10,10 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.NavArgs
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.conversion.toIntNotNull
+import net.maxsmr.commonutils.conversion.toLongNotNull
+import net.maxsmr.commonutils.conversion.toLongOrNull
 import net.maxsmr.commonutils.gui.bindTo
 import net.maxsmr.commonutils.live.field.observeFrom
-import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.bindHintError
@@ -68,11 +69,19 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel, NavArgs>() {
         }
         viewModel.maxDownloadsField.bindHintError(viewLifecycleOwner, binding.tilMaxDownloads)
 
+        binding.etConnectTimeout.bindTo(viewModel.connectTimeoutField) {
+            it.toLongNotNull()
+        }
+        viewModel.connectTimeoutField.observeFrom(binding.etConnectTimeout, viewLifecycleOwner) {
+            it.toString()
+        }
+        viewModel.connectTimeoutField.bindHintError(viewLifecycleOwner, binding.tilConnectTimeout)
+
         viewModel.retryDownloadsField.bindValue(viewLifecycleOwner, binding.cbRetryDownloads)
         viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.cbDisableNotifications)
 
         binding.etUpdateNotificationInterval.addTextChangedListener {
-            viewModel.updateNotificationIntervalStateField.toggleFieldState(it.toString().toLongOrNull() ?: 0)
+            viewModel.updateNotificationIntervalStateField.toggleFieldState(it.toString().toLongNotNull())
         }
         viewModel.updateNotificationIntervalStateField.observeFrom(binding.etUpdateNotificationInterval, viewLifecycleOwner) {
             binding.etUpdateNotificationInterval.isEnabled = it.isEnabled

@@ -13,18 +13,29 @@ abstract class BaseOkHttpClientManager(
     protected abstract fun OkHttpClient.Builder.configureBuild()
 
     fun build(): OkHttpClient {
-        val clientBuilder = OkHttpClient.Builder()
-            .callTimeout(callTimeout, TimeUnit.SECONDS)
-            .readTimeout(readTimeout, TimeUnit.SECONDS)
-            .writeTimeout(writeTimeout, TimeUnit.SECONDS)
-            .connectTimeout(connectTimeout, TimeUnit.SECONDS)
-            .retryOnConnectionFailure(false)
-        clientBuilder.configureBuild()
-        return clientBuilder.build()
+        return OkHttpClient.Builder().apply {
+            withTimeouts(
+                connectTimeout, readTimeout, writeTimeout, callTimeout
+            )
+            configureBuild()
+        }.build()
     }
 
     companion object {
 
         const val CONNECT_TIMEOUT_DEFAULT = 10L
+
+        fun OkHttpClient.Builder.withTimeouts(
+            connectTimeout: Long,
+            readTimeout: Long = connectTimeout,
+            writeTimeout: Long = connectTimeout,
+            callTimeout: Long = 0,
+        ) {
+            this.callTimeout(callTimeout, TimeUnit.SECONDS)
+                .readTimeout(readTimeout, TimeUnit.SECONDS)
+                .writeTimeout(writeTimeout, TimeUnit.SECONDS)
+                .connectTimeout(connectTimeout, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(false)
+        }
     }
 }

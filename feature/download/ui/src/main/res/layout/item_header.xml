@@ -14,7 +14,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilName"
-            style="@style/TextInputLayoutNoStrokeStyle"
+            style="@style/TextInputOutlinedWithCornersStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:hint="@string/download_field_header_key_hint">
@@ -27,7 +27,7 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilValue"
-            style="@style/TextInputLayoutNoStrokeStyle"
+            style="@style/TextInputOutlinedWithCornersStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:hint="@string/download_field_header_key_hint">

@@ -426,7 +426,7 @@ class DownloadManager @Inject constructor(
         fun getActualParams(): DownloadService.Params {
             val settings = settings
             return DownloadService.Params(
-                params.requestParams,
+                params.requestParams.copy(connectTimeout = settings.connectTimeout),
                 if (settings.disableNotifications) {
                     null
                 } else {

@@ -8,10 +8,12 @@ import net.maxsmr.commonutils.writeBytesOrThrow
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.Serializable
+import java.util.concurrent.TimeUnit
 
 @kotlinx.serialization.Serializable
 data class AppSettings(
     val maxDownloads: Int = 3,
+    val connectTimeout: Long = 30,
     val disableNotifications: Boolean = false,
     val retryDownloads: Boolean = true,
     val updateNotificationInterval: Long = 300,
@@ -19,7 +21,7 @@ data class AppSettings(
 
     companion object {
 
-        const val UPDATE_NOTIFICATION_INTERVAL_MIN = 100
+        const val UPDATE_NOTIFICATION_INTERVAL_MIN = 100L
         const val UPDATE_NOTIFICATION_INTERVAL_DEFAULT = 300L
     }
 }

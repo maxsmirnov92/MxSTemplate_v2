@@ -29,7 +29,7 @@
         <item name="android:textSize">@dimen/textSizeExtraLarge</item>
     </style>
 
-    <style name="TextInputLayoutNoStrokeStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+    <style name="TextInputOutlinedWithCornersStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 <!--        <item name="boxBackgroundColor">#f0f5fa</item>-->
 <!--        <item name="boxStrokeColor">@color/colorPrimary</item>-->
 <!--        <item name="boxStrokeWidth">0dp</item>-->
@@ -40,6 +40,8 @@
         <item name="boxCornerRadiusBottomStart">@dimen/textInputCornersRadius</item>
         <item name="boxCornerRadiusTopEnd">@dimen/textInputCornersRadius</item>
         <item name="boxCornerRadiusTopStart">@dimen/textInputCornersRadius</item>
+        <item name="cursorColor">?attr/colorAccent</item>
+        <item name="cursorErrorColor">@color/textColorError</item>
     </style>
 
 </resources>

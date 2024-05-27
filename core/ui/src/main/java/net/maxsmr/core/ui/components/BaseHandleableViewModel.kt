@@ -11,7 +11,7 @@ import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.views.snackbar.SnackbarActorImpl
 import net.maxsmr.core.ui.views.toast.ToastActorImpl
 
-open class BaseHandleableViewModel(state: SavedStateHandle): BaseViewModel(state) {
+open class BaseHandleableViewModel(state: SavedStateHandle) : BaseViewModel(state) {
 
     @CallSuper
     open fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
