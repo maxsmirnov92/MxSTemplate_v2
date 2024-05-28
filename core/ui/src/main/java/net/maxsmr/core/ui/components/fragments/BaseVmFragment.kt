@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.getAppSettingsIntent
+import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
@@ -47,7 +48,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
  */
 abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
 
-    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("BaseVmFragment")
+    protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
     @get:LayoutRes
     protected abstract val layoutId: Int
@@ -243,7 +244,8 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
             deniedPerms: Set<String>,
             negativeAction: ((Set<String>) -> Unit)?,
         ) {
-            viewModel.showYesNoPermissionDialog(message,
+            viewModel.showYesNoPermissionDialog(
+                TextMessage(message),
                 { requireActivity().startActivityForResult(getAppSettingsIntent(requireActivity()), requestCode) },
                 { negativeAction?.invoke(deniedPerms) })
         }

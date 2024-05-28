@@ -32,7 +32,7 @@ import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
-import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel.Method
+import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.core.utils.readObject
 import net.maxsmr.core.utils.writeObject

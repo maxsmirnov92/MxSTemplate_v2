@@ -26,9 +26,7 @@ import javax.inject.Inject
 import kotlin.reflect.KClass
 
 @AndroidEntryPoint
-class SettingsFragment: BaseNavigationFragment<SettingsViewModel, NavArgs>() {
-
-    override val argsClass: KClass<NavArgs>? = null
+class SettingsFragment: BaseNavigationFragment<SettingsViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_settings
 
@@ -99,8 +97,9 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel, NavArgs>() {
         return true
     }
 
-    override fun onBackPressed() {
+    override fun onBackPressed(): Boolean {
         viewModel.navigateBackWithAlert()
+        return true
     }
 
     private fun refreshSaveMenuItem(isEnabled: Boolean) {

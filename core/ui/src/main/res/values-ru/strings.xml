@@ -6,6 +6,13 @@
     <string name="pick_more_permission">Вы можете предоставить разрешение %s в %s, чтобы увидеть больше вариантов.</string>
     <string name="pick_more_permissions">Вы можете предоставить разрешения %s в %s, чтобы увидеть больше вариантов.</string>
 
+    <string name="choose_app_title_email">Выберите приложение для отправки письма</string>
+    <string name="error_intent_email">Для отправки письма установите любое приложение для работы с электронной почтой</string>
+    <string name="choose_app_title_send">Выберите приложение для отправки</string>
+    <string name="error_intent_send">Приложение для отправки не обнаружено</string>
+    <string name="error_intent_open_url">Приложение для просмотра ссылки не обнаружено</string>
+    <string name="error_intent_open_document">Приложение для выбора документа не обнаружено</string>
+
     <string name="alert_gps_not_available_message">К сожалению, ваше мобильное устройство не снабжено функцией определения местоположения.</string>
     <string name="alert_gps_enable_dialog_title">Местоположение недоступно</string>
     <string name="alert_gps_enable_dialog_message">Получение текущего местоположения недоступно. Для получения местоположения нужно включить геопозиционирование в настройках.</string>

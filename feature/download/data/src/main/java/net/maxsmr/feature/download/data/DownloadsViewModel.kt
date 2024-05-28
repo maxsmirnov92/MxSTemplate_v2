@@ -41,9 +41,9 @@ import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
-import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel.Method.POST
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.download.MD5_ALGORITHM
+import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
@@ -137,21 +137,16 @@ class DownloadsViewModel @Inject constructor(
                     }
                 }
                 message?.let {
-                    AlertBuilder(DIALOG_TAG_FAILED_ADD_TO_QUEUE)
-                        .setMessage(message)
-                        .setAnswers(Alert.Answer((android.R.string.ok)))
-                        .build()
+                    showOkDialog(DIALOG_TAG_FAILED_ADD_TO_QUEUE, message)
                 }
             }
         }
         failedStartParamsEvent.observeEvents {
-            AlertBuilder(DIALOG_TAG_FAILED_START)
-                .setMessage(TextMessage(
-                    R.string.download_alert_failed_start_message_format,
-                    it.targetResourceName
-                ))
-                .setAnswers(Alert.Answer((android.R.string.ok)))
-                .build()
+            showOkDialog(DIALOG_TAG_FAILED_START,
+                TextMessage(
+                R.string.download_alert_failed_start_message_format,
+                it.targetResourceName
+            ))
         }
     }
 
@@ -167,19 +162,20 @@ class DownloadsViewModel @Inject constructor(
 
     fun downloadFromJson(uri: Uri, contentResolver: ContentResolver) {
         viewModelScope.launch(ioDispatcher) {
-            json.decodeFromStringOrNull<List<DownloadParamsModel>>(uri.readString(contentResolver)).orEmpty().let { list ->
-                if (list.isNotEmpty()) {
-                    list.forEach {
-                        it.bodyUri?.toUri()?.takePersistableReadPermission(contentResolver)
-                        downloadManager.enqueueDownloadSuspended(it.toParams())
-                        // delay необходим из-за особенности кривых suspend'ов:
-                        // следом за незавершённым enqueueDownloadSuspended пойдёт ещё один
-                        delay(500)
+            json.decodeFromStringOrNull<List<DownloadParamsModel>>(uri.readString(contentResolver)).orEmpty()
+                .let { list ->
+                    if (list.isNotEmpty()) {
+                        list.forEach {
+                            it.bodyUri?.toUri()?.takePersistableReadPermission(contentResolver)
+                            downloadManager.enqueueDownloadSuspended(it.toParams())
+                            // delay необходим из-за особенности кривых suspend'ов:
+                            // следом за незавершённым enqueueDownloadSuspended пойдёт ещё один
+                            delay(500)
+                        }
+                    } else {
+                        showSnackbar(SnackbarAction(TextMessage(R.string.download_snackbar_no_valid_params)))
                     }
-                } else {
-                    showSnackbar(SnackbarAction(TextMessage(R.string.download_snackbar_no_valid_params)))
                 }
-            }
         }
     }
 
@@ -356,7 +352,7 @@ class DownloadsViewModel @Inject constructor(
                 successActions = defaultNotificationActions(baseApplicationContext)
             )
 
-            if (method == POST && bodyUri != null) {
+            if (method == Method.POST && bodyUri != null) {
                 defaultPOSTServiceParamsFor(
                     url,
                     fileName,

@@ -12,6 +12,7 @@ import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
 import net.maxsmr.core.utils.charsetForNameOrNull
 import okhttp3.*
+import okhttp3.internal.readBomAsCharset
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
@@ -32,6 +33,7 @@ import kotlin.coroutines.resumeWithException
 private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("OkHttpExt")
 
 private const val HEADER_CONTENT_TYPE = "Content-Type"
+private const val HEADER_CONTENT_ENCODING = "Content-Encoding"
 private const val HEADER_CONTENT_DISPOSITION = "Content-Disposition"
 private const val HEADER_ACCEPT_RANGES = "Accept-Ranges"
 private const val ATTACHMENT_FILENAME = "filename"
@@ -192,7 +194,8 @@ fun Response?.asByteArrayCloned(): ByteArray? = try {
 @Throws(IOException::class)
 fun Response?.asByteArrayClonedOrThrow(): ByteArray? {
     this ?: return null
-    return cloneBufferOrThrow()?.use { it.readByteArray() }
+    val source = body?.source() ?: return null
+    return source.cloneBufferOrThrow().use { it.readByteArray() }
 }
 
 /**
@@ -207,10 +210,11 @@ fun Response?.asStringCloned(): Pair<String, Charset>? = try {
 
 @Throws(IOException::class)
 fun Response?.asStringClonedOrThrow(): Pair<String, Charset>? {
-    this ?: return null
-    val charset = header("Content-Encoding").charsetForNameOrNull() ?: Charset.defaultCharset()
-    return cloneBufferOrThrow()?.use {
-        Pair(it.readString(charset), charset)
+    val body = this?.body ?: return null
+    val source = body.source()
+    val charset = getCharset()
+    return source.cloneBufferOrThrow().use {
+        Pair(it.readString(source.readBomAsCharset(charset)), charset)
     }
 }
 
@@ -234,29 +238,45 @@ fun Response?.writeClonedOrThrow(
 ): ResponseBody? {
     outputStream ?: return null
     val responseBody = this?.body ?: return null
-    val buffer = cloneBufferOrThrow() ?: return null
+    val source = responseBody.source()
+    val buffer = source.cloneBufferOrThrow() ?: return null
     buffer.inputStream().copyToOutputStreamOrThrow(outputStream, notifier, responseBody.contentLength())
     return responseBody
 }
 
 @Throws(IOException::class)
-private fun Response.cloneBufferOrThrow(): Buffer? {
-    val source: BufferedSource = body?.source() ?: return null
+private fun BufferedSource.cloneBufferOrThrow(): Buffer {
     // request the entire body.
-    source.request(Long.MAX_VALUE)
+    this.request(Long.MAX_VALUE)
     // clone buffer before reading from it
-    return source.buffer.clone()
+    return this.buffer.clone()
 }
 
 // endregion
 
 fun isResponseOk(responseCode: Int): Boolean = responseCode in 200..299
 
-fun Response.getContentTypeHeader() = header(HEADER_CONTENT_TYPE)
+fun Response.getContentTypeHeader(): String {
+    // или body?.contentType()?.type.orEmpty()
+    return header(HEADER_CONTENT_TYPE)?.split(";")?.getOrNull(0).orEmpty()
+}
 
-fun Response.getContentDispositionHeader() = header(HEADER_CONTENT_DISPOSITION)
+fun Response.getCharset(): Charset {
+    // сначала смотрим в Content-Encoding
+    header(HEADER_CONTENT_ENCODING).charsetForNameOrNull().let {
+        return if (it == null) {
+            val defaultCharset = Charset.defaultCharset()
+            // затем в Content-Type, где через ";" после имени типа
+            body?.contentType()?.charset(defaultCharset) ?: defaultCharset
+        } else {
+            it
+        }
+    }
+}
 
-fun Response.getAcceptRangesHeader() = header(HEADER_ACCEPT_RANGES)
+fun Response.getContentDispositionHeader() = header(HEADER_CONTENT_DISPOSITION).orEmpty()
+
+fun Response.getAcceptRangesHeader() = header(HEADER_ACCEPT_RANGES).orEmpty()
 
 fun Response.hasContentDisposition(type: ContentDispositionType): Boolean {
     return getContentDispositionHeader().hasContentDisposition(type)
@@ -275,7 +295,7 @@ fun Response.hasBytesAcceptRanges(): Boolean {
  */
 fun Response.getFileNameFromAttachmentHeader(): String {
     val disposition = getContentDispositionHeader()
-    if (disposition == null || !disposition.hasContentDisposition(ContentDispositionType.ATTACHMENT)) {
+    if (!disposition.hasContentDisposition(ContentDispositionType.ATTACHMENT)) {
         return EMPTY_STRING
     }
     val encodedName: String = if (disposition.contains("$ATTACHMENT_FILENAME*")) {
@@ -286,10 +306,9 @@ fun Response.getFileNameFromAttachmentHeader(): String {
         EMPTY_STRING
     }
     return java.net.URLDecoder.decode(
-        encodedName, Charset.defaultCharset().toString()
-    )
-        .takeIf { REG_EX_FILE_NAME.toRegex().matches(it) }
-        .orEmpty()
+        encodedName,
+        getCharset().name()
+    ).takeIf { REG_EX_FILE_NAME.toRegex().matches(it) }.orEmpty()
 }
 
 private fun String?.hasContentDisposition(type: ContentDispositionType): Boolean {

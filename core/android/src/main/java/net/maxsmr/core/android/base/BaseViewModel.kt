@@ -4,7 +4,6 @@ import android.os.Handler
 import android.os.Looper
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.doOnNext
@@ -117,37 +116,73 @@ abstract class BaseViewModel(
      * Не использовать для показа ошибок запросов. Для этого используйте [showErrorDialog]
      */
     @JvmOverloads
-    fun showOkDialog(tag: String, message: String, title: String? = null) {
-        showOkDialog(tag, TextMessage(message), title?.let { TextMessage(it) })
+    fun showOkDialog(
+        tag: String,
+        @StringRes messageResId: Int,
+        @StringRes title: Int? = null,
+        onConfirmClick: (() -> Unit)? = null,
+    ) {
+        showOkDialog(tag, TextMessage(messageResId), title?.let { TextMessage(it) }, onConfirmClick)
     }
 
     /**
      * Не использовать для показа ошибок запросов. Для этого используйте [showErrorDialog]
      */
     @JvmOverloads
-    fun showOkDialog(tag: String, message: TextMessage, title: TextMessage? = null) {
+    fun showOkDialog(
+        tag: String,
+        message: TextMessage,
+        title: TextMessage? = null,
+        onConfirmClick: (() -> Unit)? = null,
+    ) {
         AlertBuilder(tag)
             .setTitle(title)
             .setMessage(message)
-            .setAnswers(Alert.Answer((android.R.string.ok)))
+            .setAnswers(Alert.Answer((android.R.string.ok)).onSelect {
+                onConfirmClick?.invoke()
+            })
             .build()
     }
 
-    /**
-     * Не использовать для показа ошибок запросов. Для этого используйте [showErrorDialog]
-     */
-    fun showNoInternetDialog() {
-        AlertBuilder(DIALOG_TAG_NO_INTERNET)
-            .setTitle(R.string.error_server_unavailable)
-            .setMessage(R.string.error_no_internet)
-            .setAnswers(Alert.Answer(R.string.understand))
+    fun showYesNoPermissionDialog(
+        message: TextMessage,
+        onPositiveSelect: () -> Unit,
+        onNegativeSelect: () -> Unit,
+    ) {
+        showYesNoDialog(
+            DIALOG_TAG_PERMISSION_YES_NO,
+            message,
+            onPositiveSelect = onPositiveSelect,
+            onNegativeSelect = onNegativeSelect
+        )
+    }
+
+    fun showYesNoDialog(
+        tag: String,
+        message: TextMessage,
+        title: TextMessage? = null,
+        positiveAnswerResId: Int = R.string.yes,
+        negativeAnswerResId: Int = R.string.no,
+        onPositiveSelect: () -> Unit,
+        onNegativeSelect: (() -> Unit)? = null,
+    ) {
+        AlertBuilder(tag)
+            .setTitle(title)
+            .setMessage(message)
+            .setAnswers(
+                Alert.Answer(positiveAnswerResId).onSelect {
+                    onPositiveSelect()
+                },
+                Alert.Answer(negativeAnswerResId).onSelect {
+                    onNegativeSelect?.invoke()
+                })
             .build()
     }
 
     /**
      * Использовать для показа ошибок запрсов.
      */
-    fun showErrorDialog(message: TextMessage?, error: Exception?) {
+    protected fun showErrorDialog(message: TextMessage?, error: Exception?) {
 //        if (error?.getErrorCode() in ErrorCode.ERRORS_DIALOGS_HANDLEABLE) {
 //            return
 //        }
@@ -164,24 +199,13 @@ abstract class BaseViewModel(
         }
     }
 
-    fun showYesNoPermissionDialog(
-        message: String,
-        onPositiveSelect: () -> Unit,
-        onNegativeSelect: () -> Unit
-    ) {
-        AlertBuilder(DIALOG_TAG_PERMISSION_YES_NO)
-            .setMessage(message)
-            .setAnswers(
-                Alert.Answer(R.string.yes).onSelect {
-                    onPositiveSelect()
-                },
-                Alert.Answer(R.string.no).onSelect {
-                    onNegativeSelect()
-                })
+    private fun showNoInternetDialog() {
+        AlertBuilder(DIALOG_TAG_NO_INTERNET)
+            .setTitle(R.string.error_server_unavailable)
+            .setMessage(R.string.error_no_internet)
+            .setAnswers(Alert.Answer(R.string.understand))
             .build()
     }
-
-
 
     fun <T : Any> checkConnectionAndRun(targetAction: () -> T?): T? {
         return if (checkConnection()) targetAction() else null

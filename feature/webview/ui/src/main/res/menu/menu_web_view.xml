@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_refresh"
+        android:icon="@drawable/ic_menu_refresh"
+        android:title="@string/webview_menu_action_refresh"
+        app:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_copy_link"
+        android:icon="@drawable/ic_menu_copy"
+        android:title="@string/webview_menu_action_copy_link"
+        app:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_open_url"
+        android:icon="@drawable/ic_menu_url"
+        android:title="@string/webview_menu_action_open_url"
+        app:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_forward"
+        android:icon="@drawable/ic_menu_forward"
+        android:title="@string/webview_menu_action_forward"
+        app:iconTint="@color/white"
+        app:showAsAction="always" />
+</menu>

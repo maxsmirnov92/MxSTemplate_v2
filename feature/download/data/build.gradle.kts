@@ -11,12 +11,7 @@ android {
 
 dependencies {
     implementation(project(":feature:preferences:data"))
-    implementation(project(":core:di"))
-    implementation(project(":core:domain"))
-    implementation(project(":core:database"))
-    implementation(project(":core:utils"))
     implementation(project(":core:android"))
-    implementation(project(":core:network"))
     implementation(project(":core:ui"))
 
     implementation(libs.okhttp)

@@ -9,6 +9,6 @@
         android:title="@string/download_feature_title" />
     <item
         android:id="@+id/navigationSettings"
-        android:icon="@drawable/ic_settings"
+        android:icon="@drawable/ic_menu_settings"
         android:title="@string/settings_feature_title" />
 </menu>

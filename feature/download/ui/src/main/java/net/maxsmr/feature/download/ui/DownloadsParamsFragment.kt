@@ -24,7 +24,7 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
-import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
+import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.bindHintError
 import net.maxsmr.core.ui.bindState
 import net.maxsmr.core.ui.bindValue
@@ -34,6 +34,8 @@ import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderListener
 import net.maxsmr.feature.download.ui.adapter.HeadersAdapter
 import net.maxsmr.feature.download.ui.databinding.FragmentDownloadsParamsBinding
+import net.maxsmr.feature.webview.ui.WebViewCustomizer
+import net.maxsmr.feature.webview.ui.webViewActivityIntent
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -111,7 +113,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
         binding.spinnerMethod.adapter = adapter
         binding.spinnerMethod.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.methodField.value = DownloadParamsModel.Method.entries[position]
+                viewModel.methodField.value = Method.entries[position]
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
@@ -204,13 +206,26 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-        return if (menuItem.itemId == R.id.action_pick_json) {
-            viewModel.onLoadFromJsonClick(requireContext()) {
-                contentPicker.pick(REQUEST_CODE_CHOOSE_PARAMS_JSON, requireContext())
+        return when (menuItem.itemId) {
+            R.id.action_pick_json -> {
+                viewModel.onLoadFromJsonAction(requireContext()) {
+                    contentPicker.pick(REQUEST_CODE_CHOOSE_PARAMS_JSON, requireContext())
+                }
+                true
             }
-            true
-        } else {
-            super.onMenuItemSelected(menuItem)
+            R.id.action_open_browser -> {
+                startActivity(requireContext().webViewActivityIntent(
+                    WebViewCustomizer.Builder()
+                        .setUrl("https://google.com")
+                        .setCanInputUrls(true)
+                        .build()
+                ))
+                true
+            }
+
+            else -> {
+                super.onMenuItemSelected(menuItem)
+            }
         }
     }
 

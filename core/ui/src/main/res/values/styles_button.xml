@@ -18,4 +18,11 @@
         <item name="android:background">@drawable/selector_button_primary</item>
         <item name="android:textColor">@color/white</item>
     </style>
+
+    <!-- Стандартная кнопка без бордюра -->
+    <style name="BorderlessButton" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Button</item>
+    </style>
 </resources>

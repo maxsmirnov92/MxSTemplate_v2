@@ -21,7 +21,7 @@ interface INavigationHost {
     /**
      * Вызов необходим на каждом фрагменте графа с Toolbar в разметке
      */
-    fun registerToolbarWithNavigation(toolbar: Toolbar, fragment: BaseNavigationFragment<*, *>)
+    fun registerToolbarWithNavigation(toolbar: Toolbar, fragment: BaseNavigationFragment<*>)
 }
 
 // TODO ?
@@ -30,12 +30,8 @@ interface INavigationDestination {
     fun onUserInteraction() {}
 }
 
-abstract class BaseNavigationFragment<VM : BaseHandleableViewModel, Args : NavArgs> : BaseMenuFragment<VM>(),
+abstract class BaseNavigationFragment<VM : BaseHandleableViewModel> : BaseMenuFragment<VM>(),
         INavigationDestination {
-
-    protected abstract val argsClass: KClass<Args>?
-
-    protected val args: Args get() = getNavArgsOrThrow()
 
     private var navigationHost: INavigationHost? = null
 
@@ -83,8 +79,9 @@ abstract class BaseNavigationFragment<VM : BaseHandleableViewModel, Args : NavAr
      */
     open fun onUpPressed() = false
 
-    protected open fun onBackPressed() {
+    protected open fun onBackPressed(): Boolean {
         navigateUp()
+        return true
     }
 
     protected fun navigateUp() {
@@ -93,25 +90,12 @@ abstract class BaseNavigationFragment<VM : BaseHandleableViewModel, Args : NavAr
         }
     }
 
-    @MainThread
-    protected fun getNavArgs(): Args? =
-        arguments?.let { args ->
-            argsClass?.let {
-                NavArgsLazy(it) {
-                    args
-                }.value
-            }
-        }
-
-    @MainThread
-    private fun getNavArgsOrThrow(): Args = getNavArgs() ?: throw IllegalStateException("Navigation args are null")
-
     companion object {
 
         private const val KEY_FRAGMENT_RESULT = "result"
 
         @JvmStatic
-        fun BaseNavigationFragment<*, *>.handleNavigation(navCommand: NavigationCommand) {
+        fun BaseNavigationFragment<*>.handleNavigation(navCommand: NavigationCommand) {
             when (navCommand) {
                 is NavigationCommand.ToDirectionWithNavDirections -> findNavController().navigate(
                     navCommand.directions.actionId,

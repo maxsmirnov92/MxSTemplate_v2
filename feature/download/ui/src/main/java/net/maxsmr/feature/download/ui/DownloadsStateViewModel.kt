@@ -9,6 +9,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
@@ -87,31 +88,23 @@ class DownloadsStateViewModel @AssistedInject constructor(
 
     fun onClearQueue() {
         if (queueNames.value?.isNotEmpty() == true) {
-            AlertBuilder(DIALOG_TAG_CLEAR_QUEUE)
-                .setTitle(R.string.download_alert_confirm_title)
-                .setMessage(R.string.download_alert_clear_queue_message)
-                .setAnswers(
-                    Alert.Answer(net.maxsmr.core.android.R.string.yes).onSelect {
-                        manager.removeAllPending()
-                    },
-                    Alert.Answer(net.maxsmr.core.android.R.string.no)
-                )
-                .build()
+            showYesNoDialog(
+                DIALOG_TAG_CLEAR_QUEUE,
+                TextMessage(R.string.download_alert_clear_queue_message),
+                TextMessage(R.string.download_alert_confirm_title),
+                onPositiveSelect = { manager.removeAllPending() }
+            )
         }
     }
 
     fun onCancelAllDownloads() {
         if (anyCanBeCancelled.value == true) {
-            AlertBuilder(DIALOG_TAG_CANCEL_ALL)
-                .setTitle(R.string.download_alert_confirm_title)
-                .setMessage(R.string.download_alert_cancel_all_message)
-                .setAnswers(
-                    Alert.Answer(net.maxsmr.core.android.R.string.yes).onSelect {
-                        DownloadService.cancelAll()
-                    },
-                    Alert.Answer(net.maxsmr.core.android.R.string.no)
-                )
-                .build()
+            showYesNoDialog(
+                DIALOG_TAG_CANCEL_ALL,
+                TextMessage(R.string.download_alert_cancel_all_message),
+                TextMessage(R.string.download_alert_confirm_title),
+                onPositiveSelect = { DownloadService.cancelAll() }
+            )
         }
     }
 
@@ -121,16 +114,12 @@ class DownloadsStateViewModel @AssistedInject constructor(
         state: DownloadStateNotifier.DownloadState?,
     ) {
         if (state is DownloadStateNotifier.DownloadState.Success) {
-            AlertBuilder(DIALOG_TAG_RETRY_IF_SUCCESS)
-                .setTitle(R.string.download_alert_confirm_title)
-                .setMessage(R.string.download_alert_retry_if_success_message)
-                .setAnswers(
-                    Alert.Answer(net.maxsmr.core.android.R.string.yes).onSelect {
-                        manager.retryDownload(downloadId, params)
-                    },
-                    Alert.Answer(net.maxsmr.core.android.R.string.no)
-                )
-                .build()
+            showYesNoDialog(
+                DIALOG_TAG_RETRY_IF_SUCCESS,
+                TextMessage(R.string.download_alert_retry_if_success_message),
+                TextMessage(R.string.download_alert_confirm_title),
+                onPositiveSelect = { manager.retryDownload(downloadId, params) }
+            )
         } else {
             manager.retryDownload(downloadId, params)
         }
@@ -139,7 +128,6 @@ class DownloadsStateViewModel @AssistedInject constructor(
     fun onClearFinished() {
         manager.removeAllFinished()
     }
-
 
 
     fun onCancelDownload(id: Long) {

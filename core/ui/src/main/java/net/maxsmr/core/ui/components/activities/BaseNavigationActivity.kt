@@ -80,7 +80,7 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
-    override fun registerToolbarWithNavigation(toolbar: Toolbar, fragment: BaseNavigationFragment<*, *>) {
+    override fun registerToolbarWithNavigation(toolbar: Toolbar, fragment: BaseNavigationFragment<*>) {
         setSupportActionBar(toolbar)
         val configuration = appBarConfiguration
         toolbar.setupWithNavController(navController, configuration)

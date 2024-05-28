@@ -10,13 +10,7 @@ android {
 
 dependencies {
     api(project(":feature:download:data"))
-
-    implementation(project(":feature:preferences:ui"))
     implementation(project(":core:di"))
-    implementation(project(":core:domain"))
-    implementation(project(":core:database"))
-    implementation(project(":core:utils"))
-    implementation(project(":core:android"))
-    implementation(project(":core:network"))
-    implementation(project(":core:ui"))
+    implementation(project(":feature:webview:ui"))
+    implementation(project(":feature:preferences:ui"))
 }

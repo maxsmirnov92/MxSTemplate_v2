@@ -5,7 +5,7 @@
     <string name="download_state_title">Состояние</string>
 
     <string name="download_url_hint">URL для загрузки</string>
-    <string name="download_url_empty_error">URL некорректный</string>
+    <string name="download_url_empty_error">URL пустой или некорректный</string>
     <string name="download_method_name">Метод</string>
     <string name="download_field_request_body_empty_text">Файл тела запроса не выбран</string>
     <string name="download_field_request_body_non_required_text">Файл тела запроса не требуется</string>
@@ -57,5 +57,6 @@
     <string name="download_status_cancelled">Отменена</string>
 
     <string name="download_menu_action_filter">Фильтр по названию</string>
-    <string name="download_menu_action_load_params_from_json">Загрузить список параметров из JSON</string>
+    <string name="download_menu_action_load_params_from_json">Загрузить параметры из JSON</string>
+    <string name="download_menu_action_open_browser">Открыть встроенный браузер</string>
 </resources>

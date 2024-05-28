@@ -33,8 +33,8 @@ import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
-import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel.Method
 import net.maxsmr.core.domain.entities.feature.download.REG_EX_MD5_ALGORITHM
+import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.BooleanFieldState
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
@@ -316,7 +316,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
     }
 
-    fun onLoadFromJsonClick(context: Context, onPickAction: () -> Unit) {
+    fun onLoadFromJsonAction(context: Context, onPickAction: () -> Unit) {
         viewModelScope.launch {
             if (!cacheRepo.hasDownloadParamsModelSample()) {
                 withContext(ioDispatcher) {

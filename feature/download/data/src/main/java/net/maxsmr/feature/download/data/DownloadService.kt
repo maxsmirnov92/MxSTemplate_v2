@@ -51,6 +51,7 @@ import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
+import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.ContentDispositionType
 import net.maxsmr.core.network.ProgressRequestBody
 import net.maxsmr.core.network.ProgressResponseBody
@@ -400,7 +401,7 @@ class DownloadService : Service() {
 
                 if (params.resourceMimeType.isEmpty() || !params.requestParams.ignoreContentType) {
                     // при пустом исходном типе или если игнорить заголовок не надо
-                    response.getContentTypeHeader()?.takeIf { it.isNotEmpty() }?.let {
+                    response.getContentTypeHeader().takeIf { it.isNotEmpty() }?.let {
                         if (params.resourceMimeType != it) {
                             // актуализируем из заголовка, если есть - влияет на целевое имя
                             params.resourceMimeType = it
@@ -1054,7 +1055,7 @@ class DownloadService : Service() {
             ): RequestParams {
                 return RequestParams(
                     url,
-                    DownloadParamsModel.Method.POST.value,
+                    Method.POST.value,
                     headers,
                     body,
                     ignoreContentType,
@@ -1084,7 +1085,7 @@ class DownloadService : Service() {
                 }
                 return RequestParams(
                     targetUrl,
-                    DownloadParamsModel.Method.GET.value,
+                    Method.GET.value,
                     headers,
                     null,
                     ignoreContentType,

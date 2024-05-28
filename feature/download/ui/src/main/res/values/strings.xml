@@ -5,7 +5,7 @@
     <string name="download_state_title">State</string>
 
     <string name="download_url_hint">URL for loading</string>
-    <string name="download_url_empty_error">URL is not valid</string>
+    <string name="download_url_empty_error">URL is empty or not valid</string>
     <string name="download_method_name">Method</string>
     <string-array name="download_method_names" translatable="false">
         <item>GET</item>
@@ -61,5 +61,6 @@
     <string name="download_status_cancelled">Cancelled</string>
 
     <string name="download_menu_action_filter">Filter by name</string>
-    <string name="download_menu_action_load_params_from_json">Load params list from JSON</string>
+    <string name="download_menu_action_load_params_from_json">Load params from JSON</string>
+    <string name="download_menu_action_open_browser">Open in-app browser</string>
 </resources>

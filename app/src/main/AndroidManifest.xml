@@ -39,6 +39,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="net.maxsmr.feature.webview.ui.WebViewActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+
         <service android:name="net.maxsmr.feature.download.data.DownloadService" />
         <provider
             android:name="androidx.startup.InitializationProvider"

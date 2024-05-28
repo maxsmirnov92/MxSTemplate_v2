@@ -3,7 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/action_pick_json"
-        android:orderInCategory="1"
         android:title="@string/download_menu_action_load_params_from_json"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_open_browser"
+        android:title="@string/download_menu_action_open_browser"
         app:showAsAction="never" />
 </menu>

@@ -20,7 +20,7 @@ open class BaseHandleableViewModel(state: SavedStateHandle) : BaseViewModel(stat
 
     @CallSuper
     open fun handleEvents(fragment: BaseVmFragment<*>) {
-        if (fragment is BaseNavigationFragment<*, *>) {
+        if (fragment is BaseNavigationFragment<*>) {
             navigationCommands.observeEvents {
                 fragment.handleNavigation(it)
             }

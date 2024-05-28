@@ -1,6 +1,7 @@
 package net.maxsmr.core.domain.entities.feature.download
 
 import kotlinx.serialization.Serializable
+import net.maxsmr.core.domain.entities.feature.network.Method
 
 @Serializable
 data class DownloadParamsModel(
@@ -16,12 +17,4 @@ data class DownloadParamsModel(
     val replaceFile: Boolean = false,
     val deleteUnfinished: Boolean = true,
     val headers: HashMap<String, String> = hashMapOf(),
-) {
-
-    @Serializable
-    enum class Method(val value: String) {
-
-        GET("GET"),
-        POST("POST"),
-    }
-}
+)

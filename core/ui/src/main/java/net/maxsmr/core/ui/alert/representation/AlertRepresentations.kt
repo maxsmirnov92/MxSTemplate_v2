@@ -42,8 +42,8 @@ fun Alert.asMultiChoiceDialog(
         .setMultiChoiceAnswers(
             DialogRepresentation.Builder.MultiChoiceAnswersData(
                 answers,
-                R.layout.dialog_item,
-                R.id.item,
+                R.layout.item_dialog_choice,
+                R.id.tvItem,
             ), onClick
         )
         .build()

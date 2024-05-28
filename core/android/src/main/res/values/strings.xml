@@ -30,14 +30,5 @@
     <string name="video_picker_error">Cannot get video file</string>
     <string name="pick_result_error_format">Cannot pick file, reason: %s</string>
 
-    <string name="choose_app_title">Choose app</string>
-    <string name="choose_app_title_email">Choose app for sending email</string>
-    <string name="choose_app_title_email_support">Contact application technical support</string>
-    <string name="error_intent_email">Install any email application to send a letter</string>
-    <string name="error_intent_email_support">Install any email application to contact technical support</string>
-    <string name="error_intent_send">No apps for sending found</string>
-    <string name="error_intent_open_url">No apps for viewing links found</string>
-    <string name="error_intent_open_document">No apps for opening document found</string>
-
     <string name="toast_copied_to_clipboard_message">Copied to clipboard</string>
 </resources>

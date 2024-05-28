@@ -5,22 +5,18 @@ import android.view.MenuItem
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
-import androidx.navigation.NavArgs
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
-import net.maxsmr.core.android.base.alert.AlertHandler
-import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_GPS_PERMISSION
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_NOTIFICATIONS_PERMISSION
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
@@ -31,13 +27,10 @@ import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputListener
 import net.maxsmr.feature.address_sorter.ui.databinding.FragmentAddressSorterBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
-import kotlin.reflect.KClass
 
 @AndroidEntryPoint
-class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, NavArgs>(),
+class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         AddressInputListener, BaseDraggableDelegationAdapter.ItemsEventsListener<AddressInputData> {
-
-    override val argsClass: KClass<NavArgs>? = null
 
     override val layoutId: Int = R.layout.fragment_address_sorter
 

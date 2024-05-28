@@ -14,8 +14,8 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.getLocationSettingsIntent
+import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
-import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.asDispatcher
 import net.maxsmr.core.android.location.LocationCallback
@@ -59,23 +59,18 @@ class LocationViewModel @AssistedInject constructor(
     }
 
     override fun onGpsNotAvailable() {
-        AlertBuilder(DIALOG_TAG_GPS_NOT_AVAILABLE)
-            .setMessage(R.string.alert_gps_not_available_message)
-            .setAnswers(Alert.Answer(android.R.string.ok))
-            .build()
+        showOkDialog(DIALOG_TAG_GPS_NOT_AVAILABLE, R.string.alert_gps_not_available_message)
     }
 
     override fun onGpsProviderNotEnabled() {
-        AlertBuilder(DIALOG_TAG_GPS_NOT_ENABLED)
-            .setTitle(R.string.alert_gps_enable_dialog_title)
-            .setMessage(R.string.alert_gps_enable_dialog_message)
-            .setAnswers(
-                Alert.Answer(R.string.alert_gps_enable_dialog_answer_settings).onSelect {
-                    navigateToLocationSettings()
-                },
-                Alert.Answer(android.R.string.cancel)
-            )
-            .build()
+        showYesNoDialog(
+            DIALOG_TAG_GPS_NOT_ENABLED,
+            TextMessage(R.string.alert_gps_enable_dialog_message),
+            TextMessage(R.string.alert_gps_enable_dialog_title),
+            R.string.alert_gps_enable_dialog_answer_settings,
+            android.R.string.cancel,
+            onPositiveSelect = { navigateToLocationSettings() }
+        )
     }
 
     override fun onCleared() {

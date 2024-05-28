@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation_webview"
+    app:startDestination="@+id/navigationWebView">
+
+    <fragment
+        android:id="@+id/navigationWebView"
+        android:name="net.maxsmr.feature.webview.ui.WebViewFragment"
+        android:label="@string/webview_feature_title"
+        tools:layout="@layout/fragment_webview">
+
+        <argument
+            android:name="customizer"
+            app:argType="net.maxsmr.feature.webview.ui.WebViewCustomizer" />
+
+    </fragment>
+
+</navigation>

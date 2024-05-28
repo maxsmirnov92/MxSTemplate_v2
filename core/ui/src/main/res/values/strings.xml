@@ -6,6 +6,13 @@
     <string name="pick_more_permission">You may grant permission %s to %s to see more variants.</string>
     <string name="pick_more_permissions">You may grant permissions %s to %s to see more variants.</string>
 
+    <string name="choose_app_title_email">Choose app for sending email</string>
+    <string name="error_intent_email">Install any email application to send a letter</string>
+    <string name="choose_app_title_send">Choose app for sending</string>
+    <string name="error_intent_send">No apps for sending found</string>
+    <string name="error_intent_open_url">No apps for viewing links found</string>
+    <string name="error_intent_open_document">No apps for opening document found</string>
+
     <string name="alert_gps_not_available_message">Unfortunately your device does not have geolocation detection function</string>
     <string name="alert_gps_enable_dialog_title">Geolocation is unavailable</string>
     <string name="alert_gps_enable_dialog_message">Getting your current location is not available. To get the location you need to enable this option in the settings</string>

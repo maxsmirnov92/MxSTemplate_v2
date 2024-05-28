@@ -5,7 +5,6 @@
     <item
         android:id="@+id/action_filter"
         android:icon="@android:drawable/ic_menu_search"
-        android:orderInCategory="1"
         android:title="@string/download_menu_action_filter"
         app:actionViewClass="androidx.appcompat.widget.SearchView"
         app:showAsAction="always" />

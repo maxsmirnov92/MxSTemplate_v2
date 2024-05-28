@@ -29,14 +29,5 @@
     <string name="video_picker_error">Не удалось получить видеозапись</string>
     <string name="pick_result_error_format">Не удалось выбрать файл, причина: %s</string>
 
-    <string name="choose_app_title">Выберите приложение</string>
-    <string name="choose_app_title_email">Выберите приложение для отправки письма</string>
-    <string name="choose_app_title_email_support">Обращение в службу технической поддержки приложения</string>
-    <string name="error_intent_email">Для отправки письма установите любое приложение для работы с электронной почтой</string>
-    <string name="error_intent_email_support">Для обращения в службу технической поддержки установите любое приложение для работы с электронной почтой</string>
-    <string name="error_intent_send">Приложение для отправки не обнаружено</string>
-    <string name="error_intent_open_url">Приложение для просмотра ссылки не обнаружено</string>
-    <string name="error_intent_open_document">Приложение для выбора документа не обнаружено</string>
-
     <string name="toast_copied_to_clipboard_message">Скопировано в буфер обмена</string>
 </resources>
