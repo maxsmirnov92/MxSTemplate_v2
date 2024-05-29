@@ -13,7 +13,6 @@ import android.widget.PopupWindow
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.ItemTouchHelper
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,7 +30,6 @@ import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.connection.ConnectionHandler
-import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.ui.alert.representation.asIndefiniteSnackbar
@@ -40,7 +38,6 @@ import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadService.Companion.getShareAction
 import net.maxsmr.feature.download.data.DownloadService.Companion.getViewAction
 import net.maxsmr.feature.download.data.DownloadStateNotifier
-import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapterData
 import net.maxsmr.feature.download.ui.adapter.DownloadListener
@@ -61,20 +58,11 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
 
-    @Inject
-    lateinit var factory: DownloadsStateViewModel.Factory
-
     override val layoutId: Int = R.layout.fragment_downloads_state
 
-    override val viewModel: DownloadsStateViewModel by viewModels {
-        AbstractSavedStateViewModelFactory(this) {
-            factory.create(it, downloadsViewModel)
-        }
-    }
+    override val viewModel: DownloadsStateViewModel by viewModels()
 
     override val menuResId: Int = R.menu.menu_downloads_state
-
-    private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
     private val binding by viewBinding(FragmentDownloadsStateBinding::bind)
 

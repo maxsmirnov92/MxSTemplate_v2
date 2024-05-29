@@ -5,26 +5,23 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
-import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapterData
+import javax.inject.Inject
 
-class DownloadsStateViewModel @AssistedInject constructor(
-    @Assisted state: SavedStateHandle,
-    @Assisted private val downloadsViewModel: DownloadsViewModel,
+@HiltViewModel
+class DownloadsStateViewModel @Inject constructor(
+    state: SavedStateHandle,
     private val manager: DownloadManager,
 ) : BaseHandleableViewModel(state) {
 
@@ -151,15 +148,6 @@ class DownloadsStateViewModel @AssistedInject constructor(
         } else {
             items
         }
-    }
-
-    @AssistedFactory
-    interface Factory {
-
-        fun create(
-            state: SavedStateHandle,
-            downloadsViewModel: DownloadsViewModel,
-        ): DownloadsStateViewModel
     }
 
     companion object {

@@ -59,4 +59,6 @@
     <string name="download_menu_action_filter">Фильтр по названию</string>
     <string name="download_menu_action_load_params_from_json">Загрузить параметры из JSON</string>
     <string name="download_menu_action_open_browser">Открыть встроенный браузер</string>
+
+    <string name="download_alert_save_as_title">Сохранить как</string>
 </resources>

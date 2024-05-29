@@ -14,7 +14,7 @@ abstract class BaseCustomizableWebViewModel(
     abstract var customizer: WebViewCustomizer
 
     fun onOpenUrlAction() {
-        showOkDialog(DIALOG_TAG_OPEN_URL, TextMessage(R.string.webview_alert_open_url_message))
+        showOkDialog(DIALOG_TAG_OPEN_URL, TextMessage(R.string.webview_alert_open_url_title))
     }
 
     fun onUrlSelected(url: String): Boolean {

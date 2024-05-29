@@ -8,7 +8,6 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.webkit.WebView
-import android.widget.EditText
 import android.widget.ProgressBar
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -21,6 +20,7 @@ import net.maxsmr.core.utils.charsetForNameOrNull
 import net.maxsmr.feature.webview.data.client.BrowserInterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
+import net.maxsmr.feature.webview.ui.databinding.DialogInputUrlBinding
 import net.maxsmr.feature.webview.ui.databinding.FragmentWebviewBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
 import okhttp3.OkHttpClient
@@ -69,15 +69,11 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
     override fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
         super.handleAlerts(delegate)
         bindAlertDialog(BaseCustomizableWebViewModel.DIALOG_TAG_OPEN_URL) {
-            val customView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_input_url, null)
-            val urlEdit = customView.findViewById<EditText>(R.id.etUrl)
+            val dialogBinding = DialogInputUrlBinding.inflate(LayoutInflater.from(requireContext()))
             DialogRepresentation.Builder(requireContext(), it)
-//                .setThemeResId(com.google.android.material.R.style.Theme_MaterialComponents_DayNight)
-                .setCustomView(customView)
-                .setCancelable(true)
+                .setCustomView(dialogBinding.root)
                 .setPositiveButton(it.answers[0]) {
-//                    hideKeyboard(urlEdit)
-                    if (viewModel.onUrlSelected(urlEdit.text.toString().trim())) {
+                    if (viewModel.onUrlSelected(dialogBinding.etUrl.text.toString().trim())) {
                         doReloadWebView()
                     }
                 }

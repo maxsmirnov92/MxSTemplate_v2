@@ -1,27 +1,31 @@
 package net.maxsmr.feature.download.ui.webview
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
-import android.webkit.CookieManager
-import android.webkit.DownloadListener
-import android.webkit.URLUtil
 import android.webkit.WebSettings
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.alert.representation.DialogRepresentation
 import net.maxsmr.feature.download.data.DownloadsViewModel
+import net.maxsmr.feature.download.ui.databinding.DialogSaveAsBinding
 import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewFragment
+import net.maxsmr.feature.webview.ui.databinding.DialogInputUrlBinding
 import okhttp3.OkHttpClient
+import java.lang.IllegalStateException
+import javax.inject.Inject
 
-//@AndroidEntryPoint
+@AndroidEntryPoint
 class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<DownloadableWebViewModel>() {
 
 //    private val args by navArgs<DownloadableWebViewFragmentArgs>()
 
-    override val viewModel by viewModels<DownloadableWebViewModel>()
+    override val viewModel: DownloadableWebViewModel by viewModels()
 
-    private val downloadsViewModel by activityViewModels<DownloadsViewModel>()
+    private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
 //    @Inject
 //    @DownloaderOkHttpClient
@@ -36,37 +40,36 @@ class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<Downloadable
         }
     }
 
+    override fun handleAlerts(delegate: AlertFragmentDelegate<DownloadableWebViewModel>) {
+        super.handleAlerts(delegate)
+        bindAlertDialog(DownloadableWebViewModel.DIALOG_TAG_SAVE_AS) {
+            val model = it.extraData as? DownloadParamsModel ?: throw IllegalStateException("Extra data for this dialog not specified")
+            val dialogBinding = DialogSaveAsBinding.inflate(LayoutInflater.from(requireContext()))
+            dialogBinding.etFileName.setText(model.fileName)
+            DialogRepresentation.Builder(requireContext(), it)
+                .setCustomView(dialogBinding.root)
+                .setPositiveButton(it.answers[0]) {
+                    val newFileName =  dialogBinding.etFileName.text.toString()
+                    val newSubDirName = dialogBinding.etSubDirName.text.toString()
+                    downloadsViewModel.enqueueDownload(model.copy(
+                        fileName = newFileName.ifEmpty { model.fileName },
+                        subDirName = newSubDirName.ifEmpty { model.subDirName }
+                    ))
+                }
+                .setNegativeButton(it.answers[1])
+                .build()
+        }
+    }
+
     override fun onSetupWebView(webSettings: WebSettings) {
         super.onSetupWebView(webSettings)
-
-        webView.setDownloadListener(object : DownloadListener {
-            override fun onDownloadStart(
-                url: String?,
-                userAgent: String?,
-                contentDisposition: String?,
-                mimetype: String?,
-                contentLength: Long,
-            ) {
-                if (url.isNullOrEmpty()) return
-
-                val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
-                val cookies = CookieManager.getInstance().getCookie(url)
-                val headers = hashMapOf<String, String>()
-                cookies?.takeIf { it.isNotEmpty() }?.let {
-                    headers["cookie"] = cookies
-                }
-                userAgent?.takeIf { it.isNotEmpty() }?.let {
-                    headers["User-Agent"] = it
-                }
-                downloadsViewModel.enqueueDownload(
-                    DownloadParamsModel(
-                        url,
-                        fileName = fileName,
-                        ignoreFileName = true,
-                        headers = headers
-                    )
-                )
-            }
-        })
+        webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+            viewModel.onDownloadStart(
+                url,
+                userAgent,
+                contentDisposition,
+                mimetype,
+            )
+        }
     }
 }

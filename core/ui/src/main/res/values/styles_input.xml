@@ -5,7 +5,7 @@
         <item name="android:textColorHint">?attr/appHintColor</item>
         <item name="hintTextAppearance">@style/AppHintAppearance</item>
         <item name="helperTextTextAppearance">@style/AppHintAppearance</item>
-        <item name="hintTextColor">?attr/appHintColor</item>
+        <item name="hintTextColor">@color/colorAccent</item>
         <item name="errorTextColor">?attr/appErrorColor</item>
 <!--        <item name="boxStrokeColor">?attr/appHintColor</item>-->
         <item name="fontFamily">@font/roboto_regular</item>

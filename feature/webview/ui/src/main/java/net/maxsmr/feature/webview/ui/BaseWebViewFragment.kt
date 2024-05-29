@@ -143,6 +143,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             domStorageEnabled = true
             loadsImagesAutomatically = true
             mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+            loadWithOverviewMode = true
             useWideViewPort = true
             setSupportZoom(true)
             displayZoomControls = false

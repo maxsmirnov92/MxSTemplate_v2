@@ -63,4 +63,6 @@
     <string name="download_menu_action_filter">Filter by name</string>
     <string name="download_menu_action_load_params_from_json">Load params from JSON</string>
     <string name="download_menu_action_open_browser">Open in-app browser</string>
+
+    <string name="download_alert_save_as_title">Save as</string>
 </resources>

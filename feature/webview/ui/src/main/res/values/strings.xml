@@ -5,7 +5,7 @@
     <string name="webview_menu_action_open_url">Open URL</string>
     <string name="webview_menu_action_copy_link">Copy link</string>
     <string name="webview_menu_action_forward">Forward</string>
-    <string name="webview_alert_open_url_message">URL to navigate</string>
+    <string name="webview_alert_open_url_title">URL to navigate</string>
     <string name="webview_alert_open_url_hint">Type URL</string>
     <string name="webview_toast_url_not_valid">@string/url_not_valid_error</string>
 </resources>
