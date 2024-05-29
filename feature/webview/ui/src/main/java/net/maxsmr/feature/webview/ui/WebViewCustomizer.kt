@@ -15,6 +15,7 @@ class WebViewCustomizer private constructor(
     val url: String,
     val data: WebViewDataArgs?,
     val canInputUrls: Boolean,
+    // TODO заменить на отдельные части урлы
     val queryParameters: List<String>,
 ): Serializable {
 

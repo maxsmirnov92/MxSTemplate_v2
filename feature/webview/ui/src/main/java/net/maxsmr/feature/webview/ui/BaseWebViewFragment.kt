@@ -26,8 +26,8 @@ import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.webview.data.client.BaseWebChromeClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
+import net.maxsmr.feature.webview.data.client.exception.EmptyWebResourceException
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
-import net.maxsmr.feature.webview.data.client.exception.WebResourceException.Companion.emptyWebResourceException
 import java.nio.charset.Charset
 
 abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragment<VM>() {
@@ -71,6 +71,13 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         }
         viewModel.currentWebViewData.observe {
             onResourceChanged(it.first, it.second)
+        }
+        viewModel.currentWebViewProgress.observe {
+            if (it != null) {
+                onShowProgress(it)
+            } else {
+                onHideProgress()
+            }
         }
     }
 
@@ -136,6 +143,8 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             domStorageEnabled = true
             loadsImagesAutomatically = true
             mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+            useWideViewPort = true
+            setSupportZoom(true)
             displayZoomControls = false
             defaultTextEncodingName = CHARSET_DEFAULT
         }
@@ -166,7 +175,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         if (!data.isForMainFrame) {
             return
         }
-        viewModel.applyResource(LoadState.error(exception))
+        viewModel.applyResource(LoadState.error(exception, data))
     }
 
     /**
@@ -189,7 +198,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             } else {
                 // в случае успеха (перед ним был loading) предоставляем возможность отдельно проанализировать данные респонса
                 hasResponseError(data)?.let {
-                    LoadState.error(it)
+                    LoadState.error(it, data)
                 } ?: LoadState.success(data)
             }))
         }
@@ -219,12 +228,11 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         if (resource.isLoading) {
             // webview во время загрузки остаётся только при наличии данных
             webView.isVisible = resource.hasData()
-            progress?.isIndeterminate = true
+            progress?.isIndeterminate = viewModel.currentWebViewProgress.value == null
             progress?.isVisible = true
             emptyErrorContainer?.isVisible = false
         } else {
             progress?.isVisible = false
-            progress?.isIndeterminate = false
             if (resource.isSuccessWithData()) {
                 webView.isVisible = true
                 emptyErrorContainer?.isVisible = false
@@ -241,9 +249,6 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
      */
     protected open fun onResourceChanged(resource: LoadState<WebViewData>, isFirst: Boolean) {}
 
-    /**
-     * Подходит для заполняемых баров
-     */
     protected open fun onShowProgress(progress: Int) {
         this.progress?.isIndeterminate = false
         this.progress?.progress = progress
@@ -265,7 +270,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 webView.loadUrl(url)
                 true
             } else {
-                onFirstLoadNotStarted(emptyWebResourceException(url))
+                onFirstLoadNotStarted(EmptyWebResourceException(), url)
                 false
             }.apply {
                 onWebViewReload()
@@ -283,7 +288,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         data: String,
         mimeType: String = FileFormat.HTML.mimeType,
         charset: Charset = Charset.defaultCharset(),
-        forceBase64: Boolean = true
+        forceBase64: Boolean = true,
     ): Boolean {
         logger.d("loadUrl, data: '$data', mimeType: '$mimeType', charset: '$charset', forceBase64: '$forceBase64'")
         with(viewModel) {
@@ -297,7 +302,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 )
                 true
             } else {
-                onFirstLoadNotStarted(emptyWebResourceException(data))
+                onFirstLoadNotStarted(EmptyWebResourceException(), data)
                 false
             }.apply {
                 onWebViewReload()
@@ -326,7 +331,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 )
                 true
             } else {
-                onFirstLoadNotStarted(emptyWebResourceException(data))
+                onFirstLoadNotStarted(EmptyWebResourceException(), data)
                 false
             }.apply {
                 onWebViewReload()
@@ -357,7 +362,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 } else {
                     // пустой запрос также считается ошибкой
                     if (TextUtils.isEmpty(data.responseData)) {
-                        result = emptyWebResourceException(data.url)
+                        result = EmptyWebResourceException()
                     }
                 }
             }
@@ -371,7 +376,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
     private fun setupWebView(savedInstanceState: Bundle?) {
 //        destroyWebView()
         if (isWebViewInitialized) return
-        
+
         logger.d("Setting up WebView...")
         createWebViewClient().let {
             it.onPageStarted = { data ->
@@ -387,11 +392,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         }
         createWebChromeClient()?.let {
             it.onProgressChanged = { progress ->
-                if (progress in 0..99 && viewModel.firstWebViewData.value?.isLoading == true) {
-                    onShowProgress(progress)
-                } else {
-                    onHideProgress()
-                }
+                viewModel.onProgressChanged(progress)
             }
             webView.webChromeClient = it
         }

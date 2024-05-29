@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:padding="10dp">
 
@@ -10,15 +10,12 @@
         android:id="@+id/tilUrl"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/download_url_hint">
+        android:hint="@string/download_field_url_hint">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etUrl"
-            style="@style/InputText"
-            android:ellipsize="end"
-            android:inputType="textUri"
-            android:lines="1"
-            android:maxLines="1" />
+            style="@style/SingleLineInputText"
+            android:inputType="textUri" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -31,12 +28,8 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etFileName"
-            style="@style/InputText"
-            android:layout_marginTop="12dp"
-            android:ellipsize="end"
-            android:inputType="textNoSuggestions"
-            android:lines="1"
-            android:maxLines="1" />
+            style="@style/SingleLineInputText"
+            android:layout_marginTop="12dp" />
 
     </com.google.android.material.textfield.TextInputLayout>
 </LinearLayout>

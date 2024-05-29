@@ -11,5 +11,5 @@ class DownloadBottomActivity : BaseBottomNavigationActivity() {
 
     override val topLevelDestinationIds = setOf(/*R.id.navigationMain,*/ R.id.navigationDownloads, R.id.navigationSettings)
 
-    override val menuResId: Int = R.menu.menu_download
+    override val navigationMenuResId: Int = R.menu.menu_navigation_download
 }

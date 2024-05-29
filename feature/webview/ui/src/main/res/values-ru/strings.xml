@@ -5,7 +5,7 @@
     <string name="webview_menu_action_open_url">Открыть URL</string>
     <string name="webview_menu_action_copy_link">Скопировать ссылку</string>
     <string name="webview_menu_action_forward">Вперёд</string>
-    <string name="webview_alert_open_url_message">Введите URL</string>
-    <string name="webview_alert_open_url_hint">URL для перехода</string>
-    <string name="webview_toast_url_not_valid">URL пустой или некорректный</string>
+    <string name="webview_alert_open_url_message">URL для перехода</string>
+    <string name="webview_alert_open_url_hint">Введите URL</string>
+    <string name="webview_toast_url_not_valid">@string/url_not_valid_error</string>
 </resources>

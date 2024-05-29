@@ -43,7 +43,7 @@
             android:layout_width="26dp"
             android:layout_height="26dp"
             android:scaleType="centerCrop"
-            app:srcCompat="@drawable/ic_clear" />
+            app:srcCompat="@drawable/ic_close_clear_cancel_black_gray" />
 
         <ImageView
             android:id="@+id/ivMore"

@@ -14,7 +14,7 @@
         android:layout_height="16dp"
         android:layout_gravity="end"
         android:scaleType="centerCrop"
-        app:srcCompat="@drawable/ic_close_clear_cancel"
+        app:srcCompat="@drawable/ic_close_clear_cancel_black"
         app:tint="@color/gray_medium" />
 
     <TextView

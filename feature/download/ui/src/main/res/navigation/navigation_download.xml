@@ -11,6 +11,10 @@
         android:label="@string/download_feature_title"
         tools:layout="@layout/fragment_downloads_pager">
 
+        <action
+            android:id="@+id/toWebViewFragment"
+            app:destination="@id/navigationWebView" />
+
     </fragment>
 
     <fragment
@@ -18,6 +22,18 @@
         android:name="net.maxsmr.feature.preferences.ui.SettingsFragment"
         android:label="@string/settings_feature_title"
         tools:layout="@layout/fragment_settings">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigationWebView"
+        android:name="net.maxsmr.feature.download.ui.webview.DownloadableWebViewFragment"
+        android:label="@string/webview_feature_title"
+        tools:layout="@layout/fragment_webview">
+
+        <argument
+            android:name="customizer"
+            app:argType="net.maxsmr.feature.webview.ui.WebViewCustomizer" />
 
     </fragment>
 

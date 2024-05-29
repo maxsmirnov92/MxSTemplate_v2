@@ -7,10 +7,11 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.network.toUrlOrNull
 
-class WebViewModel(state: SavedStateHandle) : BaseWebViewModel(state) {
+abstract class BaseCustomizableWebViewModel(
+    state: SavedStateHandle
+) : BaseWebViewModel(state) {
 
-    var customizer: WebViewCustomizer = WebViewFragmentArgs.fromSavedStateHandle(state).customizer
-        private set
+    abstract var customizer: WebViewCustomizer
 
     fun onOpenUrlAction() {
         showOkDialog(DIALOG_TAG_OPEN_URL, TextMessage(R.string.webview_alert_open_url_message))
@@ -29,7 +30,7 @@ class WebViewModel(state: SavedStateHandle) : BaseWebViewModel(state) {
     fun onCopyLinkAction(context: Context) {
         currentWebViewData.value?.first?.data?.url?.takeIf { it.isNotEmpty() }?.let {
             copyToClipboard(context, "page link", it)
-            showToast(ToastAction(TextMessage(net.maxsmr.core.android.R.string.toast_copied_to_clipboard_message)))
+            showToast(ToastAction(TextMessage(net.maxsmr.core.android.R.string.toast_link_copied_to_clipboard_message)))
         }
     }
 

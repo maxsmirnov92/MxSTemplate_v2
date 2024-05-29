@@ -19,6 +19,7 @@ import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showKeyboard
 import net.maxsmr.commonutils.live.field.observeFromText
+import net.maxsmr.core.android.base.actions.NavigationCommand
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
@@ -35,7 +36,6 @@ import net.maxsmr.feature.download.ui.adapter.HeaderListener
 import net.maxsmr.feature.download.ui.adapter.HeadersAdapter
 import net.maxsmr.feature.download.ui.databinding.FragmentDownloadsParamsBinding
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
-import net.maxsmr.feature.webview.ui.webViewActivityIntent
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -214,12 +214,14 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
                 true
             }
             R.id.action_open_browser -> {
-                startActivity(requireContext().webViewActivityIntent(
-                    WebViewCustomizer.Builder()
-                        .setUrl("https://google.com")
-                        .setCanInputUrls(true)
-                        .build()
-                ))
+                downloadsViewModel.navigate(
+                    NavigationCommand.ToDirectionWithNavDirections(DownloadsPagerFragmentDirections.toWebViewFragment(
+                        WebViewCustomizer.Builder()
+                            .setUrl("https://google.com")
+                            .setCanInputUrls(true)
+                            .build()
+                    ))
+                )
                 true
             }
 

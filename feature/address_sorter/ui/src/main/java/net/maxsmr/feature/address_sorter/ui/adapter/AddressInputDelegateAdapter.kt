@@ -25,11 +25,11 @@ fun addressInputDelegateAdapter(listener: AddressInputListener) =
         ): ArrayAdapter<String> {
             val adapter = SuggestAdapter(
                 context,
-                net.maxsmr.core.ui.R.layout.text_view_dropdown_item_suggest_white,
-                net.maxsmr.core.ui.R.id.item_text_view,
+                net.maxsmr.core.ui.R.layout.item_suggest_dropdown_white,
+                net.maxsmr.core.ui.R.id.tvItemSuggest,
                 onTextChanged
             )
-            adapter.setDropDownViewResource(net.maxsmr.core.ui.R.layout.text_view_dropdown_item_suggest_white)
+            adapter.setDropDownViewResource(net.maxsmr.core.ui.R.layout.item_suggest_dropdown_white)
             setAdapter(adapter)
             threshold = 1
             setDropDownBackgroundResource(net.maxsmr.core.ui.R.drawable.shape_rectangle_white)

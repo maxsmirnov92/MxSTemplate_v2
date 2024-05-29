@@ -86,10 +86,20 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         alertFragmentDelegate = delegate
 
         observeNetworkConnectionHandler()
-        viewModel.handleAlerts(requireContext(), delegate)
-        viewModel.handleEvents(this@BaseVmFragment)
+        handleAlerts(delegate)
+        handleEvents()
 
         onViewCreated(view, savedInstanceState, viewModel)
+    }
+
+    @CallSuper
+    protected open fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
+        viewModel.handleAlerts(requireContext(), delegate)
+    }
+
+    @CallSuper
+    protected open fun handleEvents() {
+        viewModel.handleEvents(this@BaseVmFragment)
     }
 
     @CallSuper

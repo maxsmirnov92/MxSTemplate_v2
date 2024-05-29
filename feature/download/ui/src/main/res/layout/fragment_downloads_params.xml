@@ -20,14 +20,15 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilUrl"
-                style="@style/TextInputOutlinedWithCornersStyle"
+                style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:hint="@string/download_url_hint">
+                tools:hint="@string/download_field_url_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etUrl"
-                    style="@style/DownloadEditTextStyle" />
+                    style="@style/SingleLineInputText"
+                    android:inputType="textUri" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -41,7 +42,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/download_method_name"
+                    android:text="@string/download_field_method_name"
                     android:textAppearance="@style/TextAppearance.AppCompat.Subhead" />
 
                 <androidx.appcompat.widget.AppCompatSpinner
@@ -78,7 +79,7 @@
                     android:layout_height="26dp"
                     android:layout_marginStart="10dp"
                     android:scaleType="centerCrop"
-                    app:srcCompat="@drawable/ic_close_clear_cancel" />
+                    app:srcCompat="@drawable/ic_close_clear_cancel_black" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -112,7 +113,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilFileName"
-                style="@style/TextInputOutlinedWithCornersStyle"
+                style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -120,7 +121,7 @@
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etFileName"
-                    style="@style/DownloadEditTextStyle" />
+                    style="@style/SingleLineInputText" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -134,7 +135,7 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilSubDirName"
-                style="@style/TextInputOutlinedWithCornersStyle"
+                style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -142,13 +143,13 @@
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etSubDirName"
-                    style="@style/DownloadEditTextStyle" />
+                    style="@style/SingleLineInputText" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilTargetHash"
-                style="@style/TextInputOutlinedWithCornersStyle"
+                style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
@@ -156,7 +157,7 @@
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etTargetHash"
-                    style="@style/DownloadEditTextStyle" />
+                    style="@style/SingleLineInputText" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -202,7 +203,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/download_header_name_subtitle"
+                    android:text="@string/download_headers_subtitle"
                     android:textAppearance="@style/TextAppearance.AppCompat.Subhead" />
 
                 <ImageButton
@@ -212,7 +213,7 @@
                     android:layout_height="16dp"
                     android:layout_marginStart="8dp"
                     android:scaleType="centerCrop"
-                    app:srcCompat="@drawable/ic_add" />
+                    app:srcCompat="@drawable/ic_plus_black" />
 
             </LinearLayout>
 

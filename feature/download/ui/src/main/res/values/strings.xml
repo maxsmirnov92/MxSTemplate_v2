@@ -4,9 +4,9 @@
     <string name="download_params_title">Parameters</string>
     <string name="download_state_title">State</string>
 
-    <string name="download_url_hint">URL for loading</string>
-    <string name="download_url_empty_error">URL is empty or not valid</string>
-    <string name="download_method_name">Method</string>
+    <string name="download_field_url_hint">URL for loading</string>
+    <string name="download_field_url_empty_error">@string/url_not_valid_error</string>
+    <string name="download_field_method_name">Method</string>
     <string-array name="download_method_names" translatable="false">
         <item>GET</item>
         <item>POST</item>
@@ -25,7 +25,7 @@
     <string name="download_field_replace_file">Replace existing target file</string>
     <string name="download_field_delete_unfinished">Delete unfinished file</string>
 
-    <string name="download_header_name_subtitle">Headers</string>
+    <string name="download_headers_subtitle">Headers</string>
     <string name="download_field_header_key_hint">Name</string>
     <string name="download_field_header_key_empty_error">Header name cannot be empty</string>
     <string name="download_field_header_value_hint">Value</string>

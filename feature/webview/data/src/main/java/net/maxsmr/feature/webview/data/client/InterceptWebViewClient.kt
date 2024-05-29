@@ -5,8 +5,6 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.text.TextUtils
 import android.webkit.*
 import androidx.annotation.CallSuper
@@ -309,5 +307,16 @@ open class InterceptWebViewClient @JvmOverloads constructor(
         val isForMainFrame: Boolean,
         val response: WebResourceResponse? = null,
         val responseData: String? = null,
-    )
+    ) {
+
+        companion object {
+
+            @JvmStatic
+            fun fromMainUrl(url: String?) = if (!url.isNullOrEmpty()) {
+                WebViewData(url, true, null, null)
+            } else {
+                null
+            }
+        }
+    }
 }

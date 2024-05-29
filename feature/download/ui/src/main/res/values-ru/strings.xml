@@ -4,9 +4,9 @@
     <string name="download_params_title">Параметры</string>
     <string name="download_state_title">Состояние</string>
 
-    <string name="download_url_hint">URL для загрузки</string>
-    <string name="download_url_empty_error">URL пустой или некорректный</string>
-    <string name="download_method_name">Метод</string>
+    <string name="download_field_url_hint">URL для загрузки</string>
+    <string name="download_field_url_empty_error">@string/url_not_valid_error</string>
+    <string name="download_field_method_name">Метод</string>
     <string name="download_field_request_body_empty_text">Файл тела запроса не выбран</string>
     <string name="download_field_request_body_non_required_text">Файл тела запроса не требуется</string>
     <string name="download_field_request_body_empty_error">Тело запроса обязательно</string>
@@ -21,7 +21,7 @@
     <string name="download_field_replace_file">Заменить существующий целевой файл</string>
     <string name="download_field_delete_unfinished">Удалить недокачанный файл</string>
 
-    <string name="download_header_name_subtitle">Заголовки</string>
+    <string name="download_headers_subtitle">Заголовки</string>
     <string name="download_field_header_key_hint">Название</string>
     <string name="download_field_header_key_empty_error">Название заголовка не может быть пустым</string>
     <string name="download_field_header_value_hint">Значение</string>

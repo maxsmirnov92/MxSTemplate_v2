@@ -1,9 +1,11 @@
 package net.maxsmr.core.ui.components.activities
 
 import android.os.Bundle
+import android.view.View
 import androidx.annotation.CallSuper
 import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
+import androidx.annotation.MenuRes
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
@@ -14,6 +16,14 @@ import net.maxsmr.core.ui.R
  * Реализация [BaseNavigationActivity] с DrawerLayout и NavigationView в разметке
  */
 abstract class BaseDrawerNavigationActivity: BaseNavigationActivity() {
+
+    /**
+     * Фрагменты с этими Id из меню должны быть в графе
+     */
+    @get:MenuRes
+    protected abstract val menuResId: Int
+
+    protected abstract val headerView: View?
 
     @LayoutRes
     override val contentViewResId: Int = R.layout.activity_navigation_drawer
@@ -43,6 +53,10 @@ abstract class BaseDrawerNavigationActivity: BaseNavigationActivity() {
 
     @CallSuper
     protected open fun setupNavigationView() {
+        navigationView.inflateMenu(menuResId)
+        headerView?.let {
+            navigationView.addHeaderView(it)
+        }
         navigationView.setupWithNavController(navController)
     }
 }

@@ -85,6 +85,6 @@
         app:backgroundTint="@color/colorAccent"
         app:fabSize="normal"
         app:pressedTranslationZ="12dp"
-        app:srcCompat="@drawable/ic_plus" />
+        app:srcCompat="@drawable/ic_plus_white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

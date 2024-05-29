@@ -21,7 +21,7 @@ abstract class BaseBottomNavigationActivity: BaseNavigationActivity() {
     protected abstract val topLevelDestinationIds: Set<Int>
 
     @get:MenuRes
-    protected abstract val menuResId: Int
+    protected abstract val navigationMenuResId: Int
 
     @LayoutRes
     override val contentViewResId: Int = R.layout.activity_navigation_bottom
@@ -45,7 +45,7 @@ abstract class BaseBottomNavigationActivity: BaseNavigationActivity() {
 
     @CallSuper
     protected open fun setupBottomNavigationView() {
-        bottomNavigationView.inflateMenu(menuResId)
+        bottomNavigationView.inflateMenu(navigationMenuResId)
         bottomNavigationView.setupWithNavController(navController)
     }
 }

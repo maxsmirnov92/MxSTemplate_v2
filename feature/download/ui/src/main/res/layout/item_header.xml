@@ -14,27 +14,27 @@
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilName"
-            style="@style/TextInputOutlinedWithCornersStyle"
+            style="@style/TextInputOutlinedWithCorners"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:hint="@string/download_field_header_key_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etName"
-                style="@style/DownloadEditTextStyle" />
+                style="@style/SingleLineInputText" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilValue"
-            style="@style/TextInputOutlinedWithCornersStyle"
+            style="@style/TextInputOutlinedWithCorners"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:hint="@string/download_field_header_key_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etValue"
-                style="@style/DownloadEditTextStyle" />
+                style="@style/SingleLineInputText" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -58,6 +58,6 @@
         android:layout_centerVertical="true"
         android:layout_marginStart="10dp"
         android:scaleType="centerCrop"
-        app:srcCompat="@drawable/ic_close_clear_cancel" />
+        app:srcCompat="@drawable/ic_close_clear_cancel_black" />
 
 </RelativeLayout>

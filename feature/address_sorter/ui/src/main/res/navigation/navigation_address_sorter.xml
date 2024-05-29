@@ -3,10 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation_address_sorter"
-    app:startDestination="@+id/navigationMain">
+    app:startDestination="@+id/navigationAddressSorter">
 
     <fragment
-        android:id="@+id/navigationMain"
+        android:id="@+id/navigationAddressSorter"
         android:name="net.maxsmr.feature.address_sorter.ui.AddressSorterFragment"
         android:label="@string/address_sorter_feature_title"
         tools:layout="@layout/fragment_address_sorter">

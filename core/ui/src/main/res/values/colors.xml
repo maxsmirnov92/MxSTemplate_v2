@@ -118,6 +118,7 @@
 <!--    #96cbc6-->
     <color name="textColorHighlight">@color/colorControlNormal</color>
     <color name="textColorPrimary">@color/black</color>
+    <color name="textColorSecondary">@color/white</color>
     <color name="textColorDisabled">@color/colorControlDisabled</color>
     <color name="textColorHint">#6d6f70</color>
     <color name="textColorError">#EE3124</color>

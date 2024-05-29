@@ -50,13 +50,13 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     repo: CacheDataStoreRepository,
 ) : BasePostNotificationViewModel(repo, state) {
 
-    val urlField: Field<String> = object:  Field.Builder<String>(EMPTY_STRING) {
+    val urlField: Field<String> = object : Field.Builder<String>(EMPTY_STRING) {
         override fun valueGetter(fieldValue: MutableLiveData<String>): () -> String = {
             fieldValue.value.orEmpty().trim()
         }
     }.emptyIf { it.toUrlOrNull() == null }
-        .setRequired(R.string.download_url_empty_error)
-        .hint(R.string.download_url_hint)
+        .setRequired(R.string.download_field_url_empty_error)
+        .hint(R.string.download_field_url_hint)
         .persist(state, KEY_FIELD_URL)
         .build()
 
@@ -372,7 +372,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         val replaceFile = replaceFileField.value ?: false
         val deleteUnfinished = deleteUnfinishedField.value ?: false
 
-        viewModel.download(
+        viewModel.enqueueDownload(
             DownloadParamsModel(
                 url,
                 method,

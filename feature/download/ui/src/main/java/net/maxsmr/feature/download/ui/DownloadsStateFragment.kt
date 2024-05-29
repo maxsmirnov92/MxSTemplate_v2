@@ -35,16 +35,12 @@ import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.ui.alert.representation.asIndefiniteSnackbar
-import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadService.Companion.getShareAction
 import net.maxsmr.feature.download.data.DownloadService.Companion.getViewAction
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadsViewModel
-import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_CANCEL_ALL
-import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_CLEAR_QUEUE
-import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_RETRY_IF_SUCCESS
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapterData
 import net.maxsmr.feature.download.ui.adapter.DownloadListener
@@ -260,7 +256,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
                                 true
                             ) {
                                 copyToClipboard(requireContext(), "url", params.requestParams.url)
-                                viewModel.showToast(ToastAction(TextMessage(net.maxsmr.core.android.R.string.toast_copied_to_clipboard_message)))
+                                viewModel.showToast(ToastAction(TextMessage(net.maxsmr.core.android.R.string.toast_link_copied_to_clipboard_message)))
                             }
                         )))
                 }

@@ -9,7 +9,5 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:di"))
-
     api(project(":feature:webview:data"))
 }

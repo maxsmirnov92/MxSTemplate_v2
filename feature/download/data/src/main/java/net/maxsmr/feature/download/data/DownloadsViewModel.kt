@@ -33,7 +33,6 @@ import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.Status
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.actions.SnackbarAction
-import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.database.model.download.DownloadInfo
@@ -60,7 +59,7 @@ import javax.inject.Inject
  * Базовая VM, служит как прокси для старта [DownloadService] и наблюдения за результатом в UI в
  * случае необходимости.
  *
- * Запоминает текущие запросы загрузки (см. [download]) и позволяет получить по ним статус или
+ * Запоминает текущие запросы загрузки (см. [enqueueDownload]) и позволяет получить по ним статус или
  * ошибку, которую может устранить юзер (см. [recoverableExceptions]), предоставив разрешение на доступ.
  */
 @HiltViewModel
@@ -179,14 +178,14 @@ class DownloadsViewModel @Inject constructor(
         }
     }
 
-    fun download(paramsModel: DownloadParamsModel) {
-        download(paramsModel.toParams())
+    fun enqueueDownload(paramsModel: DownloadParamsModel) {
+        enqueueDownload(paramsModel.toParams())
     }
 
     /**
      * Стартует загрузку ресурса с параметрами [params]
      */
-    fun download(params: DownloadService.Params) {
+    fun enqueueDownload(params: DownloadService.Params) {
         downloadManager.enqueueDownload(params)
     }
 
@@ -268,9 +267,10 @@ class DownloadsViewModel @Inject constructor(
             }
             .map {
                 when (it.downloadInfo.status) {
-                    is DownloadInfo.Status.Loading -> LoadState.loading()
+                    is DownloadInfo.Status.Loading -> LoadState.loading(it)
                     is DownloadInfo.Status.Error -> LoadState.error(
-                        it.downloadInfo.statusAsError?.reason ?: RuntimeException()
+                        it.downloadInfo.statusAsError?.reason ?: RuntimeException(),
+                        it
                     )
 
                     is DownloadInfo.Status.Success -> LoadState.success<DownloadInfoWithUri>(it)

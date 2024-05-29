@@ -11,6 +11,21 @@
         <item name="fontFamily">@font/roboto_regular</item>
     </style>
 
+    <style name="TextInputOutlinedWithCorners" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <!--        <item name="boxBackgroundColor">#f0f5fa</item>-->
+        <!--        <item name="boxStrokeColor">@color/colorPrimary</item>-->
+        <!--        <item name="boxStrokeWidth">0dp</item>-->
+        <!--        <item name="boxStrokeWidthFocused">0dp</item>-->
+        <!--        <item name="boxBackgroundMode">filled</item>-->
+        <!--        <item name="android:background">#f0f5fa</item>-->
+        <item name="boxCornerRadiusBottomEnd">@dimen/textInputCornersRadius</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/textInputCornersRadius</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/textInputCornersRadius</item>
+        <item name="boxCornerRadiusTopStart">@dimen/textInputCornersRadius</item>
+        <item name="cursorColor">?attr/colorAccent</item>
+        <item name="cursorErrorColor">@color/textColorError</item>
+    </style>
+
     <style name="AppEditText" parent="Widget.AppCompat.EditText">
         <item name="android:textColor">?attr/appEditTextColor</item>
         <item name="android:textCursorDrawable">@drawable/shape_cursor_accent</item>
@@ -29,19 +44,16 @@
         <item name="android:textSize">@dimen/textSizeExtraLarge</item>
     </style>
 
-    <style name="TextInputOutlinedWithCornersStyle" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-<!--        <item name="boxBackgroundColor">#f0f5fa</item>-->
-<!--        <item name="boxStrokeColor">@color/colorPrimary</item>-->
-<!--        <item name="boxStrokeWidth">0dp</item>-->
-<!--        <item name="boxStrokeWidthFocused">0dp</item>-->
-<!--        <item name="boxBackgroundMode">filled</item>-->
-<!--        <item name="android:background">#f0f5fa</item>-->
-        <item name="boxCornerRadiusBottomEnd">@dimen/textInputCornersRadius</item>
-        <item name="boxCornerRadiusBottomStart">@dimen/textInputCornersRadius</item>
-        <item name="boxCornerRadiusTopEnd">@dimen/textInputCornersRadius</item>
-        <item name="boxCornerRadiusTopStart">@dimen/textInputCornersRadius</item>
-        <item name="cursorColor">?attr/colorAccent</item>
-        <item name="cursorErrorColor">@color/textColorError</item>
+    <style name="SingleLineInputText" parent="InputText">
+        <item name="android:ellipsize">end</item>
+        <item name="android:inputType">textNoSuggestions</item>
+        <item name="android:lines">1</item>
+        <item name="android:maxLines">1</item>
+        <!--        <item name="android:background">@drawable/selector_background_edit_text</item>-->
+    </style>
+
+    <style name="SingleLineInputText.Large">
+        <item name="android:textSize">@dimen/textSizeExtraLarge</item>
     </style>
 
 </resources>

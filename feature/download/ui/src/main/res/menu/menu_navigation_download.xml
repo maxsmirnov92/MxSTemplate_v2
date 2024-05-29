@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <!--        <item-->
-    <!--            android:id="@+id/navigationMain"-->
-    <!--            android:title="@string/title_main" />-->
     <item
         android:id="@+id/navigationDownloads"
         android:icon="@drawable/ic_download"

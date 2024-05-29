@@ -25,7 +25,7 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
     @get:NavigationRes
     protected abstract val navigationGraphResId: Int
 
-    protected open val startDestinationArgs: Bundle? = null
+    protected open val startDestinationArgs: Bundle? get() = intent?.extras
 
     @LayoutRes
     protected open val contentViewResId: Int = R.layout.activity_navigation

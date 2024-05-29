@@ -27,6 +27,10 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
 
     val currentWebViewData = _currentWebViewData as LiveData<Pair<LoadState<WebViewData>, Boolean>>
 
+    val _currentWebViewProgress = MutableLiveData<Int?>(null)
+
+    val currentWebViewProgress = _currentWebViewProgress as LiveData<Int?>
+
     /**
      * Был ли выставлен завершённый [_firstWebViewData]
      * с момента создания [BaseWebViewModel]
@@ -64,7 +68,15 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
         }
     }
 
-    fun onFirstLoadNotStarted(exception: WebResourceException) {
-        _firstWebViewData.value = LoadState.error(exception)
+    fun onFirstLoadNotStarted(exception: WebResourceException, url: String) {
+        _firstWebViewData.value = LoadState.error(exception, WebViewData.fromMainUrl(url))
+    }
+
+    fun onProgressChanged(progress: Int) {
+        _currentWebViewProgress.value = if (progress in 0..99 /*&& firstWebViewData.value?.isLoading == true*/) {
+            progress
+        } else {
+            null
+        }
     }
 }
