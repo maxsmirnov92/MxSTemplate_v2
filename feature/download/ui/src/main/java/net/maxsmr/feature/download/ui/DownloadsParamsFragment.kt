@@ -19,7 +19,7 @@ import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showKeyboard
 import net.maxsmr.commonutils.live.field.observeFromText
-import net.maxsmr.core.android.base.actions.NavigationCommand
+import net.maxsmr.core.android.base.actions.NavigationAction.NavigationCommand
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker

@@ -12,12 +12,15 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.getLocationSettingsIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.asDispatcher
+import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.android.location.LocationCallback
 import net.maxsmr.core.android.location.receiver.ILocationReceiver
 import net.maxsmr.core.android.location.receiver.LocationParams
@@ -37,7 +40,9 @@ class LocationViewModel @AssistedInject constructor(
     private val _currentLocation: MutableLiveData<Location?> = MutableLiveData()
     val currentLocation: LiveData<Location?> = _currentLocation
 
-    private val navigateToLocationSettings: MutableLiveData<VmEvent<Unit>> = MutableLiveData()
+    private val _navigateToLocationSettings = MutableStateFlow<VmEvent<Unit>?>(null)
+
+    val navigateToLocationSettings = _navigateToLocationSettings.asStateFlow()
 
     private val locationThread: HandlerThread = HandlerThread("LocationHandlerThread")
 
@@ -93,7 +98,9 @@ class LocationViewModel @AssistedInject constructor(
 
     override fun handleEvents(fragment: BaseVmFragment<*>) {
         super.handleEvents(fragment)
-        navigateToLocationSettings.observeEvents(fragment.viewLifecycleOwner) { fragment.startActivity(getLocationSettingsIntent()) }
+        navigateToLocationSettings.collectEventsWithOwner(fragment.viewLifecycleOwner) {
+            fragment.startActivity(getLocationSettingsIntent())
+        }
     }
 
     fun getLastKnownLocation(isGpsOnly: Boolean): Location? {
@@ -133,7 +140,7 @@ class LocationViewModel @AssistedInject constructor(
     }
 
     private fun navigateToLocationSettings() {
-        navigateToLocationSettings.postValue(VmEvent(Unit))
+        _navigateToLocationSettings.tryEmit(VmEvent(Unit))
     }
 
     fun hasGpsPermissions(fragment: BaseVmFragment<*>, requireFineLocation: Boolean): Boolean {

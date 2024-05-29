@@ -362,7 +362,7 @@ class DownloadService : Service() {
 
                 override fun notify(currentBytes: Long, totalBytes: Long, done: Boolean, startTime: Long) {
                     super.notify(currentBytes, totalBytes, done, startTime)
-                    logger.d("$type: notify, currentBytes=$currentBytes, totalBytes=$totalBytes, done=$done, startTime=$startTime")
+//                    logger.d("$type: notify, currentBytes=$currentBytes, totalBytes=$totalBytes, done=$done, startTime=$startTime")
                     if (done) {
                         logger.d("$type: done")
                     }

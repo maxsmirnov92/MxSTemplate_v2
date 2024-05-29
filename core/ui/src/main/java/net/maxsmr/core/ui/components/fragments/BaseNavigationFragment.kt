@@ -5,16 +5,12 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.annotation.CallSuper
-import androidx.annotation.MainThread
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
-import androidx.navigation.NavArgs
-import androidx.navigation.NavArgsLazy
 import androidx.navigation.fragment.findNavController
-import net.maxsmr.core.android.base.actions.NavigationCommand
+import net.maxsmr.core.android.base.actions.NavigationAction
+import net.maxsmr.core.android.base.actions.NavigationAction.NavigationCommand
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
-import kotlin.reflect.KClass
 
 
 interface INavigationHost {
@@ -91,31 +87,34 @@ abstract class BaseNavigationFragment<VM : BaseHandleableViewModel> : BaseMenuFr
         }
     }
 
+    class NavigationActorImpl(private val fragment: BaseNavigationFragment<*>) : NavigationAction.INavigationActor {
+
+        override fun doNavigate(command: NavigationCommand) {
+            when (command) {
+                is NavigationCommand.ToDirectionWithNavDirections -> fragment.findNavController().navigate(
+                    command.directions.actionId,
+                    command.directions.arguments,
+                    command.navOptions,
+                    command.navigatorExtras,
+                )
+                is NavigationCommand.ToDirectionWithRoute -> fragment.findNavController().navigate(
+                    command.route,
+                    command.navOptions,
+                    command.navigatorExtras,
+                )
+                is NavigationCommand.Back -> {
+                    fragment.navigateUp()
+                }
+                else -> {
+                    throw IllegalArgumentException("Unknown command: $command")
+                }
+            }
+        }
+    }
+
     companion object {
 
         private const val KEY_FRAGMENT_RESULT = "result"
 
-        @JvmStatic
-        fun BaseNavigationFragment<*>.handleNavigation(navCommand: NavigationCommand) {
-            when (navCommand) {
-                is NavigationCommand.ToDirectionWithNavDirections -> findNavController().navigate(
-                    navCommand.directions.actionId,
-                    navCommand.directions.arguments,
-                    navCommand.navOptions,
-                    navCommand.navigatorExtras,
-                )
-                is NavigationCommand.ToDirectionWithRoute -> findNavController().navigate(
-                    navCommand.route,
-                    navCommand.navOptions,
-                    navCommand.navigatorExtras,
-                )
-                is NavigationCommand.Back -> {
-                    navigateUp()
-                }
-                else -> {
-                    throw IllegalArgumentException("Unknown navCommand: $navCommand")
-                }
-            }
-        }
     }
 }

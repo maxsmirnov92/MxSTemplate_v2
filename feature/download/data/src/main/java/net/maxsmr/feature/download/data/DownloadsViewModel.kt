@@ -18,6 +18,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -84,17 +85,12 @@ class DownloadsViewModel @Inject constructor(
         downloadRepo.getIntentSenderListFiltered(list.map { it.name }).asLiveData()
     }
 
-    private val failedStartParamsEvent = MutableLiveData<VmEvent<DownloadService.Params>>()
+    private val failedStartParamsEvent = MutableStateFlow<VmEvent<DownloadService.Params>?>(null)
 
     override fun onInitialized() {
         super.onInitialized()
         viewModelScope.launch {
-            downloadManager.failedStartParamsEvent.collect {
-                failedStartParamsEvent.postValue(VmEvent(it))
-            }
-        }
-        viewModelScope.launch {
-            downloadManager.successAddedToQueueEvent.collect {
+            downloadManager.successAddedToQueueEvents.collect {
                 it.targetResourceName.takeIf { it.isNotEmpty() }?.let { name ->
                     showSnackbar(
                         SnackbarAction(
@@ -108,7 +104,7 @@ class DownloadsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            downloadManager.failedAddedToQueueEvent.collect {
+            downloadManager.failedAddedToQueueEvents.collect {
                 val name = it.first.targetResourceName
                 val reason = TextMessage.ResArg(
                     when (it.second) {
@@ -140,12 +136,17 @@ class DownloadsViewModel @Inject constructor(
                 }
             }
         }
-        failedStartParamsEvent.observeEvents {
-            showOkDialog(DIALOG_TAG_FAILED_START,
-                TextMessage(
-                R.string.download_alert_failed_start_message_format,
-                it.targetResourceName
-            ))
+        viewModelScope.launch {
+            downloadManager.failedStartParamsEvents.collect {
+                showOkDialog(
+                    DIALOG_TAG_FAILED_START,
+                    TextMessage(
+                        R.string.download_alert_failed_start_message_format,
+                        it.targetResourceName
+                    ),
+                    TextMessage(R.string.download_alert_failed_start_title)
+                )
+            }
         }
     }
 

@@ -12,12 +12,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.getAppSettingsIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
@@ -31,6 +29,9 @@ import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.content.pick.ContentPicker
+import net.maxsmr.core.android.coroutines.collectEventsWithOwner
+import net.maxsmr.core.android.coroutines.collectWithOwner
+import net.maxsmr.core.android.coroutines.collectFlowSafely
 import net.maxsmr.core.android.permissions.formatDeniedPermissionsMessage
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
@@ -186,29 +187,25 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         )
     }
 
-    protected fun <T : Any> Flow<T>.collect(
+    protected inline fun <T : Any> Flow<T>.collect(
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
-        action: suspend (value: T) -> Unit,
+        crossinline action: (value: T) -> Unit,
     ) {
-        collectFlowSafely(lifecycleState) { this.collectLatest { action(it) } }
+        collectWithOwner(viewLifecycleOwner, lifecycleState, action)
     }
 
-    protected fun <T : Any> Flow<PagingData<T>>.collectPaging(
+    protected inline fun <T : Any> StateFlow<VmEvent<T>?>.collectEvent(
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
-        action: suspend (value: PagingData<T>) -> Unit,
+        crossinline action: (value: T) -> Unit,
     ) {
-        collectFlowSafely(lifecycleState) { this.collectLatest { action(it) } }
+        collectEventsWithOwner(viewLifecycleOwner, lifecycleState, action)
     }
 
-    private fun collectFlowSafely(
-        lifecycleState: Lifecycle.State,
-        collect: suspend () -> Unit,
+    protected inline fun <T : Any> Flow<PagingData<T>>.collectPaging(
+        lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
+        crossinline action: (value: PagingData<T>) -> Unit,
     ) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(lifecycleState) {
-                collect()
-            }
-        }
+        collectFlowSafely(viewLifecycleOwner, lifecycleState) { this.collectLatest { action(it) } }
     }
 
     private fun observeNetworkConnectionHandler() {

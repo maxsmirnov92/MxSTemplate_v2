@@ -21,7 +21,8 @@
     <string name="download_failed_add_to_queue_reason_not_valid">некорректные параметры</string>
     <string name="download_failed_add_to_queue_reason_already_added">уже в очереди</string>
     <string name="download_failed_add_to_queue_reason_already_loading">уже загружается</string>
-    <string name="download_alert_failed_start_message_format">Не удалось запустить сервис для загрузки файла %s</string>
+    <string name="download_alert_failed_start_title">Не удалось запустить сервис</string>
+    <string name="download_alert_failed_start_message_format">Для загрузки файла \"%s\".\n(Приложение было свёрнуто?)</string>
     <string name="download_snackbar_no_valid_params">Отсутствуют корректные параметры</string>
     <string name="download_error">Ошибка при загрузке файла</string>
 

@@ -41,13 +41,11 @@ import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading.Type
 import net.maxsmr.feature.download.data.DownloadsRepo
 import net.maxsmr.feature.preferences.data.domain.AppSettings
-import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.File
 import java.io.InterruptedIOException
 import java.io.Serializable
 import java.net.SocketException
-import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -103,18 +101,18 @@ class DownloadManager @Inject constructor(
 
     val resultItems = _resultItems.asStateFlow()
 
-    private val _failedStartParamsEvent = MutableSharedFlow<DownloadService.Params>()
+    private val _failedStartParamsEvents = MutableSharedFlow<DownloadService.Params>()
 
-    val failedStartParamsEvent: SharedFlow<DownloadService.Params> = _failedStartParamsEvent.asSharedFlow()
+    val failedStartParamsEvents: SharedFlow<DownloadService.Params> = _failedStartParamsEvents.asSharedFlow()
 
-    private val _successAddedToQueueEvent = MutableSharedFlow<DownloadService.Params>()
+    private val _successAddedToQueueEvents = MutableSharedFlow<DownloadService.Params>()
 
-    val successAddedToQueueEvent: SharedFlow<DownloadService.Params> = _successAddedToQueueEvent.asSharedFlow()
+    val successAddedToQueueEvents: SharedFlow<DownloadService.Params> = _successAddedToQueueEvents.asSharedFlow()
 
-    private val _failedAddedToQueueEvent = MutableSharedFlow<Pair<DownloadService.Params, FailAddReason>>()
+    private val _failedAddedToQueueEvents = MutableSharedFlow<Pair<DownloadService.Params, FailAddReason>>()
 
-    val failedAddedToQueueEvent: SharedFlow<Pair<DownloadService.Params, FailAddReason>> =
-        _failedAddedToQueueEvent.asSharedFlow()
+    val failedAddedToQueueEvents: SharedFlow<Pair<DownloadService.Params, FailAddReason>> =
+        _failedAddedToQueueEvents.asSharedFlow()
 
     private var settings = AppSettings()
 
@@ -481,10 +479,10 @@ class DownloadManager @Inject constructor(
             downloadsPendingQueue.appendToSet(item)
             downloadsPendingStorage.addItem(item)
 
-            _successAddedToQueueEvent.emit(actualParams)
+            _successAddedToQueueEvents.emit(actualParams)
         } finally {
             failReason?.let {
-                _failedAddedToQueueEvent.emit(Pair(actualParams, it))
+                _failedAddedToQueueEvents.emit(Pair(actualParams, it))
             }
         }
     }
@@ -576,7 +574,7 @@ class DownloadManager @Inject constructor(
                 if (!DownloadService.start(item.params)) {
                     // при размере буфера 0 и BufferOverflow.SUSPEND tryEmit не сработает
                     logger.e("DownloadService start failed with item $item")
-                    _failedStartParamsEvent.emit(item.params)
+                    _failedStartParamsEvents.emit(item.params)
                 } else {
                     // т.к. статус в таблице после start не успеет смениться на loading сразу
                     // (onDownloadStarting в корутине),

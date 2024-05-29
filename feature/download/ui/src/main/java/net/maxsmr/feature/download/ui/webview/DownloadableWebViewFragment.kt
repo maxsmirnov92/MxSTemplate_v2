@@ -32,7 +32,7 @@ class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<Downloadable
         super.onViewCreated(view, savedInstanceState, viewModel)
         with(downloadsViewModel) {
             handleAlerts(requireContext(), AlertFragmentDelegate(this@DownloadableWebViewFragment, this))
-            handleEvents()
+            handleEvents(this@DownloadableWebViewFragment)
         }
     }
 

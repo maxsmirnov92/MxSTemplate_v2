@@ -5,6 +5,10 @@ import android.os.Looper
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
 import androidx.lifecycle.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.doOnNext
 import net.maxsmr.commonutils.live.event.VmEvent
@@ -13,7 +17,8 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.core.android.R
 import net.maxsmr.core.android.base.BaseViewModel.*
-import net.maxsmr.core.android.base.actions.NavigationCommand
+import net.maxsmr.core.android.base.actions.NavigationAction
+import net.maxsmr.core.android.base.actions.NavigationAction.NavigationCommand
 import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.alert.Alert
@@ -56,17 +61,20 @@ abstract class BaseViewModel(
      * привязанного к NavHostFragment,
      * в котором имеется данный [BaseNavigationFragment], кто будет обозревать ивенты
      */
-    private val _navigationCommands: MutableLiveData<VmEvent<NavigationCommand>> = MutableLiveData()
+    private val _navigationCommands = MutableStateFlow<VmEvent<NavigationAction>?>(null)
 
-    val navigationCommands = _navigationCommands as LiveData<VmEvent<NavigationCommand>>
+    val navigationCommands = _navigationCommands.asStateFlow()
 
-    private val _toastCommands: MutableLiveData<VmEvent<ToastAction>> = MutableLiveData()
+    private val _toastCommands = MutableStateFlow<VmEvent<ToastAction>?>(null)
 
-    val toastCommands = _toastCommands as LiveData<VmEvent<ToastAction>>
+    val toastCommands = _toastCommands.asStateFlow()
 
-    private val _snackbarCommands: MutableLiveData<VmEvent<SnackbarAction>> = MutableLiveData()
+    private val _snackbarCommands = MutableStateFlow<VmEvent<SnackbarAction>?>(null)
 
-    val snackbarCommands = _snackbarCommands as LiveData<VmEvent<SnackbarAction>>
+    val snackbarCommands = _snackbarCommands.asStateFlow()
+
+    // MutableStateFlow подходит лучше, чем MutableSharedFlow, т.к. гарантированно будет хранить последнее значение;
+    // в то время как tryEmit у MutableSharedFlow может не сработать при переполнении буфера, т.к. не является suspend-функцией
 
     /**
      * Очередь для показа диалогов
@@ -216,19 +224,23 @@ abstract class BaseViewModel(
     }
 
     fun navigate(command: NavigationCommand.ToDirection) {
-        _navigationCommands.postValue(VmEvent(command))
+        _navigationCommands.tryEmit(VmEvent(NavigationAction(command)))
+    }
+
+    fun navigate(command: NavigationCommand.ToDirectionWithNavDirections) {
+        _navigationCommands.tryEmit(VmEvent(NavigationAction(command)))
     }
 
     fun navigateBack() {
-        _navigationCommands.postValue(VmEvent(NavigationCommand.Back))
+        _navigationCommands.tryEmit(VmEvent(NavigationAction(NavigationCommand.Back)))
     }
 
     fun showToast(action: ToastAction) {
-        _toastCommands.postValue(VmEvent(action))
+        _toastCommands.tryEmit(VmEvent(action))
     }
 
     fun showSnackbar(action: SnackbarAction) {
-        _snackbarCommands.postValue(VmEvent(action))
+        _snackbarCommands.tryEmit(VmEvent(action))
     }
 
     fun onPickerResultError(error: PickResult.Error) {
@@ -271,6 +283,7 @@ abstract class BaseViewModel(
         return observer
     }
 
+    @Deprecated("use MutableStateFlow with VmEvent or MutableSharedFlow")
     @JvmOverloads
     inline fun <T> LiveData<VmEvent<T>>.observeEvents(
         owner: LifecycleOwner = this@BaseViewModel,
