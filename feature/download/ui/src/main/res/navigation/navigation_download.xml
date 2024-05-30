@@ -12,8 +12,12 @@
         tools:layout="@layout/fragment_downloads_pager">
 
         <action
-            android:id="@+id/toWebViewFragment"
-            app:destination="@id/navigationWebView" />
+            android:id="@+id/actionToWebViewFragment"
+            app:destination="@id/navigationWebView"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out" />
 
     </fragment>
 

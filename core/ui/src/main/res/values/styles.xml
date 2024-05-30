@@ -44,8 +44,8 @@
     </style>
 
     <style name="PopupAnimationStyle">
-        <item name="android:windowEnterAnimation">@anim/anim_window_in</item>
-        <item name="android:windowExitAnimation">@anim/anim_window_out</item>
+        <item name="android:windowEnterAnimation">@anim/window_in</item>
+        <item name="android:windowExitAnimation">@anim/window_out</item>
     </style>
 
     <style name="AppSearchViewStyle" parent="Widget.AppCompat.SearchView">

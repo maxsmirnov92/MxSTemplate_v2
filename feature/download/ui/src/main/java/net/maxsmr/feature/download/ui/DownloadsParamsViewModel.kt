@@ -340,7 +340,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         viewModelScope.launch {
             viewModel.navigate(
                 NavigationAction.NavigationCommand.ToDirectionWithNavDirections(
-                    DownloadsPagerFragmentDirections.toWebViewFragment(
+                    DownloadsPagerFragmentDirections.actionToWebViewFragment(
                         WebViewCustomizer.Builder()
                             .setUrl(settingsRepo.getSettings().startPageUrl)
                             .setCanInputUrls(true)
