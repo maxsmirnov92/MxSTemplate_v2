@@ -1,4 +1,4 @@
-package net.maxsmr.core.ui
+package net.maxsmr.core.ui.fields
 
 import android.widget.CompoundButton
 import androidx.annotation.StringRes

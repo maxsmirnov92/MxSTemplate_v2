@@ -27,12 +27,12 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
 
     val currentWebViewData = _currentWebViewData as LiveData<Pair<LoadState<WebViewData>, Boolean>>
 
-    val _currentWebViewProgress = MutableLiveData<Int?>(null)
+    private val _currentWebViewProgress = MutableLiveData<Int?>(null)
 
     val currentWebViewProgress = _currentWebViewProgress as LiveData<Int?>
 
     /**
-     * Был ли выставлен завершённый [_firstWebViewData]
+     * Был ли выставлен завершённый [firstWebViewData]
      * с момента создания [BaseWebViewModel]
      */
     protected var isFirstResourceChanged = false

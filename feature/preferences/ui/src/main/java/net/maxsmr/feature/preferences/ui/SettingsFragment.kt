@@ -7,23 +7,21 @@ import android.view.MenuItem
 import android.view.View
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.viewModels
-import androidx.navigation.NavArgs
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.conversion.toIntNotNull
 import net.maxsmr.commonutils.conversion.toLongNotNull
-import net.maxsmr.commonutils.conversion.toLongOrNull
 import net.maxsmr.commonutils.gui.bindTo
+import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.live.field.observeFrom
+import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.viewBinding
-import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
-import net.maxsmr.core.ui.bindHintError
-import net.maxsmr.core.ui.bindValue
+import net.maxsmr.core.ui.fields.bindHintError
+import net.maxsmr.core.ui.fields.bindValue
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.toggleFieldState
+import net.maxsmr.core.ui.fields.toggleFieldState
 import net.maxsmr.feature.preferences.ui.databinding.FragmentSettingsBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
-import kotlin.reflect.KClass
 
 @AndroidEntryPoint
 class SettingsFragment: BaseNavigationFragment<SettingsViewModel>() {
@@ -86,6 +84,10 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel>() {
             it.value.toString()
         }
         viewModel.updateNotificationIntervalStateField.bindHintError(viewLifecycleOwner, binding.tilUpdateNotificationInterval)
+
+        binding.etStartPageUrl.bindToTextNotNull(viewModel.startPageUrlField)
+        viewModel.startPageUrlField.observeFromText(binding.etStartPageUrl, viewLifecycleOwner)
+        viewModel.startPageUrlField.bindHintError(viewLifecycleOwner, binding.tilStartPageUrl)
 
         viewModel.hasChanges.observe {
             refreshSaveMenuItem(it)

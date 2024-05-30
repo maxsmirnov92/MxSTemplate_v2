@@ -5,7 +5,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
@@ -14,11 +13,13 @@ import net.maxsmr.commonutils.live.field.validateAndSetByRequired
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableValue
-import net.maxsmr.core.ui.LongFieldState
+import net.maxsmr.core.android.network.URL_PAGE_BLANK
+import net.maxsmr.core.ui.fields.LongFieldState
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
-import net.maxsmr.core.ui.toggleRequiredFieldState
+import net.maxsmr.core.ui.fields.toggleRequiredFieldState
+import net.maxsmr.core.ui.fields.urlField
 import net.maxsmr.feature.preferences.data.domain.AppSettings
 import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
@@ -32,9 +33,8 @@ class SettingsViewModel @Inject constructor(
 
     val maxDownloadsField: Field<Int> = Field.Builder(0)
         .emptyIf { false }
-        .setRequired(net.maxsmr.core.ui.R.string.field_error_empty)
-        .validators(Field.Validator(net.maxsmr.core.ui.R.string.field_error_value_zero) {
-            it > 0
+        .validators(Field.Validator(net.maxsmr.core.ui.R.string.field_error_value_negative) {
+            it >= 0
         })
         .hint(R.string.settings_field_max_downloads_hint)
         .persist(state, KEY_FIELD_MAX_DOWNLOADS)
@@ -42,7 +42,6 @@ class SettingsViewModel @Inject constructor(
 
     val connectTimeoutField: Field<Long> = Field.Builder(0L)
         .emptyIf { false }
-        .setRequired(net.maxsmr.core.ui.R.string.field_error_empty)
         .validators(Field.Validator({
             return@Validator TextMessage(net.maxsmr.core.ui.R.string.field_error_value_negative)
         }) {
@@ -54,21 +53,21 @@ class SettingsViewModel @Inject constructor(
 
     val retryDownloadsField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
-        .setRequired(net.maxsmr.core.ui.R.string.field_error_empty)
         .persist(state, KEY_FIELD_RETRY_DOWNLOADS)
         .build()
 
     val disableNotificationsField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
-        .setRequired(net.maxsmr.core.ui.R.string.field_error_empty)
         .persist(state, KEY_FIELD_DISABLE_NOTIFICATIONS)
         .build()
 
     val updateNotificationIntervalStateField: Field<LongFieldState> = Field.Builder(LongFieldState(0))
         .emptyIf { false }
-        .setRequired(net.maxsmr.core.ui.R.string.field_error_empty)
         .validators(Field.Validator({
-            return@Validator TextMessage(net.maxsmr.core.ui.R.string.field_error_value_more_or_equal_format, UPDATE_NOTIFICATION_INTERVAL_MIN)
+            return@Validator TextMessage(
+                net.maxsmr.core.ui.R.string.field_error_value_more_or_equal_format,
+                UPDATE_NOTIFICATION_INTERVAL_MIN
+            )
         }) {
             it.value >= UPDATE_NOTIFICATION_INTERVAL_MIN
         })
@@ -76,8 +75,21 @@ class SettingsViewModel @Inject constructor(
         .persist(state, KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE)
         .build()
 
+    val startPageUrlField = state.urlField(
+        R.string.settings_field_start_page_url_hint,
+        isRequired = false,
+        isValidByBlank = true
+    )
+
     private val allFields =
-        listOf<Field<*>>(maxDownloadsField, connectTimeoutField, retryDownloadsField, disableNotificationsField, updateNotificationIntervalStateField)
+        listOf<Field<*>>(
+            maxDownloadsField,
+            connectTimeoutField,
+            retryDownloadsField,
+            disableNotificationsField,
+            updateNotificationIntervalStateField,
+            startPageUrlField
+        )
 
     private val appSettings by persistableLiveData<AppSettings>()
 
@@ -93,7 +105,7 @@ class SettingsViewModel @Inject constructor(
         super.onInitialized()
         if (initialSettings == null) {
             viewModelScope.launch {
-                val settings = repository.settings.firstOrNull() ?: AppSettings()
+                val settings = repository.getSettings()
                 initialSettings = settings
                 appSettings.value = settings
                 restoreFields(settings)
@@ -124,6 +136,9 @@ class SettingsViewModel @Inject constructor(
         updateNotificationIntervalStateField.clearErrorOnChange(this) {
             appSettings.value = currentAppSettings.copy(updateNotificationInterval = it.value)
         }
+        startPageUrlField.clearErrorOnChange(this) {
+            appSettings.value = currentAppSettings.copy(startPageUrl = it)
+        }
     }
 
     override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
@@ -134,16 +149,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun saveChanges() {
-
-        fun <D> Field<D>.getIfRequired(): D? {
-            return if (required) {
-                value
-            } else {
-                null
-            }
-        }
-
-        if (!allFields.validateAndSetByRequired(false)) {
+        if (!allFields.validateAndSetByRequired()) {
             return
         }
         viewModelScope.launch {
@@ -151,12 +157,13 @@ class SettingsViewModel @Inject constructor(
                 val initialSettings = initialSettings ?: AppSettings()
                 repository.updateSettings(
                     AppSettings(
-                        maxDownloadsField.getIfRequired() ?: initialSettings.maxDownloads,
-                        connectTimeoutField.getIfRequired() ?: initialSettings.connectTimeout,
-                        disableNotificationsField.getIfRequired() ?: initialSettings.disableNotifications,
-                        retryDownloadsField.getIfRequired() ?: initialSettings.retryDownloads,
-                        updateNotificationIntervalStateField.getIfRequired()?.value
-                            ?: initialSettings.updateNotificationInterval
+                        maxDownloadsField.value ?: initialSettings.maxDownloads,
+                        connectTimeoutField.value ?: initialSettings.connectTimeout,
+                        disableNotificationsField.value ?: initialSettings.disableNotifications,
+                        retryDownloadsField.value ?: initialSettings.retryDownloads,
+                        updateNotificationIntervalStateField.value?.value
+                            ?: initialSettings.updateNotificationInterval,
+                        startPageUrlField.value?.takeIf { it.isNotEmpty() } ?: URL_PAGE_BLANK
                     )
                 )
             }
@@ -191,6 +198,7 @@ class SettingsViewModel @Inject constructor(
         disableNotificationsField.value = settings.disableNotifications
         updateNotificationIntervalStateField.value =
             LongFieldState(settings.updateNotificationInterval, !settings.disableNotifications)
+        startPageUrlField.value = settings.startPageUrl
     }
 
     companion object {

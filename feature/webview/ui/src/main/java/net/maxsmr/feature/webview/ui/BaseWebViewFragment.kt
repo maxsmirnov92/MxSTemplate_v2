@@ -19,7 +19,8 @@ import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.content.FileFormat
-import net.maxsmr.core.android.network.toUrlOrNull
+import net.maxsmr.core.android.network.URL_PAGE_BLANK
+import net.maxsmr.core.android.network.isUrlValid
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.isResponseOk
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
@@ -92,22 +93,14 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         webView.goBack()
         true
     } else {
-        if (!handleUpPressed()) {
-            super.onUpPressed()
-        } else {
-            true
-        }
+        super.onUpPressed()
     }
 
     override fun onBackPressed(): Boolean = if (shouldInterceptOnBackPressed && webView.canGoBack()) {
         webView.goBack()
         true
     } else {
-        if (!handleBackPressed()) {
-            super.onBackPressed()
-        } else {
-            true
-        }
+        super.onBackPressed()
     }
 
     override fun onResume() {
@@ -130,10 +123,6 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
     protected abstract fun createWebViewClient(): InterceptWebViewClient
 
     protected open fun createWebChromeClient(): BaseWebChromeClient? = BaseWebChromeClient()
-
-    protected open fun handleUpPressed() = false
-
-    protected open fun handleBackPressed() = false
 
     @SuppressLint("SetJavaScriptEnabled")
     protected open fun onSetupWebView(webSettings: WebSettings) {
@@ -267,7 +256,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
     protected fun loadUrl(url: String): Boolean {
         logger.d("loadUrl, url: '$url'")
         with(viewModel) {
-            return if (isWebViewInitialized && url.toUrlOrNull() != null) {
+            return if (isWebViewInitialized && url.isUrlValid(orBlank = true)) {
                 webView.loadUrl(url)
                 true
             } else {
@@ -343,7 +332,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
     private fun cancelLoading() {
         webView.post {
             webView.stopLoading()
-            // loadUrl()
+            webView.loadUrl(URL_PAGE_BLANK)
         }
     }
 

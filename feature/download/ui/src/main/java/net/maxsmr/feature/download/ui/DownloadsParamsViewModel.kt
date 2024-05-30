@@ -2,7 +2,6 @@ package net.maxsmr.feature.download.ui
 
 import android.content.Context
 import android.net.Uri
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -13,7 +12,6 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
@@ -22,6 +20,7 @@ import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStream
 import net.maxsmr.commonutils.openRawResource
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
@@ -29,17 +28,21 @@ import net.maxsmr.core.android.baseAppName
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.ContentStorage
-import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.download.REG_EX_MD5_ALGORITHM
 import net.maxsmr.core.domain.entities.feature.network.Method
-import net.maxsmr.core.ui.BooleanFieldState
+import net.maxsmr.core.ui.fields.BooleanFieldState
+import net.maxsmr.core.ui.fields.fileNameField
+import net.maxsmr.core.ui.fields.subDirNameField
+import net.maxsmr.core.ui.fields.urlField
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.preferences.ui.BasePostNotificationViewModel
+import net.maxsmr.feature.webview.ui.WebViewCustomizer
 import java.io.Serializable
 
 class DownloadsParamsViewModel @AssistedInject constructor(
@@ -47,18 +50,14 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     @Assisted private val viewModel: DownloadsViewModel,
     @Dispatcher(AppDispatchers.IO)
     private val ioDispatcher: CoroutineDispatcher,
+    private val settingsRepo: SettingsDataStoreRepository,
     repo: CacheDataStoreRepository,
 ) : BasePostNotificationViewModel(repo, state) {
 
-    val urlField: Field<String> = object : Field.Builder<String>(EMPTY_STRING) {
-        override fun valueGetter(fieldValue: MutableLiveData<String>): () -> String = {
-            fieldValue.value.orEmpty().trim()
-        }
-    }.emptyIf { it.toUrlOrNull() == null }
-        .setRequired(R.string.download_field_url_empty_error)
-        .hint(R.string.download_field_url_hint)
-        .persist(state, KEY_FIELD_URL)
-        .build()
+    val urlField: Field<String> = state.urlField(
+        R.string.download_field_url_hint,
+        isRequired = true
+    )
 
     val methodField: Field<Method> = Field.Builder(Method.GET)
         .emptyIf { false }
@@ -70,23 +69,14 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         .persist(state, KEY_FIELD_BODY)
         .build()
 
-    val fileNameField: Field<String> = Field.Builder(EMPTY_STRING)
-        .emptyIf { it.isEmpty() }
-        .validators(Field.Validator(R.string.download_field_file_name_error) { Regex(REG_EX_FILE_NAME).matches(it) })
-        .hint(R.string.download_field_file_name_hint)
-        .persist(state, KEY_FIELD_FILE_NAME)
-        .build()
+    val fileNameField: Field<String> = state.fileNameField()
 
     val fileNameChangeStateField: Field<BooleanFieldState> = Field.Builder(BooleanFieldState(false))
         .emptyIf { false }
         .persist(state, KEY_FIELD_FILE_NAME_CHANGE_STATE)
         .build()
 
-    val subDirNameField: Field<String> = Field.Builder(EMPTY_STRING)
-        .emptyIf { it.isEmpty() }
-        .hint(R.string.download_field_sub_dir_name_hint)
-        .persist(state, KEY_FIELD_SUB_DIR_NAME)
-        .build()
+    val subDirNameField: Field<String> = state.subDirNameField()
 
     val targetHashField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
@@ -346,6 +336,21 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
     }
 
+    fun onOpenBrowserAction() {
+        viewModelScope.launch {
+            viewModel.navigate(
+                NavigationAction.NavigationCommand.ToDirectionWithNavDirections(
+                    DownloadsPagerFragmentDirections.toWebViewFragment(
+                        WebViewCustomizer.Builder()
+                            .setUrl(settingsRepo.getSettings().startPageUrl)
+                            .setCanInputUrls(true)
+                            .build()
+                    )
+                )
+            )
+        }
+    }
+
     fun onStartDownloadClick() {
         if (!allFields.validateAndSetByRequired()) {
             return
@@ -355,7 +360,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         val bodyUri = bodyField.value?.bodyUri
 
         val fileName = fileNameField.value
-        val subDirName = subDirNameField.value.orEmpty()
+        val subDirName = subDirNameField.value
         val ignoreFileName = fileNameChangeStateField.value?.value != true
 
         val headers = hashMapOf<String, String>()
@@ -457,12 +462,9 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     companion object {
 
-        private const val KEY_FIELD_URL = "url"
         private const val KEY_FIELD_METHOD = "method"
         private const val KEY_FIELD_BODY = "body"
-        private const val KEY_FIELD_FILE_NAME = "file_name"
         private const val KEY_FIELD_FILE_NAME_CHANGE_STATE = "file_name_change_state"
-        private const val KEY_FIELD_SUB_DIR_NAME = "sub_dir_name"
         private const val KEY_FIELD_TARGET_HASH = "target_hash"
         private const val KEY_FIELD_IGNORE_SERVER_ERRORS = "ignore_server_errors"
         private const val KEY_FIELD_IGNORE_ATTACHMENT_STATE = "ignore_attachment_state"

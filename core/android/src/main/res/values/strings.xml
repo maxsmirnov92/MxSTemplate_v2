@@ -29,9 +29,4 @@
     <string name="video_picker_title">App for choose video file</string>
     <string name="video_picker_error">Cannot get video file</string>
     <string name="pick_result_error_format">Cannot pick file, reason: %s</string>
-
-    <string name="url_not_valid_error">URL is empty or not valid</string>
-
-    <string name="toast_link_copied_to_clipboard_message">Link copied to clipboard</string>
-    <string name="toast_copied_to_clipboard_message">Copied to clipboard</string>
 </resources>

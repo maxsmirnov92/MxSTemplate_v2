@@ -5,7 +5,6 @@
     <string name="download_state_title">State</string>
 
     <string name="download_field_url_hint">URL for loading</string>
-    <string name="download_field_url_empty_error">@string/url_not_valid_error</string>
     <string name="download_field_method_name">Method</string>
     <string-array name="download_method_names" translatable="false">
         <item>GET</item>
@@ -14,10 +13,7 @@
     <string name="download_field_request_body_empty_text">Request body file not selected</string>
     <string name="download_field_request_body_non_required_text">Request body file not required</string>
     <string name="download_field_request_body_empty_error">Request body file is required</string>
-    <string name="download_field_file_name_hint">File name</string>
-    <string name="download_field_file_name_error">Not valid file name</string>
     <string name="download_field_file_name_fix_checkbox_text">Change by header name if available</string>
-    <string name="download_field_sub_dir_name_hint">Sub folder name</string>
     <string name="download_field_target_hash_hint">Target MD5 hash</string>
     <string name="download_field_target_hash_error">Not valid MD5 format</string>
     <string name="download_field_ignore_server_errors">Ignore server errors</string>

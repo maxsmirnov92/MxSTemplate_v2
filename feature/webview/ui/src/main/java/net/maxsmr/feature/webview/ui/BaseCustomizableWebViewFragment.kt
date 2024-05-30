@@ -9,8 +9,11 @@ import android.view.MenuItem
 import android.view.View
 import android.webkit.WebView
 import android.widget.ProgressBar
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import net.maxsmr.commonutils.gui.bindToTextNotNull
+import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.FileFormat
@@ -70,10 +73,24 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         super.handleAlerts(delegate)
         bindAlertDialog(BaseCustomizableWebViewModel.DIALOG_TAG_OPEN_URL) {
             val dialogBinding = DialogInputUrlBinding.inflate(LayoutInflater.from(requireContext()))
+
+            dialogBinding.etUrl.bindToTextNotNull(viewModel.urlField)
+            viewModel.urlField.observeFromText(dialogBinding.etUrl, viewLifecycleOwner)
+            // бинд только хинта;
+            // по текущему еррору (который здесь меняется при каждом инпуте)
+            // еррор не выставляем - вместо этого дисейбл кнопки
+            viewModel.urlField.hintLive.observe {hint ->
+                dialogBinding.tilUrl.hint = hint?.get(requireContext())
+            }
+
             DialogRepresentation.Builder(requireContext(), it)
-                .setCustomView(dialogBinding.root)
+                .setCustomView(dialogBinding.root) {
+                    viewModel.urlField.errorLive.observe { error ->
+                        (this as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = error == null
+                    }
+                }
                 .setPositiveButton(it.answers[0]) {
-                    if (viewModel.onUrlSelected(dialogBinding.etUrl.text.toString().trim())) {
+                    if (viewModel.onUrlConfirmed()) {
                         doReloadWebView()
                     }
                 }
@@ -116,6 +133,17 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
                 } else {
                     false
                 }
+            }
+
+            R.id.action_clear_cache -> {
+                webView.clearCache(true)
+                true
+            }
+
+            R.id.action_clear_history -> {
+                webView.clearHistory()
+                refreshForwardMenuItem()
+                true
             }
 
             else -> {

@@ -4,12 +4,17 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.webkit.WebSettings
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
+import net.maxsmr.commonutils.gui.bindToTextNotNull
+import net.maxsmr.commonutils.live.field.observeFromText
+import net.maxsmr.commonutils.live.zip
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation
+import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.databinding.DialogSaveAsBinding
 import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewFragment
@@ -45,15 +50,26 @@ class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<Downloadable
         bindAlertDialog(DownloadableWebViewModel.DIALOG_TAG_SAVE_AS) {
             val model = it.extraData as? DownloadParamsModel ?: throw IllegalStateException("Extra data for this dialog not specified")
             val dialogBinding = DialogSaveAsBinding.inflate(LayoutInflater.from(requireContext()))
-            dialogBinding.etFileName.setText(model.fileName)
+
+            dialogBinding.etFileName.bindToTextNotNull(viewModel.fileNameField)
+            viewModel.fileNameField.observeFromText(dialogBinding.etFileName, viewLifecycleOwner)
+            viewModel.fileNameField.bindHintError(viewLifecycleOwner, dialogBinding.tilFileName)
+
+            dialogBinding.etSubDirName.bindToTextNotNull(viewModel.subDirNameField)
+            viewModel.subDirNameField.observeFromText(dialogBinding.etSubDirName, viewLifecycleOwner)
+            viewModel.subDirNameField.bindHintError(viewLifecycleOwner, dialogBinding.tilSubDirName)
+
             DialogRepresentation.Builder(requireContext(), it)
-                .setCustomView(dialogBinding.root)
+                .setCustomView(dialogBinding.root) {
+                    viewModel.canStartDownload.observe {isEnabled ->
+                        (this as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = isEnabled
+                    }
+                }
+                .setCancelable(false)
                 .setPositiveButton(it.answers[0]) {
-                    val newFileName =  dialogBinding.etFileName.text.toString()
-                    val newSubDirName = dialogBinding.etSubDirName.text.toString()
                     downloadsViewModel.enqueueDownload(model.copy(
-                        fileName = newFileName.ifEmpty { model.fileName },
-                        subDirName = newSubDirName.ifEmpty { model.subDirName }
+                        fileName = viewModel.fileNameField.value,
+                        subDirName = viewModel.subDirNameField.value
                     ))
                 }
                 .setNegativeButton(it.answers[1])

@@ -25,4 +25,16 @@
 	<string name="field_error_value_more_or_equal_format">Value must be %d and over</string>
 	<string name="field_error_value_zero">Value must be not zero</string>
 	<string name="field_error_value_negative">Value must be non negative</string>
+
+    <string name="field_url_empty_error">URL is empty</string>
+    <string name="field_url_error">URL is not valid</string>
+    <string name="field_file_name_hint">File name</string>
+    <string name="field_file_name_empty_error">File name is required</string>
+    <string name="field_file_name_error">Not valid file name</string>
+    <string name="field_sub_dir_name_hint">Sub folder name</string>
+    <string name="field_sub_dir_name_empty_error">Dir name is required</string>
+    <string name="field_sub_dir_name_error">Not valid dir name</string>
+
+    <string name="toast_link_copied_to_clipboard_message">Link copied to clipboard</string>
+    <string name="toast_copied_to_clipboard_message">Copied to clipboard</string>
 </resources>

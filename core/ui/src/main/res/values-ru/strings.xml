@@ -25,4 +25,16 @@
     <string name="field_error_value_more_or_equal_format">Значение должно быть от %d и выше</string>
     <string name="field_error_value_zero">Значение должно быть ненулевым</string>
     <string name="field_error_value_negative">Значение должно быть неотрицательным</string>
+
+    <string name="field_url_empty_error">URL пустой</string>
+    <string name="field_url_error">URL некорректный</string>
+    <string name="field_file_name_hint">Имя файла</string>
+    <string name="field_file_name_empty_error">Имя файла обязательно</string>
+    <string name="field_file_name_error">Некорректное имя файла</string>
+    <string name="field_sub_dir_name_hint">Имя подкаталога</string>
+    <string name="field_sub_dir_name_empty_error">Имя каталога обязательно</string>
+    <string name="field_sub_dir_name_error">Некорректное имя каталога</string>
+
+    <string name="toast_link_copied_to_clipboard_message">Ссылка скопирована в буфер обмена</string>
+    <string name="toast_copied_to_clipboard_message">Скопировано в буфер обмена</string>
 </resources>

@@ -19,23 +19,21 @@ import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showKeyboard
 import net.maxsmr.commonutils.live.field.observeFromText
-import net.maxsmr.core.android.base.actions.NavigationAction.NavigationCommand
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.network.Method
-import net.maxsmr.core.ui.bindHintError
-import net.maxsmr.core.ui.bindState
-import net.maxsmr.core.ui.bindValue
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
+import net.maxsmr.core.ui.fields.bindHintError
+import net.maxsmr.core.ui.fields.bindState
+import net.maxsmr.core.ui.fields.bindValue
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderListener
 import net.maxsmr.feature.download.ui.adapter.HeadersAdapter
 import net.maxsmr.feature.download.ui.databinding.FragmentDownloadsParamsBinding
-import net.maxsmr.feature.webview.ui.WebViewCustomizer
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -214,14 +212,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
                 true
             }
             R.id.action_open_browser -> {
-                downloadsViewModel.navigate(
-                    NavigationCommand.ToDirectionWithNavDirections(DownloadsPagerFragmentDirections.toWebViewFragment(
-                        WebViewCustomizer.Builder()
-                            .setUrl("https://google.com")
-                            .setCanInputUrls(true)
-                            .build()
-                    ))
-                )
+                viewModel.onOpenBrowserAction()
                 true
             }
 

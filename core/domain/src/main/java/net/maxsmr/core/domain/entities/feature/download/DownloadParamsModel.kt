@@ -10,7 +10,7 @@ data class DownloadParamsModel(
     val bodyUri: String? = null,
     val fileName: String? = null,
     val ignoreFileName: Boolean = false,
-    val subDirName: String = "",
+    val subDirName: String? = null,
     val targetMd5Hash: String? = null,
     val ignoreServerErrors: Boolean = false,
     val ignoreAttachment: Boolean = false,

@@ -17,6 +17,7 @@ data class AppSettings(
     val disableNotifications: Boolean = false,
     val retryDownloads: Boolean = true,
     val updateNotificationInterval: Long = 300,
+    val startPageUrl: String = "https://google.com"
 ): Serializable {
 
     companion object {

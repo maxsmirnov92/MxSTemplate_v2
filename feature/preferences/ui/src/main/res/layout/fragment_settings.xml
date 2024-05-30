@@ -101,6 +101,21 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/tilStartPageUrl"
+            style="@style/TextInputOutlinedWithCorners"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            tools:hint="@string/settings_field_start_page_url_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etStartPageUrl"
+                style="@style/SingleLineInputText"
+                android:inputType="textUri" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
     </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

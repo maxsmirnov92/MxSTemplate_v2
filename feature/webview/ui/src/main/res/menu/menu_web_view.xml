@@ -25,4 +25,12 @@
         android:title="@string/webview_menu_action_forward"
         app:iconTint="@color/white"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/action_clear_cache"
+        android:title="@string/webview_menu_action_clear_cache"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_clear_history"
+        android:title="@string/webview_menu_action_clear_history"
+        app:showAsAction="never" />
 </menu>

@@ -244,7 +244,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
                                 true
                             ) {
                                 copyToClipboard(requireContext(), "url", params.requestParams.url)
-                                viewModel.showToast(ToastAction(TextMessage(net.maxsmr.core.android.R.string.toast_link_copied_to_clipboard_message)))
+                                viewModel.showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message)))
                             }
                         )))
                 }

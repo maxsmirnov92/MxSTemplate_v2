@@ -28,9 +28,4 @@
     <string name="video_picker_title">Приложение для выбора видеозаписи</string>
     <string name="video_picker_error">Не удалось получить видеозапись</string>
     <string name="pick_result_error_format">Не удалось выбрать файл, причина: %s</string>
-
-    <string name="url_not_valid_error">URL пустой или некорректный</string>
-
-    <string name="toast_link_copied_to_clipboard_message">Ссылка скопирована в буфер обмена</string>
-    <string name="toast_copied_to_clipboard_message">Скопировано в буфер обмена</string>
 </resources>

@@ -28,6 +28,7 @@ import net.maxsmr.commonutils.openOutputStream
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.appendToSet
 import net.maxsmr.core.android.network.NetworkStateManager
+import net.maxsmr.core.android.network.isUrlValid
 import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
@@ -193,7 +194,7 @@ class DownloadManager @Inject constructor(
                 downloadsRepo.get(),
                 downloadsPendingQueue,
                 downloadsLaunchedQueue,
-                settingsRepo.settings
+                settingsRepo.settingsFlow
             ) { v1, v2, v3, _ ->
                 DownloadState(v1, v2, v3)
             }.collectLatest {
@@ -354,7 +355,7 @@ class DownloadManager @Inject constructor(
         }
 
         scope.launch {
-            settingsRepo.settings.collect {
+            settingsRepo.settingsFlow.collect {
                 settings = it
             }
         }
@@ -362,7 +363,7 @@ class DownloadManager @Inject constructor(
         scope.launch {
             combine(
                 NetworkStateManager.asFlow(scope),
-                settingsRepo.settings
+                settingsRepo.settingsFlow
             ) { hasConnection: Boolean, settings: AppSettings ->
                 Pair(hasConnection, settings.retryDownloads)
             }.collectLatest {
@@ -617,10 +618,11 @@ class DownloadManager @Inject constructor(
     }
 
     private fun DownloadService.Params.validate(): Boolean {
-        if (requestParams.url.toUrlOrNull() == null) return false
+        if (!requestParams.url.isUrlValid()) return false
         if (requestParams.method == Method.POST.value && requestParams.body?.isEmpty != false) return false
         if (targetResourceName.isEmpty()) return false
         if (!Regex(REG_EX_FILE_NAME).matches(resourceName)) return false
+        if (!subDirPath.isNullOrEmpty() && !Regex(REG_EX_FILE_NAME).matches(subDirPath)) return false
         return !requestParams.headers.entries.any { it.key.isEmpty() || it.value.isEmpty() }
     }
 
