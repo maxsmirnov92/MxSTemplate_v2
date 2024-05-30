@@ -6,7 +6,6 @@ import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.utils.asByteArray
 import net.maxsmr.core.utils.asObject
 
-
 class DownloadInfoTypeConverter {
 
     @TypeConverter
@@ -17,7 +16,7 @@ class DownloadInfoTypeConverter {
 
     @TypeConverter
     fun convertDownloadInfoStatus(array: ByteArray): DownloadInfo.Status {
-//        return baseJson.decodeFromStringOrNull(json) ?: throw RuntimeException("Failed convert to DownloadInfo.Status")
-        return array.asObject() ?: throw RuntimeException("Failed convert to DownloadInfo.Status")
+//        return baseJson.decodeFromStringOrNull(json) ?: DownloadInfo.Status.Error()
+        return array.asObject() ?: DownloadInfo.Status.Error()
     }
 }

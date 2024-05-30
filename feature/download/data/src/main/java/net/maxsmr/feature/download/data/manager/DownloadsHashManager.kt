@@ -5,11 +5,12 @@ import net.maxsmr.commonutils.digest
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
+import net.maxsmr.core.domain.entities.feature.download.HashInfo.Companion.ALGORITHM_SHA1
 import java.util.Locale
 
 object DownloadsHashManager {
 
-    private const val ALGORITHM_DEFAULT = "SHA-1"
+    private const val ALGORITHM_DEFAULT = ALGORITHM_SHA1
 
     private const val HEX_CHARS = "0123456789ABCDEF"
 
@@ -19,8 +20,8 @@ object DownloadsHashManager {
      */
     fun checkHash(uri: Uri, expected: HashInfo): Boolean {
         val algorithm = expected.algorithm
-        val hash = uri.digest(baseApplicationContext.contentResolver, algorithm)?.toHexString() ?: return false
-        return expected == HashInfo(algorithm, hash)
+        val hash = getHash(uri, algorithm).takeIf { !it.isEmpty } ?: return false
+        return expected == hash
     }
 
     fun getHash(uri: Uri, algorithm: String = ALGORITHM_DEFAULT): HashInfo {

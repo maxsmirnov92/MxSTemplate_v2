@@ -236,15 +236,17 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
 
                         is DownloadState.Failed -> {
                             statusColorResId = R.color.textColorDownloadFailed
-                            context.getString(R.string.download_status_failed_format,
-                                if (state.e is NoConnectivityException) {
-                                    context.getString(net.maxsmr.core.android.R.string.error_no_connection)
-                                } else {
-                                    state.e?.message?.takeIf { it.isNotEmpty() }
-                                        ?: context.getString(net.maxsmr.core.android.R.string.error_unknown)
-                                            .changeCaseFirstChar(false, CharCase.NO_CHANGE)
-                                }
-                            )
+
+                            val message = if (state.e is NoConnectivityException) {
+                                context.getString(net.maxsmr.core.android.R.string.error_no_connection)
+                            } else {
+                                state.e?.message?.takeIf { it.isNotEmpty() }
+                            }
+                            if (message != null) {
+                                context.getString(R.string.download_status_failed_format, message)
+                            } else {
+                                context.getString(R.string.download_status_failed_unknown)
+                            }
                         }
 
                         is DownloadState.Cancelled -> {

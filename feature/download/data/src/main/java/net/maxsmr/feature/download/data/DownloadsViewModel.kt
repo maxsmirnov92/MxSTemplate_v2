@@ -42,7 +42,7 @@ import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
-import net.maxsmr.core.domain.entities.feature.download.MD5_ALGORITHM
+import net.maxsmr.core.domain.entities.feature.download.HashInfo.Companion.ALGORITHM_SHA1
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asOkDialog
@@ -342,12 +342,11 @@ class DownloadsViewModel @Inject constructor(
 
         @JvmStatic
         private fun DownloadParamsModel.toParams(): DownloadService.Params = with(this) {
-
             val url = url.trim()
             val bodyUri = bodyUri
-            val targetHashInfo = targetMd5Hash?.takeIf { it.isNotEmpty() }?.let {
-                HashInfo(MD5_ALGORITHM, it)
-            }
+            val targetHashInfo = targetSha1Hash?.takeIf { it.isNotEmpty() }?.let {
+                HashInfo(ALGORITHM_SHA1, it)
+            } ?: HashInfo(ALGORITHM_SHA1, EMPTY_STRING)
 
             val notificationParams = DownloadService.NotificationParams(
                 successActions = defaultNotificationActions(baseApplicationContext)

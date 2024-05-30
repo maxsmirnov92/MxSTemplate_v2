@@ -12,4 +12,8 @@ class StoreException @JvmOverloads constructor(
 ) : RuntimeException(message, cause) {
 
     val localUri get() = _localUri.toUri()
+
+    override fun toString(): String {
+        return "StoreException(localUri='$_localUri', message='$message')"
+    }
 }

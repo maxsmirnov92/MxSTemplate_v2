@@ -31,7 +31,7 @@ import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
-import net.maxsmr.core.domain.entities.feature.download.REG_EX_MD5_ALGORITHM
+import net.maxsmr.core.domain.entities.feature.download.HashInfo.Companion.REG_EX_ALGORITHM_SHA1
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.fields.BooleanFieldState
 import net.maxsmr.core.ui.fields.fileNameField
@@ -81,9 +81,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     val targetHashField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
         .validators(Field.Validator(R.string.download_field_target_hash_error) {
-            Regex(REG_EX_MD5_ALGORITHM).matches(
-                it
-            )
+            Regex(REG_EX_ALGORITHM_SHA1).matches(it)
         })
         .hint(R.string.download_field_target_hash_hint)
         .persist(state, KEY_FIELD_TARGET_HASH)

@@ -6,7 +6,7 @@
     "fileName": "abc.txt",
     "ignoreFileName": false,
     "subDirName": "downloads_sample",
-    "targetMd5Hash": "C59C1023F85566F804016104ADC53BB3",
+    "targetSha1Hash": "C59C1023F85566F804016104ADC53BB3",
     "ignoreServerErrors": false,
     "ignoreAttachment": false,
     "replaceFile": false,

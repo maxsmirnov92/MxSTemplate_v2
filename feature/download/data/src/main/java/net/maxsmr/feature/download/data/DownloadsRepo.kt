@@ -94,7 +94,8 @@ class DownloadsRepo @Inject constructor(
     suspend fun getDownloaded(resourceName: String, ext: String): DownloadInfo? {
         val downloaded = getByNameAndExt(resourceName, ext) ?: return null
         val success = downloaded.statusAsSuccess ?: return null
-        if (DownloadsHashManager.checkHash(success.localUri, success.initialHashInfo)) {
+        val initialHashInfo = success.initialHashInfo
+        if (initialHashInfo != null && DownloadsHashManager.checkHash(success.localUri, initialHashInfo)) {
             return downloaded
         }
         return null

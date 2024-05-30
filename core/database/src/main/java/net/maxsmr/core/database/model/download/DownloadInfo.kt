@@ -83,7 +83,7 @@ data class DownloadInfo(
             get() = uriString?.let { Uri.parse(it) }
 
 
-        object Loading : Status() {
+        data object Loading : Status() {
 
             override val uriString: String? = null
         }
@@ -100,11 +100,12 @@ data class DownloadInfo(
 
         /**
          * @param uriString урла успешно загруженного файла
-         * @param initialHashInfo посчитанная контрольная сумма на момент успешной загрузки файла
+         * @param initialHashInfo посчитанная контрольная сумма на момент успешной загрузки файла,
+         * если алгоритм был указан в парамсах
          */
         data class Success(
             override val uriString: String,
-            val initialHashInfo: HashInfo,
+            val initialHashInfo: HashInfo?,
         ) : Status() {
 
             override val localUri: Uri

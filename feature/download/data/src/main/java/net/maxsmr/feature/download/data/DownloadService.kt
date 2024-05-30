@@ -10,7 +10,6 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import androidx.annotation.DrawableRes
@@ -24,6 +23,7 @@ import net.maxsmr.commonutils.NotificationWrapper.Companion.setContentBigText
 import net.maxsmr.commonutils.getSerializableExtraCompat
 import net.maxsmr.commonutils.getUriFromRawResource
 import net.maxsmr.commonutils.isAtLeastOreo
+import net.maxsmr.commonutils.isAtLeastQ
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
@@ -49,7 +49,6 @@ import net.maxsmr.core.di.ApplicationScope
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.di.DownloaderOkHttpClient
-import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.ContentDispositionType
@@ -232,7 +231,7 @@ class DownloadService : Service() {
         val cancelDownloadId = intent?.getLongExtra(EXTRA_CANCEL_DOWNLOAD_ID, 0L) ?: 0L
         if (cancelDownloadId > 0) {
             currentJobs.remove(cancelDownloadId)?.let {
-                logger.d("Cancel download with id: $cancelDownloadId by user")
+                logger.i("Cancel download with id: $cancelDownloadId by user")
                 it.cancel()
                 return START_NOT_STICKY
             }
@@ -309,7 +308,7 @@ class DownloadService : Service() {
 
             if (params.skipIfDownloaded) {
                 storage.findAlreadyLoaded(params, prevDownload)?.let {
-                    logger.d("Skip download of $params: found already loaded file with same hash")
+                    logger.i("Skip download of $params: found already loaded file with same hash")
                     onDownloadSuccess(it, params, oldParams)
                     return@launch
                 }
@@ -383,11 +382,12 @@ class DownloadService : Service() {
                         .build()
                 }.build()
 
+                logger.i("Requesting for $params...")
                 val response = client.newCallSuspended(
                     params.createRequest(ServiceProgressListener(Loading.Type.UPLOADING)),
                     !params.requestParams.storeErrorBody
                 )
-                logger.i("Response finished with code ${response.code}, message \"${response.message}\"")
+                logger.i("Response finished with code ${response.code}, message \"${response.message}\" for $params")
 
                 if (!params.requestParams.storeErrorBody
                         && !params.requestParams.ignoreAttachment
@@ -419,6 +419,7 @@ class DownloadService : Service() {
                 }
 
                 if (wasParamsChanged) {
+                    logger.d("Params changed, updating notification...")
                     // апдейт расширения/имени в основной нотификации
                     updateForegroundNotification()
                     // актуализации изменёнными парамсами
@@ -430,23 +431,48 @@ class DownloadService : Service() {
 //                    downloadsRepo.upsert(downloadInfo)
                 }
 
-                val localUri = storage.store(params, prevDownload?.statusAsError?.localUri) { uri, outStream, _ ->
+                val previousLocalUri = prevDownload?.statusAsError?.localUri
+                logger.i("Storing for $params, previous local uri: $previousLocalUri...")
+                val localUri = storage.store(params, previousLocalUri) { uri, outStream, _ ->
                     unfinishedLocalUri = uri
                     response.writeBufferedOrThrow(outStream)
                 }
+                logger.i("Finished store for $params")
 
-                val hashInfo = params.targetHashInfo?.takeIf { !it.isEmpty }?.also {
-                    // проверка с целевым хэшэм при наличии
-                    if (!DownloadsHashManager.checkHash(localUri, it)) {
+                val targetHashInfo: HashInfo? = params.targetHashInfo?.takeIf { !it.isEmpty }
+                val thisHashInfo: HashInfo? = if (targetHashInfo != null) {
+                    // есть алгоритм и целевой хэш
+                    logger.i("Checking hash of \"$localUri\" with $targetHashInfo...")
+                    if (!DownloadsHashManager.checkHash(localUri, targetHashInfo)) {
                         throw StoreException(
                             localUri.toString(),
                             message = "Loaded resource hash doesn't match with expected"
                         )
                     }
-                } ?: DownloadsHashManager.getHash(localUri)
+                    targetHashInfo
+                } else {
+                    // отсутствует алгоритм и/или целевой хэш
+                    params.targetHashInfo?.algorithm?.takeIf { it.isNotEmpty() }?.let { algorithm ->
+                        // запоминаем только если есть такое исходное намерение в парамсах,
+                        // файлы могут весить много и вычисление занимает время
+                        logger.i("Calculating $algorithm hash for \"$localUri\"...")
+                        DownloadsHashManager.getHash(
+                            localUri,
+                            algorithm
+                        ).also {
+                            logger.i("Hash for \"$localUri\" is $this")
+                            if (it.isEmpty) {
+                                throw StoreException(
+                                    localUri.toString(),
+                                    message = "Cannot calculate $algorithm hash"
+                                )
+                            }
+                        }
+                    }
+                }
 
                 unfinishedLocalUri = null
-                val newStatus = DownloadInfo.Status.Success(localUri.toString(), hashInfo)
+                val newStatus = DownloadInfo.Status.Success(localUri.toString(), thisHashInfo)
                 onDownloadSuccess(
                     downloadInfo.copy(
                         status = newStatus
@@ -457,7 +483,7 @@ class DownloadService : Service() {
             } catch (e: InterruptedIOException) {
                 onCancellationException(e)
             } catch (e: SecurityException) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && e is RecoverableSecurityException) {
+                if (isAtLeastQ() && e is RecoverableSecurityException) {
                     downloadsRepo.notifyIntentSender(
                         IntentSenderParams(
                             downloadInfo.id,
@@ -490,19 +516,19 @@ class DownloadService : Service() {
         val success = prevDownload?.statusAsSuccess
 
         success?.let {
-            //Прошлая загрузка успешно завершена, проверяем совпадения хэша по ее uri с целевым хэшем
+            // Прошлая загрузка успешно завершена, проверяем совпадения хэша по ее uri с целевым хэшем
             // либо с хэшем на момент загрузки (чтобы убедиться, что файл не менялся с тех пор)
             val expectedHash = params.targetHashInfo ?: it.initialHashInfo
-            if (!expectedHash.isEmpty && DownloadsHashManager.checkHash(
-                        it.localUri,
-                        expectedHash
-                    )
-            ) return prevDownload
+            // В прошлой загрузке могли не запомнить хэш
+            if (expectedHash != null && !expectedHash.isEmpty
+                    && DownloadsHashManager.checkHash(it.localUri, expectedHash)
+            ) {
+                return prevDownload
+            }
         }
 
         // Пробуем проверить хэши всех существующих uri с совпадающими именами в целевой папки
-        val expectedHash = (params.targetHashInfo
-            ?: success?.initialHashInfo)?.takeIf { !it.isEmpty }
+        val expectedHash = (params.targetHashInfo ?: success?.initialHashInfo)?.takeIf { !it.isEmpty }
             ?: return null
         val alreadyLoadedUris = this.alreadyLoadedUris(params)
         return alreadyLoadedUris
@@ -528,7 +554,7 @@ class DownloadService : Service() {
     }
 
     private suspend fun onDownloadStarting(downloadInfo: DownloadInfo, params: Params) {
-        logger.d("Download starting: ${downloadInfo.name}")
+        logger.i("Download starting: ${downloadInfo.name}")
         downloadsRepo.upsert(downloadInfo)
         updateForegroundNotification()
         notifier.onDownloadStarting(downloadInfo, params)
@@ -540,7 +566,7 @@ class DownloadService : Service() {
         downloadInfo: DownloadInfo,
         params: Params,
     ) {
-//        logger.d("Download processing: type: $type, $downloadInfo, stateInfo: $stateInfo")
+//        logger.i("Download processing: type: $type, $downloadInfo, stateInfo: $stateInfo")
         notifier.onDownloadProcessing(type, stateInfo, downloadInfo, params)
 
         params.notificationParams ?: return
@@ -581,7 +607,7 @@ class DownloadService : Service() {
 
     private suspend fun onDownloadSuccess(downloadInfo: DownloadInfo, params: Params, oldParams: Params) {
         val status = downloadInfo.statusAsSuccess ?: return
-        logger.d("Download success: $downloadInfo, params: $params, oldParams: $oldParams")
+        logger.i("Download success: $downloadInfo, params: $params, oldParams: $oldParams")
 
         params.notificationParams?.let { notificationParams ->
 
@@ -794,9 +820,10 @@ class DownloadService : Service() {
      * @param requestParams параметры http запроса для получения ресурса (файла)
      * @param resourceName имя ресурса, без расширения (при его наличии будет использовано как вспомогательное далее)
      * @param storageType определяет корневую директорию для сохранения ресурса
-     * @param subDirPath путь к подпапке относительно [storageType], куда требуется поместить скаченный
-     * ресурс. При Null помещается в корень [storageType].
-     * @param targetHashInfo целевой (ожидаемый) хэш файла, либо null, если заранее неизвестен
+     * @param subDirPath путь к подпапке относительно [storageType], куда требуется поместить скаченный ресурс.
+     * При Null помещается в корень [storageType].
+     * @param targetHashInfo целевой (ожидаемый) хэш файла, либо null, если заранее неизвестен;
+     * Можно передать только алгоритм, если требуется запоминать хэш после загрузки.
      * @param skipIfDownloaded пропуск загрузки, если ресурс уже был успешно загружен ранее и его хэш совпадает
      * @param notificationParams параметры показа нотификаций и действий к ним; null, если нотификации по каждой загрузке не нужны
      * @param retryWithNotifier если true, повтор загрузки по действию в нотификации будет происходить через [DownloadStateNotifier]

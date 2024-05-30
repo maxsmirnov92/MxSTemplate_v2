@@ -14,8 +14,8 @@
     <string name="download_field_request_body_non_required_text">Request body file not required</string>
     <string name="download_field_request_body_empty_error">Request body file is required</string>
     <string name="download_field_file_name_fix_checkbox_text">Change by header name if available</string>
-    <string name="download_field_target_hash_hint">Target MD5 hash</string>
-    <string name="download_field_target_hash_error">Not valid MD5 format</string>
+    <string name="download_field_target_hash_hint">Target SHA-1 hash</string>
+    <string name="download_field_target_hash_error">Not valid SHA-1 format</string>
     <string name="download_field_ignore_server_errors">Ignore server errors</string>
     <string name="download_field_ignore_attachment">Ignore missing attachment by headers</string>
     <string name="download_field_replace_file">Replace existing target file</string>
@@ -54,6 +54,7 @@
 
     <string name="download_status_success">Success</string>
     <string name="download_status_failed_format">Error occurred: \"%s\"</string>
+    <string name="download_status_failed_unknown">Unknown error occurred</string>
     <string name="download_status_cancelled">Cancelled</string>
 
     <string name="download_menu_action_filter">Filter by name</string>

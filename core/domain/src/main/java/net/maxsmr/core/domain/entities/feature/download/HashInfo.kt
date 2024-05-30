@@ -2,9 +2,6 @@ package net.maxsmr.core.domain.entities.feature.download
 
 import java.io.Serializable
 
-const val MD5_ALGORITHM = "MD5"
-const val REG_EX_MD5_ALGORITHM = "^[a-f0-9]{32}$"
-
 @kotlinx.serialization.Serializable
 class HashInfo(
     val algorithm: String,
@@ -27,5 +24,21 @@ class HashInfo(
         var result = algorithm.lowercase().hashCode()
         result = 31 * result + hash.lowercase().hashCode()
         return result
+    }
+
+    override fun toString(): String {
+        return "HashInfo(algorithm='$algorithm', hash='$hash')"
+    }
+
+    companion object {
+
+        const val ALGORITHM_SHA1 = "SHA-1"
+        // работает медленно!
+        const val ALGORITHM_MD5 = "MD5"
+        const val ALGORITHM_CRC32 = "CRC32"
+
+        const val REG_EX_ALGORITHM_MD5 = "^[a-fA-F0-9]{32}$"
+        const val REG_EX_ALGORITHM_SHA1 = "^[a-fA-F0-9]{40}$"
+        const val REG_EX_ALGORITHM_CRC32 = "^[a-fA-F0-9]{8}$"
     }
 }

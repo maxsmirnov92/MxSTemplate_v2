@@ -131,7 +131,7 @@ internal class CacheWrapper(
                 args.filterNot { it is Continuation<*> }.joinToString(
                     prefix = "_",
                     separator = "_"
-                ) { it.javaClass.canonicalName + "&" + it.toString() }).encodeUtf8().md5().hex()
+                ) { it.javaClass.canonicalName.orEmpty() + "&" + it.toString() }).encodeUtf8().md5().hex()
 
     internal class WrappedContinuation(
         val cache: FileCache,
