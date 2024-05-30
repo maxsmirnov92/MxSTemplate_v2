@@ -19,6 +19,7 @@ abstract class BaseCustomizableWebViewModel(
         private set
 
     val urlField: Field<String> = state.urlField(
+        initialValue = SCHEME_HTTPS,
         hintResId = R.string.webview_alert_open_url_field_hint,
         withAsterisk = false,
         isRequired = true
@@ -41,7 +42,7 @@ abstract class BaseCustomizableWebViewModel(
             return false
         }
         customizer = customizer.buildUpon().setUrl(urlField.value).build()
-        urlField.value = EMPTY_STRING
+        urlField.value = SCHEME_HTTPS
         return true
     }
 
@@ -55,5 +56,7 @@ abstract class BaseCustomizableWebViewModel(
     companion object {
 
         const val DIALOG_TAG_OPEN_URL = "open_url"
+
+        private const val SCHEME_HTTPS = "https://"
     }
 }

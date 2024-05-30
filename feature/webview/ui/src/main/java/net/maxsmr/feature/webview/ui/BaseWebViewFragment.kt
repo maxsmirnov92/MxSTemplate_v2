@@ -136,6 +136,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             useWideViewPort = true
             setSupportZoom(true)
             displayZoomControls = false
+            builtInZoomControls = true
             defaultTextEncodingName = CHARSET_DEFAULT
         }
     }
