@@ -10,18 +10,14 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.live.field.observeFromText
-import net.maxsmr.commonutils.live.zip
-import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.databinding.DialogSaveAsBinding
 import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewFragment
-import net.maxsmr.feature.webview.ui.databinding.DialogInputUrlBinding
 import okhttp3.OkHttpClient
 import java.lang.IllegalStateException
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<DownloadableWebViewModel>() {
@@ -48,7 +44,10 @@ class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<Downloadable
     override fun handleAlerts(delegate: AlertFragmentDelegate<DownloadableWebViewModel>) {
         super.handleAlerts(delegate)
         bindAlertDialog(DownloadableWebViewModel.DIALOG_TAG_SAVE_AS) {
-            val model = it.extraData as? DownloadParamsModel ?: throw IllegalStateException("Extra data for this dialog not specified")
+            @Suppress("UNCHECKED_CAST")
+            val modelWithType = it.extraData as? ParamsModelWithType ?: throw IllegalStateException("Extra data for this dialog not specified")
+            val model = modelWithType.first
+
             val dialogBinding = DialogSaveAsBinding.inflate(LayoutInflater.from(requireContext()))
 
             dialogBinding.etFileName.bindToTextNotNull(viewModel.fileNameField)
@@ -70,7 +69,7 @@ class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<Downloadable
                     downloadsViewModel.enqueueDownload(model.copy(
                         fileName = viewModel.fileNameField.value,
                         subDirName = viewModel.subDirNameField.value
-                    ))
+                    ), modelWithType.second)
                 }
                 .setNegativeButton(it.answers[1])
                 .build()

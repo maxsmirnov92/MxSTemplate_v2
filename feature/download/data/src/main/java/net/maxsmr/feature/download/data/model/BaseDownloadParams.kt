@@ -14,6 +14,7 @@ import java.io.Serializable
 open class BaseDownloadParams(
     val url: String,
     var resourceName: String,
+    private val withExtFromContentType: Boolean = true
 ) : Serializable {
 
     val resourceNameWithoutExt get() = resourceName.substringBeforeLast('.')
@@ -21,12 +22,19 @@ open class BaseDownloadParams(
     /**
      * Расширение на основе исходного или обновлённого [resourceMimeType]
      */
-    val extension
-        get() = getExtensionFromMimeType(resourceMimeType)
-            .takeIf { it.isNotEmpty() }
-        // при изначально отсутствии resourceMimeType или если не смогли определить
-        // выделять из имени
-            ?: getExtension(resourceName)
+    val extension: String
+        get() {
+            val extFromName = getExtension(resourceName)
+            val extFromType = if (withExtFromContentType || extFromName.isEmpty()) {
+                getExtensionFromMimeType(resourceMimeType).takeIf { it.isNotEmpty() }
+            } else {
+                null
+            }
+            // при изначальном отсутствии resourceMimeType
+            // или если не смогли определить оттуда
+            // или надо принудительно из имени
+            return extFromType ?: extFromName
+        }
 
     /**
      * @return целевое имя ресурса с [extension]
@@ -57,17 +65,19 @@ open class BaseDownloadParams(
 
         if (resourceName != other.resourceName) return false
         if (url != other.url) return false
-        return resourceMimeType == other.resourceMimeType
+        if (resourceMimeType != other.resourceMimeType) return false
+        return withExtFromContentType == other.withExtFromContentType
     }
 
     override fun hashCode(): Int {
         var result = resourceName.hashCode()
         result = 31 * result + url.hashCode()
         result = 31 * result + resourceMimeType.hashCode()
+        result = 31 * result + withExtFromContentType.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "BaseDownloadParams(url='$url', resourceNameWithoutExt='$resourceNameWithoutExt')"
+        return "BaseDownloadParams(url='$url', resourceNameWithoutExt='$resourceNameWithoutExt', ignoreContentType='$withExtFromContentType')"
     }
 }

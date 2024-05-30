@@ -512,25 +512,30 @@ class DownloadService : Service() {
         params: Params,
         prevDownload: DownloadInfo?,
     ): DownloadInfo? {
-
         val success = prevDownload?.statusAsSuccess
+        // Есть валидный целевой или ранее запомненный в success
+        val expectedHash = (params.targetHashInfo?.takeIf { !it.isEmpty } ?: success?.initialHashInfo)?.takeIf { !it.isEmpty }
 
         success?.let {
+            logger.d("Got previous success download: $prevDownload")
             // Прошлая загрузка успешно завершена, проверяем совпадения хэша по ее uri с целевым хэшем
             // либо с хэшем на момент загрузки (чтобы убедиться, что файл не менялся с тех пор)
-            val expectedHash = params.targetHashInfo ?: it.initialHashInfo
             // В прошлой загрузке могли не запомнить хэш
-            if (expectedHash != null && !expectedHash.isEmpty
-                    && DownloadsHashManager.checkHash(it.localUri, expectedHash)
-            ) {
-                return prevDownload
+            if (expectedHash != null) {
+                logger.d("Checking it hash with $expectedHash...")
+                if (DownloadsHashManager.checkHash(it.localUri, expectedHash)){
+                    logger.d("Previous success download match: $prevDownload")
+                    return prevDownload
+                }
             }
         }
 
         // Пробуем проверить хэши всех существующих uri с совпадающими именами в целевой папки
-        val expectedHash = (params.targetHashInfo ?: success?.initialHashInfo)?.takeIf { !it.isEmpty }
-            ?: return null
+        expectedHash ?: return null
         val alreadyLoadedUris = this.alreadyLoadedUris(params)
+        if (alreadyLoadedUris.isEmpty()) return null
+        logger.d("Checking hashes with $expectedHash of other ${alreadyLoadedUris.count()} URIs...")
+
         return alreadyLoadedUris
             .find { DownloadsHashManager.checkHash(it, expectedHash) }
             ?.let {
@@ -839,7 +844,7 @@ class DownloadService : Service() {
         val replaceFile: Boolean = false,
         val deleteUnfinished: Boolean = true,
         val retryWithNotifier: Boolean = true,
-    ) : BaseDownloadParams(requestParams.url, resourceName) {
+    ) : BaseDownloadParams(requestParams.url, resourceName, !requestParams.ignoreFileName) {
 
         constructor(params: Params) : this(
             params.requestParams,
@@ -849,7 +854,8 @@ class DownloadService : Service() {
             params.subDirPath,
             params.targetHashInfo,
             params.skipIfDownloaded,
-            params.deleteUnfinished
+            params.deleteUnfinished,
+            params.retryWithNotifier
         )
 
         fun createRequest(listener: ProgressListener): Request = requestParams.createRequest(listener)

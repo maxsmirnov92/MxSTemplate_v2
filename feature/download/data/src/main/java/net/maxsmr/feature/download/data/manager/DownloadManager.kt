@@ -441,7 +441,8 @@ class DownloadManager @Inject constructor(
                 params.targetHashInfo,
                 params.skipIfDownloaded,
                 params.replaceFile,
-                params.deleteUnfinished
+                params.deleteUnfinished,
+                params.retryWithNotifier
             )
         }
 
@@ -498,7 +499,9 @@ class DownloadManager @Inject constructor(
     private suspend fun retryDownloadSuspended(downloadId: Long?, params: DownloadService.Params) {
         logger.d("retryDownloadSuspended, downloadId: $downloadId, params: $params")
         downloadId?.let {
-            removeFinishedSuspended(it, false)
+            // также убираем из таблицы,
+            // т.к. смысл повтора в том, чтобы вдруг не было нахождения существующего файла по хэшу из Success
+            removeFinishedSuspended(it, true)
         }
         enqueueDownloadSuspended(params)
     }

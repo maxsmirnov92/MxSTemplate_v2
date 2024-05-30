@@ -167,6 +167,7 @@ class DownloadsViewModel @Inject constructor(
                     if (list.isNotEmpty()) {
                         list.forEach {
                             it.bodyUri?.toUri()?.takePersistableReadPermission(contentResolver)
+                            // тип заранее неизвестен, не игнорируем из ответа
                             downloadManager.enqueueDownloadSuspended(it.toParams())
                             // delay необходим из-за особенности кривых suspend'ов:
                             // следом за незавершённым enqueueDownloadSuspended пойдёт ещё один
@@ -179,8 +180,12 @@ class DownloadsViewModel @Inject constructor(
         }
     }
 
-    fun enqueueDownload(paramsModel: DownloadParamsModel) {
-        enqueueDownload(paramsModel.toParams())
+    /**
+     * @param mimeType заранее известный тип из ответа, если есть
+     */
+    @JvmOverloads
+    fun enqueueDownload(paramsModel: DownloadParamsModel, mimeType: String? = null) {
+        enqueueDownload(paramsModel.toParams(mimeType))
     }
 
     /**
@@ -341,7 +346,7 @@ class DownloadsViewModel @Inject constructor(
         )
 
         @JvmStatic
-        private fun DownloadParamsModel.toParams(): DownloadService.Params = with(this) {
+        private fun DownloadParamsModel.toParams(mimeType: String? = null): DownloadService.Params = with(this) {
             val url = url.trim()
             val bodyUri = bodyUri
             val targetHashInfo = targetSha1Hash?.takeIf { it.isNotEmpty() }?.let {
@@ -352,6 +357,9 @@ class DownloadsViewModel @Inject constructor(
                 successActions = defaultNotificationActions(baseApplicationContext)
             )
 
+            // не спрашивать из ответа тип, если он известен заранее
+            val hasMimeType = !mimeType.isNullOrEmpty()
+
             if (method == Method.POST && bodyUri != null) {
                 defaultPOSTServiceParamsFor(
                     url,
@@ -359,6 +367,7 @@ class DownloadsViewModel @Inject constructor(
                     DownloadService.RequestParams.Body(
                         DownloadService.RequestParams.Body.Uri(bodyUri.trim())
                     ),
+                    ignoreContentType = hasMimeType,
                     ignoreAttachment = ignoreAttachment,
                     ignoreFileName = ignoreFileName,
                     storeErrorBody = ignoreServerErrors,
@@ -373,6 +382,7 @@ class DownloadsViewModel @Inject constructor(
                 defaultGETServiceParamsFor(
                     url,
                     fileName,
+                    ignoreContentType = hasMimeType,
                     ignoreAttachment = ignoreAttachment,
                     ignoreFileName = ignoreFileName,
                     storeErrorBody = ignoreServerErrors,
@@ -383,6 +393,10 @@ class DownloadsViewModel @Inject constructor(
                     deleteUnfinished = deleteUnfinished,
                     notificationParams = notificationParams,
                 )
+            }
+        }.apply {
+            if (!mimeType.isNullOrEmpty()) {
+                resourceMimeType = mimeType
             }
         }
     }

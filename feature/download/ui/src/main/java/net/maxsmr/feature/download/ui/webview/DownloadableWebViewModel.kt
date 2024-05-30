@@ -16,6 +16,8 @@ import net.maxsmr.feature.download.ui.R
 import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewModel
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
 
+typealias ParamsModelWithType = Pair<DownloadParamsModel, String?>
+
 class DownloadableWebViewModel(state: SavedStateHandle) : BaseCustomizableWebViewModel(state) {
 
     override var customizer: WebViewCustomizer =
@@ -60,6 +62,8 @@ class DownloadableWebViewModel(state: SavedStateHandle) : BaseCustomizableWebVie
         val model = DownloadParamsModel(
             url,
             fileName = fileName,
+            // в любом случае будет непустое от пользователя,
+            // перебивать из ответа не надо
             ignoreFileName = true,
             headers = headers
         )
@@ -72,7 +76,7 @@ class DownloadableWebViewModel(state: SavedStateHandle) : BaseCustomizableWebVie
                 Alert.Answer(android.R.string.ok),
                 Alert.Answer(android.R.string.cancel)
             )
-            .setExtraData(model)
+            .setExtraData(ParamsModelWithType(model, mimetype))
             .build()
     }
 

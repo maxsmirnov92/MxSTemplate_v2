@@ -32,8 +32,8 @@ class HashInfo(
 
     companion object {
 
+        // FIXME все работают медленно на больших файлах
         const val ALGORITHM_SHA1 = "SHA-1"
-        // работает медленно!
         const val ALGORITHM_MD5 = "MD5"
         const val ALGORITHM_CRC32 = "CRC32"
 
