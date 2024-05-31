@@ -12,6 +12,7 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.maxsmr.commonutils.REG_EX_ALGORITHM_SHA1
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
@@ -31,7 +32,6 @@ import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
-import net.maxsmr.core.domain.entities.feature.download.HashInfo.Companion.REG_EX_ALGORITHM_SHA1
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.fields.BooleanFieldState
 import net.maxsmr.core.ui.fields.fileNameField

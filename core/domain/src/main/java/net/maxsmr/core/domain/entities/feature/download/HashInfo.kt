@@ -33,12 +33,6 @@ class HashInfo(
     companion object {
 
         // FIXME все работают медленно на больших файлах
-        const val ALGORITHM_SHA1 = "SHA-1"
-        const val ALGORITHM_MD5 = "MD5"
-        const val ALGORITHM_CRC32 = "CRC32"
 
-        const val REG_EX_ALGORITHM_MD5 = "^[a-fA-F0-9]{32}$"
-        const val REG_EX_ALGORITHM_SHA1 = "^[a-fA-F0-9]{40}$"
-        const val REG_EX_ALGORITHM_CRC32 = "^[a-fA-F0-9]{8}$"
     }
 }

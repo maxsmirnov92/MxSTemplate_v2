@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import net.maxsmr.commonutils.ALGORITHM_SHA1
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.message.TextMessageException
 import net.maxsmr.commonutils.live.event.VmEvent
@@ -42,7 +43,6 @@ import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
-import net.maxsmr.core.domain.entities.feature.download.HashInfo.Companion.ALGORITHM_SHA1
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asOkDialog
@@ -351,7 +351,7 @@ class DownloadsViewModel @Inject constructor(
             val bodyUri = bodyUri
             val targetHashInfo = targetSha1Hash?.takeIf { it.isNotEmpty() }?.let {
                 HashInfo(ALGORITHM_SHA1, it)
-            } ?: HashInfo(ALGORITHM_SHA1, EMPTY_STRING)
+            } ?: HashInfo(ALGORITHM_SHA1, EMPTY_STRING) // если не указан - считаем в итоге по тому же алгоритму
 
             val notificationParams = DownloadService.NotificationParams(
                 successActions = defaultNotificationActions(baseApplicationContext)

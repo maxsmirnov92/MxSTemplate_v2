@@ -454,8 +454,7 @@ class DownloadService : Service() {
                 } else {
                     // отсутствует алгоритм и/или целевой хэш
                     params.targetHashInfo?.algorithm?.takeIf { it.isNotEmpty() }?.let { algorithm ->
-                        // запоминаем только если есть такое исходное намерение в парамсах,
-                        // файлы могут весить много и вычисление занимает время
+                        // считаем и запоминаем только если есть такое намерение в парамсах
                         logger.i("Calculating $algorithm hash for \"$localUri\"...")
                         DownloadsHashManager.getHash(
                             localUri,
