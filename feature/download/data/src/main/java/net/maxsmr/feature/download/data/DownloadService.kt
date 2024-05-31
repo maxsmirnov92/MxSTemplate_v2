@@ -119,7 +119,7 @@ class DownloadService : Service() {
         NotificationWrapper(context) {
             permissionsHelper.hasPermissions(
                 context,
-                PermissionsHelper.addPostNotificationsByApiVersion(emptyList())
+                PermissionsHelper.withPostNotificationsByApiVersion(emptyList())
             )
         }
     }

@@ -1,5 +1,6 @@
 package net.maxsmr.feature.preferences.data.repository
 
+import android.os.Build
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -26,17 +27,28 @@ class CacheDataStoreRepository @Inject constructor(
 ) {
 
     val postNotificationAsked = dataStore.data.map { it[FIELD_POST_NOTIFICATION_ASKED] ?: false }
+        .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU }
 
-    suspend fun isPostNotificationAsked() = postNotificationAsked.firstOrNull() ?: false
+    suspend fun isPostNotificationAsked() = postNotificationAsked?.firstOrNull() ?: false
 
     suspend fun setPostNotificationAsked() {
-        dataStore.edit { prefs ->
-            prefs[FIELD_POST_NOTIFICATION_ASKED] = true
+        setPostNotificationAsked(true)
+    }
+
+    suspend fun clearPostNotificationAsked() {
+        setPostNotificationAsked(false)
+    }
+
+    private suspend fun setPostNotificationAsked(toggle: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            dataStore.edit { prefs ->
+                prefs[FIELD_POST_NOTIFICATION_ASKED] = toggle
+            }
         }
     }
 
-    // mapNotNull == висяк
     suspend fun getLastLocation(): Address.Location? {
+        // mapNotNull == висяк
         return dataStore.data.map { prefs ->
             prefs[FIELD_LAST_LOCATION]?.let {
                 json.decodeFromStringOrNull(it) as Address.Location?

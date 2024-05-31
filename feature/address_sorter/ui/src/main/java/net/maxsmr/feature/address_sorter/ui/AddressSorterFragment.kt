@@ -18,13 +18,14 @@ import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_GPS_PERMISSION
-import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_NOTIFICATIONS_PERMISSION
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputAdapter
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputListener
 import net.maxsmr.feature.address_sorter.ui.databinding.FragmentAddressSorterBinding
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.ui.observePostNotificationPermissionAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -75,6 +76,9 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
     @Inject
     lateinit var factory: AddressSorterViewModel.Factory
+
+    @Inject
+    lateinit var cacheRepo: CacheDataStoreRepository
 
     // by lazy не подходит, т.к.
     // "Fragments must call registerForActivityResult() before they are created"
@@ -131,7 +135,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
         adapter.registerItemsEventsListener(this)
 
-        viewModel.observePostNotificationPermissionAsked(this, REQUEST_CODE_NOTIFICATIONS_PERMISSION)
+        cacheRepo.observePostNotificationPermissionAsked(this)
         doRequestGps()
     }
 

@@ -33,6 +33,7 @@ import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.network.Method
+import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.fields.BooleanFieldState
 import net.maxsmr.core.ui.fields.fileNameField
 import net.maxsmr.core.ui.fields.subDirNameField
@@ -41,7 +42,6 @@ import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import net.maxsmr.feature.preferences.ui.BasePostNotificationViewModel
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
 import java.io.Serializable
 
@@ -51,8 +51,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     @Dispatcher(AppDispatchers.IO)
     private val ioDispatcher: CoroutineDispatcher,
     private val settingsRepo: SettingsDataStoreRepository,
-    repo: CacheDataStoreRepository,
-) : BasePostNotificationViewModel(repo, state) {
+    val cacheRepo: CacheDataStoreRepository,
+) : BaseHandleableViewModel(state) {
 
     val urlField: Field<String> = state.urlField(
         R.string.download_field_url_hint,

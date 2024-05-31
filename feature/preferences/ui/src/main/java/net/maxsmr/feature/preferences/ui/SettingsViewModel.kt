@@ -22,12 +22,14 @@ import net.maxsmr.core.ui.fields.toggleRequiredFieldState
 import net.maxsmr.core.ui.fields.urlField
 import net.maxsmr.feature.preferences.data.domain.AppSettings
 import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsDataStoreRepository,
+    private val cacheRepository: CacheDataStoreRepository,
     state: SavedStateHandle,
 ) : BaseHandleableViewModel(state) {
 
@@ -155,11 +157,17 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             if (hasChanges.value == true) {
                 val initialSettings = initialSettings ?: AppSettings()
+                val disableNotifications = disableNotificationsField.value ?: initialSettings.disableNotifications
+                if (!disableNotifications) {
+                    viewModelScope.launch {
+                        cacheRepository.clearPostNotificationAsked()
+                    }
+                }
                 repository.updateSettings(
                     AppSettings(
                         maxDownloadsField.value ?: initialSettings.maxDownloads,
                         connectTimeoutField.value ?: initialSettings.connectTimeout,
-                        disableNotificationsField.value ?: initialSettings.disableNotifications,
+                        disableNotifications,
                         retryDownloadsField.value ?: initialSettings.retryDownloads,
                         updateNotificationIntervalStateField.value?.value
                             ?: initialSettings.updateNotificationInterval,

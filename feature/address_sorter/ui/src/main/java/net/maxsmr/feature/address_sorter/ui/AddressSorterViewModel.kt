@@ -26,25 +26,23 @@ import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
+import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.feature.address_sorter.data.AddressSuggestUseCase
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
-import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.feature.preferences.ui.BasePostNotificationViewModel
 import java.io.Serializable
 
 class AddressSorterViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val locationViewModel: LocationViewModel,
-    cacheRepo: CacheDataStoreRepository,
     @Dispatcher(AppDispatchers.IO)
     private val ioDispatcher: CoroutineDispatcher,
     private val repo: AddressRepo,
     private val addressSuggestUseCase: AddressSuggestUseCase,
-) : BasePostNotificationViewModel(cacheRepo, state) {
+) : BaseHandleableViewModel(state) {
 
     // сразу нельзя получить из
     // repo.sortedAddress.asLiveData(),

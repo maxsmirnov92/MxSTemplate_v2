@@ -34,6 +34,8 @@ import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderListener
 import net.maxsmr.feature.download.ui.adapter.HeadersAdapter
 import net.maxsmr.feature.download.ui.databinding.FragmentDownloadsParamsBinding
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.ui.observePostNotificationPermissionAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -181,13 +183,13 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
             requireActivity().clearFocus()
             doOnPermissionsResult(
                 BaseActivity.REQUEST_CODE_DOWNLOAD_PERMISSION,
-                PermissionsHelper.addPostNotificationsByApiVersion(listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE) // post_notifications не является обязательным для работы сервиса
             ) {
                 viewModel.onStartDownloadClick()
             }
         }
 
-        viewModel.observePostNotificationPermissionAsked(this, BaseActivity.REQUEST_CODE_NOTIFICATIONS_PERMISSION)
+        viewModel.cacheRepo.observePostNotificationPermissionAsked(this)
     }
 
     override fun onResume() {
