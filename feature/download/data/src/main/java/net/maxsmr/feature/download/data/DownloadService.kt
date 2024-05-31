@@ -30,6 +30,7 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatExc
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.media.getContentName
 import net.maxsmr.commonutils.media.getMimeTypeFromName
+import net.maxsmr.commonutils.media.isEmpty
 import net.maxsmr.commonutils.media.lengthOrThrow
 import net.maxsmr.commonutils.media.mimeTypeOrThrow
 import net.maxsmr.commonutils.media.openInputStreamOrThrow
@@ -514,7 +515,8 @@ class DownloadService : Service() {
     ): DownloadInfo? {
         val success = prevDownload?.statusAsSuccess
         // Есть валидный целевой или ранее запомненный в success
-        val expectedHash = (params.targetHashInfo?.takeIf { !it.isEmpty } ?: success?.initialHashInfo)?.takeIf { !it.isEmpty }
+        val expectedHash =
+            (params.targetHashInfo?.takeIf { !it.isEmpty } ?: success?.initialHashInfo)?.takeIf { !it.isEmpty }
 
         success?.let {
             logger.d("Got previous success download: $prevDownload")
@@ -523,7 +525,7 @@ class DownloadService : Service() {
             // В прошлой загрузке могли не запомнить хэш
             if (expectedHash != null) {
                 logger.d("Checking it hash with $expectedHash...")
-                if (DownloadsHashManager.checkHash(it.localUri, expectedHash)){
+                if (DownloadsHashManager.checkHash(it.localUri, expectedHash)) {
                     logger.d("Previous success download match: $prevDownload")
                     return prevDownload
                 }
@@ -641,20 +643,24 @@ class DownloadService : Service() {
                 // кнопки показываем при успешной загрузке (нет exception, урла есть)
                 val mimeType = downloadInfo.mimeType
                 notificationParams.actionIntent<NotificationParams.SuccessAction.View>()?.let {
-                    addAction(
-                        it.iconResId,
-                        it.notificationActionName.takeIf { it.isNotEmpty() }
-                            ?: getString(R.string.download_notification_success_view_button),
-                        it.intent(uri, mimeType).toPendingIntent()
-                    )
+                    it.intent(context, uri, mimeType)?.let { intent ->
+                        addAction(
+                            it.iconResId,
+                            it.notificationActionName.takeIf { it.isNotEmpty() }
+                                ?: getString(R.string.download_notification_success_view_button),
+                            intent.toPendingIntent())
+                    }
+
                 }
                 notificationParams.actionIntent<NotificationParams.SuccessAction.Share>()?.let {
-                    addAction(
-                        it.iconResId,
-                        it.notificationActionName.takeIf { it.isNotEmpty() }
-                            ?: getString(R.string.download_notification_success_share_button),
-                        it.intent(uri, mimeType).toPendingIntent()
-                    )
+                    it.intent(context, uri, mimeType)?.let { intent ->
+                        addAction(
+                            it.iconResId,
+                            it.notificationActionName.takeIf { it.isNotEmpty() }
+                                ?: getString(R.string.download_notification_success_share_button),
+                            intent.toPendingIntent())
+                    }
+
                 }
                 setContentIntent()
             }
@@ -1173,8 +1179,11 @@ class DownloadService : Service() {
 
             abstract val notificationActionName: String
 
-            fun intent(uri: Uri, mimeType: String): Intent {
+            fun intent(context: Context, uri: Uri, mimeType: String): Intent? {
                 logger.d("Success mimeType: $mimeType, action: $this")
+                if (uri.isEmpty(context.contentResolver)) {
+                    return null
+                }
                 return createIntent(uri, mimeType).wrapChooser(chooserTitle)
             }
 

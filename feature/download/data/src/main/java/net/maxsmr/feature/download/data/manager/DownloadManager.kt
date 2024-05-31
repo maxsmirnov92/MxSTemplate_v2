@@ -29,7 +29,6 @@ import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.appendToSet
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.network.isUrlValid
-import net.maxsmr.core.android.network.toUrlOrNull
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
@@ -387,6 +386,10 @@ class DownloadManager @Inject constructor(
         }
     }
 
+    fun cancelDownload(downloadId: Long) {
+        DownloadService.cancel(downloadId)
+    }
+
     fun cancelAllDownloads() {
         removeAllPending()
         downloadsQueue.value.toList().forEach {
@@ -655,6 +658,8 @@ class DownloadManager @Inject constructor(
         parentPath: String = baseApplicationContext.filesDir.absolutePath,
     ) {
 
+        private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("QueueFileStorage.$path")
+
         val queueDir = File(parentPath, path)
 
         suspend fun restoreItems(shouldDeleteFiles: Boolean): Set<QueueItem> =
@@ -673,15 +678,19 @@ class DownloadManager @Inject constructor(
                     queueDir,
                     GetMode.FILES, null, 1, notifier
                 ).filter { it.name.split(FILE_NAME_PREFIX).size == 2 && it.extension == FILE_NAME_EXT }
+                logger.d("Files item list: $files")
 
                 val result: List<Pair<QueueItem, File>> = files.mapNotNull {
                     val item = it.openInputStream()?.readObject<QueueItem>()
                     if (item != null) {
                         Pair(item, it)
                     } else {
+                        logger.w("Cannot read item from \"$it\", deleting...")
+                        deleteFile(it)
                         null
                     }
                 }.sortedBy { it.first.id }
+                logger.d("Result item list: $result")
 
                 if (shouldDeleteFiles) {
                     // удалить файлы только по успешно восстановленным
@@ -695,7 +704,11 @@ class DownloadManager @Inject constructor(
         @Synchronized
         fun addItem(item: QueueItem): Boolean {
             createFile(FILE_NAME_FORMAT.format(item.id), queueDir.absolutePath).openOutputStream()?.let {
-                return it.writeObject(item)
+                return it.writeObject(item).also { result ->
+                    if (result) {
+                        logger.d("Added item with id: ${item.id}")
+                    }
+                }
             }
             return false
         }
@@ -707,12 +720,20 @@ class DownloadManager @Inject constructor(
 
         @Synchronized
         private fun removeItem(itemId: Int): Boolean {
-            return deleteFile(File(queueDir, FILE_NAME_FORMAT.format(itemId)))
+            return deleteFile(File(queueDir, FILE_NAME_FORMAT.format(itemId))).also {
+                if (it) {
+                    logger.d("Removed item with id: $itemId")
+                }
+            }
         }
 
         @Synchronized
         fun clear() {
-            deleteFiles(queueDir, depth = 1)
+            deleteFiles(queueDir, depth = 1).also {
+                if (it.isNotEmpty()) {
+                    logger.d("Files deleted: $it")
+                }
+            }
         }
 
         companion object {

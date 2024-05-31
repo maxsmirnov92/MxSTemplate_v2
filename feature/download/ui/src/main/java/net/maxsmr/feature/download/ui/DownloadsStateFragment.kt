@@ -28,6 +28,7 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
+import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
@@ -185,11 +186,15 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
     }
 
     override fun onViewResource(downloadUri: Uri, mimeType: String) {
-        startActivity(getViewAction().intent(downloadUri, mimeType))
+        getViewAction().intent(requireContext(), downloadUri, mimeType)?.let {
+            startActivity(it)
+        } ?: viewModel.showSnackbar(SnackbarAction(TextMessage(R.string.download_snackbar_action_view_error_format, downloadUri.toString())))
     }
 
     override fun onShareResource(downloadUri: Uri, mimeType: String) {
-        startActivity(getShareAction().intent(downloadUri, mimeType))
+        getShareAction().intent(requireContext(), downloadUri, mimeType)?.let {
+            startActivity(it)
+        } ?: viewModel.showSnackbar(SnackbarAction(TextMessage(R.string.download_snackbar_action_share_error_format, downloadUri.toString())))
     }
 
     override fun onItemMoved(fromPosition: Int, toPosition: Int, item: DownloadInfoAdapterData) {

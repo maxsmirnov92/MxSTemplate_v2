@@ -128,7 +128,7 @@ class DownloadsStateViewModel @Inject constructor(
 
 
     fun onCancelDownload(id: Long) {
-        DownloadService.cancel(id)
+       manager.cancelDownload(id)
     }
 
     fun onRemoveFinishedDownload(id: Long) {
