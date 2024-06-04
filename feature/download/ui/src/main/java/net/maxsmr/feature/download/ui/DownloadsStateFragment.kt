@@ -185,16 +185,16 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         showDetailsPopup(params, anchorView)
     }
 
+    override fun onDeleteResource(downloadId: Long) {
+        viewModel.onDeleteResource(downloadId)
+    }
+
     override fun onViewResource(downloadUri: Uri, mimeType: String) {
-        getViewAction().intent(requireContext(), downloadUri, mimeType)?.let {
-            startActivity(it)
-        } ?: viewModel.showSnackbar(SnackbarAction(TextMessage(R.string.download_snackbar_action_view_error_format, downloadUri.toString())))
+        viewModel.onViewResource(downloadUri, mimeType)
     }
 
     override fun onShareResource(downloadUri: Uri, mimeType: String) {
-        getShareAction().intent(requireContext(), downloadUri, mimeType)?.let {
-            startActivity(it)
-        } ?: viewModel.showSnackbar(SnackbarAction(TextMessage(R.string.download_snackbar_action_share_error_format, downloadUri.toString())))
+        viewModel.onShareResource(downloadUri, mimeType)
     }
 
     override fun onItemMoved(fromPosition: Int, toPosition: Int, item: DownloadInfoAdapterData) {

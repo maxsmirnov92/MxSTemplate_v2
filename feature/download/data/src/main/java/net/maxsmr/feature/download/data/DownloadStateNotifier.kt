@@ -1,12 +1,15 @@
 package net.maxsmr.feature.download.data
 
+import android.content.Context
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.media.length
 import net.maxsmr.core.ProgressListener
+import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
@@ -162,6 +165,8 @@ class DownloadStateNotifier @Inject constructor(
             params: DownloadService.Params,
             oldParams: DownloadService.Params,
         ) : DownloadState(downloadInfo, params, oldParams) {
+
+            fun getLength() = downloadInfo.localUri?.length(baseApplicationContext.contentResolver) ?: 0
 
             override fun toString(): String {
                 return "DownloadState.Success(downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"

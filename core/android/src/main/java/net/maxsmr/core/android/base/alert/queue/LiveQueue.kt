@@ -2,8 +2,8 @@ package net.maxsmr.core.android.base.alert.queue
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import net.maxsmr.commonutils.live.setValueIfNew
-import java.util.*
+import net.maxsmr.commonutils.live.postValueIfNew
+import java.util.Queue
 
 /**
  * Очередь с дополнительной фичей - LiveData, эмитящая головной элемент очереди
@@ -60,16 +60,16 @@ class LiveQueue<E>(
         if (this === other) return true
         if (other !is LiveQueue<*>) return false
 
-        if (queue != other.queue) return false
-
-        return true
+        return queue == other.queue
     }
 
     override fun hashCode(): Int {
         return queue.hashCode()
     }
 
-    private fun <T> T.notifyChange(): T = this.also { headLiveData.setValueIfNew(peek()) }
+    private fun <T> T.notifyChange(): T = this.also {
+        headLiveData.postValueIfNew(peek())
+    }
 
     private inner class NotifyIterator<E>(
             private val src: MutableIterator<E>

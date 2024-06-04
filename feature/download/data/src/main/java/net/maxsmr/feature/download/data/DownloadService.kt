@@ -642,23 +642,19 @@ class DownloadService : Service() {
                 // кнопки показываем при успешной загрузке (нет exception, урла есть)
                 val mimeType = downloadInfo.mimeType
                 notificationParams.actionIntent<NotificationParams.SuccessAction.View>()?.let {
-                    it.intent(context, uri, mimeType)?.let { intent ->
-                        addAction(
-                            it.iconResId,
-                            it.notificationActionName.takeIf { it.isNotEmpty() }
-                                ?: getString(R.string.download_notification_success_view_button),
-                            intent.toPendingIntent())
-                    }
+                    addAction(
+                        it.iconResId,
+                        it.notificationActionName.takeIf { it.isNotEmpty() }
+                            ?: getString(R.string.download_notification_success_view_button),
+                        it.intent(uri, mimeType).toPendingIntent())
 
                 }
                 notificationParams.actionIntent<NotificationParams.SuccessAction.Share>()?.let {
-                    it.intent(context, uri, mimeType)?.let { intent ->
-                        addAction(
-                            it.iconResId,
-                            it.notificationActionName.takeIf { it.isNotEmpty() }
-                                ?: getString(R.string.download_notification_success_share_button),
-                            intent.toPendingIntent())
-                    }
+                    addAction(
+                        it.iconResId,
+                        it.notificationActionName.takeIf { it.isNotEmpty() }
+                            ?: getString(R.string.download_notification_success_share_button),
+                        it.intent(uri, mimeType).toPendingIntent())
 
                 }
                 setContentIntent()
@@ -1178,12 +1174,14 @@ class DownloadService : Service() {
 
             abstract val notificationActionName: String
 
-            fun intent(context: Context, uri: Uri, mimeType: String): Intent? {
+            fun intent(uri: Uri, mimeType: String, withChooser: Boolean = true): Intent {
                 logger.d("Success mimeType: $mimeType, action: $this")
-                if (uri.isEmpty(context.contentResolver)) {
-                    return null
+                return createIntent(uri, mimeType).apply {
+                    // FIXME в chooser вместо тайтла mimeType на Android 13
+                    if (withChooser) {
+                        wrapChooser(chooserTitle)
+                    }
                 }
-                return createIntent(uri, mimeType).wrapChooser(chooserTitle)
             }
 
             protected abstract fun createIntent(uri: Uri, mimeType: String): Intent
@@ -1326,7 +1324,7 @@ class DownloadService : Service() {
         @JvmOverloads
         fun getShareAction(
             context: Context = baseApplicationContext,
-            @StringRes chooserTitleRes: Int = R.string.view_choose_client_file_title,
+            @StringRes chooserTitleRes: Int = R.string.share_choose_client_file_title,
             @StringRes notificationActionRes: Int = R.string.download_notification_success_share_button,
             @DrawableRes iconResId: Int = android.R.drawable.ic_menu_share,
             intentSubject: String = EMPTY_STRING,

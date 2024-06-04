@@ -77,31 +77,40 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/tvStatusInfo"
-        style="@style/NonSelectable"
-        android:layout_toStartOf="@+id/containerSuccessButtons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:maxLines="4"
-        android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        android:textSize="@dimen/textSizeExtraMini"
-        tools:text=",status ," />
+        <TextView
+            android:id="@+id/tvStatusInfo"
+            style="@style/NonSelectable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_toStartOf="@+id/containerSuccessButtons"
+            android:maxLines="4"
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            android:textSize="@dimen/textSizeExtraMini"
+            tools:text=",status ," />
 
         <LinearLayout
             android:id="@+id/containerSuccessButtons"
-            android:orientation="horizontal"
-            android:layout_alignParentEnd="true"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/ibDelete"
+                style="@style/Widget.AppCompat.ActionButton"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:scaleType="centerCrop"
+                app:srcCompat="@drawable/ic_delete" />
+
 
             <ImageButton
                 android:id="@+id/ibView"
                 style="@style/Widget.AppCompat.ActionButton"
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                app:tint="@color/black"
+                android:layout_marginStart="10dp"
                 android:scaleType="centerCrop"
                 app:srcCompat="@android:drawable/ic_menu_view" />
 
@@ -112,7 +121,6 @@
                 android:layout_height="22dp"
                 android:layout_marginStart="10dp"
                 android:scaleType="centerCrop"
-                app:tint="@color/black"
                 app:srcCompat="@android:drawable/ic_menu_share" />
 
         </LinearLayout>

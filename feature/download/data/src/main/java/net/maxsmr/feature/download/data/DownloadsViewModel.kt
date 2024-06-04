@@ -20,7 +20,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.ALGORITHM_SHA1
 import net.maxsmr.commonutils.gui.message.TextMessage
@@ -304,9 +303,6 @@ class DownloadsViewModel @Inject constructor(
         }
         downloadsInfos.observe(owner, observer)
     }
-
-    fun isDownloaded(resourceName: String, initialExt: String): Boolean =
-        runBlocking(ioDispatcher) { downloadRepo.isDownloaded(resourceName, initialExt) }
 
     data class DownloadInfoWithUri(
         val uri: Uri,

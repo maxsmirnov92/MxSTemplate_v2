@@ -48,6 +48,9 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
             ibDetails.setOnClickListener {
                 listener.onShowDownloadDetails(item.downloadInfo, item.params, item.state, ibDetails)
             }
+            ibDelete.setOnClickListener {
+                listener.onDeleteResource(item.id)
+            }
             ibView.setOnClickListener {
                 item.downloadInfo.localUri?.let {
                     listener.onViewResource(it, item.downloadInfo.mimeType)
@@ -274,7 +277,7 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
 
                 ibCancel.isVisible = state is DownloadState.Loading || state == null // для этапа выполнения запроса
                 ibRetry.isVisible = state !is DownloadState.Loading && state != null
-                containerSuccessButtons.isVisible = state is DownloadState.Success
+                containerSuccessButtons.isVisible = state is DownloadState.Success && state.downloadInfo.localUri != null
             }
         }
     }
@@ -320,6 +323,8 @@ interface DownloadListener {
         state: DownloadState?,
         anchorView: View,
     )
+
+    fun onDeleteResource(downloadId: Long)
 
     fun onViewResource(downloadUri: Uri, mimeType: String)
 

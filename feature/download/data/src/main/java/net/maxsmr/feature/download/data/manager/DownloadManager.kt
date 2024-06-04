@@ -23,6 +23,7 @@ import net.maxsmr.commonutils.deleteFiles
 import net.maxsmr.commonutils.getFiles
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.openInputStream
 import net.maxsmr.commonutils.openOutputStream
 import net.maxsmr.core.android.baseApplicationContext
@@ -202,7 +203,7 @@ class DownloadManager @Inject constructor(
         }
         scope.launch {
             downloadsFinishedQueue.collectLatest { finishedQueue ->
-                // уборать из результирующих итемов те готовые, что отсутствуют в downloadsFinishedQueue;
+                // убрать из результирующих итемов те готовые, что отсутствуют в downloadsFinishedQueue;
                 // а наполнение _resultItems происходит по ивентам (см. refreshWith)
                 val items = _resultItems.value.toMutableList()
                 val iterator = items.iterator()
@@ -416,9 +417,13 @@ class DownloadManager @Inject constructor(
         }
     }
 
-    fun removeFinished(downloadId: Long, withDb: Boolean = true) {
+    fun removeFinished(
+        downloadId: Long,
+        withDb: Boolean = true,
+        withUri: Boolean = false
+        ) {
         scope.launch {
-            removeFinishedSuspended(downloadId, withDb)
+            removeFinishedSuspended(downloadId, withDb, withUri)
         }
     }
 
@@ -527,7 +532,11 @@ class DownloadManager @Inject constructor(
         }
     }
 
-    private suspend fun removeFinishedSuspended(downloadId: Long, withDb: Boolean = true) {
+    private suspend fun removeFinishedSuspended(
+        downloadId: Long,
+        withDb: Boolean = true,
+        withUri: Boolean = false
+    ) {
         // поиск только в завершённых
         val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
         val iterator = newFinishedSet.iterator()
@@ -543,9 +552,14 @@ class DownloadManager @Inject constructor(
         downloadsFinishedQueue.value = newFinishedSet
         targetItem?.let {
             downloadsFinishedStorage.removeItem(it)
-            if (withDb) {
-                downloadsRepo.remove(downloadId)
+        }
+        if (withUri) {
+            downloadsRepo.getById(downloadId)?.takeIf { it.isSuccess }?.let {
+                it.localUri?.delete(baseApplicationContext.contentResolver)
             }
+        }
+        if (withDb) {
+            downloadsRepo.remove(downloadId)
         }
     }
 

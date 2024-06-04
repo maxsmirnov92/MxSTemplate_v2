@@ -1,6 +1,5 @@
 package net.maxsmr.core.ui.components.fragments
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -227,9 +226,8 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
     inner class FragmentContentPickerBuilder() : ContentPicker.Builder(this,
         object : ContentPicker.PermissionHandler {
 
-            override fun filterDeniedNotAskAgain(context: Context, permissions: Collection<String>): Set<String> {
-                return permissionsHelper.filterDeniedNotAskAgain(context, permissions)
-            }
+            override val permissionHelper: PermissionsHelper
+                get() = permissionsHelper
 
             override fun handle(
                 requestCode: Int,

@@ -5,9 +5,7 @@ import android.os.Looper
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
 import androidx.lifecycle.*
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.doOnNext
@@ -267,7 +265,7 @@ abstract class BaseViewModel(
     ): LiveData<ILoadState<T>> =
         doOnNext {
             if (it?.isLoading == true) {
-                AlertBuilder(tag, dialogQueue).setMessage(messageRes).build()
+                AlertBuilder(tag).setMessage(messageRes).build()
             } else {
                 dialogQueue.removeAllWithTag(tag)
             }

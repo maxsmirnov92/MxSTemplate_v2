@@ -28,6 +28,7 @@
     <string name="download_alert_clear_queue_message">Очистить очередь ожидающих загрузок?</string>
     <string name="download_alert_cancel_all_message">Отменить все текущие загрузки?</string>
     <string name="download_alert_retry_if_success_message">Данная загрузка завершилась успешно. Всё равно повторить?</string>
+    <string name="download_alert_delete_if_success_message">Вы уверены, что хотите удалить загруженный файл?</string>
     <string name="download_alert_params_sample_copied_format">Пример JSON-файла был скопирован в %s</string>
     <string name="download_queued_count_subtitle">В очереди:</string>
     <string name="download_active_empty_text">Нет активных загрузок</string>

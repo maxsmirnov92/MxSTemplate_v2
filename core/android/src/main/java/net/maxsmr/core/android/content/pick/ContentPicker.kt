@@ -10,20 +10,20 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.map
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
-import net.maxsmr.commonutils.live.filterNotNull
 import net.maxsmr.core.android.R
 import net.maxsmr.core.android.base.delegates.FragmentViewBindingDelegate.Companion.onViewLifecycleCreated
 import net.maxsmr.core.android.content.pick.ContentPicker.Builder
 import net.maxsmr.core.android.content.pick.concrete.ConcretePickerParams
+import net.maxsmr.core.android.content.pick.concrete.camera.CameraPicker
 import net.maxsmr.core.android.content.pick.concrete.camera.CameraPickerParams
 import net.maxsmr.core.android.content.pick.concrete.media.MediaPicker
+import net.maxsmr.core.android.content.pick.concrete.media.MediaPickerParams
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPicker
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
-import net.maxsmr.core.android.content.pick.concrete.camera.CameraPicker
-import net.maxsmr.core.android.content.pick.concrete.media.MediaPickerParams
+import net.maxsmr.core.android.coroutines.collectEventsWithOwner
+import net.maxsmr.permissionchecker.PermissionsHelper
 
 /**
  * Фасад для взятия контента из разных источников и обработки разрешений.
@@ -124,41 +124,35 @@ class ContentPicker private constructor(
 
     init {
         fragment.onViewLifecycleCreated {
-            //Наблюдаем за выбором аппа пользователем, запускаем выбранное приложение либо запрашиваем необходимые разрешения
-            viewModel.appChoices.observe(it) {
-                it.get()?.let { choice ->
-                    val requiredPermissions = choice.requiredPermissions().toSet()
-                    permissionHandler.handle(choice.requestCode, requiredPermissions,
-                        onDenied = {
-                            Toast.makeText(
-                                fragment.requireContext(),
-                                fragment.requireContext().getString(R.string.pick_no_permissions),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        },
-                        onGranted = { choice.select() }
-                    )
-                }
+            // Наблюдаем за выбором аппа пользователем, запускаем выбранное приложение либо запрашиваем необходимые разрешения
+            viewModel.appChoices.collectEventsWithOwner(fragment.viewLifecycleOwner) { choice ->
+                val requiredPermissions = choice.requiredPermissions().toSet()
+                permissionHandler.handle(choice.requestCode, requiredPermissions,
+                    onDenied = {
+                        // здесь нет ToastActionImpl :(
+                        Toast.makeText(
+                            fragment.requireContext(),
+                            fragment.requireContext().getString(R.string.pick_no_permissions),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    },
+                    onGranted = { choice.select() }
+                )
             }
             //Наблюдаем за результатом, вызываем соответствующие методы в случае успеха или неуспеха на нужном запросе
-            viewModel.pickResult
-                .map { it?.get() }
-                .filterNotNull()
-                .observe(fragment.viewLifecycleOwner) { result ->
-                    val request = requests.find { it.requestCode == result?.requestCode }
-                        ?: return@observe
-                    when (result) {
-                        is PickResult.Success -> request.onSuccess(result)
-                        is PickResult.Error -> request.onError?.invoke(result)
-                            ?: Toast.makeText(
-                                fragment.requireContext(),
-                                result.reason.get(fragment.requireContext()),
-                                Toast.LENGTH_SHORT
-                            ).show()
-
-                        else -> {}
-                    }
+            viewModel.pickResult.collectEventsWithOwner(fragment.viewLifecycleOwner) { result ->
+                val request = requests.find { it.requestCode == result.requestCode }
+                    ?: return@collectEventsWithOwner
+                when (result) {
+                    is PickResult.Success -> request.onSuccess(result)
+                    is PickResult.Error -> request.onError?.invoke(result)
+                        ?: Toast.makeText(
+                            fragment.requireContext(),
+                            result.reason.get(fragment.requireContext()),
+                            Toast.LENGTH_SHORT
+                        ).show()
                 }
+            }
         }
     }
 
@@ -171,8 +165,11 @@ class ContentPicker private constructor(
     fun pick(requestCode: Int, context: Context) {
         val request = requests.first { it.requestCode == requestCode }
         val intents = request.intentsWithPermissions()
+
+        val permissionsHelper = permissionHandler.permissionHelper
+
         val flatIntents = intents.flatMap { (params, srcIntent) ->
-            srcIntent.flatten(context).map { params to it }
+            srcIntent.flatten(context, permissionsHelper).map { params to it }
         }
         if (flatIntents.isEmpty()) {
             viewModel.onError(request.requestCode, TextMessage(R.string.pick_no_apps))
@@ -181,7 +178,7 @@ class ContentPicker private constructor(
         //Чузер также надо показать, если приложение 1, но оно не может быть использовано из-за запрета
         // разрешения с опцией "Больше не спрашивать", т.к. на чузере есть возможность перехода к настройкам для дачи разрешения
         val needShowChooser = flatIntents.size > 1 ||
-                permissionHandler.filterDeniedNotAskAgain(
+                permissionsHelper.filterDeniedNotAskAgain(
                     fragment.requireContext(),
                     flatIntents.first().second.permissions.toList()
                 ).isNotEmpty()
@@ -259,7 +256,7 @@ class ContentPicker private constructor(
 
     interface PermissionHandler {
 
-        fun filterDeniedNotAskAgain(context: Context, permissions: Collection<String>): Set<String>
+        val permissionHelper: PermissionsHelper
 
         fun handle(requestCode: Int, permissions: Set<String>, onDenied: (Set<String>) -> Unit, onGranted: () -> Unit)
     }
