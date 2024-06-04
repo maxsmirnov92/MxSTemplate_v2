@@ -49,7 +49,7 @@ fun downloadInfoDelegateAdapter(listener: DownloadListener) =
                 listener.onShowDownloadDetails(item.downloadInfo, item.params, item.state, ibDetails)
             }
             ibDelete.setOnClickListener {
-                listener.onDeleteResource(item.id)
+                listener.onDeleteResource(item.id, item.downloadInfo.nameWithExt)
             }
             ibView.setOnClickListener {
                 item.downloadInfo.localUri?.let {
@@ -324,7 +324,7 @@ interface DownloadListener {
         anchorView: View,
     )
 
-    fun onDeleteResource(downloadId: Long)
+    fun onDeleteResource(downloadId: Long, name: String)
 
     fun onViewResource(downloadUri: Uri, mimeType: String)
 

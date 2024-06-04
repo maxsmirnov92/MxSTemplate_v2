@@ -3,6 +3,7 @@ package net.maxsmr.core
 import androidx.annotation.CallSuper
 import java.io.InterruptedIOException
 import java.io.Serializable
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -17,7 +18,7 @@ abstract class ProgressListener {
      */
     abstract fun onProcessing(state: ProgressStateInfo): Boolean
 
-    @Throws(InterruptedIOException::class)
+    @Throws(CancellationException::class)
     @CallSuper
     open fun notify(currentBytes: Long, totalBytes: Long, done: Boolean, startTime: Long) {
 
@@ -51,7 +52,7 @@ abstract class ProgressListener {
                         )
                     )
             ) {
-                throw InterruptedIOException("Process interrupted")
+                throw CancellationException("Process interrupted")
             }
             lastNotifyTime = System.currentTimeMillis()
         }

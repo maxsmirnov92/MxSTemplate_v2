@@ -113,14 +113,11 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
                 binding.containerEmpty.isVisible = true
             }
             infoAdapter.items = items
+            // FIXME скролл
+//            binding.rvDownloads.scrollToPosition(items.size - 1)
 
             binding.ibClearFinished.isVisible = items.any { item -> !item.downloadInfo.isLoading }
-            // FIXME скролл
-            if (!infoAdapter.isEmpty) {
-                findIndexed(items) { it.state is DownloadStateNotifier.DownloadState.Loading }?.let {
-                    binding.rvDownloads.scrollToPosition(it.first)
-                }
-            }
+
         }
         viewModel.anyCanBeCancelled.observe {
             binding.ibCancelAll.isVisible = it
@@ -185,8 +182,8 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         showDetailsPopup(params, anchorView)
     }
 
-    override fun onDeleteResource(downloadId: Long) {
-        viewModel.onDeleteResource(downloadId)
+    override fun onDeleteResource(downloadId: Long, name: String) {
+        viewModel.onDeleteResource(downloadId, name)
     }
 
     override fun onViewResource(downloadUri: Uri, mimeType: String) {

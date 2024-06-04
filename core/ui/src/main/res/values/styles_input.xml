@@ -46,7 +46,7 @@
 
     <style name="SingleLineInputText" parent="InputText">
         <item name="android:ellipsize">end</item>
-        <item name="android:inputType">textNoSuggestions</item>
+        <item name="android:inputType">textNoSuggestions|textCapCharacters</item>
         <item name="android:lines">1</item>
         <item name="android:maxLines">1</item>
         <!--        <item name="android:background">@drawable/selector_background_edit_text</item>-->

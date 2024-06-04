@@ -334,7 +334,7 @@ class DownloadService : Service() {
                 val info = downloadInfo.copy(
                     status = DownloadInfo.Status.Error(localUri?.toString(), e)
                 )
-                if (e is CancellationException || e is InterruptedIOException) {
+                if (e is CancellationException) {
                     onDownloadCancelled(info, params, oldParams)
                 } else {
                     onDownloadFailed(info, params, oldParams, e)
@@ -479,8 +479,6 @@ class DownloadService : Service() {
                     ), params, oldParams
                 )
             } catch (e: CancellationException) {
-                onCancellationException(e)
-            } catch (e: InterruptedIOException) {
                 onCancellationException(e)
             } catch (e: SecurityException) {
                 if (isAtLeastQ() && e is RecoverableSecurityException) {

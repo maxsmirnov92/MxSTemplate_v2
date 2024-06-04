@@ -3,7 +3,6 @@ package net.maxsmr.feature.download.ui
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
@@ -166,10 +165,10 @@ class DownloadsStateViewModel @Inject constructor(
         queryNameFilter.value = value.orEmpty()/*.trim()*/
     }
 
-    fun onDeleteResource(downloadId: Long) {
+    fun onDeleteResource(downloadId: Long, name: String) {
         showYesNoDialog(
             DIALOG_TAG_DELETE_IF_SUCCESS,
-            TextMessage(R.string.download_alert_delete_if_success_message),
+            TextMessage(R.string.download_alert_delete_if_success_message_format, name),
             TextMessage(R.string.download_alert_confirm_title),
             onPositiveSelect = { manager.removeFinished(downloadId, withDb = true, withUri = true) }
         )
