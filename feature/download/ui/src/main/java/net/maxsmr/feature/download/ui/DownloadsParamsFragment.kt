@@ -182,7 +182,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
         binding.btStart.setOnClickListener {
             requireActivity().clearFocus()
             doOnPermissionsResult(
-                BaseActivity.REQUEST_CODE_DOWNLOAD_PERMISSION,
+                BaseActivity.REQUEST_CODE_WRITE_EXTERNAL_PERMISSION,
                 listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE) // post_notifications не является обязательным для работы сервиса
             ) {
                 viewModel.onStartDownloadClick()
@@ -208,11 +208,17 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.action_pick_json -> {
-                viewModel.onLoadFromJsonAction(requireContext()) {
-                    contentPicker.pick(REQUEST_CODE_CHOOSE_PARAMS_JSON, requireContext())
+                doOnPermissionsResult(
+                    BaseActivity.REQUEST_CODE_WRITE_EXTERNAL_PERMISSION,
+                    listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                ) {
+                    viewModel.onLoadFromJsonAction(requireContext()) {
+                        contentPicker.pick(REQUEST_CODE_CHOOSE_PARAMS_JSON, requireContext())
+                    }
                 }
                 true
             }
+
             R.id.action_open_browser -> {
                 viewModel.onOpenBrowserAction()
                 true

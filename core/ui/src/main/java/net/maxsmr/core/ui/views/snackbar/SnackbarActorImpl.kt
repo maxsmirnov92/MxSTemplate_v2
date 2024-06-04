@@ -6,7 +6,7 @@ import net.maxsmr.core.android.base.actions.SnackbarAction
 
 class SnackbarActorImpl(private val view: View): SnackbarAction.ISnackbarActor {
 
-    override fun showSnackbar(message: TextMessage, length: SnackbarAction.SnackbarLength) {
-        view.showSnackbar(message, length)
+    override fun showSnackbar(message: TextMessage, length: SnackbarAction.SnackbarLength, maxLines: Int?) {
+        view.showSnackbar(message, length, maxLines)
     }
 }

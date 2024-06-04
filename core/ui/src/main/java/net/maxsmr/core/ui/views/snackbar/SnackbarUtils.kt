@@ -16,12 +16,13 @@ import net.maxsmr.core.ui.R
 fun View.showSnackbar(
     message: TextMessage,
     length: SnackbarLength,
+    maxLines: Int? = null,
     callback: BaseTransientBottomBar.BaseCallback<Snackbar>? = null,
 ): Snackbar {
     check(length != SnackbarLength.INDEFINITE) {
         "Snackbar length cannot be INDEFINITE for that case"
     }
-    val snackbar = createSnackbar(message, length, callback)
+    val snackbar = createSnackbar(message, length, maxLines, callback)
     snackbar.show()
     return snackbar
 }
@@ -29,6 +30,7 @@ fun View.showSnackbar(
 fun View.createSnackbar(
     message: TextMessage,
     length: SnackbarLength,
+    maxLines: Int? = null,
     callback: BaseTransientBottomBar.BaseCallback<Snackbar>? = null,
 ): Snackbar {
 
@@ -41,6 +43,9 @@ fun View.createSnackbar(
 
     val snackbarTextView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
     snackbarTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.resources.getDimensionPixelSize(R.dimen.snackbarMessageTextSize).toFloat())
+    maxLines?.takeIf { it > 0 }?.let {
+        snackbarTextView.maxLines = it
+    }
 
     callback?.let {
         snackbar.addCallback(callback)

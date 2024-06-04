@@ -53,10 +53,6 @@ open class BaseActivity: AppCompatActivity() {
 
         const val REQUEST_CODE_NOTIFICATIONS_PERMISSION = 1
         const val REQUEST_CODE_GPS_PERMISSION = 2
-
-        /**
-         * возможный WRITE_EXTERNAL_STORAGE + POST_NOTIFICATION
-         */
-        const val REQUEST_CODE_DOWNLOAD_PERMISSION = 3
+        const val REQUEST_CODE_WRITE_EXTERNAL_PERMISSION = 3
     }
 }

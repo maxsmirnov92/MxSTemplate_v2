@@ -3,6 +3,7 @@ package net.maxsmr.core.android.content.pick.concrete.saf
 import android.content.Intent
 import kotlinx.parcelize.Parcelize
 import net.maxsmr.commonutils.media.MIME_TYPE_ANY
+import net.maxsmr.commonutils.media.getMimeTypeFromExtension
 import net.maxsmr.core.android.content.pick.concrete.ConcretePickerParams
 import net.maxsmr.core.android.content.pick.concrete.ConcretePickerType
 
@@ -49,18 +50,24 @@ class SafPickerParams @JvmOverloads constructor(
             "image/png",
         )
 
+        private val MIME_TYPE_JSON = "application/json"
+
         @JvmStatic
         fun documents() = SafPickerParams(intentType = MIME_TYPE_ANY, mimeTypes = DOCUMENT_MIME_TYPES)
 
         @JvmStatic
         fun images() = SafPickerParams(intentType = MIME_TYPE_ANY, mimeTypes = IMAGE_MIME_TYPES)
 
-        /**
-         * Android не знает mime типа для .json файлов (MimeTypeMap.getSingleton().getMimeTypeFromExtension("json") == null),
-         * поэтому не ограничиваем типы
-         */
         @JvmStatic
-        fun json() = any()
+        fun json(): SafPickerParams {
+            val mimeType = getMimeTypeFromExtension("json")
+            return SafPickerParams(
+                intentType = mimeType.ifEmpty {
+                    // "application/json" начал возвращаться предположительно с Q или P
+                    MIME_TYPE_ANY
+                }
+            )
+        }
 
         @JvmStatic
         fun any() = SafPickerParams(intentType = MIME_TYPE_ANY)

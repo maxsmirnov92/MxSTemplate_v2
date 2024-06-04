@@ -33,7 +33,9 @@
     <string name="download_alert_cancel_all_message">Cancel all currently running downloads?</string>
     <string name="download_alert_retry_if_success_message">This load was finished successfully. Retry anyway?</string>
     <string name="download_alert_delete_if_success_message">Are you sure to delete downloaded file?</string>
-    <string name="download_alert_params_sample_copied_format">Sample JSON-file copied to %s</string>
+    <string name="download_alert_params_sample_copy_success_format">Sample JSON-file copied to %s</string>
+    <string name="download_alert_params_sample_copy_failed">Sample JSON-file failed to copy to %s</string>
+    <string name="download_alert_params_sample_copy_failed_format">Sample JSON-file failed to copy to %1$s, reason: %2$s</string>
     <string name="download_queued_count_subtitle">Queued:</string>
     <string name="download_active_empty_text">No active loads</string>
 

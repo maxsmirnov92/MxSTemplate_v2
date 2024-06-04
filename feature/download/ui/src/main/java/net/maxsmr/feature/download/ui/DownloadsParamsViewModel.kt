@@ -18,8 +18,8 @@ import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
 import net.maxsmr.commonutils.live.field.validateAndSetByRequired
 import net.maxsmr.commonutils.media.name
-import net.maxsmr.commonutils.media.writeFromStream
-import net.maxsmr.commonutils.openRawResource
+import net.maxsmr.commonutils.media.writeFromStreamOrThrow
+import net.maxsmr.commonutils.openRawResourceOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.android.base.actions.SnackbarAction
@@ -307,27 +307,55 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     fun onLoadFromJsonAction(context: Context, onPickAction: () -> Unit) {
         viewModelScope.launch {
             if (!cacheRepo.hasDownloadParamsModelSample()) {
+
+                var snackbarTextMessage: TextMessage? = null
+
+                fun String?.asTextMessage() = this?.takeIf { it.isNotEmpty() }?.let {
+                    TextMessage(
+                        R.string.download_alert_params_sample_copy_failed_format,
+                        storage.path,
+                        it
+                    )
+                } ?: TextMessage(
+                    R.string.download_alert_params_sample_copy_failed,
+                    storage.path
+                )
+
                 withContext(ioDispatcher) {
                     val subDir = baseAppName
                     val resource = storage.getOrCreate(RESOURCE_NAME_DOWNLOAD_PARAMS_MODEL, subDir)
                     resource.getOrNull()?.let {
-                        // ассеты не допускаются в либах
-                        openRawResource(context, R.raw.download_params_model_sample)?.let { assetStream ->
-                            if (it.writeFromStream(context.contentResolver, assetStream)) {
-                                showSnackbar(
-                                    SnackbarAction(
-                                        TextMessage(
-                                            R.string.download_alert_params_sample_copied_format,
-                                            storage.path
-                                        ),
-                                        SnackbarAction.SnackbarLength.LONG
-                                    )
+                        try {
+                            // ассеты не допускаются в либах
+                            openRawResourceOrThrow(context, R.raw.download_params_model_sample).let { assetStream ->
+                                it.writeFromStreamOrThrow(context.contentResolver, assetStream)
+
+                                snackbarTextMessage = TextMessage(
+                                    R.string.download_alert_params_sample_copy_success_format,
+                                    storage.path
                                 )
+
+                                cacheRepo.setHasDownloadParamsModelSample()
                             }
+                        } catch (e: Exception) {
+                            logger.e(e)
+                            snackbarTextMessage = e.message.asTextMessage()
                         }
+                    } ?: run {
+                        snackbarTextMessage = (resource.component2()?.message?.takeIf { it.isNotEmpty() }
+                            ?: "Cannot create file").asTextMessage()
                     }
                 }
-                cacheRepo.setHasDownloadParamsModelSample()
+
+                snackbarTextMessage?.let {
+                    showSnackbar(
+                        SnackbarAction(
+                            it,
+                            SnackbarAction.SnackbarLength.LONG
+                        )
+                    )
+                }
+
             } else {
                 onPickAction()
             }
