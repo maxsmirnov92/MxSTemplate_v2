@@ -115,8 +115,6 @@ class DownloadManager @Inject constructor(
     val failedAddedToQueueEvents: SharedFlow<Pair<DownloadService.Params, FailAddReason>> =
         _failedAddedToQueueEvents.asSharedFlow()
 
-    private var settings = AppSettings()
-
     val downloadsPendingParams by lazy {
         downloadsPendingQueue.map {
             it.map { item -> item.params }
@@ -355,12 +353,6 @@ class DownloadManager @Inject constructor(
         }
 
         scope.launch {
-            settingsRepo.settingsFlow.collect {
-                settings = it
-            }
-        }
-
-        scope.launch {
             combine(
                 NetworkStateManager.asFlow(scope),
                 settingsRepo.settingsFlow
@@ -430,40 +422,14 @@ class DownloadManager @Inject constructor(
     suspend fun enqueueDownloadSuspended(params: DownloadService.Params) {
         logger.i("enqueueDownloadSuspended, params: $params")
 
-        fun getActualParams(): DownloadService.Params {
-            val settings = settings
-            return DownloadService.Params(
-                params.requestParams.copy(connectTimeout = settings.connectTimeout),
-                if (settings.disableNotifications) {
-                    null
-                } else {
-                    params.notificationParams?.copy(
-                        updateNotificationInterval = settings.updateNotificationInterval
-                    ) ?: DownloadService.NotificationParams(
-                        updateNotificationInterval = settings.updateNotificationInterval
-                    )
-                },
-                params.resourceName,
-                params.storageType,
-                params.subDirPath,
-                params.targetHashInfo,
-                params.skipIfDownloaded,
-                params.replaceFile,
-                params.deleteUnfinished,
-                params.retryWithNotifier
-            )
-        }
-
-        val actualParams = getActualParams()
-
         var failReason: FailAddReason? = null
         try {
-            if (!actualParams.validate()) {
+            if (!params.validate()) {
                 failReason = FailAddReason.NOT_VALID
                 return
             }
 
-            val targetResourceName = actualParams.targetResourceName
+            val targetResourceName = params.targetResourceName
             if (downloadsLaunchedQueue.value.map { it.params }.any { it.targetResourceName == targetResourceName }) {
                 logger.w("Not added to pending queue - \"$targetResourceName\" already in launched queue")
                 failReason = FailAddReason.ALREADY_ADDED
@@ -478,21 +444,21 @@ class DownloadManager @Inject constructor(
             // или если это retry - params должны быть актуальные;
             // не пройдёт, если это был isLoading
             val prevDownload =
-                downloadsRepo.getByNameAndExt(actualParams.resourceNameWithoutExt, actualParams.extension)
+                downloadsRepo.getByNameAndExt(params.resourceNameWithoutExt, params.extension)
             if (prevDownload?.isLoading == true) {
                 logger.w("Not added to pending queue - DownloadInfo with \"$targetResourceName\" already loading in service")
                 failReason = FailAddReason.ALREADY_LOADING
                 return
             }
             val id = downloadsRepo.nextItemId()
-            val item = QueueItem(id, actualParams)
+            val item = QueueItem(id, params)
             downloadsPendingQueue.appendToSet(item)
             downloadsPendingStorage.addItem(item)
 
-            _successAddedToQueueEvents.emit(actualParams)
+            _successAddedToQueueEvents.emit(params)
         } finally {
             failReason?.let {
-                _failedAddedToQueueEvents.emit(Pair(actualParams, it))
+                _failedAddedToQueueEvents.emit(Pair(params, it))
             }
         }
     }
@@ -571,8 +537,10 @@ class DownloadManager @Inject constructor(
     private suspend fun refreshQueue() { // state: DownloadState
         logger.d("refreshQueue")
 
+        val settings = settingsRepo.getSettings()
         // есть проблемы с актуальностью значений из-за suspend'ов, читаем вручную по месту
         // при этом getRaw() suspend - ставим его на первое место
+        // (с 2-мя suspend'ами - settings выше - эта проблема актуальна)
         val maxDownloadsCount = settings.maxDownloads
         val downloads = downloadsRepo.getRaw() // state.downloads
         val downloadsPendingQueue = downloadsPendingQueue.value // state.downloadsPendingQueue
@@ -591,8 +559,32 @@ class DownloadManager @Inject constructor(
                 break
             }
             if (!downloadsLaunchedQueue.any { it.id == item.id }) {
+
+                fun DownloadService.Params.getActualParams(): DownloadService.Params {
+                    return DownloadService.Params(
+                        requestParams.copy(connectTimeout = settings.connectTimeout),
+                        if (settings.disableNotifications) {
+                            null
+                        } else {
+                            notificationParams?.copy(
+                                updateNotificationInterval = settings.updateNotificationInterval
+                            ) ?: DownloadService.NotificationParams(
+                                updateNotificationInterval = settings.updateNotificationInterval
+                            )
+                        },
+                        resourceName,
+                        storageType,
+                        subDirPath,
+                        targetHashInfo,
+                        skipIfDownloaded,
+                        replaceFile,
+                        deleteUnfinished,
+                        retryWithNotifier
+                    )
+                }
+
                 // пропуск, если уже есть в запущенных через start сервиса
-                if (!DownloadService.start(item.params)) {
+                if (!DownloadService.start(item.params.getActualParams())) {
                     // при размере буфера 0 и BufferOverflow.SUSPEND tryEmit не сработает
                     logger.e("DownloadService start failed with item $item")
                     _failedStartParamsEvents.emit(item.params)
