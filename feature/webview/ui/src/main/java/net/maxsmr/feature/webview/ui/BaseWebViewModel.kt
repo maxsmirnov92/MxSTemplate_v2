@@ -15,21 +15,23 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
     /**
      * Первые данные в WebView с состоянием загрузки/ошибки - после очередного вызова loadUrl/loadData
      */
-    private val _firstWebViewData = MutableLiveData<LoadState<WebViewData>>()
+    private val _firstWebViewData = MutableLiveData<LoadState<WebViewData?>>(LoadState.success(null))
 
-    val firstWebViewData = _firstWebViewData as LiveData<LoadState<WebViewData>>
+    val firstWebViewData = _firstWebViewData as LiveData<LoadState<WebViewData?>>
 
     /**
      * Текущие данные в [WebView] с состоянием загрузки/ошибки
      * + флаг о том является ли он loading/завершённым относительно последнего вызова loadUrl/loadData
      */
-    private val _currentWebViewData = MutableLiveData<Pair<LoadState<WebViewData>, Boolean>>()
+    private val _currentWebViewData = MutableLiveData<LoadState<WebViewData?>>(LoadState.success(null))
 
-    val currentWebViewData = _currentWebViewData as LiveData<Pair<LoadState<WebViewData>, Boolean>>
+    val currentWebViewData = _currentWebViewData as LiveData<LoadState<WebViewData?>>
 
     private val _currentWebViewProgress = MutableLiveData<Int?>(null)
 
     val currentWebViewProgress = _currentWebViewProgress as LiveData<Int?>
+
+    protected val currentUrl get() = currentWebViewData.value?.data?.url?.takeIf { it.isNotEmpty() }
 
     /**
      * Был ли выставлен завершённый [firstWebViewData]
@@ -43,10 +45,19 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
         isFirstResourceChanged = false
     }
 
+    @CallSuper
+    open fun onWebViewDestroyed() {
+        _firstWebViewData.value = LoadState.success(null)
+        _currentWebViewData.value = LoadState.success(null)
+        _currentWebViewProgress.value = null
+        isFirstResourceChanged = false
+    }
+
     /**
      * Вызывается из [WebView]-колбеков и меняет состояние LD с [WebViewData]
      * относ-но текущего [isFirstResourceChanged] на VM с момента создания
      */
+    @Suppress("UNCHECKED_CAST")
     fun applyResource(resource: LoadState<WebViewData>) {
         val isForMainFrame = resource.data?.isForMainFrame == true
         if (!isForMainFrame) {
@@ -57,9 +68,9 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
         if (shouldChangeFirst) {
             // переприсвоение, только если он является loading/завершённым
             // относительно последнего loadUrl/loadData !
-            _firstWebViewData.postValue(resource)
+            _firstWebViewData.postValue(resource as LoadState<WebViewData?>)
         }
-        _currentWebViewData.postValue(Pair(resource, shouldChangeFirst))
+        _currentWebViewData.postValue(resource as LoadState<WebViewData?>)
         if (!resource.isLoading) {
             // завершённое состояние ->
             // последующие вызовы не будут менять firstWebDataResource

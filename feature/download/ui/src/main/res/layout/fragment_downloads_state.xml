@@ -57,7 +57,7 @@
                 android:layout_marginTop="4dp"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium"
                 android:textColor="@color/textColorHint"
-                android:textSize="12sp"
+                android:textSize="@dimen/textSizeExtraMini"
                 tools:text="abc1, abc2" />
 
             <LinearLayout

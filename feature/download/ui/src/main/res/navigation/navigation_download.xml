@@ -11,13 +11,17 @@
         android:label="@string/download_feature_title"
         tools:layout="@layout/fragment_downloads_pager">
 
+        <!--  action используется при кастомном переходе в bottom или при стандартном navigate -->
         <action
             android:id="@+id/actionToWebViewFragment"
             app:destination="@id/navigationWebView"
             app:enterAnim="@anim/slide_in"
             app:exitAnim="@anim/slide_out"
             app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out" />
+            app:popExitAnim="@anim/slide_out"
+            app:popUpTo="@id/navigationDownloads"
+            app:popUpToSaveState="true"
+            app:restoreState="true" />
 
     </fragment>
 
@@ -26,6 +30,17 @@
         android:name="net.maxsmr.feature.preferences.ui.SettingsFragment"
         android:label="@string/settings_feature_title"
         tools:layout="@layout/fragment_settings">
+
+        <action
+            android:id="@+id/actionToWebViewFragment"
+            app:destination="@id/navigationWebView"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out"
+            app:popUpTo="@id/navigationSettings"
+            app:popUpToSaveState="true"
+            app:restoreState="true" />
 
     </fragment>
 

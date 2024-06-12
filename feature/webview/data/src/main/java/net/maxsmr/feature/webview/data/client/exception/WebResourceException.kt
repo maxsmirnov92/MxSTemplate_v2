@@ -10,9 +10,18 @@ open class WebResourceException(
 ) : NetworkException(code, message) {
 
     val isConnectionError =
-        code in listOf(WebViewClient.ERROR_CONNECT, WebViewClient.ERROR_IO, WebViewClient.ERROR_TIMEOUT)
+        code in listOf(WebViewClient.ERROR_HOST_LOOKUP,
+            WebViewClient.ERROR_CONNECT,
+            WebViewClient.ERROR_IO,
+            WebViewClient.ERROR_TIMEOUT)
 
     override fun toString(): String {
         return "WebResourceException(code=$code, message=$message, isConnectionError=$isConnectionError)"
+    }
+
+    companion object {
+
+        @JvmStatic
+        fun Throwable.isWebConnectionError() = this is WebResourceException && this.isConnectionError
     }
 }

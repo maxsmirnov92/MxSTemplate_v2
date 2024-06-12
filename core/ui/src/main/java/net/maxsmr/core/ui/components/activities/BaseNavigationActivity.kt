@@ -35,9 +35,11 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
 
     protected lateinit var navController: NavController
         private set
+
     private lateinit var navHostFragment: NavHostFragment
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
+    lateinit var appBarConfiguration: AppBarConfiguration
+        private set
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

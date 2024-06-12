@@ -362,21 +362,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
     }
 
-    fun onOpenBrowserAction() {
-        viewModelScope.launch {
-            viewModel.navigate(
-                NavigationAction.NavigationCommand.ToDirectionWithNavDirections(
-                    DownloadsPagerFragmentDirections.actionToWebViewFragment(
-                        WebViewCustomizer.Builder()
-                            .setUrl(settingsRepo.getSettings().startPageUrl)
-                            .setCanInputUrls(true)
-                            .build()
-                    )
-                )
-            )
-        }
-    }
-
     fun onStartDownloadClick() {
         if (!allFields.validateAndSetByRequired()) {
             return

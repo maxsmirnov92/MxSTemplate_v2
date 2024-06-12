@@ -39,8 +39,6 @@ class DownloadsStateViewModel @Inject constructor(
     @Dispatcher(AppDispatchers.Default) private val defaultDispatcher: CoroutineDispatcher,
 ) : BaseHandleableViewModel(state) {
 
-    override val connectionManager: ConnectionManager = ConnectionManager(snackbarQueue)
-
     val queueNames = MutableLiveData<List<String>>()
 
     val allItems = MutableLiveData<List<DownloadInfoAdapterData>>()

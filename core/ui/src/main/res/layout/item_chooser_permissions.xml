@@ -11,5 +11,5 @@
     android:focusable="true"
     android:padding="8dp"
     android:textColor="@color/textColorPrimary"
-    android:textSize="12sp"
+    android:textSize="@dimen/textSizeExtraMini"
     tools:text="@string/pick_more_permissions" />

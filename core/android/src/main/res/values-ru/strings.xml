@@ -14,8 +14,8 @@
     <string name="error_unexpected">Произошла неизвестная ошибка</string>
 
     <string name="no_data">Нет данных</string>
-    <string name="try_again_internet">Проверить снова</string>
-    <string name="try_again_connect">Попробовать снова</string>
+    <string name="check_again">Проверить снова</string>
+    <string name="try_again">Попробовать снова</string>
 
     <string name="pick_no_permissions">Не получено необходимых разрешений</string>
     <string name="pick_no_apps">Не найдено подходящих приложений</string>

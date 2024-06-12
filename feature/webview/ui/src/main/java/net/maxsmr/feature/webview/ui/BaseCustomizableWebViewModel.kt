@@ -15,9 +15,6 @@ abstract class BaseCustomizableWebViewModel(
 
     abstract var customizer: WebViewCustomizer
 
-    lateinit var startUrl: String
-        private set
-
     val urlField: Field<String> = state.urlField(
         initialValue = SCHEME_HTTPS,
         hintResId = R.string.webview_alert_open_url_field_hint,
@@ -27,13 +24,15 @@ abstract class BaseCustomizableWebViewModel(
 
     override fun onInitialized() {
         super.onInitialized()
-        startUrl = customizer.url
         urlField.valueLive.observe {
             urlField.validateAndSetByRequired()
         }
     }
 
     fun onOpenUrlAction() {
+        currentUrl?.let {
+            urlField.value = it
+        }
         showOkDialog(DIALOG_TAG_OPEN_URL, TextMessage(R.string.webview_alert_open_url_title))
     }
 
@@ -41,13 +40,17 @@ abstract class BaseCustomizableWebViewModel(
         if (urlField.hasError) {
             return false
         }
-        customizer = customizer.buildUpon().setUrl(urlField.value).build()
+        val newValue = urlField.value
+        if (currentUrl == newValue) {
+            return false
+        }
+        customizer = customizer.buildUpon().setUrl(newValue).build()
         urlField.value = SCHEME_HTTPS
         return true
     }
 
     fun onCopyLinkAction(context: Context) {
-        currentWebViewData.value?.first?.data?.url?.takeIf { it.isNotEmpty() }?.let {
+        currentWebViewData.value?.data?.url?.takeIf { it.isNotEmpty() }?.let {
             copyToClipboard(context, "page link", it)
             showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message)))
         }

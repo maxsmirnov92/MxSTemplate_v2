@@ -15,8 +15,8 @@
     <string name="error_unexpected">Unexpected error occurred</string>
 
     <string name="no_data">No data</string>
-    <string name="try_again_internet">Check again</string>
-    <string name="try_again_connect">Try again</string>
+    <string name="check_again">Check again</string>
+    <string name="try_again">Try again</string>
 
     <string name="pick_no_permissions">Necessary permissions was not acquired</string>
     <string name="pick_no_apps">No appropriate apps</string>

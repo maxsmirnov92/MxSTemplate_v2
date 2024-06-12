@@ -87,7 +87,7 @@ abstract class BaseViewModel(
     /**
      * Определяет логику обработки событий состояния сети. Переопределите, если требуется обработка.
      */
-    open val connectionManager: ConnectionManager? = null
+    val connectionManager: ConnectionManager by lazy { ConnectionManager(snackbarQueue) }
 
     private val lifecycleRegistry: LifecycleRegistry by lazy { LifecycleRegistry(this) }
 

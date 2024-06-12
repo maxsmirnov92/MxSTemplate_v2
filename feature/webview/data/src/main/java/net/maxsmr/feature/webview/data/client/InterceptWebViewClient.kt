@@ -11,6 +11,8 @@ import androidx.annotation.CallSuper
 import androidx.annotation.MainThread
 import androidx.annotation.RequiresApi
 import net.maxsmr.commonutils.URL_SCHEME_MAIL
+import net.maxsmr.commonutils.logger.BaseLogger
+import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.media.getMimeTypeFromUrl
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.domain.entities.feature.network.Method
@@ -28,11 +30,16 @@ import net.maxsmr.feature.webview.data.client.interceptor.IWebViewInterceptor.In
 import net.maxsmr.feature.webview.data.client.interceptor.WebViewInterceptor
 import java.nio.charset.Charset
 
+/**
+ * @param okHttpClient применим только для api >= 21
+ */
 open class InterceptWebViewClient @JvmOverloads constructor(
     protected val context: Context,
     protected val okHttpClient: OkHttpClient? = null,
     private val webViewInterceptor: IWebViewInterceptor? = WebViewInterceptor(),
 ) : WebViewClient() {
+
+    protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
     /**
      * Нужен для последующих вызовов [onWebResourceRequestError] и/или [onPageFinished];
@@ -187,6 +194,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
 
     @CallSuper
     open fun onWebResourceRequestError(error: NetworkException, request: WebResourceRequest?) {
+        logger.e("onWebResourceRequestError, error: $error, request: $request")
         val data = currentMainFrameData
         if (data != null && request == null) {
             // если WebResourceRequest отсутствует (при ошибке SSL)
@@ -302,6 +310,10 @@ open class InterceptWebViewClient @JvmOverloads constructor(
         return WebViewData(url, isForMainFrame, response, responseBody)
     }
 
+    /**
+     * [response] и [responseData] нульные, если запрос не выполнялся вручную в Interceptor
+     * (или был exception в процессе executeCall)
+     */
     data class WebViewData(
         val url: String,
         val isForMainFrame: Boolean,

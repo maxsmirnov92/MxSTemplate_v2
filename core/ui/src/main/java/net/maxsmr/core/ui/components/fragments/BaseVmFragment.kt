@@ -209,12 +209,12 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
 
     private fun observeNetworkConnectionHandler() {
         connectionHandler?.onNetworkStateChanged?.let { onStateChanged ->
-            viewModel.connectionManager?.asLiveData?.observe {
+            viewModel.connectionManager.asLiveData?.observe {
                 onStateChanged(it)
             }
         }
         connectionHandler?.alertsMapper?.let { mapper ->
-            viewModel.connectionManager?.queue?.let {
+            viewModel.connectionManager.queue?.let {
                 // queue разные: snackbarQueue вместо dialogQueue
                 bindAlertDialog(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
                     mapper(alert)

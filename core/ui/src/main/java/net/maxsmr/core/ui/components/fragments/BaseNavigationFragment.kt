@@ -82,7 +82,7 @@ abstract class BaseNavigationFragment<VM : BaseHandleableViewModel> : BaseMenuFr
     }
 
     protected fun navigateUp() {
-        if (!findNavController().navigateUp()) {
+        if (!findNavController().navigateUp()) { // (requireActivity() as BaseNavigationActivity).appBarConfiguration
             requireActivity().finish()
         }
     }
@@ -103,6 +103,7 @@ abstract class BaseNavigationFragment<VM : BaseHandleableViewModel> : BaseMenuFr
                     command.navigatorExtras,
                 )
                 is NavigationCommand.Back -> {
+//                    fragment.requireActivity().onBackPressed()
                     fragment.navigateUp()
                 }
                 else -> {

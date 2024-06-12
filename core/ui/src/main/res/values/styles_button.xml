@@ -13,10 +13,13 @@
         <item name="android:textAppearance">@style/TextAppearance.AppCompat.Button</item>
     </style>
 
-    <!--красная кнопка со скругленными углами-->
     <style name="Button.Primary">
         <item name="android:background">@drawable/selector_button_primary</item>
         <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="Button.Primary.Rounded">
+        <item name="android:background">@drawable/selector_button_primary_rounded</item>
     </style>
 
     <!-- Стандартная кнопка без бордюра -->

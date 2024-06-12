@@ -58,7 +58,6 @@
 
     <string name="download_menu_action_filter">Фильтр по названию</string>
     <string name="download_menu_action_load_params_from_json">Загрузить параметры из JSON</string>
-    <string name="download_menu_action_open_browser">Открыть встроенный браузер</string>
 
     <string name="download_snackbar_action_view_error_format">Невозможно открыть URI \"%s\"</string>
     <string name="download_snackbar_action_share_error_format">Невозможно поделиться URI \"%s\"</string>

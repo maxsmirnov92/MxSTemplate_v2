@@ -2,9 +2,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/action_refresh"
-        android:icon="@drawable/ic_menu_refresh"
-        android:title="@string/webview_menu_action_refresh"
+        android:id="@+id/action_stop_loading"
+        android:icon="@drawable/ic_stop"
+        android:title="@string/webview_menu_action_stop_loading"
         app:iconTint="@color/white"
         app:showAsAction="ifRoom" />
     <item

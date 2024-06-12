@@ -12,6 +12,7 @@ import android.webkit.WebViewClient
 import android.widget.ProgressBar
 import androidx.annotation.CallSuper
 import androidx.core.view.isVisible
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import net.maxsmr.commonutils.CHARSET_DEFAULT
 import net.maxsmr.commonutils.gui.BaseUrlParams
 import net.maxsmr.commonutils.gui.loadDataCompat
@@ -19,7 +20,6 @@ import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.content.FileFormat
-import net.maxsmr.core.android.network.URL_PAGE_BLANK
 import net.maxsmr.core.android.network.isUrlValid
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.isResponseOk
@@ -29,32 +29,39 @@ import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
 import net.maxsmr.feature.webview.data.client.exception.EmptyWebResourceException
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
+import net.maxsmr.feature.webview.data.client.exception.WebResourceException.Companion.isWebConnectionError
 import java.nio.charset.Charset
+
 
 abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragment<VM>() {
 
     abstract val webView: WebView
 
+    abstract val swipeRefresh: SwipeRefreshLayout?
+
     abstract val progress: ProgressBar?
 
-    abstract val emptyErrorContainer: View?
+    abstract val errorContainer: View?
 
     override val connectionHandler: ConnectionHandler = ConnectionHandler.Builder()
         .onStateChanged {
             if (it && shouldReloadAfterConnectionError) {
-                val data = viewModel.firstWebViewData.value
+                val data = viewModel.currentWebViewData.value
                 data?.error?.let { error ->
-                    if (error is WebResourceException && error.isConnectionError) {
-                        // если последняя ошибка была обусловлена сетью,
-                        // загрузить повторно при появлении сети сейчас
-                        doReloadWebView()
+                    if (error.isWebConnectionError()) {
+                        // с задержкой, т.к. после появления сети коннект может не пройти сразу
+                        webView.postDelayed({
+                            // если последняя ошибка была обусловлена сетью,
+                            // загрузить повторно при появлении сети сейчас
+                            doReloadWebView()
+                        }, 500)
                     }
                 }
             }
         }
         .build()
 
-    protected open val shouldReloadAfterConnectionError: Boolean = false
+    protected open val shouldReloadAfterConnectionError: Boolean = true
 
     protected open val shouldInterceptOnUpPressed: Boolean = false
 
@@ -71,13 +78,21 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             onFirstResourceChanged(it)
         }
         viewModel.currentWebViewData.observe {
-            onResourceChanged(it.first, it.second)
+            onResourceChanged(it)
         }
         viewModel.currentWebViewProgress.observe {
             if (it != null) {
                 onShowProgress(it)
             } else {
                 onHideProgress()
+            }
+        }
+        swipeRefresh?.setOnRefreshListener {
+            doReloadWebView()
+        }
+        swipeRefresh?.let {
+            it.viewTreeObserver?.addOnScrollChangedListener {
+                it.isEnabled = webView.scrollY == 0
             }
         }
     }
@@ -118,11 +133,23 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         destroyWebView()
     }
 
-    protected abstract fun doReloadWebView()
+    /**
+     * Перезагрузка исходными данными
+     */
+    protected abstract fun doInitReloadWebView()
 
     protected abstract fun createWebViewClient(): InterceptWebViewClient
 
     protected open fun createWebChromeClient(): BaseWebChromeClient? = BaseWebChromeClient()
+
+    /**
+     * Перезагрузка с текущим состоянием WebView
+     */
+    @CallSuper
+    protected open fun doReloadWebView() {
+//        viewModel.onWebViewReload()
+        webView.reload()
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     protected open fun onSetupWebView(webSettings: WebSettings) {
@@ -145,6 +172,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
     protected open fun onDestroyWebView() {
         logger.d("onDestroyWebView")
         webView.destroy()
+        viewModel.onWebViewDestroyed()
     }
 
     @CallSuper
@@ -173,6 +201,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
      * Колбек сработает в результате загрузки страницы:
      * 1. Успех
      * 2. Ошибка, по которой вызвался [onPageError], кроме SSL
+     * По некоторым страницам почему-то не приходит
      */
     @CallSuper
     protected open fun onPageFinished(data: WebViewData) {
@@ -182,7 +211,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         }
         with(viewModel) {
             // используем инфу о состоянии для последнего ресурса с той же урлой
-            val currentResource = currentWebViewData.value?.takeIf { it.first.data?.url == data.url }?.first
+            val currentResource = currentWebViewData.value?.takeIf { it.data?.url == data.url }
             applyResource((if (currentResource != null && currentResource.isError()) {
                 // если до этого в onPageLoadError выставлялся еррор - оставляем статус
                 currentResource.copyOf(data)
@@ -208,37 +237,56 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
 
     protected open fun onWebViewFirstInit() {
         logger.d("onWebViewFirstInit")
-        doReloadWebView()
+        doInitReloadWebView()
     }
 
     /**
-     * Вызывается, когда ресурс, инициированный последним [loadUrl] или [loadData],
-     * попадает на этот экран впервые
+     * Вызывается при загрузке,
+     * инициированной последним [loadUrl]/[loadData]
      */
-    protected open fun onFirstResourceChanged(resource: LoadState<WebViewData>) {
+    protected open fun onFirstResourceChanged(resource: LoadState<WebViewData?>) {}
+
+    protected open fun onFirstResourceLoading(hasData: Boolean, url: String?) {}
+
+    protected open fun onFirstResourceSuccess(url: String) {}
+
+    /**
+     * Для дополнительной логики при ерроре
+     */
+    protected open fun onFirstResourceError(hasData: Boolean, url: String?, exception: NetworkException?) {}
+
+    /**
+     * При любых mainframe лоадингах (например при навигациях по странице)
+     */
+    @CallSuper
+    protected open fun onResourceChanged(resource: LoadState<WebViewData?>) {
+        val hasData = resource.hasData { !it?.url.isNullOrEmpty() && it?.isForMainFrame == true }
+        val url = resource.data?.url
         if (resource.isLoading) {
             // webview во время загрузки остаётся только при наличии данных
-            webView.isVisible = resource.hasData()
+            webView.isVisible = hasData
             progress?.isIndeterminate = viewModel.currentWebViewProgress.value == null
             progress?.isVisible = true
-            emptyErrorContainer?.isVisible = false
+            errorContainer?.isVisible = false
+            onFirstResourceLoading(hasData, url)
         } else {
             progress?.isVisible = false
-            if (resource.isSuccessWithData()) {
+            swipeRefresh?.isRefreshing = false
+            if (resource.isSuccess() && hasData) {
+                swipeRefresh?.isEnabled = true
                 webView.isVisible = true
-                emptyErrorContainer?.isVisible = false
+                errorContainer?.isVisible = false
+                onFirstResourceSuccess(url.orEmpty())
             } else {
-                webView.isVisible = false
-                emptyErrorContainer?.isVisible = true
+                val shouldShowError = !hasData || resource.error?.isWebConnectionError() == true
+                // свайп доступен только при видимой webview
+                swipeRefresh?.isEnabled = !shouldShowError
+                webView.isVisible = !shouldShowError
+                errorContainer?.isVisible = shouldShowError
+                onFirstResourceError(hasData, url, resource.error as? NetworkException)
             }
         }
     }
-
-    /**
-     * @param isFirst является ли [resource] loading/завершённым
-     * относительно последнего вызова loadUrl/loadData
-     */
-    protected open fun onResourceChanged(resource: LoadState<WebViewData>, isFirst: Boolean) {}
 
     protected open fun onShowProgress(progress: Int) {
         this.progress?.isIndeterminate = false
@@ -327,13 +375,6 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             }.apply {
                 onWebViewReload()
             }
-        }
-    }
-
-    private fun cancelLoading() {
-        webView.post {
-            webView.stopLoading()
-            webView.loadUrl(URL_PAGE_BLANK)
         }
     }
 

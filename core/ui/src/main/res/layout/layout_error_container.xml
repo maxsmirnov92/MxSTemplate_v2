@@ -3,8 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="8dp"
-    android:layout_marginTop="10dp"
     android:gravity="center"
     android:orientation="vertical"
     android:paddingHorizontal="16dp"
@@ -30,6 +28,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:gravity="center"
-        android:text="@string/try_again_connect"
-        android:textSize="12sp" />
+        android:text="@string/try_again"
+        android:textSize="@dimen/textSizeExtraMini" />
 </LinearLayout>

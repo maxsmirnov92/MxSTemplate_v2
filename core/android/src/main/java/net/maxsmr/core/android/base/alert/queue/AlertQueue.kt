@@ -25,7 +25,9 @@ class AlertQueue(
 
     init {
         queue.asLiveData().observeForever {
-            logger.d("AlertQueue->${toString()}")
+            if (queue.isNotEmpty()) {
+                logger.d("AlertQueue->${toString()}")
+            }
             //искусственно повышаем приоритет сообщения в голове очереди, чтобы оно не перебивалось новыми
             it?.setMaxPriority()
         }

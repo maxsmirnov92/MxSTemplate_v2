@@ -11,12 +11,15 @@ import android.webkit.WebView
 import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import net.maxsmr.commonutils.gui.bindToTextNotNull
+import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.FileFormat
+import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation
 import net.maxsmr.core.utils.charsetForNameOrNull
@@ -36,11 +39,13 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     final override val layoutId: Int = R.layout.fragment_webview
 
-    override val webView: WebView by lazy { binding.containerWebView.webView }
+    override val webView: WebView by lazy { binding.webView }
+
+    override val swipeRefresh: SwipeRefreshLayout? by lazy { binding.swipeWebView }
 
     override val progress: ProgressBar by lazy { binding.pbToolbar }
 
-    override val emptyErrorContainer: View by lazy { binding.containerWebView.errorContainer.root }
+    override val errorContainer: View by lazy { binding.errorContainer.root }
 
     override val menuResId: Int = R.menu.menu_web_view
 
@@ -55,6 +60,8 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     private var copyMenuItem: MenuItem? = null
 
+    private var stopMenuItem: MenuItem? = null
+
     private var forwardMenuItem: MenuItem? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
@@ -65,7 +72,10 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             }
             toolbar.navigationIcon =
                 ContextCompat.getDrawable(requireContext(), net.maxsmr.core.ui.R.drawable.ic_close_clear_cancel_white)
-            containerWebView.errorContainer.btRetry.setOnClickListener { doReloadWebView() }
+            errorContainer.btReload.setOnClickListener {
+                doReloadWebView()
+            }
+
         }
     }
 
@@ -79,8 +89,12 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             // бинд только хинта;
             // по текущему еррору (который здесь меняется при каждом инпуте)
             // еррор не выставляем - вместо этого дисейбл кнопки
-            viewModel.urlField.hintLive.observe {hint ->
+            viewModel.urlField.hintLive.observe { hint ->
                 dialogBinding.tilUrl.hint = hint?.get(requireContext())
+            }
+
+            dialogBinding.ibClear.setOnClickListener {
+                viewModel.urlField.value = EMPTY_STRING
             }
 
             DialogRepresentation.Builder(requireContext(), it)
@@ -91,7 +105,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
                 }
                 .setPositiveButton(it.answers[0]) {
                     if (viewModel.onUrlConfirmed()) {
-                        doReloadWebView()
+                        doInitReloadWebView()
                     }
                 }
                 .build()
@@ -104,7 +118,9 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             isVisible = viewModel.customizer.canInputUrls
         }
         copyMenuItem = menu.findItem(R.id.action_copy_link)
-        refreshCopyLinkMenuItem(viewModel.currentWebViewData.value?.first)
+        refreshCopyLinkMenuItem(viewModel.currentWebViewData.value)
+        stopMenuItem = menu.findItem(R.id.action_stop_loading)
+        refreshStopMenuItem(viewModel.currentWebViewData.value)
         forwardMenuItem = menu.findItem(R.id.action_forward)
         refreshForwardMenuItem()
     }
@@ -116,13 +132,14 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
                 true
             }
 
-            R.id.action_refresh -> {
-                webView.reload()
+            R.id.action_copy_link -> {
+                viewModel.onCopyLinkAction(requireContext())
                 true
             }
 
-            R.id.action_copy_link -> {
-                viewModel.onCopyLinkAction(requireContext())
+            R.id.action_stop_loading -> {
+                webView.stopLoading()
+                stopMenuItem?.isVisible = false
                 true
             }
 
@@ -165,7 +182,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             }
         }
 
-    override fun doReloadWebView() {
+    override fun doInitReloadWebView() {
         val customizer = webViewCustomizer
         val url = customizer.url
         val data = customizer.data
@@ -194,28 +211,40 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         }
     }
 
-    override fun onFirstResourceChanged(resource: LoadState<WebViewData>) {
-        super.onFirstResourceChanged(resource)
-        with(binding.containerWebView) {
-            if (resource.isLoading || resource.isSuccessWithData()) {
-                errorContainer.btRetry.isVisible = false
-            } else {
-                // повтор целесообразен только при наличии исходной урлы
-                errorContainer.btRetry.isVisible = webViewCustomizer.url.isNotEmpty()
-            }
+//    override fun onFirstResourceLoading(hasData: Boolean, url: String?) {
+//        super.onFirstResourceLoading(hasData, url)
+//        binding.scrollWebView.isFillViewport = !hasData
+//    }
+
+//    override fun onFirstResourceSuccess(url: String) {
+//        super.onFirstResourceSuccess(url)
+//        binding.scrollWebView.isFillViewport = false
+//    }
+
+    override fun onFirstResourceError(hasData: Boolean, url: String?, exception: NetworkException?) {
+        with(binding.errorContainer) {
+            tvErrorUrl.setTextOrGone(url)
+            tvErrorDescription.setTextOrGone(exception?.message)
+//            binding.scrollWebView.isFillViewport = true
         }
     }
 
-    override fun onResourceChanged(resource: LoadState<WebViewData>, isFirst: Boolean) {
+    override fun onResourceChanged(resource: LoadState<WebViewData?>) {
+        super.onResourceChanged(resource)
         refreshCopyLinkMenuItem(resource)
+        refreshStopMenuItem(resource)
         refreshForwardMenuItem()
     }
 
-    private fun refreshCopyLinkMenuItem(resource: LoadState<WebViewData>?) {
+    private fun refreshCopyLinkMenuItem(resource: LoadState<WebViewData?>?) {
         copyMenuItem?.isVisible = resource?.hasData { it?.url?.isNotEmpty() == true } == true
     }
 
+    private fun refreshStopMenuItem(resource: LoadState<WebViewData?>?) {
+        stopMenuItem?.isVisible = resource?.isLoading == true
+    }
+
     private fun refreshForwardMenuItem() {
-        forwardMenuItem?.isVisible = webView.canGoForward()
+        forwardMenuItem?.isVisible = isWebViewInitialized && webView.canGoForward()
     }
 }

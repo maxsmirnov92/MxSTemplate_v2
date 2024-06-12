@@ -49,8 +49,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:gravity="center"
-            android:text="@string/try_again_connect"
-            android:textSize="12sp" />
+            android:text="@string/try_again"
+            android:textSize="@dimen/textSizeExtraMini" />
 
     </LinearLayout>
 

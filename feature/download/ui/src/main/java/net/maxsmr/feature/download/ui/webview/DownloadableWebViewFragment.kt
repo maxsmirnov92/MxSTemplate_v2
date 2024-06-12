@@ -19,7 +19,7 @@ import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewFragment
 import okhttp3.OkHttpClient
 import java.lang.IllegalStateException
 
-@AndroidEntryPoint
+//@AndroidEntryPoint
 class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<DownloadableWebViewModel>() {
 
 //    private val args by navArgs<DownloadableWebViewFragmentArgs>()
@@ -78,7 +78,7 @@ class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<Downloadable
 
     override fun onSetupWebView(webSettings: WebSettings) {
         super.onSetupWebView(webSettings)
-        webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+        webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, _ ->
             viewModel.onDownloadStart(
                 url,
                 userAgent,

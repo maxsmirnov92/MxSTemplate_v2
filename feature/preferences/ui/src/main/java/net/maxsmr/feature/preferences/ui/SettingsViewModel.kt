@@ -83,15 +83,14 @@ class SettingsViewModel @Inject constructor(
         isValidByBlank = true
     )
 
-    private val allFields =
-        listOf<Field<*>>(
-            maxDownloadsField,
-            connectTimeoutField,
-            retryDownloadsField,
-            disableNotificationsField,
-            updateNotificationIntervalStateField,
-            startPageUrlField
-        )
+    private val allFields = listOf<Field<*>>(
+        maxDownloadsField,
+        connectTimeoutField,
+        retryDownloadsField,
+        disableNotificationsField,
+        updateNotificationIntervalStateField,
+        startPageUrlField
+    )
 
     private val appSettings by persistableLiveData<AppSettings>()
 
@@ -107,10 +106,7 @@ class SettingsViewModel @Inject constructor(
         super.onInitialized()
         if (initialSettings == null) {
             viewModelScope.launch {
-                val settings = repository.getSettings()
-                initialSettings = settings
-                appSettings.value = settings
-                restoreFields(settings)
+                initSettings()
             }
         }
 
@@ -175,7 +171,9 @@ class SettingsViewModel @Inject constructor(
                     )
                 )
             }
-            navigateBack()
+
+            initSettings()
+//            navigateBack()
         }
     }
 
@@ -207,6 +205,13 @@ class SettingsViewModel @Inject constructor(
         updateNotificationIntervalStateField.value =
             LongFieldState(settings.updateNotificationInterval, !settings.disableNotifications)
         startPageUrlField.value = settings.startPageUrl
+    }
+
+    private suspend fun initSettings() {
+        val settings = repository.getSettings()
+        initialSettings = settings
+        appSettings.value = settings
+        restoreFields(settings)
     }
 
     companion object {

@@ -219,11 +219,6 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
                 true
             }
 
-            R.id.action_open_browser -> {
-                viewModel.onOpenBrowserAction()
-                true
-            }
-
             else -> {
                 super.onMenuItemSelected(menuItem)
             }
