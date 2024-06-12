@@ -30,7 +30,6 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatExc
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.media.getContentName
 import net.maxsmr.commonutils.media.getMimeTypeFromName
-import net.maxsmr.commonutils.media.isEmpty
 import net.maxsmr.commonutils.media.lengthOrThrow
 import net.maxsmr.commonutils.media.mimeTypeOrThrow
 import net.maxsmr.commonutils.media.openInputStreamOrThrow
@@ -114,6 +113,7 @@ class DownloadService : Service() {
     private val context: Context by lazy { this }
 
     private val groupKeyLoading by lazy { "${context.packageName}.LOADING" }
+    private val groupKeyFinished by lazy { "${context.packageName}.FINISHED" }
 
     private val notificationWrapper: NotificationWrapper by lazy {
         NotificationWrapper(context) {
@@ -214,7 +214,7 @@ class DownloadService : Service() {
         logger.d("onCreate")
         val notification =
             foregroundNotification(getString(R.string.download_notification_initial_text), null)
-        startForeground(DOWNLOADING_NOTIFICATION_ID, notification)
+        startForeground(NOTIFICATION_ID_FOREGROUND, notification)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -630,7 +630,7 @@ class DownloadService : Service() {
                     ?: getString(R.string.download_notification_success_title))
                 setContentBigText(notificationParams.contentText.takeIf { it.isNotEmpty() }
                     ?: params.targetResourceName)
-                setGroup(groupKeyLoading)
+                setGroup(groupKeyFinished)
                 setSortKey(SORT_KEY_FINISHED)
                 setSound(successSoundUri)
                 setVibrate(VIBRATION_PATTERN_SUCCESS)
@@ -683,7 +683,7 @@ class DownloadService : Service() {
                     ?: getString(R.string.download_notification_failed_title))
                 setContentBigText(notificationParams.contentText.takeIf { it.isNotEmpty() }
                     ?: params.targetResourceName)
-                setGroup(groupKeyLoading)
+                setGroup(groupKeyFinished)
                 setSortKey(SORT_KEY_FINISHED)
                 setSound(failedSoundUri)
                 setVibrate(VIBRATION_PATTERN_FAILED)
@@ -712,7 +712,7 @@ class DownloadService : Service() {
                     ?: getString(R.string.download_notification_cancelled_title))
                 setContentBigText(notificationParams.contentText.takeIf { it.isNotEmpty() }
                     ?: params.targetResourceName)
-                setGroup(groupKeyLoading)
+                setGroup(groupKeyFinished)
                 setSortKey(SORT_KEY_FINISHED)
                 setOngoing(false)
                 addRetryAction(downloadInfo.id, params)
@@ -748,13 +748,13 @@ class DownloadService : Service() {
 
         val title = context.resources.getQuantityString(R.plurals.download_files, size, size)
         notificationWrapper.show(
-            DOWNLOADING_NOTIFICATION_ID,
+            NOTIFICATION_ID_FOREGROUND,
             foregroundNotification(title, message)
         )
     }
 
     private fun foregroundNotification(title: String, message: String?): Notification {
-        return notificationWrapper.create(notificationChannel) {
+        return notificationWrapper.create(NOTIFICATION_ID_FOREGROUND, notificationChannel) {
             setDefaults(Notification.DEFAULT_ALL)
             setSmallIcon(R.drawable.ic_download)
             setContentTitle(title)
@@ -1255,9 +1255,9 @@ class DownloadService : Service() {
         const val EXTRA_CANCEL_DOWNLOAD_ID = "download_service_cancel_download_id"
 
         /**
-         * Ид уведомления текущей загрузки. Для корректной работы не должен пересекаться с ид успешных загрузок/фейлов
+         * Ид главного уведомления. Для корректной работы не должен пересекаться с ид отдельных нотификаций по загрузкам
          */
-        private const val DOWNLOADING_NOTIFICATION_ID = -1
+        private const val NOTIFICATION_ID_FOREGROUND = -1
 
         //лексиграфическая сортировка нотификаций - уведомление текущей загрузки всегда сверху
         private const val SORT_KEY_LOADING_ALL = "A"

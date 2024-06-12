@@ -2,5 +2,5 @@
 <resources>
     <color name="textColorDownloadSuccess">#6dc100</color>
     <color name="textColorDownloadFailed">@color/textColorError</color>
-    <color name="textColorDownloadCancelled">#ffce00</color>
+    <color name="textColorDownloadCancelled">#ffaf00</color>
 </resources>
