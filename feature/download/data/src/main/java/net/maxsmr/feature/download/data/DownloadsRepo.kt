@@ -43,7 +43,7 @@ class DownloadsRepo @Inject constructor(
 
     suspend fun getById(id: Long): DownloadInfo? = dao.getById(id)
 
-    suspend fun getByName(name: String): DownloadInfo? = dao.getByName(name)
+    suspend fun getByName(name: String, ext: String): DownloadInfo? = dao.getByName(name, ext)
 
     suspend fun getByNameAndExt(name: String, ext: String): DownloadInfo? = dao.getByNameAndExt(name, ext)
 
@@ -51,7 +51,11 @@ class DownloadsRepo @Inject constructor(
 
     suspend fun remove(id: Long) = dao.remove(id)
 
+    suspend fun remove(ids: List<Long>) = dao.remove(*ids.toLongArray())
+
     suspend fun remove(downloadInfo: DownloadInfo) = remove(downloadInfo.id)
+
+    suspend fun remove(name: String, ext: String) = dao.remove(name, ext)
 
     suspend fun removeUnfinished() {
         removeIf(false)
@@ -65,7 +69,7 @@ class DownloadsRepo @Inject constructor(
 
     private suspend fun removeIf(isFinished: Boolean) {
         val ids = dao.getAllRaw().filter { it.isLoading != isFinished }.map { it.id }
-        dao.remove(ids)
+        remove(ids)
     }
 
     /**

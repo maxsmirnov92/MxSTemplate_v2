@@ -185,6 +185,16 @@ class DownloadManager @Inject constructor(
             val totalCount = items.size + finishedItems.size
             downloadsRepo.setItemIdCounterByItemsCount(totalCount)
             applyFinished(finishedItems.toMutableSet())
+
+            // на этом этапе в таблице могут присутствовать записи,
+            // которым не соответствуют итемы в finished
+            val idsToRemove = downloadsRepo.getRaw().filter { i ->
+                !finishedItems.any { it.downloadId == i.id }
+            }.map { it.id }
+            if (idsToRemove.isNotEmpty()) {
+                downloadsRepo.remove(idsToRemove)
+            }
+
             downloadsPendingQueue.emit(items.sortedBy { it.id }.toSet())
         }
 

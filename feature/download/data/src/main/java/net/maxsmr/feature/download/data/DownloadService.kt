@@ -631,6 +631,7 @@ class DownloadService : Service() {
                     ?: getString(R.string.download_notification_success_title))
                 setContentBigText(notificationParams.contentText.takeIf { it.isNotEmpty() }
                     ?: params.targetResourceName)
+                setProgress(100, 100, false)
                 setGroup(groupKeyFinished)
                 setSortKey(SORT_KEY_FINISHED)
                 setSound(successSoundUri)
@@ -684,6 +685,7 @@ class DownloadService : Service() {
                     ?: getString(R.string.download_notification_failed_title))
                 setContentBigText(notificationParams.contentText.takeIf { it.isNotEmpty() }
                     ?: params.targetResourceName)
+                setProgress(0, 0, false)
                 setGroup(groupKeyFinished)
                 setSortKey(SORT_KEY_FINISHED)
                 setSound(failedSoundUri)
@@ -713,6 +715,7 @@ class DownloadService : Service() {
                     ?: getString(R.string.download_notification_cancelled_title))
                 setContentBigText(notificationParams.contentText.takeIf { it.isNotEmpty() }
                     ?: params.targetResourceName)
+                setProgress(0, 0, false)
                 setGroup(groupKeyFinished)
                 setSortKey(SORT_KEY_FINISHED)
                 setOngoing(false)
