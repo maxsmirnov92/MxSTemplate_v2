@@ -1,10 +1,12 @@
 package net.maxsmr.feature.webview.ui
 
+import android.net.Uri
 import android.webkit.WebView
 import androidx.annotation.CallSuper
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.map
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
@@ -31,14 +33,15 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
 
     val currentWebViewProgress = _currentWebViewProgress as LiveData<Int?>
 
-    protected val currentUrl get() = currentWebViewData.value?.data?.url?.takeIf { it.isNotEmpty() }
+    val currentUrl = currentWebViewData.map { it.data?.url }
+
+    val currentData = currentWebViewData.map { it.data?.data }
 
     /**
      * Был ли выставлен завершённый [firstWebViewData]
      * с момента создания [BaseWebViewModel]
      */
-    protected var isFirstResourceChanged = false
-        private set
+    private var isFirstResourceChanged = false
 
     @CallSuper
     open fun onWebViewReload() {
@@ -79,8 +82,15 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
         }
     }
 
-    fun onFirstLoadNotStarted(exception: WebResourceException, url: String) {
-        _firstWebViewData.value = LoadState.error(exception, WebViewData.fromMainUrl(url))
+    fun onFirstLoadNotStarted(exception: WebResourceException, url: Uri?, data: String?) {
+        onWebViewReload()
+        applyResource(LoadState.error(exception, if (url != null && !data.isNullOrEmpty()) {
+            WebViewData.fromUrlWithData(url, data)
+        } else if (url != null) {
+            WebViewData.fromUrl(url)
+        } else {
+            WebViewData.fromData(data)
+        }))
     }
 
     fun onProgressChanged(progress: Int) {

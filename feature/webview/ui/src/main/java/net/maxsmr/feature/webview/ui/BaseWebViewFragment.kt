@@ -242,33 +242,24 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
 
     /**
      * Вызывается при загрузке,
-     * инициированной последним [loadUrl]/[loadData]
+     * инициированной последним [loadUri]/[loadData]
      */
     protected open fun onFirstResourceChanged(resource: LoadState<WebViewData?>) {}
-
-    protected open fun onFirstResourceLoading(hasData: Boolean, url: String?) {}
-
-    protected open fun onFirstResourceSuccess(url: String) {}
-
-    /**
-     * Для дополнительной логики при ерроре
-     */
-    protected open fun onFirstResourceError(hasData: Boolean, url: String?, exception: NetworkException?) {}
 
     /**
      * При любых mainframe лоадингах (например при навигациях по странице)
      */
     @CallSuper
     protected open fun onResourceChanged(resource: LoadState<WebViewData?>) {
-        val hasData = resource.hasData { !it?.url.isNullOrEmpty() && it?.isForMainFrame == true }
         val url = resource.data?.url
+        val data = resource.data?.data
+        val hasData = resource.hasData { it != null && !it.isEmpty }
         if (resource.isLoading) {
-            // webview во время загрузки остаётся только при наличии данных
             webView.isVisible = hasData
             progress?.isIndeterminate = viewModel.currentWebViewProgress.value == null
             progress?.isVisible = true
             errorContainer?.isVisible = false
-            onFirstResourceLoading(hasData, url)
+            onResourceLoading(url, data)
         } else {
             progress?.isVisible = false
             swipeRefresh?.isRefreshing = false
@@ -276,43 +267,53 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 swipeRefresh?.isEnabled = true
                 webView.isVisible = true
                 errorContainer?.isVisible = false
-                onFirstResourceSuccess(url.orEmpty())
+                onResourceSuccess(url, data)
             } else {
                 val shouldShowError = !hasData || resource.error?.isWebConnectionError() == true
                 // свайп доступен только при видимой webview
                 swipeRefresh?.isEnabled = !shouldShowError
                 webView.isVisible = !shouldShowError
                 errorContainer?.isVisible = shouldShowError
-                onFirstResourceError(hasData, url, resource.error as? NetworkException)
+                onResourceError(hasData, url, data, resource.error as? NetworkException)
             }
         }
     }
 
+    protected open fun onResourceLoading(url: Uri?, data: String?) {}
+
+    protected open fun onResourceSuccess(url: Uri?, data: String?) {}
+
+    /**
+     * Для дополнительной логики при ерроре
+     */
+    protected open fun onResourceError(hasData: Boolean, url: Uri?, data: String?, exception: NetworkException?) {}
+
     protected open fun onShowProgress(progress: Int) {
+        logger.d("onShowProgress, progress: $progress")
         this.progress?.isIndeterminate = false
         this.progress?.progress = progress
         this.progress?.isVisible = true
     }
 
     protected open fun onHideProgress() {
+        logger.d("onHideProgress")
         this.progress?.isVisible = false
     }
 
-    protected fun loadUri(uri: Uri) {
-        loadUrl(uri.toString())
+    protected fun loadUrl(url: String) {
+        loadUri(Uri.parse(url))
     }
 
-    protected fun loadUrl(url: String): Boolean {
-        logger.d("loadUrl, url: '$url'")
+    protected fun loadUri(uri: Uri): Boolean {
+        logger.d("loadUrl, url: '$uri'")
         with(viewModel) {
-            return if (isWebViewInitialized && url.isUrlValid(orBlank = true)) {
-                webView.loadUrl(url)
+            val uriString = uri.toString()
+            return if (isWebViewInitialized && uriString.isUrlValid(orBlank = true)) {
+                webView.loadUrl(uriString)
                 true
             } else {
-                onFirstLoadNotStarted(EmptyWebResourceException(), url)
+                onFirstLoadNotStarted(EmptyWebResourceException(), uri, null)
                 false
-            }.apply {
-                onWebViewReload()
             }
         }
     }
@@ -341,10 +342,8 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 )
                 true
             } else {
-                onFirstLoadNotStarted(EmptyWebResourceException(), data)
+                onFirstLoadNotStarted(EmptyWebResourceException(), null, data)
                 false
-            }.apply {
-                onWebViewReload()
             }
         }
     }
@@ -370,10 +369,8 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 )
                 true
             } else {
-                onFirstLoadNotStarted(EmptyWebResourceException(), data)
+                onFirstLoadNotStarted(EmptyWebResourceException(), baseUrl?.let { Uri.parse(it) }, data)
                 false
-            }.apply {
-                onWebViewReload()
             }
         }
     }

@@ -77,6 +77,9 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             }
 
         }
+        viewModel.currentUrl.observe {
+            refreshMenuItemsByCurrentUri(it)
+        }
     }
 
     override fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
@@ -114,11 +117,13 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
+
         urlMenuItem = menu.findItem(R.id.action_open_url).apply {
             isVisible = viewModel.customizer.canInputUrls
         }
         copyMenuItem = menu.findItem(R.id.action_copy_link)
-        refreshCopyLinkMenuItem(viewModel.currentWebViewData.value)
+        refreshMenuItemsByCurrentUri(viewModel.currentUrl.value)
+
         stopMenuItem = menu.findItem(R.id.action_stop_loading)
         refreshStopMenuItem(viewModel.currentWebViewData.value)
         forwardMenuItem = menu.findItem(R.id.action_forward)
@@ -221,9 +226,9 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 //        binding.scrollWebView.isFillViewport = false
 //    }
 
-    override fun onFirstResourceError(hasData: Boolean, url: String?, exception: NetworkException?) {
+    override fun onResourceError(hasData: Boolean, url: Uri?, data: String?, exception: NetworkException?) {
         with(binding.errorContainer) {
-            tvErrorUrl.setTextOrGone(url)
+            tvErrorUrl.setTextOrGone(url.toString())
             tvErrorDescription.setTextOrGone(exception?.message)
 //            binding.scrollWebView.isFillViewport = true
         }
@@ -231,14 +236,16 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     override fun onResourceChanged(resource: LoadState<WebViewData?>) {
         super.onResourceChanged(resource)
-        refreshCopyLinkMenuItem(resource)
         refreshStopMenuItem(resource)
         refreshForwardMenuItem()
     }
 
-    private fun refreshCopyLinkMenuItem(resource: LoadState<WebViewData?>?) {
-        copyMenuItem?.isVisible = resource?.hasData { it?.url?.isNotEmpty() == true } == true
+    private fun refreshMenuItemsByCurrentUri(uri: Uri?) {
+        val hasUri = uri != null
+        urlMenuItem?.isVisible = hasUri
+        copyMenuItem?.isVisible = hasUri
     }
+
 
     private fun refreshStopMenuItem(resource: LoadState<WebViewData?>?) {
         stopMenuItem?.isVisible = resource?.isLoading == true

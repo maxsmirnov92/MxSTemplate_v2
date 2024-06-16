@@ -15,6 +15,7 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.media.getMimeTypeFromUrl
 import net.maxsmr.core.android.content.FileFormat
+import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.asStringCloned
 import net.maxsmr.core.network.exceptions.NetworkException
@@ -80,6 +81,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
         )
     }
 
+    // вызывается после onPageStarted
     private fun shouldInterceptRequest(
         view: WebView,
         url: String,
@@ -124,30 +126,30 @@ open class InterceptWebViewClient @JvmOverloads constructor(
 
     @MainThread
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
-        shouldInterceptCommand(view, url, ::shouldInterceptFromPageStart)
+        super.onPageStarted(view, url, favicon)
     }
 
     @MainThread
     override fun onPageFinished(view: WebView, url: String) {
-        shouldInterceptCommand(view, url, ::shouldInterceptFromPageFinish)
+        super.onPageFinished(view, url)
         val data = currentMainFrameData
         var isHandled = false
-        if (data != null) {
-            val previousUrl = Uri.parse(data.url)
-            if (TextUtils.isEmpty(previousUrl.host) || url == data.url) {
-                // загрузка завершилась для той же "главной" урлы!
-                // или она не являлась урлой вовсе (вызывалась loadData)
-                // как индикатор завершения текущей цепочки - забываем
-                onPageFinished?.invoke(data)
-                currentMainFrameData = null
-                isHandled = true
-            }
+        if (data != null
+                && (url.equalsIgnoreSubDomain(data.url.toString())
+                        || !data.data.isNullOrEmpty())
+        ) {
+            // загрузка завершилась для той же "главной" урлы!
+            // или вызывалось loadData/loadDataWithBaseUrl;
+            // как индикатор завершения текущей цепочки - забываем
+            onPageFinished?.invoke(data)
+            currentMainFrameData = null
+            isHandled = true
         }
         if (!isHandled) {
             // если урла не совпала
             // или currentMainFrameData отсутствует (главная была завершена)
             // -> это загрузка какой-то части страницы, просто оповещаем
-            onPageFinished?.invoke(WebViewData(url, false))
+            onPageFinished?.invoke(WebViewData(Uri.parse(url), null, false))
         }
     }
 
@@ -207,13 +209,13 @@ open class InterceptWebViewClient @JvmOverloads constructor(
             // чтобы далее правильно вызвался onPageFinished
             if (request != null) {
                 val isForMainFrame = request.isForMainFrame
-                val url = request.url.toString()
-                val newData = if (data != null && isForMainFrame && url == data.url) {
+                val url = request.url
+                val newData = if (data != null && isForMainFrame && url.equalsIgnoreSubDomain(data.url)) {
                     // можно идентифицировать как главный, начатый ранее
                     data
                 } else {
                     // такого быть не должно, т.к. должен был быть запомнен currentMainFrameData при старте
-                    WebViewData(url, isForMainFrame)
+                    WebViewData(url, null, isForMainFrame)
                 }
                 onPageError?.invoke(newData, error)
             }
@@ -224,16 +226,12 @@ open class InterceptWebViewClient @JvmOverloads constructor(
 
     open fun shouldInterceptFromOverrideUrl(url: String): InterceptedUrl? = null
 
-    open fun shouldInterceptFromPageStart(url: String): InterceptedUrl? = null
-
-    open fun shouldInterceptFromPageFinish(url: String): InterceptedUrl? = null
-
     protected open fun onUrlIntercepted(view: WebView?, interceptedUrlType: InterceptedUrl) {}
 
     // не главный поток
     @CallSuper
     protected open fun onStartLoading(url: String, isForMainFrame: Boolean) {
-        val data = WebViewData(url, isForMainFrame, null)
+        val data = WebViewData(Uri.parse(url), null, isForMainFrame)
         if (isForMainFrame) {
             currentMainFrameData = data
         }
@@ -307,25 +305,44 @@ open class InterceptWebViewClient @JvmOverloads constructor(
                 body?.byteStream()
             )
         }
-        return WebViewData(url, isForMainFrame, response, responseBody)
+        return WebViewData(Uri.parse(url), null, isForMainFrame, response, responseBody)
     }
 
     /**
+     * [url] или [data] исходный url или данные (в зав-ти от loadUrl и loadData и последующих вызовов)
      * [response] и [responseData] нульные, если запрос не выполнялся вручную в Interceptor
      * (или был exception в процессе executeCall)
      */
     data class WebViewData(
-        val url: String,
+        val url: Uri?,
+        val data: String?,
         val isForMainFrame: Boolean,
         val response: WebResourceResponse? = null,
         val responseData: String? = null,
     ) {
 
+        val isEmpty = url == null && data.isNullOrEmpty()
+
         companion object {
 
             @JvmStatic
-            fun fromMainUrl(url: String?) = if (!url.isNullOrEmpty()) {
-                WebViewData(url, true, null, null)
+            fun fromUrlWithData(url: Uri?, data: String?) =
+                if (url != null && !url.scheme.isNullOrEmpty() && !data.isNullOrEmpty()) {
+                    WebViewData(url, data, true, null, null)
+                } else {
+                    null
+                }
+
+            @JvmStatic
+            fun fromUrl(url: Uri?) = if (url != null && !url.scheme.isNullOrEmpty()) {
+                WebViewData(url, null, true, null, null)
+            } else {
+                null
+            }
+
+            @JvmStatic
+            fun fromData(data: String?) = if (!data.isNullOrEmpty()) {
+                WebViewData(null, data, true, null, null)
             } else {
                 null
             }

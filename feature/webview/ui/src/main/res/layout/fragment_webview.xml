@@ -36,6 +36,12 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <include
+            android:id="@+id/errorContainer"
+            layout="@layout/layout_network_error_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
             android:id="@+id/swipeWebView"
             android:layout_width="match_parent"
@@ -48,12 +54,6 @@
                 android:orientation="vertical" />
 
         </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
-        <include
-            android:id="@+id/errorContainer"
-            layout="@layout/layout_network_error_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
 
     </FrameLayout>
 

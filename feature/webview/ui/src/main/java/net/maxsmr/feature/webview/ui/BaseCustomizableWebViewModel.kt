@@ -5,8 +5,8 @@ import androidx.lifecycle.SavedStateHandle
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
-import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.actions.ToastAction
+import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import net.maxsmr.core.ui.fields.urlField
 
 abstract class BaseCustomizableWebViewModel(
@@ -29,19 +29,12 @@ abstract class BaseCustomizableWebViewModel(
         }
     }
 
-    fun onOpenUrlAction() {
-        currentUrl?.let {
-            urlField.value = it
-        }
-        showOkDialog(DIALOG_TAG_OPEN_URL, TextMessage(R.string.webview_alert_open_url_title))
-    }
-
     fun onUrlConfirmed(): Boolean {
         if (urlField.hasError) {
             return false
         }
         val newValue = urlField.value
-        if (currentUrl == newValue) {
+        if (currentUrl.value.toString().equalsIgnoreSubDomain(newValue)) {
             return false
         }
         customizer = customizer.buildUpon().setUrl(newValue).build()
@@ -49,9 +42,16 @@ abstract class BaseCustomizableWebViewModel(
         return true
     }
 
+    fun onOpenUrlAction() {
+        currentUrl.value?.let {
+            urlField.value = it.toString()
+        }
+        showOkDialog(DIALOG_TAG_OPEN_URL, TextMessage(R.string.webview_alert_open_url_title))
+    }
+
     fun onCopyLinkAction(context: Context) {
-        currentWebViewData.value?.data?.url?.takeIf { it.isNotEmpty() }?.let {
-            copyToClipboard(context, "page link", it)
+        currentUrl.value?.let {
+            copyToClipboard(context, "page link", it.toString())
             showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message)))
         }
     }
