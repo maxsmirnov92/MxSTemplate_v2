@@ -68,21 +68,23 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <CheckBox
-            android:id="@+id/cbRetryDownloads"
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchRetryDownloads"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/settings_field_retry_failed_downloads"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            app:switchPadding="4dp" />
 
-        <CheckBox
-            android:id="@+id/cbDisableNotifications"
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchDisableNotifications"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="@string/settings_field_disable_notifications"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small" />
+            android:textAppearance="@style/TextAppearance.AppCompat.Small"
+            app:switchPadding="4dp" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/tilUpdateNotificationInterval"

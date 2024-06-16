@@ -23,7 +23,6 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
 
     /**
      * Текущие данные в [WebView] с состоянием загрузки/ошибки
-     * + флаг о том является ли он loading/завершённым относительно последнего вызова loadUrl/loadData
      */
     private val _currentWebViewData = MutableLiveData<LoadState<WebViewData?>>(LoadState.success(null))
 

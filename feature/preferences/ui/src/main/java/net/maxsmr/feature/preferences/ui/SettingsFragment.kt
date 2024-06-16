@@ -73,8 +73,8 @@ class SettingsFragment: BaseNavigationFragment<SettingsViewModel>() {
         }
         viewModel.connectTimeoutField.bindHintError(viewLifecycleOwner, binding.tilConnectTimeout)
 
-        viewModel.retryDownloadsField.bindValue(viewLifecycleOwner, binding.cbRetryDownloads)
-        viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.cbDisableNotifications)
+        viewModel.retryDownloadsField.bindValue(viewLifecycleOwner, binding.switchRetryDownloads)
+        viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.switchDisableNotifications)
 
         binding.etUpdateNotificationInterval.addTextChangedListener {
             viewModel.updateNotificationIntervalStateField.toggleFieldState(it.toString().toLongNotNull())
