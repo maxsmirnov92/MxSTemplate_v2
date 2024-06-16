@@ -12,6 +12,7 @@
     <string name="error_intent_send">Приложение для отправки не обнаружено</string>
     <string name="error_intent_open_url">Приложение для просмотра ссылки не обнаружено</string>
     <string name="error_intent_open_document">Приложение для выбора документа не обнаружено</string>
+    <string name="error_intent_any">Отсутствуют приложения для данного действия</string>
 
     <string name="alert_gps_not_available_message">К сожалению, ваше мобильное устройство не снабжено функцией определения местоположения.</string>
     <string name="alert_gps_enable_dialog_title">Местоположение недоступно</string>

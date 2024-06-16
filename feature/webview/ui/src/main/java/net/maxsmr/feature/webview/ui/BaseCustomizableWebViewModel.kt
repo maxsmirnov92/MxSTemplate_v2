@@ -1,10 +1,13 @@
 package net.maxsmr.feature.webview.ui
 
 import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.SavedStateHandle
 import net.maxsmr.commonutils.copyToClipboard
+import net.maxsmr.commonutils.getSendTextIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
+import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import net.maxsmr.core.ui.fields.urlField
@@ -51,8 +54,18 @@ abstract class BaseCustomizableWebViewModel(
 
     fun onCopyLinkAction(context: Context) {
         currentUrl.value?.let {
-            copyToClipboard(context, "page link", it.toString())
+            copyToClipboard(context, context.getString(R.string.webview_url_link_title), it.toString())
             showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message)))
+        }
+    }
+
+    fun onShareLinkAction(context: Context) {
+        currentUrl.value?.let {
+            context.startActivitySafe(getSendTextIntent(it.toString()).apply {
+                putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.webview_url_link_title))
+            }) {
+                showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.error_intent_send)))
+            }
         }
     }
 

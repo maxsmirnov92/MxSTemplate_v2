@@ -60,6 +60,8 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     private var copyMenuItem: MenuItem? = null
 
+    private var shareMenuItem: MenuItem? = null
+
     private var stopMenuItem: MenuItem? = null
 
     private var forwardMenuItem: MenuItem? = null
@@ -122,6 +124,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             isVisible = viewModel.customizer.canInputUrls
         }
         copyMenuItem = menu.findItem(R.id.action_copy_link)
+        shareMenuItem = menu.findItem(R.id.action_share_link)
         refreshMenuItemsByCurrentUri(viewModel.currentUrl.value)
 
         stopMenuItem = menu.findItem(R.id.action_stop_loading)
@@ -139,6 +142,11 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
             R.id.action_copy_link -> {
                 viewModel.onCopyLinkAction(requireContext())
+                true
+            }
+
+            R.id.action_share_link -> {
+                viewModel.onShareLinkAction(requireContext())
                 true
             }
 
@@ -244,8 +252,8 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         val hasUri = uri != null
         urlMenuItem?.isVisible = hasUri
         copyMenuItem?.isVisible = hasUri
+        shareMenuItem?.isVisible = hasUri
     }
-
 
     private fun refreshStopMenuItem(resource: LoadState<WebViewData?>?) {
         stopMenuItem?.isVisible = resource?.isLoading == true

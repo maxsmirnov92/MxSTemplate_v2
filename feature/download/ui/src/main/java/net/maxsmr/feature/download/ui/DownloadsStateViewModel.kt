@@ -1,7 +1,6 @@
 package net.maxsmr.feature.download.ui
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
@@ -15,9 +14,14 @@ import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.media.isEmpty
+import net.maxsmr.commonutils.startActivitySafe
+import net.maxsmr.commonutils.wrapChooser
 import net.maxsmr.core.android.base.actions.SnackbarAction
-import net.maxsmr.core.android.base.connection.ConnectionManager
+import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.android.content.ShareStrategy
+import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
+import net.maxsmr.core.android.content.ViewStrategy
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
@@ -49,7 +53,7 @@ class DownloadsStateViewModel @Inject constructor(
 
     val queryNameFilter = MutableLiveData<String>()
 
-    private val navigateUriIntentEvent = MutableStateFlow<VmEvent<Intent>?>(null)
+    private val navigateUriEvent = MutableStateFlow<VmEvent<IntentWithUriProvideStrategy<*>>?>(null)
 
     override fun onInitialized() {
         super.onInitialized()
@@ -82,7 +86,6 @@ class DownloadsStateViewModel @Inject constructor(
         queryNameFilter.observe {
             currentItems.value = manager.resultItems.value.mapWithFilterByName(it)
         }
-
     }
 
     override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
@@ -103,8 +106,31 @@ class DownloadsStateViewModel @Inject constructor(
 
     override fun handleEvents(fragment: BaseVmFragment<*>) {
         super.handleEvents(fragment)
-        navigateUriIntentEvent.collectEventsWithOwner(fragment.viewLifecycleOwner) {
-            fragment.startActivity(it)
+        navigateUriEvent.collectEventsWithOwner(fragment.viewLifecycleOwner) { s ->
+            val context = fragment.requireContext()
+            var intent = s.intent()
+
+            val titleResId = when (s) {
+                is ViewStrategy -> {
+                    net.maxsmr.feature.download.data.R.string.view_choose_client_file_title
+                }
+
+                is ShareStrategy -> {
+                    net.maxsmr.feature.download.data.R.string.share_choose_client_file_title
+                }
+
+                else -> {
+                    null
+                }
+            }
+            titleResId?.let {
+                intent = intent.wrapChooser(context.getString(it))
+            }
+            // по дефолту "открыть с помощью" или "поделиться"
+
+            context.startActivitySafe(intent) {
+                showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.error_intent_any)))
+            }
         }
     }
 
@@ -173,18 +199,20 @@ class DownloadsStateViewModel @Inject constructor(
     }
 
     fun onViewResource(downloadUri: Uri, mimeType: String) {
-        navigateUriAfterCheck(downloadUri) {
-            DownloadService.getViewAction().intent(downloadUri, mimeType, false)
-        }
+        navigateUriAfterCheck(
+            downloadUri,
+            ViewStrategy(IntentWithUriProvideStrategy.Data(downloadUri, mimeType))
+        )
     }
 
     fun onShareResource(downloadUri: Uri, mimeType: String) {
-        navigateUriAfterCheck(downloadUri) {
-            DownloadService.getShareAction().intent(downloadUri, mimeType, false)
-        }
+        navigateUriAfterCheck(
+            downloadUri,
+            ShareStrategy(ShareStrategy.Data(downloadUri, mimeType))
+        )
     }
 
-    private fun navigateUriAfterCheck(downloadUri: Uri, intentFunc: () -> Intent) {
+    private fun <T : IntentWithUriProvideStrategy<*>> navigateUriAfterCheck(downloadUri: Uri, strategy: T) {
         viewModelScope.launch(defaultDispatcher) {
             AlertBuilder(DIALOG_TAG_PROGRESS).build()
             if (downloadUri.isEmpty(baseApplicationContext.contentResolver)) {
@@ -197,7 +225,7 @@ class DownloadsStateViewModel @Inject constructor(
                     )
                 )
             } else {
-                navigateUriIntentEvent.emit(VmEvent(intentFunc()))
+                navigateUriEvent.emit(VmEvent(strategy))
             }
             // нечастый баг с тем, что крутилка остаётся
             delay(100)

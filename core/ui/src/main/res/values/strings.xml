@@ -12,6 +12,7 @@
     <string name="error_intent_send">No apps for sending found</string>
     <string name="error_intent_open_url">No apps for viewing links found</string>
     <string name="error_intent_open_document">No apps for opening document found</string>
+    <string name="error_intent_any">No apps can perform this action</string>
 
     <string name="alert_gps_not_available_message">Unfortunately your device does not have geolocation detection function</string>
     <string name="alert_gps_enable_dialog_title">Geolocation is unavailable</string>

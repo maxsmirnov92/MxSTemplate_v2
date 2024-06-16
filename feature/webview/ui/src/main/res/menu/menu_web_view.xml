@@ -14,6 +14,12 @@
         app:iconTint="@color/white"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/action_share_link"
+        android:icon="@drawable/ic_share"
+        android:title="@string/webview_menu_action_share_link"
+        app:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_copy_link"
         android:icon="@drawable/ic_menu_copy"
         android:title="@string/webview_menu_action_copy_link"

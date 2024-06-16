@@ -71,8 +71,9 @@ import net.maxsmr.feature.download.data.manager.DownloadsHashManager
 import net.maxsmr.feature.download.data.model.BaseDownloadParams
 import net.maxsmr.feature.download.data.model.IntentSenderParams
 import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
-import net.maxsmr.feature.download.data.storage.file.ShareFile
-import net.maxsmr.feature.download.data.storage.file.ViewFile
+import net.maxsmr.core.android.content.ShareStrategy
+import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
+import net.maxsmr.core.android.content.ViewStrategy
 import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
 import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -1172,14 +1173,10 @@ class DownloadService : Service() {
 
             abstract val notificationActionName: String
 
-            fun intent(uri: Uri, mimeType: String, withChooser: Boolean = true): Intent {
+            fun intent(uri: Uri, mimeType: String): Intent {
                 logger.d("Success mimeType: $mimeType, action: $this")
-                return createIntent(uri, mimeType).apply {
-                    // FIXME в chooser вместо тайтла mimeType на Android 13
-                    if (withChooser) {
-                        wrapChooser(chooserTitle)
-                    }
-                }
+                // chooser title может не сработать для SEND/SEND_MULTIPLE
+                return createIntent(uri, mimeType).wrapChooser(chooserTitle)
             }
 
             protected abstract fun createIntent(uri: Uri, mimeType: String): Intent
@@ -1203,9 +1200,8 @@ class DownloadService : Service() {
 
                 override val id: Int = 1
 
-                override fun createIntent(uri: Uri, mimeType: String): Intent = ViewFile.intent(
-                    ViewFile.Data(uri, mimeType)
-                )
+                override fun createIntent(uri: Uri, mimeType: String): Intent =
+                    ViewStrategy(IntentWithUriProvideStrategy.Data(uri, mimeType)).intent()
             }
 
             data class Share @JvmOverloads constructor(
@@ -1219,9 +1215,17 @@ class DownloadService : Service() {
 
                 override val id: Int = 2
 
-                override fun createIntent(uri: Uri, mimeType: String): Intent = ShareFile.intent(
-                    ShareFile.Data(uri, mimeType, intentText, intentSubject, intentEmails)
-                )
+                override fun createIntent(uri: Uri, mimeType: String): Intent =
+                    ShareStrategy(
+                        ShareStrategy.Data(
+                            uri,
+                            mimeType,
+                            true,
+                            intentText,
+                            intentSubject,
+                            intentEmails
+                        )
+                    ).intent()
             }
         }
     }
