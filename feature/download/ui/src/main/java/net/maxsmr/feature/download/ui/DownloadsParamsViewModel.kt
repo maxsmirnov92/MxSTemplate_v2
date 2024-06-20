@@ -16,12 +16,11 @@ import net.maxsmr.commonutils.REG_EX_ALGORITHM_SHA1
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
-import net.maxsmr.commonutils.live.field.validateAndSetByRequired
+import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
 import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStreamOrThrow
 import net.maxsmr.commonutils.openRawResourceOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
@@ -362,12 +361,16 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
     }
 
-    fun onStartDownloadClick() {
-        if (!allFields.validateAndSetByRequired()) {
-            return
+    /**
+     * @return первый ошибочный [Field]
+     */
+    fun onStartDownloadClick(): Field<*>? {
+        val result = allFields.validateAndSetByRequiredFields()
+        if (result.isNotEmpty()) {
+            return result.first()
         }
-        val url = urlField.value ?: return
-        val method = methodField.value ?: return
+        val url = urlField.value ?: return null
+        val method = methodField.value ?: return null
         val bodyUri = bodyField.value?.bodyUri
 
         val fileName = fileNameField.value
@@ -404,6 +407,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 headers
             )
         )
+        return null
     }
 
     private fun updateHeaderItem(

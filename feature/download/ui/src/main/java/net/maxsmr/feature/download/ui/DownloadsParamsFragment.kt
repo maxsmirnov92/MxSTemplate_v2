@@ -16,8 +16,10 @@ import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.clearFocus
 import net.maxsmr.commonutils.gui.hideKeyboard
+import net.maxsmr.commonutils.gui.scrollToView
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showKeyboard
+import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
@@ -90,6 +92,19 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
                 .build()
         )
         .build()
+
+    private val fieldViewsMap: Map<Field<*>, View> by lazy {
+        mutableMapOf<Field<*>, View>().apply {
+            with(viewModel) {
+                put(urlField, binding.tilUrl)
+                put(methodField, binding.containerMethod)
+                put(bodyField, binding.containerSelectRequestBody)
+                put(fileNameField, binding.tilFileName)
+                put(subDirNameField, binding.tilSubDirName)
+                put(targetHashField, binding.tilTargetHash)
+            }
+        }
+    }
 
     private var wasResumedOnce = false
 
@@ -185,7 +200,11 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
                 BaseActivity.REQUEST_CODE_WRITE_EXTERNAL_PERMISSION,
                 listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE) // post_notifications не является обязательным для работы сервиса
             ) {
-                viewModel.onStartDownloadClick()
+                viewModel.onStartDownloadClick()?.let { field ->
+                    fieldViewsMap[field]?.let {
+                        binding.svParams.scrollToView(it, true, activity = requireActivity())
+                    }
+                }
             }
         }
 

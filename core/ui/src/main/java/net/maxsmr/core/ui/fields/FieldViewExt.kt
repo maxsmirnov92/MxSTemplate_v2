@@ -31,7 +31,10 @@ fun Field<BooleanFieldState>.bindState(lifecycleOwner: LifecycleOwner, checkBox:
     }
 }
 
-fun <D> Field<D>.bindHintError(lifecycleOwner: LifecycleOwner, textInputLayout: TextInputLayout) {
+fun <D> Field<D>.bindHintError(
+    lifecycleOwner: LifecycleOwner,
+    textInputLayout: TextInputLayout
+    ) {
     hintLive.observe(lifecycleOwner) {
         textInputLayout.hint = it?.get(textInputLayout.context)
     }

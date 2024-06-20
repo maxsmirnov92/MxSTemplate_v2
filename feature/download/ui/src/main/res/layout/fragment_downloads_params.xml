@@ -6,6 +6,7 @@
     android:layout_height="match_parent">
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/svParams"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/btStart"
@@ -33,6 +34,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <LinearLayout
+                android:id="@+id/containerMethod"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"

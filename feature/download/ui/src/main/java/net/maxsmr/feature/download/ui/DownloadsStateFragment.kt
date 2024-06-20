@@ -97,6 +97,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
 //        )
         viewModel.queueNames.observe {
             binding.tvQueueCount.text = it.size.toString()
+            binding.containerQueue.isVisible = it.isNotEmpty()
             val mergedNames = it.joinToString("; ")
             binding.tvQueuedNames.setTextOrGone("[ $mergedNames ]", isEmptyFunc = { mergedNames.isEmpty() })
             binding.ibClearQueue.isVisible = it.isNotEmpty()

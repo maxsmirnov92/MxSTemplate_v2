@@ -344,7 +344,7 @@ class DownloadsViewModel @Inject constructor(
         @JvmStatic
         private fun DownloadParamsModel.toParams(mimeType: String? = null): DownloadService.Params = with(this) {
             val url = url.trim()
-            val bodyUri = bodyUri
+            val bodyUri = bodyUri?.trim()
             val targetHashInfo = targetSha1Hash?.takeIf { it.isNotEmpty() }?.let {
                 HashInfo(ALGORITHM_SHA1, it)
             } ?: HashInfo(ALGORITHM_SHA1, EMPTY_STRING) // если не указан - считаем в итоге по тому же алгоритму
@@ -356,12 +356,12 @@ class DownloadsViewModel @Inject constructor(
             // не спрашивать из ответа тип, если он известен заранее
             val hasMimeType = !mimeType.isNullOrEmpty()
 
-            if (method == Method.POST && bodyUri != null) {
+            if (method == Method.POST && !bodyUri.isNullOrEmpty()) {
                 defaultPOSTServiceParamsFor(
                     url,
                     fileName,
                     DownloadService.RequestParams.Body(
-                        DownloadService.RequestParams.Body.Uri(bodyUri.trim())
+                        DownloadService.RequestParams.Body.Uri(bodyUri),
                     ),
                     ignoreContentType = hasMimeType,
                     ignoreAttachment = ignoreAttachment,

@@ -20,6 +20,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import net.maxsmr.commonutils.NotificationWrapper
 import net.maxsmr.commonutils.NotificationWrapper.Companion.setContentBigText
+import net.maxsmr.commonutils.getFileLength
 import net.maxsmr.commonutils.getSerializableExtraCompat
 import net.maxsmr.commonutils.getUriFromRawResource
 import net.maxsmr.commonutils.isAtLeastOreo
@@ -30,6 +31,7 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatExc
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.media.getContentName
 import net.maxsmr.commonutils.media.getMimeTypeFromName
+import net.maxsmr.commonutils.media.isEmpty
 import net.maxsmr.commonutils.media.lengthOrThrow
 import net.maxsmr.commonutils.media.mimeTypeOrThrow
 import net.maxsmr.commonutils.media.openInputStreamOrThrow
@@ -74,6 +76,7 @@ import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
 import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ViewStrategy
+import net.maxsmr.core.android.network.SCHEME_RESOURCES
 import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
 import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -1046,9 +1049,10 @@ class DownloadService : Service() {
 
         class Body(val content: Serializable, val mimeType: String? = null) : Serializable {
 
-            val isEmpty: Boolean = when (content) {
-                is Uri -> content.value.isEmpty()
-                is File -> content.length() == 0L
+            // не бросает исключения
+            val isEmpty: Boolean get() = when (content) {
+                is Uri -> content.toUri()?.isEmpty(baseApplicationContext.contentResolver) != false
+                is File -> getFileLength(content) == 0L
                 is ByteArray -> content.isEmpty()
                 is String -> content.isEmpty()
                 is ByteString -> content.size == 0
@@ -1058,7 +1062,10 @@ class DownloadService : Service() {
             fun createRequestBody(): RequestBody {
                 val type = mimeType?.toMediaTypeOrNull()
                 return when (content) {
-                    is Uri -> ContentOrFileUriRequestBody(content.toUri(), mimeType)
+                    is Uri -> {
+                        ResourceUriRequestBody(content.toUriOrThrow(), mimeType)
+                    }
+
                     is File -> content.asRequestBody(
                         type
                             ?: getMimeTypeFromName(content.name).toMediaTypeOrNull()
@@ -1071,11 +1078,23 @@ class DownloadService : Service() {
                 }
             }
 
-            data class Uri(
-                val value: String,
-            ) : Serializable {
+            data class Uri(val value: String) : Serializable {
 
-                fun toUri() = android.net.Uri.parse(value)
+                fun toUri(): android.net.Uri? = try {
+                    toUriOrThrow()
+                } catch (e: IllegalArgumentException) {
+                    logger.e(e)
+                    null
+                }
+
+                @Throws(IllegalArgumentException::class)
+                fun toUriOrThrow(): android.net.Uri {
+                    val uri = android.net.Uri.parse(value)
+                    val scheme = uri.scheme
+                    return uri.takeIf {
+                        SCHEME_RESOURCES.any { it.equals(scheme, true) }
+                    } ?: throw IllegalArgumentException("Incorrect body URI scheme: $scheme")
+                }
             }
         }
 
@@ -1237,7 +1256,7 @@ class DownloadService : Service() {
         }
     }
 
-    private class ContentOrFileUriRequestBody(
+    private class ResourceUriRequestBody(
         private val uri: Uri,
         private val type: String? = null,
     ) : RequestBody() {
