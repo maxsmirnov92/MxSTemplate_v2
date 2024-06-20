@@ -1,20 +1,23 @@
 package net.maxsmr.core.ui.components.activities
 
-import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.widget.Toast
 import androidx.annotation.CallSuper
 import androidx.annotation.LayoutRes
 import androidx.annotation.NavigationRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph
+import androidx.navigation.NavHostController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupWithNavController
+import net.maxsmr.commonutils.isAtLeastUpsideDownCake
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.components.fragments.INavigationHost
@@ -30,16 +33,34 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
     @LayoutRes
     protected open val contentViewResId: Int = R.layout.activity_navigation
 
+    protected open val backPressedOverrideMode: BackPressedMode = BackPressedMode.NO_CHANGE
+
+    private val handler = Handler(Looper.getMainLooper())
+
+    private val backPressedClearRunnable = Runnable {
+        backPressedTriggered = false
+    }
+
     protected var currentNavDestinationId = NAV_ID_NONE
         private set
 
-    protected lateinit var navController: NavController
+    protected lateinit var navController: NavHostController
         private set
 
     private lateinit var navHostFragment: NavHostFragment
 
     lateinit var appBarConfiguration: AppBarConfiguration
         private set
+
+    private var backPressedTriggered = false
+
+//    private val navBackStackQueue: List<NavBackStackEntry> get() {
+//        val queue: ArrayDeque<NavBackStackEntry>? = getFieldValue(NavHostController::class.java, navController, "backQueue")
+//        return queue.orEmpty()
+//    }
+
+    private val navBackStackEntryCount: Int
+        get() = navHostFragment.childFragmentManager.backStackEntryCount
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,7 +77,7 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
         // для создания его аргументов (если предусмотрены)
         navHostFragment.navController.setGraph(graph, startDestinationArgs)
 
-        navController = navHostFragment.navController
+        navController = navHostFragment.navController as NavHostController
 
         this.appBarConfiguration = createAppBarConfiguration()
 //        setupActionBarWithNavController(navController, appBarConfiguration)
@@ -72,8 +93,48 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
         navController.removeOnDestinationChangedListener(this)
     }
 
+    override fun finish() {
+        super.finish()
+        if (isAtLeastUpsideDownCake()) {
+            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+        } else {
+            overridePendingTransition(0, 0)
+        }
+    }
+
+    override fun onBackPressed() {
+        var handled = false
+        val mode = backPressedOverrideMode
+        if (mode != BackPressedMode.NO_CHANGE) {
+            if (!navHostFragment.childFragmentManager.isStateSaved && !supportFragmentManager.isStateSaved) {
+                val count = navBackStackEntryCount.takeIf { it > 0 } ?: supportFragmentManager.backStackEntryCount
+                if (count == 0 || mode.isCurrent && count > 0) {
+                    if (mode.isPressTwice && !backPressedTriggered) {
+                        backPressedTriggered = true
+                        handler.postDelayed(backPressedClearRunnable, DELAY_PRESS_TWICE)
+                        Toast.makeText(
+                            this@BaseNavigationActivity,
+                            R.string.toast_press_twice_to_quit_message,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        finish()
+                    }
+                    handled = true
+                }
+            }
+        }
+        if (!handled) {
+            super.onBackPressed()
+        }
+    }
+
     @CallSuper
-    override fun onDestinationChanged(controller: NavController, destination: NavDestination, arguments: Bundle?) {
+    override fun onDestinationChanged(
+        controller: NavController,
+        destination: NavDestination,
+        arguments: Bundle?,
+    ) {
         currentNavDestinationId = destination.id
     }
 
@@ -103,17 +164,26 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
         // do nothing
     }
 
-    override fun finish() {
-        super.finish()
-        if (Build.VERSION.SDK_INT >= 34) {
-            overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
-        } else {
-            overridePendingTransition(0, 0)
-        }
+    enum class BackPressedMode {
+        NO_CHANGE,
+        PRESS_TWICE_LAST,
+        PRESS_TWICE_CURRENT,
+        FINISH_LAST,
+        FINISH_CURRENT;
+
+        val isLast get() = this in listOf(PRESS_TWICE_LAST, FINISH_LAST)
+
+        val isCurrent get() = this in listOf(PRESS_TWICE_CURRENT, FINISH_CURRENT)
+
+        val isPressTwice get() = this in listOf(PRESS_TWICE_LAST, PRESS_TWICE_CURRENT)
+
+        val isFinish get() = this in listOf(FINISH_LAST, FINISH_CURRENT)
     }
 
     companion object {
 
         private const val NAV_ID_NONE = -1
+
+        private const val DELAY_PRESS_TWICE = 1000L
     }
 }

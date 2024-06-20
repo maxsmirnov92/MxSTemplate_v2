@@ -39,4 +39,6 @@
 
     <string name="toast_link_copied_to_clipboard_message">Link copied to clipboard</string>
     <string name="toast_copied_to_clipboard_message">Copied to clipboard</string>
+
+    <string name="toast_press_twice_to_quit_message">Press twice to quit</string>
 </resources>

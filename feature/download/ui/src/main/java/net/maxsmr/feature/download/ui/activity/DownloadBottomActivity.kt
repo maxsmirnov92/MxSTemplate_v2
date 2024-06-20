@@ -19,6 +19,8 @@ class DownloadBottomActivity : BaseBottomNavigationActivity() {
 
     override val navigationMenuResId: Int = R.menu.menu_navigation_download
 
+    override val backPressedOverrideMode: BackPressedMode = BackPressedMode.PRESS_TWICE_CURRENT
+
     @Inject
     lateinit var settingsRepo: SettingsDataStoreRepository
 

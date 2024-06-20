@@ -39,4 +39,6 @@
 
     <string name="toast_link_copied_to_clipboard_message">Ссылка скопирована в буфер обмена</string>
     <string name="toast_copied_to_clipboard_message">Скопировано в буфер обмена</string>
+
+    <string name="toast_press_twice_to_quit_message">Нажмите дважды, чтобы выйти</string>
 </resources>
