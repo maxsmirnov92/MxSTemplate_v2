@@ -11,7 +11,7 @@
         android:label="@string/download_feature_title"
         tools:layout="@layout/fragment_downloads_pager">
 
-        <!--  action используется при кастомном переходе в bottom или при стандартном navigate -->
+        <!--  action используется при кастомном переходе в bottom/drawer или при стандартном navigate -->
         <action
             android:id="@+id/actionToWebViewFragment"
             app:destination="@id/navigationWebView"
@@ -46,7 +46,7 @@
 
     <fragment
         android:id="@+id/navigationWebView"
-        android:name="net.maxsmr.feature.download.ui.webview.DownloadableWebViewFragment"
+        android:name="net.maxsmr.mxstemplate.ui.fragment.DownloadableWebViewFragment"
         android:label="@string/webview_feature_title"
         tools:layout="@layout/fragment_webview">
 

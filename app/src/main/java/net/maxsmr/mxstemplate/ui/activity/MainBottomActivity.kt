@@ -1,23 +1,23 @@
-package net.maxsmr.feature.download.ui.activity
+package net.maxsmr.mxstemplate.ui.activity
 
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import net.maxsmr.core.ui.components.activities.BaseBottomNavigationActivity
 import net.maxsmr.feature.download.ui.DownloadsPagerFragmentDirections
-import net.maxsmr.feature.download.ui.R
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
+import net.maxsmr.mxstemplate.R
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DownloadBottomActivity : BaseBottomNavigationActivity() {
+class MainBottomActivity : BaseBottomNavigationActivity() {
 
-    override val navigationGraphResId: Int = R.navigation.navigation_download
+    override val navigationGraphResId: Int = R.navigation.navigation_main
 
     override val topLevelDestinationIds = setOf(R.id.navigationDownloads, R.id.navigationWebView, R.id.navigationSettings)
 
-    override val navigationMenuResId: Int = R.menu.menu_navigation_download
+    override val navigationMenuResId: Int = R.menu.menu_navigation_main
 
     override val backPressedOverrideMode: BackPressedMode = BackPressedMode.PRESS_TWICE_CURRENT
 

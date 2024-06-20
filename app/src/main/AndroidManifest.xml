@@ -27,7 +27,7 @@
 
         <!--  при  adjustPan проблемы с пустым пространством при отсутствующей клавиатуре остаются   -->
         <activity
-            android:name="net.maxsmr.feature.download.ui.activity.DownloadBottomActivity"
+            android:name=".ui.activity.MainBottomActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:launchMode="singleTop"

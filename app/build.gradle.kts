@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.mxs.template.hilt)
     alias(libs.plugins.mxs.template.room)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.navigation.safeargs.kotlin)
 }
 
 object AppConfig {

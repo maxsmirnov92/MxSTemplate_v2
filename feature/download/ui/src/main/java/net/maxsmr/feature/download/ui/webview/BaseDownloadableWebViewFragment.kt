@@ -7,7 +7,6 @@ import android.webkit.WebSettings
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
@@ -20,11 +19,7 @@ import okhttp3.OkHttpClient
 import java.lang.IllegalStateException
 
 //@AndroidEntryPoint
-class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<DownloadableWebViewModel>() {
-
-//    private val args by navArgs<DownloadableWebViewFragmentArgs>()
-
-    override val viewModel: DownloadableWebViewModel by viewModels()
+abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel> : BaseCustomizableWebViewFragment<VM>() {
 
     private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
@@ -33,17 +28,17 @@ class DownloadableWebViewFragment : BaseCustomizableWebViewFragment<Downloadable
     // при перехватах по некоторым урлам циклические редиректы
     override var okHttpClient: OkHttpClient? = null
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: DownloadableWebViewModel) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         super.onViewCreated(view, savedInstanceState, viewModel)
         with(downloadsViewModel) {
-            handleAlerts(requireContext(), AlertFragmentDelegate(this@DownloadableWebViewFragment, this))
-            handleEvents(this@DownloadableWebViewFragment)
+            handleAlerts(requireContext(), AlertFragmentDelegate(this@BaseDownloadableWebViewFragment, this))
+            handleEvents(this@BaseDownloadableWebViewFragment)
         }
     }
 
-    override fun handleAlerts(delegate: AlertFragmentDelegate<DownloadableWebViewModel>) {
+    override fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
         super.handleAlerts(delegate)
-        bindAlertDialog(DownloadableWebViewModel.DIALOG_TAG_SAVE_AS) {
+        bindAlertDialog(BaseDownloadableWebViewModel.DIALOG_TAG_SAVE_AS) {
             @Suppress("UNCHECKED_CAST")
             val modelWithType = it.extraData as? ParamsModelWithType ?: throw IllegalStateException("Extra data for this dialog not specified")
             val model = modelWithType.first

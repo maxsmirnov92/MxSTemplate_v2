@@ -24,7 +24,7 @@ class AppModule {
     ) = UUIDManager(sharedPreferences)
 
     @[Provides Singleton Named(DI_NAME_MAIN_ACTIVITY_CLASS)]
-    fun provideMainActivityClassName(): String = "net.maxsmr.feature.download.ui.activity.DownloadBottomActivity"
+    fun provideMainActivityClassName(): String = "net.maxsmr.mxstemplate.activity.DownloadBottomActivity"
 
     @[Provides Singleton]
     fun providePermissionHelper(

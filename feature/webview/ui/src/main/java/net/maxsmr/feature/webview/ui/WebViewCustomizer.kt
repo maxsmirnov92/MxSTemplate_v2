@@ -26,7 +26,7 @@ class WebViewCustomizer private constructor(
         .setCanInputUrls(canInputUrls)
         .setOpenSystemBrowserByQueryParameterNames(queryParameters)
 
-    class Builder() {
+    class Builder {
 
         private var title: String = EMPTY_STRING
         private var url: String  = EMPTY_STRING
