@@ -318,8 +318,8 @@ class DownloadsViewModel @Inject constructor(
         @JvmOverloads
         fun defaultNotificationActions(
             context: Context,
-            @StringRes shareChooseClientTitle: Int = R.string.share_choose_client_file_title,
-            @StringRes viewChooseClientTitle: Int = R.string.view_choose_client_file_title,
+            @StringRes shareChooseClientTitle: Int = net.maxsmr.core.ui.R.string.chooser_title_send,
+            @StringRes viewChooseClientTitle: Int = net.maxsmr.core.ui.R.string.chooser_title_view,
             @DrawableRes shareIconResId: Int = android.R.drawable.ic_menu_share,
             @DrawableRes viewIconResId: Int = android.R.drawable.ic_menu_view,
             subject: String = EMPTY_STRING,

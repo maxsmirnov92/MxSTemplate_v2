@@ -23,7 +23,7 @@ fun Context.openEmailIntentWithToastError(
     return openEmailIntent(
         email,
         sendAction,
-        getString(R.string.choose_app_title_email),
+        getString(R.string.chooser_title_send_email),
         sendIntentFunc,
         chooserIntentFunc,
         flags,
@@ -50,7 +50,7 @@ fun Context.openEmailIntentWithToastError(
     return openEmailIntent(
         uri,
         sendAction,
-        getString(R.string.choose_app_title_email),
+        getString(R.string.chooser_title_send_email),
         sendIntentFunc,
         chooserIntentFunc,
         flags,
@@ -68,7 +68,7 @@ fun Context.openSendDataIntentWithToastError(
     flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
     options: Bundle? = null,
 ): Boolean {
-    return openSendDataIntent(sendAction, getString(R.string.choose_app_title_send), sendIntentFunc, chooserIntentFunc, flags, options) {
+    return openSendDataIntent(sendAction, getString(R.string.chooser_title_send), sendIntentFunc, chooserIntentFunc, flags, options) {
         Toast.makeText(this, getString(R.string.error_intent_send), Toast.LENGTH_SHORT).show()
     }
 }

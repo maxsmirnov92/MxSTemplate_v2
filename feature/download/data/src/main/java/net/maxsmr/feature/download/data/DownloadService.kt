@@ -129,7 +129,11 @@ class DownloadService : Service() {
         NotificationWrapper.ChannelParams(
             "$packageName.downloads",
             getString(R.string.download_notification_channel_name)
-        )
+        ) {
+            if (isAtLeastOreo()) {
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            }
+        }
     }
 
     private val successSoundUri: Uri by lazy {
@@ -1316,7 +1320,7 @@ class DownloadService : Service() {
         @JvmOverloads
         fun getViewAction(
             context: Context = baseApplicationContext,
-            @StringRes chooserTitleRes: Int = R.string.view_choose_client_file_title,
+            @StringRes chooserTitleRes: Int = net.maxsmr.core.ui.R.string.chooser_title_view,
             @StringRes notificationActionRes: Int = R.string.download_notification_success_view_button,
             @DrawableRes iconResId: Int = android.R.drawable.ic_menu_view,
         ) = NotificationParams.SuccessAction.View(
@@ -1329,7 +1333,7 @@ class DownloadService : Service() {
         @JvmOverloads
         fun getShareAction(
             context: Context = baseApplicationContext,
-            @StringRes chooserTitleRes: Int = R.string.share_choose_client_file_title,
+            @StringRes chooserTitleRes: Int = net.maxsmr.core.ui.R.string.chooser_title_send,
             @StringRes notificationActionRes: Int = R.string.download_notification_success_share_button,
             @DrawableRes iconResId: Int = android.R.drawable.ic_menu_share,
             intentSubject: String = EMPTY_STRING,

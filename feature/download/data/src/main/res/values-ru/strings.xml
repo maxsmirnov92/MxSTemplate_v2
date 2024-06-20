@@ -25,7 +25,4 @@
     <string name="download_alert_failed_start_message_format">Для загрузки файла \"%s\".\n(Приложение было свёрнуто?)</string>
     <string name="download_snackbar_no_valid_params">Отсутствуют корректные параметры</string>
     <string name="download_error">Ошибка при загрузке файла</string>
-
-    <string name="view.choose_client_file_title">Выберите клиент для открытия файла</string>
-    <string name="share.choose_client_file_title">Выберите клиент для отправки файла</string>
 </resources>

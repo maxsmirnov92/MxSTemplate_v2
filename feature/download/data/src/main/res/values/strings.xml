@@ -25,7 +25,4 @@
     <string name="download_alert_failed_start_message_format">For download file \"%s\".\n(Was app minimized?)</string>
     <string name="download_snackbar_no_valid_params">No valid parameters</string>
     <string name="download_error">Error loading file</string>
-
-    <string name="view.choose_client_file_title">Choose client for opening file</string>
-    <string name="share.choose_client_file_title">Choose client for sending file</string>
 </resources>

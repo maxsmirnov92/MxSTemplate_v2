@@ -112,11 +112,11 @@ class DownloadsStateViewModel @Inject constructor(
 
             val titleResId = when (s) {
                 is ViewStrategy -> {
-                    net.maxsmr.feature.download.data.R.string.view_choose_client_file_title
+                    net.maxsmr.core.ui.R.string.chooser_title_view
                 }
 
                 is ShareStrategy -> {
-                    net.maxsmr.feature.download.data.R.string.share_choose_client_file_title
+                    net.maxsmr.core.ui.R.string.chooser_title_send
                 }
 
                 else -> {
