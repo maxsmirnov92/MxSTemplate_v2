@@ -45,18 +45,14 @@ fun <D> Field<D>.bindHintError(
 
 
 fun <D : Serializable> Field<FieldState<D>>.toggleFieldState(value: D) {
-    val flags = this.value ?: FieldState(value = value)
+    val flags = this.value /*?: FieldState(value = value)*/
     if (flags.isEnabled) {
         this.value = flags.copy(value = value)
     }
 }
 
-fun <D : Serializable> Field<FieldState<D>>.toggleRequiredFieldState(
-    required: Boolean,
-    @StringRes errorResId: Int,
-    defaultValue: FieldState<D>,
-) {
-    val currentValue: FieldState<D> = value ?: defaultValue
+fun <D : Serializable> Field<FieldState<D>>.toggleRequiredFieldState(required: Boolean, @StringRes errorResId: Int) {
+    val currentValue: FieldState<D> = value /*?: defaultValue*/
     value = if (required) {
         this.setRequired(errorResId)
         currentValue.copy(isEnabled = true)

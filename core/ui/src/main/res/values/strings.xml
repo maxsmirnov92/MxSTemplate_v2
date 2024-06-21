@@ -41,4 +41,6 @@
     <string name="toast_copied_to_clipboard_message">Copied to clipboard</string>
 
     <string name="toast_press_twice_to_quit_message">Press twice to quit</string>
+
+    <string name="alert_battery_optimization_message">To ensure smooth operation of the application, it is recommended to disable power saving features</string>
 </resources>

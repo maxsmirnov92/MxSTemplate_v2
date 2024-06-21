@@ -106,7 +106,7 @@ class SettingsViewModel @Inject constructor(
         super.onInitialized()
         if (initialSettings == null) {
             viewModelScope.launch {
-                initSettings()
+                updateSettings()
             }
         }
 
@@ -127,7 +127,6 @@ class SettingsViewModel @Inject constructor(
             updateNotificationIntervalStateField.toggleRequiredFieldState(
                 !it,
                 net.maxsmr.core.ui.R.string.field_error_empty,
-                LongFieldState(0)
             )
         }
 
@@ -152,8 +151,7 @@ class SettingsViewModel @Inject constructor(
         }
         viewModelScope.launch {
             if (hasChanges.value == true) {
-                val initialSettings = initialSettings ?: AppSettings()
-                val disableNotifications = disableNotificationsField.value ?: initialSettings.disableNotifications
+                val disableNotifications = disableNotificationsField.value
                 if (!disableNotifications) {
                     viewModelScope.launch {
                         cacheRepository.clearPostNotificationAsked()
@@ -161,18 +159,17 @@ class SettingsViewModel @Inject constructor(
                 }
                 repository.updateSettings(
                     AppSettings(
-                        maxDownloadsField.value ?: initialSettings.maxDownloads,
-                        connectTimeoutField.value ?: initialSettings.connectTimeout,
+                        maxDownloadsField.value ,
+                        connectTimeoutField.value,
                         disableNotifications,
-                        retryDownloadsField.value ?: initialSettings.retryDownloads,
-                        updateNotificationIntervalStateField.value?.value
-                            ?: initialSettings.updateNotificationInterval,
-                        startPageUrlField.value?.takeIf { it.isNotEmpty() } ?: URL_PAGE_BLANK
+                        retryDownloadsField.value ,
+                        updateNotificationIntervalStateField.value.value,
+                        startPageUrlField.value.takeIf { it.isNotEmpty() } ?: URL_PAGE_BLANK
                     )
                 )
             }
 
-            initSettings()
+            updateSettings()
 //            navigateBack()
         }
     }
@@ -207,7 +204,7 @@ class SettingsViewModel @Inject constructor(
         startPageUrlField.value = settings.startPageUrl
     }
 
-    private suspend fun initSettings() {
+    private suspend fun updateSettings() {
         val settings = repository.getSettings()
         initialSettings = settings
         appSettings.value = settings

@@ -199,7 +199,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
                 BaseActivity.REQUEST_CODE_WRITE_EXTERNAL_PERMISSION,
                 listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE) // post_notifications не является обязательным для работы сервиса
             ) {
-                viewModel.onStartDownloadClick()?.let { field ->
+                viewModel.onStartDownloadClick { field ->
                     fieldViewsMap[field]?.let {
                         binding.svParams.scrollToView(it, true, activity = requireActivity())
                     }

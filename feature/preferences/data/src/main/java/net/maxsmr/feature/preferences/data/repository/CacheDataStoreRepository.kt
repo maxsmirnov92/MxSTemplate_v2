@@ -90,11 +90,24 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
+    suspend fun askedAppDetails(): Boolean {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_ASKED_APP_DETAILS]
+        }.firstOrNull() ?: false
+    }
+
+    suspend fun setAskedAppDetails() {
+        dataStore.edit { prefs ->
+            prefs[FIELD_ASKED_APP_DETAILS] = true
+        }
+    }
+
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
         private val FIELD_LAST_LOCATION = stringPreferencesKey("lastLocation")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
+        private val FIELD_ASKED_APP_DETAILS = booleanPreferencesKey("askedAppDetails")
     }
 }

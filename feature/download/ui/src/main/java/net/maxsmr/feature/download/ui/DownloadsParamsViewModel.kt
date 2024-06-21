@@ -10,15 +10,21 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.REG_EX_ALGORITHM_SHA1
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.isAtLeastMarshmallow
+import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
 import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
 import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStreamOrThrow
+import net.maxsmr.commonutils.openBatteryOptimizationSettings
 import net.maxsmr.commonutils.openRawResourceOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.actions.SnackbarAction
@@ -28,11 +34,15 @@ import net.maxsmr.core.android.baseAppName
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.ContentStorage
+import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.network.Method
+import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
+import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.fields.BooleanFieldState
 import net.maxsmr.core.ui.fields.fileNameField
 import net.maxsmr.core.ui.fields.subDirNameField
@@ -40,8 +50,6 @@ import net.maxsmr.core.ui.fields.urlField
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import net.maxsmr.feature.webview.ui.WebViewCustomizer
 import java.io.Serializable
 
 class DownloadsParamsViewModel @AssistedInject constructor(
@@ -49,7 +57,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     @Assisted private val viewModel: DownloadsViewModel,
     @Dispatcher(AppDispatchers.IO)
     private val ioDispatcher: CoroutineDispatcher,
-    private val settingsRepo: SettingsDataStoreRepository,
     val cacheRepo: CacheDataStoreRepository,
 ) : BaseHandleableViewModel(state) {
 
@@ -110,6 +117,10 @@ class DownloadsParamsViewModel @AssistedInject constructor(
      * Готовые итемы для отображения в адаптере
      */
     val headerItems by persistableLiveDataInitial<List<HeaderInfoAdapterData>>(arrayListOf())
+
+    private val _navigateAppDetailsEvent = MutableStateFlow<VmEvent<Unit>?>(null)
+
+    val navigateAppDetailsEvent = _navigateAppDetailsEvent.asStateFlow()
 
     private val headerFields = mutableListOf<HeaderInfoFields>()
 
@@ -185,14 +196,30 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
     }
 
+    override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(context, delegate)
+        delegate.bindAlertDialog(DIALOG_TAG_NAVIGATE_TO_BATTERY_OPTIMIZATION) {
+            it.asOkDialog(context)
+        }
+    }
+
+    override fun handleEvents(fragment: BaseVmFragment<*>) {
+        super.handleEvents(fragment)
+        navigateAppDetailsEvent.collectEventsWithOwner(fragment.viewLifecycleOwner) {
+            if (isAtLeastMarshmallow()) {
+                fragment.requireContext().openBatteryOptimizationSettings()
+            }
+        }
+    }
+
     fun onBodyUriSelected(uri: Uri) {
         val body = bodyField.value
-        if (body == null || !body.isEnabled) return
+        if (!body.isEnabled) return
         bodyField.value = body.copy(bodyUri = uri.toString())
     }
 
     fun onClearRequestBodyUri() {
-        bodyField.value = bodyField.value?.copy(bodyUri = null)
+        bodyField.value = bodyField.value.copy(bodyUri = null)
     }
 
     fun onAddHeader() {
@@ -354,7 +381,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                         )
                     )
                 }
-
             } else {
                 onPickAction()
             }
@@ -362,52 +388,68 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     }
 
     /**
-     * @return первый ошибочный [Field]
+     * @param errorFieldResult с первым ошибочным [Field]
      */
-    fun onStartDownloadClick(): Field<*>? {
-        val result = allFields.validateAndSetByRequiredFields()
-        if (result.isNotEmpty()) {
-            return result.first()
+    fun onStartDownloadClick(errorFieldResult: (Field<*>?) -> Unit) {
+        viewModelScope.launch(ioDispatcher) {
+            if (isAtLeastMarshmallow() && !cacheRepo.askedAppDetails()) {
+                showOkDialog(
+                    DIALOG_TAG_NAVIGATE_TO_BATTERY_OPTIMIZATION,
+                    net.maxsmr.core.ui.R.string.alert_battery_optimization_message
+                ) {
+                    viewModelScope.launch {
+                        cacheRepo.setAskedAppDetails()
+                        _navigateAppDetailsEvent.emit(VmEvent(Unit))
+                    }
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    val result = allFields.validateAndSetByRequiredFields()
+                    if (result.isNotEmpty()) {
+                        errorFieldResult(result.first())
+                        return@withContext
+                    }
+                    val url = urlField.value
+                    val method = methodField.value
+                    val bodyUri = bodyField.value.bodyUri
+
+                    val fileName = fileNameField.value
+                    val subDirName = subDirNameField.value
+                    val ignoreFileName = !fileNameChangeStateField.value.value
+
+                    val headers = hashMapOf<String, String>()
+                    headerFields.forEach {
+                        val key = it.header.first.field.value
+                        val value = it.header.second.field.value
+                        headers[key] = value
+                    }
+
+                    val targetHash = targetHashField.value
+
+                    val ignoreServerErrors = ignoreServerErrorsField.value
+                    val ignoreAttachment = ignoreAttachmentStateField.value.value
+                    val replaceFile = replaceFileField.value
+                    val deleteUnfinished = deleteUnfinishedField.value
+
+                    viewModel.enqueueDownload(
+                        DownloadParamsModel(
+                            url,
+                            method,
+                            bodyUri,
+                            fileName,
+                            ignoreFileName,
+                            subDirName,
+                            targetHash,
+                            ignoreServerErrors,
+                            ignoreAttachment,
+                            replaceFile,
+                            deleteUnfinished,
+                            headers
+                        )
+                    )
+                }
+            }
         }
-        val url = urlField.value ?: return null
-        val method = methodField.value ?: return null
-        val bodyUri = bodyField.value?.bodyUri
-
-        val fileName = fileNameField.value
-        val subDirName = subDirNameField.value
-        val ignoreFileName = fileNameChangeStateField.value?.value != true
-
-        val headers = hashMapOf<String, String>()
-        headerFields.forEach {
-            val key = it.header.first.field.value ?: return@forEach
-            val value = it.header.second.field.value ?: return@forEach
-            headers[key] = value
-        }
-
-        val targetHash = targetHashField.value
-
-        val ignoreServerErrors = ignoreServerErrorsField.value ?: false
-        val ignoreAttachment = ignoreAttachmentStateField.value?.value ?: false
-        val replaceFile = replaceFileField.value ?: false
-        val deleteUnfinished = deleteUnfinishedField.value ?: false
-
-        viewModel.enqueueDownload(
-            DownloadParamsModel(
-                url,
-                method,
-                bodyUri,
-                fileName,
-                ignoreFileName,
-                subDirName,
-                targetHash,
-                ignoreServerErrors,
-                ignoreAttachment,
-                replaceFile,
-                deleteUnfinished,
-                headers
-            )
-        )
-        return null
     }
 
     private fun updateHeaderItem(
@@ -487,5 +529,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         private const val KEY_FIELD_DELETE_UNFINISHED = "delete_unfinished"
 
         private const val RESOURCE_NAME_DOWNLOAD_PARAMS_MODEL = "download_params_model_sample.json"
+
+        private const val DIALOG_TAG_NAVIGATE_TO_BATTERY_OPTIMIZATION = "navigate_to_battery_optimization"
     }
 }
