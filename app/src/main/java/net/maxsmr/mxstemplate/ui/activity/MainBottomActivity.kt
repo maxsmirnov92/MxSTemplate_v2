@@ -19,7 +19,11 @@ class MainBottomActivity : BaseBottomNavigationActivity() {
 
     override val navigationMenuResId: Int = R.menu.menu_navigation_main
 
-    override val backPressedOverrideMode: BackPressedMode = BackPressedMode.PRESS_TWICE_CURRENT
+    override val backPressedOverrideMode: BackPressedMode get() = if (currentNavDestinationId != R.id.navigationWebView) {
+        BackPressedMode.PRESS_TWICE_CURRENT
+    } else {
+        BackPressedMode.NO_CHANGE
+    }
 
     @Inject
     lateinit var settingsRepo: SettingsDataStoreRepository

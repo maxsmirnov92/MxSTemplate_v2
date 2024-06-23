@@ -40,7 +40,7 @@ import net.maxsmr.commonutils.service.startNoCheck
 import net.maxsmr.commonutils.service.withMutabilityFlag
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.toFile
-import net.maxsmr.commonutils.wrapChooser
+import net.maxsmr.commonutils.wrapChooserWithInitial
 import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.android.baseAppName
 import net.maxsmr.core.android.baseApplicationContext
@@ -1202,7 +1202,7 @@ class DownloadService : Service() {
             fun intent(uri: Uri, mimeType: String): Intent {
                 logger.d("Success mimeType: $mimeType, action: $this")
                 // chooser title может не сработать для SEND/SEND_MULTIPLE
-                return createIntent(uri, mimeType).wrapChooser(chooserTitle)
+                return createIntent(uri, mimeType).wrapChooserWithInitial(baseApplicationContext, chooserTitle)
             }
 
             protected abstract fun createIntent(uri: Uri, mimeType: String): Intent

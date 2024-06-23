@@ -169,7 +169,7 @@ class ContentPicker private constructor(
         val permissionsHelper = permissionHandler.permissionHelper
 
         val flatIntents = intents.flatMap { (params, srcIntent) ->
-            srcIntent.flatten(context, permissionsHelper).map { params to it }
+            srcIntent.flatten(context).map { params to it }
         }
         if (flatIntents.isEmpty()) {
             viewModel.onError(request.requestCode, TextMessage(R.string.pick_no_apps))

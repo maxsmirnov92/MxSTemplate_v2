@@ -40,6 +40,7 @@
         </activity>
 
         <service android:name="net.maxsmr.feature.download.data.DownloadService" />
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -64,4 +65,36 @@
                 tools:replace="android:resource" />
         </provider>
     </application>
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="*/*" />
+<!--            <data android:scheme="http" />-->
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <!-- Camera -->
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+            <data android:mimeType="image/*" />
+        </intent>
+        <!-- Gallery -->
+        <intent>
+            <action android:name="android.intent.action.GET_CONTENT" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.PICK" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.CHOOSER" />
+        </intent>
+        <!--        <intent>-->
+        <!--            <action android:name="android.intent.action.DIAL" />-->
+        <!--            <data android:scheme="tel" />-->
+        <!--        </intent>-->
+    </queries>
 </manifest>

@@ -26,7 +26,11 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
         }.root
     }
 
-    override val backPressedOverrideMode: BackPressedMode = BackPressedMode.PRESS_TWICE_LAST
+    override val backPressedOverrideMode: BackPressedMode = if (currentNavDestinationId != R.id.navigationWebView) {
+        BackPressedMode.PRESS_TWICE_LAST
+    } else {
+        BackPressedMode.NO_CHANGE
+    }
 
     @Inject
     lateinit var settingsRepo: SettingsDataStoreRepository

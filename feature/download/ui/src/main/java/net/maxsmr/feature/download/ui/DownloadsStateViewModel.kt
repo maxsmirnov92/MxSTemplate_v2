@@ -15,7 +15,7 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.media.isEmpty
 import net.maxsmr.commonutils.startActivitySafe
-import net.maxsmr.commonutils.wrapChooser
+import net.maxsmr.commonutils.wrapChooserWithInitial
 import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.baseApplicationContext
@@ -124,7 +124,7 @@ class DownloadsStateViewModel @Inject constructor(
                 }
             }
             titleResId?.let {
-                intent = intent.wrapChooser(context.getString(it))
+                intent = intent.wrapChooserWithInitial(context, context.getString(it))
             }
             // по дефолту "открыть с помощью" или "поделиться"
 
