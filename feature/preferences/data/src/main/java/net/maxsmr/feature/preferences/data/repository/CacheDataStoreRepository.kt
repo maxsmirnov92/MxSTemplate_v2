@@ -102,6 +102,18 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
+    suspend fun appRated(): Boolean {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_APP_RATED]
+        }.firstOrNull() ?: false
+    }
+
+    suspend fun setAppRated() {
+        dataStore.edit { prefs ->
+            prefs[FIELD_APP_RATED] = true
+        }
+    }
+
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
@@ -109,5 +121,6 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
         private val FIELD_ASKED_APP_DETAILS = booleanPreferencesKey("askedAppDetails")
+        private val FIELD_APP_RATED = booleanPreferencesKey("appRated")
     }
 }

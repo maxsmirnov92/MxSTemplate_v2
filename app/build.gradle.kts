@@ -190,6 +190,9 @@ dependencies {
     implementation(project(":feature:address_sorter:ui"))
     implementation(project(":feature:webview:ui"))
 
+    implementation(project(":feature:rate"))
+    implementation(project(":feature:about"))
+
     implementation(libs.jodaTime)
 
     //android

@@ -106,6 +106,9 @@
     <color name="gray_light">#F4F4F4</color>
     <color name="gray_medium">#b3b3b3</color>
     <color name="gray_dark">#4b4b4b</color>
+    <color name="white_smoke">#F6F6F6</color>
+    <color name="azure">#007AFF</color>
+    <color name="yellow">#FFCB14</color>
 
     <color name="colorPrimary">@color/purple_500</color>
     <color name="colorPrimaryVariant">@color/purple_500</color>
@@ -113,10 +116,11 @@
     <color name="colorAccent">@color/colorPrimary</color>
     <color name="colorControlNormal">@color/black</color>
     <color name="colorControlActivated">@color/colorPrimary</color>
+    <color name="colorControlHighlight">@color/colorControlActivated</color>
     <color name="colorControlDisabled">#cecdcd</color>
 
 <!--    #96cbc6-->
-    <color name="textColorHighlight">@color/colorControlNormal</color>
+    <color name="textColorHighlight">@color/colorControlHighlight</color>
     <color name="textColorPrimary">@color/black</color>
     <color name="textColorSecondary">@color/white</color>
     <color name="textColorDisabled">@color/colorControlDisabled</color>

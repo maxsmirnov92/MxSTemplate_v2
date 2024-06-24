@@ -24,8 +24,8 @@ import net.maxsmr.core.ui.alert.representation.asYesNoDialog
  * 2. Использование по месту при связывании целевого фрагмента с [viewModel], диалоги с которой он должен обрабатывать
  */
 class AlertFragmentDelegate<VM: BaseViewModel>(
-    private val fragment: Fragment,
-    private val viewModel: VM
+    val fragment: Fragment,
+    val viewModel: VM
 ) {
 
     val alertHandler: AlertHandler by lazy { AlertHandler(fragment) }

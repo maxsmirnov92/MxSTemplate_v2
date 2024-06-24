@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rate_dialog_app_title">Rate the app</string>
+    <string name="rate_dialog_app_button_positive">Rate</string>
+    <string name="rate_dialog_app_button_negative">@android:string/cancel</string>
+
+    <string name="rate_star_content_description_format">Rating %d</string>
+    <string name="rate_star_content_description_empty">Rating not selected.</string>
+    <string name="rate_star_content_description_empty_instruction">Rating not selected. To change, use your fingers to swipe left and right.</string>
+
+    <string name="rate_feedback_title">Your feedback</string>
+    <string name="rate_feedback_subtitle">Help me make the app better</string>
+    <string name="rate_feedback_send_button">Send</string>
+    <string name="rate_feedback_field_subject_hint">Subject</string>
+    <string name="rate_feedback_field_text_hint">Text</string>
+    <string name="rate_feedback_field_subject_empty_error">Please specify subject</string>
+    <string name="rate_feedback_field_text_empty_error">Please type your message</string>
+</resources>

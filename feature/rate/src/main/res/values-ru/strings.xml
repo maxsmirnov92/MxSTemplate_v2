@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="rate_dialog_app_title">Оцените приложение</string>
+    <string name="rate_dialog_app_button_positive">Оценить</string>
+    <string name="rate_dialog_app_button_negative">@android:string/cancel</string>
+
+    <string name="rate_star_content_description_format">Оценка %d</string>
+    <string name="rate_star_content_description_empty">Оценка не выбрана.</string>
+    <string name="rate_star_content_description_empty_instruction">Оценка не выбрана. Чтобы изменить используйте пальцами жесты влево и вправо.</string>
+
+    <string name="rate_feedback_title">Ваше обращение</string>
+    <string name="rate_feedback_subtitle">Помогите мне сделать приложение лучше</string>
+    <string name="rate_feedback_send_button">Отправить</string>
+    <string name="rate_feedback_field_subject_hint">Тема</string>
+    <string name="rate_feedback_field_text_hint">Текст</string>
+    <string name="rate_feedback_field_subject_empty_error">Пожалуйста укажите тему</string>
+    <string name="rate_feedback_field_text_empty_error">Пожалуйста введите ваше сообщение</string>
+</resources>

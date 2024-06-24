@@ -37,7 +37,8 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textSize">@dimen/textSizeMini</item>
         <item name="android:textColor">@drawable/selector_color_text_primary</item>
-        <item name="android:backgroundTint">@color/textColorHighlight</item>
+        <item name="android:textColorHint">@color/textColorHint</item>
+<!--        <item name="android:backgroundTint">@color/textColorHighlight</item>-->
     </style>
 
     <style name="InputText.Large">

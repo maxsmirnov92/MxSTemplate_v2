@@ -53,9 +53,6 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     protected val webViewCustomizer: WebViewCustomizer get() = viewModel.customizer
 
-    @Inject
-    override lateinit var permissionsHelper: PermissionsHelper
-
     private var urlMenuItem: MenuItem? = null
 
     private var copyMenuItem: MenuItem? = null

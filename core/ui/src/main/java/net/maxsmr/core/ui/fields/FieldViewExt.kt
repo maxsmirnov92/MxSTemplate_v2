@@ -1,6 +1,7 @@
 package net.maxsmr.core.ui.fields
 
 import android.widget.CompoundButton
+import android.widget.EditText
 import androidx.annotation.StringRes
 import androidx.lifecycle.LifecycleOwner
 import com.google.android.material.textfield.TextInputLayout
@@ -40,6 +41,18 @@ fun <D> Field<D>.bindHintError(
     }
     errorLive.observe(lifecycleOwner) {
         textInputLayout.error = it?.get(textInputLayout.context)
+    }
+}
+
+fun <D> Field<D>.bindHintError(
+    lifecycleOwner: LifecycleOwner,
+    editText: EditText
+) {
+    hintLive.observe(lifecycleOwner) {
+        editText.hint = it?.get(editText.context)
+    }
+    errorLive.observe(lifecycleOwner) {
+        editText.error = it?.get(editText.context)
     }
 }
 

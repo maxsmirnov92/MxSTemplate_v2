@@ -13,7 +13,7 @@ import net.maxsmr.commonutils.openSystemBrowser
 
 @JvmOverloads
 fun Context.openEmailIntentWithToastError(
-    email: String?,
+    address: String?,
     sendAction: SendAction = SendAction.SENDTO,
     sendIntentFunc: ((Intent) -> Unit)? = null,
     chooserIntentFunc: ((Intent) -> Unit)? = null,
@@ -21,7 +21,7 @@ fun Context.openEmailIntentWithToastError(
     options: Bundle? = null,
 ): Boolean {
     return openEmailIntent(
-        email,
+        address,
         sendAction,
         getString(R.string.chooser_title_send_email),
         sendIntentFunc,
@@ -41,6 +41,7 @@ fun Context.openEmailIntentWithToastError(
 @JvmOverloads
 fun Context.openEmailIntentWithToastError(
     uri: Uri,
+    addresses: List<String>? = null,
     sendAction: SendAction = SendAction.SENDTO,
     sendIntentFunc: ((Intent) -> Unit)? = null,
     chooserIntentFunc: ((Intent) -> Unit)? = null,
@@ -49,6 +50,7 @@ fun Context.openEmailIntentWithToastError(
 ): Boolean {
     return openEmailIntent(
         uri,
+        addresses,
         sendAction,
         getString(R.string.chooser_title_send_email),
         sendIntentFunc,

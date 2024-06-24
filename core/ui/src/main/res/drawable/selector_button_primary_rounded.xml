@@ -8,9 +8,19 @@
         </shape>
     </item>
     <item>
-        <shape android:shape="rectangle">
-            <corners android:radius="14dp" />
-            <solid android:color="@color/colorPrimary" />
-        </shape>
+        <selector>
+            <item android:state_enabled="false">
+                <shape android:shape="rectangle">
+                    <corners android:radius="14dp" />
+                    <solid android:color="@color/colorControlDisabled" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="14dp" />
+                    <solid android:color="@color/colorPrimary" />
+                </shape>
+            </item>
+        </selector>
     </item>
 </ripple>
