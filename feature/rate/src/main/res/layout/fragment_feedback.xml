@@ -43,7 +43,7 @@
                     android:layout_height="wrap_content"
                     android:padding="@dimen/defaultPadding"
                     android:text="@string/rate_feedback_subtitle"
-                    android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Title"
                     android:textColor="@color/textColorPrimary" />
 
                 <com.google.android.material.textfield.TextInputLayout
@@ -67,12 +67,12 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etText"
                     style="@style/InputText"
-                    android:background="@drawable/background_shape_edittext"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="@dimen/defaultPadding"
-                    android:padding="@dimen/defaultPadding"
+                    android:layout_marginHorizontal="@dimen/defaultPadding"
+                    android:background="@drawable/background_shape_edittext"
                     android:inputType="textMultiLine"
+                    android:padding="@dimen/defaultPadding"
                     tools:hint="@string/rate_feedback_field_text_hint" />
 
                 <!--                <com.google.android.material.textfield.TextInputLayout-->

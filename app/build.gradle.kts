@@ -55,7 +55,6 @@ fun isGoogleBuild(gradle: Gradle): Boolean? {
 
 android {
     namespace = "net.maxsmr.mxstemplate"
-    android.buildFeatures.buildConfig = true
 
     defaultConfig {
         applicationId = "net.maxsmr.mxstemplate"

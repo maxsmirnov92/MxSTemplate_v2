@@ -26,11 +26,12 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
         }.root
     }
 
-    override val backPressedOverrideMode: BackPressedMode = if (currentNavDestinationId != R.id.navigationWebView) {
-        BackPressedMode.PRESS_TWICE_LAST
-    } else {
-        BackPressedMode.NO_CHANGE
-    }
+    override val backPressedOverrideMode: BackPressedMode
+        get() = if (currentNavDestinationId != R.id.navigationWebView) {
+            BackPressedMode.PRESS_TWICE_LAST
+        } else {
+            BackPressedMode.NO_CHANGE
+        }
 
     @Inject
     lateinit var settingsRepo: SettingsDataStoreRepository
@@ -39,21 +40,13 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
         super.setupNavigationView()
         navigationView.setNavigationItemSelectedListener { item ->
             drawerLayout.closeDrawers()
-            if (item.itemId == R.id.navigationWebView) {
-                lifecycleScope.launch {
-                    navController.navigate(
-                        DownloadsPagerFragmentDirections.actionToWebViewFragment(
-                            WebViewCustomizer.Builder()
-                                .setUrl(settingsRepo.getSettings().startPageUrl)
-                                .setCanInputUrls(true)
-                                .build()
-                        )
-                    )
-                }
-            } else {
-                navController.navigate(item.itemId)
-            }
-            true
+            navController.navigateWithMenuFragments(
+                item,
+                lifecycleScope,
+                settingsRepo,
+                currentNavDestinationId,
+                currentNavFragment
+            )
         }
     }
 }

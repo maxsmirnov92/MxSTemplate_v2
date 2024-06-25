@@ -391,7 +391,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
      * @param errorFieldResult с первым ошибочным [Field]
      */
     fun onStartDownloadClick(errorFieldResult: (Field<*>?) -> Unit) {
-        viewModelScope.launch(ioDispatcher) {
+        viewModelScope.launch {
             if (isAtLeastMarshmallow() && !cacheRepo.askedAppDetails()) {
                 showOkDialog(
                     DIALOG_TAG_NAVIGATE_TO_BATTERY_OPTIMIZATION,
@@ -403,51 +403,49 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                     }
                 }
             } else {
-                withContext(Dispatchers.Main) {
-                    val result = allFields.validateAndSetByRequiredFields()
-                    if (result.isNotEmpty()) {
-                        errorFieldResult(result.first())
-                        return@withContext
-                    }
-                    val url = urlField.value
-                    val method = methodField.value
-                    val bodyUri = bodyField.value.bodyUri
-
-                    val fileName = fileNameField.value
-                    val subDirName = subDirNameField.value
-                    val ignoreFileName = !fileNameChangeStateField.value.value
-
-                    val headers = hashMapOf<String, String>()
-                    headerFields.forEach {
-                        val key = it.header.first.field.value
-                        val value = it.header.second.field.value
-                        headers[key] = value
-                    }
-
-                    val targetHash = targetHashField.value
-
-                    val ignoreServerErrors = ignoreServerErrorsField.value
-                    val ignoreAttachment = ignoreAttachmentStateField.value.value
-                    val replaceFile = replaceFileField.value
-                    val deleteUnfinished = deleteUnfinishedField.value
-
-                    viewModel.enqueueDownload(
-                        DownloadParamsModel(
-                            url,
-                            method,
-                            bodyUri,
-                            fileName,
-                            ignoreFileName,
-                            subDirName,
-                            targetHash,
-                            ignoreServerErrors,
-                            ignoreAttachment,
-                            replaceFile,
-                            deleteUnfinished,
-                            headers
-                        )
-                    )
+                val result = allFields.validateAndSetByRequiredFields()
+                if (result.isNotEmpty()) {
+                    errorFieldResult(result.first())
+                    return@launch
                 }
+                val url = urlField.value
+                val method = methodField.value
+                val bodyUri = bodyField.value.bodyUri
+
+                val fileName = fileNameField.value
+                val subDirName = subDirNameField.value
+                val ignoreFileName = !fileNameChangeStateField.value.value
+
+                val headers = hashMapOf<String, String>()
+                headerFields.forEach {
+                    val key = it.header.first.field.value
+                    val value = it.header.second.field.value
+                    headers[key] = value
+                }
+
+                val targetHash = targetHashField.value
+
+                val ignoreServerErrors = ignoreServerErrorsField.value
+                val ignoreAttachment = ignoreAttachmentStateField.value.value
+                val replaceFile = replaceFileField.value
+                val deleteUnfinished = deleteUnfinishedField.value
+
+                viewModel.enqueueDownload(
+                    DownloadParamsModel(
+                        url,
+                        method,
+                        bodyUri,
+                        fileName,
+                        ignoreFileName,
+                        subDirName,
+                        targetHash,
+                        ignoreServerErrors,
+                        ignoreAttachment,
+                        replaceFile,
+                        deleteUnfinished,
+                        headers
+                    )
+                )
             }
         }
     }

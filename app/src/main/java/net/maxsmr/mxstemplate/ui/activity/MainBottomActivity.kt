@@ -2,11 +2,8 @@ package net.maxsmr.mxstemplate.ui.activity
 
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import net.maxsmr.core.ui.components.activities.BaseBottomNavigationActivity
-import net.maxsmr.feature.download.ui.DownloadsPagerFragmentDirections
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import net.maxsmr.feature.webview.ui.WebViewCustomizer
 import net.maxsmr.mxstemplate.R
 import javax.inject.Inject
 
@@ -41,26 +38,13 @@ class MainBottomActivity : BaseBottomNavigationActivity() {
     override fun setupBottomNavigationView() {
         super.setupBottomNavigationView()
         bottomNavigationView.setOnItemSelectedListener { item ->
-            return@setOnItemSelectedListener if (item.itemId != navController.currentDestination?.id) {
-                if (item.itemId == R.id.navigationWebView) {
-                    lifecycleScope.launch {
-                        // FIXME за счёт этого криво будет работать navigateUp с других фрагментов на WebView
-                        navController.navigate(
-                            DownloadsPagerFragmentDirections.actionToWebViewFragment(
-                                WebViewCustomizer.Builder()
-                                    .setUrl(settingsRepo.getSettings().startPageUrl)
-                                    .setCanInputUrls(true)
-                                    .build()
-                            )
-                        )
-                    }
-                } else {
-                    navController.navigate(item.itemId)
-                }
-                true
-            } else {
-                false
-            }
+            navController.navigateWithMenuFragments(
+                item,
+                lifecycleScope,
+                settingsRepo,
+                currentNavDestinationId,
+                currentNavFragment
+            )
         }
     }
 }

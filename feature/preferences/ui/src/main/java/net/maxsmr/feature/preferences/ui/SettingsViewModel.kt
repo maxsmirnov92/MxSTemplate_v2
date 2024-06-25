@@ -9,15 +9,15 @@ import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
-import net.maxsmr.commonutils.live.field.validateAndSetByRequired
+import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableValue
 import net.maxsmr.core.android.network.URL_PAGE_BLANK
-import net.maxsmr.core.ui.fields.LongFieldState
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
+import net.maxsmr.core.ui.fields.LongFieldState
 import net.maxsmr.core.ui.fields.toggleRequiredFieldState
 import net.maxsmr.core.ui.fields.urlField
 import net.maxsmr.feature.preferences.data.domain.AppSettings
@@ -145,51 +145,65 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun saveChanges() {
-        if (!allFields.validateAndSetByRequired()) {
-            return
-        }
+    fun saveChanges(
+        errorFieldResult: (Field<*>) -> Unit?,
+        navigationAction: (() -> Unit)? = null,
+    ) {
         viewModelScope.launch {
-            if (hasChanges.value == true) {
-                val disableNotifications = disableNotificationsField.value
-                if (!disableNotifications) {
-                    viewModelScope.launch {
-                        cacheRepository.clearPostNotificationAsked()
-                    }
-                }
-                repository.updateSettings(
-                    AppSettings(
-                        maxDownloadsField.value ,
-                        connectTimeoutField.value,
-                        disableNotifications,
-                        retryDownloadsField.value ,
-                        updateNotificationIntervalStateField.value.value,
-                        startPageUrlField.value.takeIf { it.isNotEmpty() } ?: URL_PAGE_BLANK
-                    )
-                )
+            val result = allFields.validateAndSetByRequiredFields()
+            if (result.isNotEmpty()) {
+                errorFieldResult(result.first())
+                return@launch
             }
+            if (hasChanges.value != true) {
+                return@launch
+            }
+            val disableNotifications = disableNotificationsField.value
+            if (!disableNotifications) {
+                viewModelScope.launch {
+                    cacheRepository.clearPostNotificationAsked()
+                }
+            }
+            repository.updateSettings(
+                AppSettings(
+                    maxDownloadsField.value,
+                    connectTimeoutField.value,
+                    disableNotifications,
+                    retryDownloadsField.value,
+                    updateNotificationIntervalStateField.value.value,
+                    startPageUrlField.value.takeIf { it.isNotEmpty() } ?: URL_PAGE_BLANK
+                )
+            )
 
             updateSettings()
-//            navigateBack()
+            navigationAction?.invoke()
         }
     }
 
-    fun navigateBackWithAlert() {
-        if (hasChanges.value == true) {
+    fun navigateBackWithAlert(errorFieldResult: (Field<*>) -> Unit?): Boolean =
+        navigateWithAlert(errorFieldResult) { navigateBack() }
+
+    fun navigateWithAlert(
+        errorFieldResult: (Field<*>) -> Unit?,
+        navigationAction: (() -> Unit)?,
+    ): Boolean {
+        return if (hasChanges.value == true) {
             AlertBuilder(DIALOG_TAG_CONFIRM_EXIT)
                 .setMessage(R.string.settings_alert_confirm_message)
                 .setAnswers(
                     Alert.Answer(R.string.settings_alert_confirm_yes_button).onSelect {
-                        saveChanges()
+                        saveChanges(errorFieldResult, navigationAction)
                     },
                     Alert.Answer(R.string.settings_alert_confirm_neutral_button).onSelect {
-                        navigateBack()
+//                        navigateBack()
+                        navigationAction?.invoke()
                     },
                     Alert.Answer(R.string.settings_alert_confirm_negative_button),
                 )
                 .build()
+            true
         } else {
-            navigateBack()
+            false
         }
     }
 

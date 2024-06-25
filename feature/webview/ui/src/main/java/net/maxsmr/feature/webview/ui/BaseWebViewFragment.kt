@@ -99,6 +99,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
+        if (isRemoving || !isAdded) return
         val bundle = Bundle()
         webView.saveState(bundle)
         outState.putBundle(ARG_WEB_VIEW_STATE, bundle)

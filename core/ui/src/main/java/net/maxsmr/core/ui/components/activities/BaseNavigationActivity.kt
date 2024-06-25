@@ -41,20 +41,26 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
         backPressedTriggered = false
     }
 
-    protected var currentNavDestinationId = NAV_ID_NONE
-        private set
-
     protected lateinit var navController: NavHostController
         private set
 
     private lateinit var navHostFragment: NavHostFragment
 
-    lateinit var appBarConfiguration: AppBarConfiguration
+    protected lateinit var appBarConfiguration: AppBarConfiguration
         private set
 
     private var backPressedTriggered = false
 
-    private val navBackStackEntryCount: Int
+    protected val currentNavDestination
+        get() = navController.currentDestination
+
+    protected val currentNavDestinationId: Int
+        get() = currentNavDestination?.id ?: NAV_ID_NONE
+
+    protected val currentNavFragment: BaseNavigationFragment<*>?
+        get() = navHostFragment.childFragmentManager.fragments.lastOrNull() as? BaseNavigationFragment<*>
+
+    protected val navBackStackEntryCount: Int
         get() = navHostFragment.childFragmentManager.backStackEntryCount
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -124,13 +130,12 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
         }
     }
 
-    @CallSuper
     override fun onDestinationChanged(
         controller: NavController,
         destination: NavDestination,
         arguments: Bundle?,
     ) {
-        currentNavDestinationId = destination.id
+        // do nothing
     }
 
     override fun onSupportNavigateUp(): Boolean {

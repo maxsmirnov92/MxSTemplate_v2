@@ -72,6 +72,12 @@ abstract class BaseNavigationFragment<VM : BaseHandleableViewModel> : BaseMenuFr
     }
 
     /**
+     * Возможна ли навигация с этого фрагмента в текущем состоянии
+     * @param navigationAction целевое действие навигации; можно вызвать отложенно по готовности
+     */
+    open fun canNavigate(navigationAction: () -> Unit) = true
+
+    /**
      * @return true, если нажатие на этом фрагменте было обработано
      */
     open fun onUpPressed() = false

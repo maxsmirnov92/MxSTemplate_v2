@@ -28,96 +28,103 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/svSettings"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="10dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilMaxDownloads"
-            style="@style/TextInputOutlinedWithCorners"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            tools:hint="@string/settings_field_max_downloads_hint">
+            android:orientation="vertical"
+            android:padding="10dp">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etMaxDownloads"
-                style="@style/SingleLineInputText"
-                android:inputType="text|numberDecimal"
-                android:maxLength="10"
-                tools:hint="@string/settings_field_max_downloads_hint" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilMaxDownloads"
+                style="@style/TextInputOutlinedWithCorners"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:hint="@string/settings_field_max_downloads_hint">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etMaxDownloads"
+                    style="@style/SingleLineInputText"
+                    android:inputType="text|numberDecimal"
+                    android:maxLength="10"
+                    tools:hint="@string/settings_field_max_downloads_hint" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilConnectTimeout"
-            style="@style/TextInputOutlinedWithCorners"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            tools:hint="@string/settings_field_connect_timeout_hint">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etConnectTimeout"
-                style="@style/SingleLineInputText"
-                android:inputType="text|numberDecimal"
-                android:maxLength="10"
-                tools:hint="@string/settings_field_connect_timeout_hint" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilConnectTimeout"
+                style="@style/TextInputOutlinedWithCorners"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                tools:hint="@string/settings_field_connect_timeout_hint">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etConnectTimeout"
+                    style="@style/SingleLineInputText"
+                    android:inputType="text|numberDecimal"
+                    android:maxLength="10"
+                    tools:hint="@string/settings_field_connect_timeout_hint" />
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switchRetryDownloads"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/settings_field_retry_failed_downloads"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            app:switchPadding="4dp" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switchDisableNotifications"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/settings_field_disable_notifications"
-            android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            app:switchPadding="4dp" />
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchRetryDownloads"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/settings_field_retry_failed_downloads"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                app:switchPadding="4dp" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilUpdateNotificationInterval"
-            style="@style/TextInputOutlinedWithCorners"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            tools:hint="@string/settings_field_update_notification_interval_hint">
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchDisableNotifications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/settings_field_disable_notifications"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                app:switchPadding="4dp" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etUpdateNotificationInterval"
-                style="@style/SingleLineInputText"
-                android:inputType="text|numberDecimal"
-                android:maxLength="10"
-                tools:hint="@string/settings_field_update_notification_interval_hint" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilUpdateNotificationInterval"
+                style="@style/TextInputOutlinedWithCorners"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                tools:hint="@string/settings_field_update_notification_interval_hint">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etUpdateNotificationInterval"
+                    style="@style/SingleLineInputText"
+                    android:inputType="text|numberDecimal"
+                    android:maxLength="10"
+                    tools:hint="@string/settings_field_update_notification_interval_hint" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilStartPageUrl"
-            style="@style/TextInputOutlinedWithCorners"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            tools:hint="@string/settings_field_start_page_url_hint">
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etStartPageUrl"
-                style="@style/SingleLineInputText"
-                android:inputType="textUri" />
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilStartPageUrl"
+                style="@style/TextInputOutlinedWithCorners"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                tools:hint="@string/settings_field_start_page_url_hint">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etStartPageUrl"
+                    style="@style/SingleLineInputText"
+                    android:inputType="textUri" />
 
-    </LinearLayout>
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
