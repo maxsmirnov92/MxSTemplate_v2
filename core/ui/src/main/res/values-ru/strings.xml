@@ -39,8 +39,8 @@
 
     <string name="toast_link_copied_to_clipboard_message">Ссылка скопирована в буфер обмена</string>
     <string name="toast_copied_to_clipboard_message">Скопировано в буфер обмена</string>
-
     <string name="toast_press_twice_to_quit_message">Нажмите дважды, чтобы выйти</string>
+    <string name="toast_market_not_installed">На устройстве нет установленных магазинов приложений</string>
 
     <string name="alert_battery_optimization_message">Для обеспечения бесперебойной работы приложения рекомендуется отключить функции энергосбережения</string>
 </resources>

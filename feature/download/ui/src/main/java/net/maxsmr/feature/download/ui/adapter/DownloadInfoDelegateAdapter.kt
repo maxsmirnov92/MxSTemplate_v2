@@ -17,9 +17,7 @@ import net.maxsmr.commonutils.format.decomposeTimeFormatted
 import net.maxsmr.commonutils.format.formatSizeSingle
 import net.maxsmr.commonutils.format.formatSpeedSize
 import net.maxsmr.commonutils.gui.setTextOrGone
-import net.maxsmr.commonutils.text.CharCase
 import net.maxsmr.commonutils.text.capFirstChar
-import net.maxsmr.commonutils.text.changeCaseFirstChar
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.feature.download.data.DownloadService
@@ -30,7 +28,7 @@ import net.maxsmr.feature.download.ui.databinding.ItemDownloadInfoBinding
 import java.util.concurrent.TimeUnit
 
 @SuppressLint("StringFormatInvalid")
-fun downloadInfoDelegateAdapter(listener: DownloadListener) =
+fun downloadInfoAdapterDelegate(listener: DownloadListener) =
     adapterDelegate<DownloadInfoAdapterData, DownloadInfoAdapterData, BaseDraggableDelegationAdapter.DragAndDropViewHolder<DownloadInfoAdapterData>>(
         R.layout.item_download_info, createViewHolder = { it.createWithDraggable(R.id.containerDownloadInfo) }
     ) {

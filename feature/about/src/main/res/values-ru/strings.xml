@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about_feature_title">О приложении</string>
-    <string name="about_menu_action_rate_app">@string/rate_dialog_app_title</string>
+    <string name="about_menu_action_rate_app">Оцените приложение</string>
+    <string name="about_menu_action_feedback">Связаться с разработчиком</string>
+    <string name="about_app_description_text">Данное ПО распространяется \"как есть\" и является свободным от рекламы.\nПо всем интересующим вопросам и предложениям можно связаться со мной через форму обратной связи.</string>
+    <string name="about_donate_description_text">Если Вам нравится моё приложение, буду крайне признателен за любое пожертвование</string>
 </resources>

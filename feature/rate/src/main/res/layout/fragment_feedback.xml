@@ -44,8 +44,7 @@
                     android:padding="@dimen/defaultPadding"
                     android:text="@string/rate_feedback_subtitle"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
-                    android:textColor="@color/textColorPrimary"
-                    android:textSize="@dimen/textSizeLarge" />
+                    android:textColor="@color/textColorPrimary" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilSubject"

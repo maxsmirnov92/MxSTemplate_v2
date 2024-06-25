@@ -37,8 +37,8 @@ abstract class BaseFeedbackViewModel(state: SavedStateHandle) : BaseHandleableVi
         val subject = subjectField.value
         val text = textField.value
         context.openEmailIntentWithToastError(emailAddress, sendIntentFunc = {
-            it.putExtra(Intent.EXTRA_SUBJECT, subject);
-            it.putExtra(Intent.EXTRA_TEXT, text);
+            it.putExtra(Intent.EXTRA_SUBJECT, subject)
+            it.putExtra(Intent.EXTRA_TEXT, text)
         })
     }
 

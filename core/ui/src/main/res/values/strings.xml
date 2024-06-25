@@ -39,8 +39,8 @@
 
     <string name="toast_link_copied_to_clipboard_message">Link copied to clipboard</string>
     <string name="toast_copied_to_clipboard_message">Copied to clipboard</string>
-
     <string name="toast_press_twice_to_quit_message">Press twice to quit</string>
+    <string name="toast_market_not_installed">There are not installed market apps on the device</string>
 
     <string name="alert_battery_optimization_message">To ensure smooth operation of the application, it is recommended to disable power saving features</string>
 </resources>

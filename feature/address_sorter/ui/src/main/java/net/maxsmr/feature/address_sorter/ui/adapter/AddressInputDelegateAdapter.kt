@@ -14,7 +14,7 @@ import net.maxsmr.feature.address_sorter.ui.R
 import net.maxsmr.feature.address_sorter.ui.databinding.ItemAddressBinding
 import java.io.Serializable
 
-fun addressInputDelegateAdapter(listener: AddressInputListener) =
+fun addressInputAdapterDelegate(listener: AddressInputListener) =
     adapterDelegate<AddressInputData, AddressInputData, BaseDraggableDelegationAdapter.DragAndDropViewHolder<AddressInputData>>(
         R.layout.item_address, createViewHolder = { it.createWithDraggable(R.id.ivMore) }
     ) {

@@ -4,7 +4,7 @@ import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDel
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter.DragAndDropViewHolder
 
 class DownloadInfoAdapter(listener: DownloadListener) : BaseDraggableDelegationAdapter<DownloadInfoAdapterData, DragAndDropViewHolder<DownloadInfoAdapterData>>(
-    downloadInfoDelegateAdapter(listener)
+    downloadInfoAdapterDelegate(listener)
 ) {
 
     override fun canDragItem(item: DownloadInfoAdapterData, position: Int): Boolean = false

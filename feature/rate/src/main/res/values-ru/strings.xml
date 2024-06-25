@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="rate_dialog_app_title">Оцените приложение</string>
+    <string name="rate_dialog_app_title">Ваша оценка</string>
     <string name="rate_dialog_app_button_positive">Оценить</string>
     <string name="rate_dialog_app_button_negative">@android:string/cancel</string>
 

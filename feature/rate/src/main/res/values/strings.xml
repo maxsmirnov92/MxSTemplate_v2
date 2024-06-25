@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="rate_dialog_app_title">Rate the app</string>
+    <string name="rate_dialog_app_title">Your rate</string>
     <string name="rate_dialog_app_button_positive">Rate</string>
     <string name="rate_dialog_app_button_negative">@android:string/cancel</string>
 

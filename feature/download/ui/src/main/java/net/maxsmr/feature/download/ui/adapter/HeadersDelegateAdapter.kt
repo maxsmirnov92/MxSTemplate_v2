@@ -19,7 +19,7 @@ import java.io.Serializable
 
 val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("HeadersDelegateAdapter")
 
-fun headersDelegateAdapter(listener: HeaderListener) =
+fun headersAdapterDelegate(listener: HeaderListener) =
     adapterDelegate<HeaderInfoAdapterData, HeaderInfoAdapterData, HeadersViewHolder>(
         R.layout.item_header,
         createViewHolder = { HeadersViewHolder(it) }

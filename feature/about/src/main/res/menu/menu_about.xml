@@ -5,4 +5,8 @@
         android:id="@+id/actionRateApp"
         android:title="@string/about_menu_action_rate_app"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/actionFeedback"
+        android:title="@string/about_menu_action_feedback"
+        app:showAsAction="never" />
 </menu>

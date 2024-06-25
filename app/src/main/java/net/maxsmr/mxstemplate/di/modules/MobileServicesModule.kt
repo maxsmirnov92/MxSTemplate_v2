@@ -9,6 +9,8 @@ import dagger.hilt.components.SingletonComponent
 import net.maxsmr.core.android.location.receiver.ILocationReceiver
 import net.maxsmr.mobile_services.IMobileServicesAvailability
 import net.maxsmr.mobile_services.MobileServicesAvailability
+import net.maxsmr.mobile_services.market.MarketIntentLauncher
+import net.maxsmr.mobile_services.market.WrappedMarketIntentLauncher
 import net.maxsmr.mobile_services.market.startActivityMarketIntent
 import net.maxsmr.mobile_services.receiver.LocationReceiverResolver
 import javax.inject.Singleton
@@ -24,7 +26,8 @@ class MobileServicesModule {
      * Интент перехода к маркету
      */
     @[Singleton Provides]
-    fun provideMarketIntent() = startActivityMarketIntent()
+    fun provideMarketIntent(mobileServicesAvailability: IMobileServicesAvailability): MarketIntentLauncher =
+        WrappedMarketIntentLauncher(startActivityMarketIntent(), mobileServicesAvailability)
 
     /**
      * Доступность сервисов HMS/GMS **на устройстве**

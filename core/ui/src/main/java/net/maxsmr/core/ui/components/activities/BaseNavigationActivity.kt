@@ -54,11 +54,6 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
 
     private var backPressedTriggered = false
 
-//    private val navBackStackQueue: List<NavBackStackEntry> get() {
-//        val queue: ArrayDeque<NavBackStackEntry>? = getFieldValue(NavHostController::class.java, navController, "backQueue")
-//        return queue.orEmpty()
-//    }
-
     private val navBackStackEntryCount: Int
         get() = navHostFragment.childFragmentManager.backStackEntryCount
 

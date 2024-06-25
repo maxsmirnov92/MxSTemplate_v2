@@ -18,6 +18,7 @@ plugins {
 }
 
 object AppConfig {
+
     private const val defaultBuildNumber = "dev"
     private const val defaultBranchName = "HEAD"
 
@@ -54,6 +55,7 @@ fun isGoogleBuild(gradle: Gradle): Boolean? {
 
 android {
     namespace = "net.maxsmr.mxstemplate"
+    android.buildFeatures.buildConfig = true
 
     defaultConfig {
         applicationId = "net.maxsmr.mxstemplate"
@@ -62,7 +64,35 @@ android {
         project.ext.set("archivesBaseName", "${project.name}-${AppConfig.versionName}")
 
         buildConfigField("int", "PROTOCOL_VERSION", "1")
-        buildConfigField("String", "AUTHORIZATION_RADAR_IO", "\"prj_live_pk_1e1327e1118b82d07dc7ad93525c6795688e5561\"")
+
+        val appProperties = Properties()
+        appProperties.load(FileInputStream(File(rootDir, "app/app.properties")))
+
+        buildConfigField(
+            "String",
+            "AUTHORIZATION_RADAR_IO",
+            "\"${appProperties.getProperty("authorizationRadarIo")}\""
+        )
+        buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getProperty("devEmailAddress")}\"")
+
+        val donateProperties = Properties()
+        donateProperties.load(FileInputStream(File(rootDir, "app/donate.properties")))
+        val addressesMap = mutableMapOf<String, String>()
+        donateProperties.entries.forEach {
+            val key = it.key as String? ?: return@forEach
+            val value = it.value as String? ?: return@forEach
+            addressesMap[key] = value
+        }
+
+        var addressesHashMap = "new java.util.HashMap<String, String>()" + "{" + "{ "
+        addressesMap.forEach { (k, v) -> addressesHashMap += "put(\"${k}\"," + "\"${v}\"" + ");" }
+        val addressesString = "$addressesHashMap}}"
+
+        buildConfigField(
+            "java.util.Map<String, String>",
+            "DEV_PAYMENT_ADDRESSES",
+            addressesString
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -235,20 +265,20 @@ fun loadSigningConfigForBuildType(propsFile: File, signingConfigName: String, sh
     }
 
     if (propsFile.exists()) {
-            val properties = Properties()
-            properties.load(FileInputStream(propsFile))
-            android {
-                signingConfigs {
-                    if (shouldCreate) {
-                        create(signingConfigName) {
-                            set(properties)
-                        }
-                    } else {
-                        getByName(signingConfigName) {
-                            set(properties)
-                        }
+        val properties = Properties()
+        properties.load(FileInputStream(propsFile))
+        android {
+            signingConfigs {
+                if (shouldCreate) {
+                    create(signingConfigName) {
+                        set(properties)
+                    }
+                } else {
+                    getByName(signingConfigName) {
+                        set(properties)
                     }
                 }
             }
         }
+    }
 }

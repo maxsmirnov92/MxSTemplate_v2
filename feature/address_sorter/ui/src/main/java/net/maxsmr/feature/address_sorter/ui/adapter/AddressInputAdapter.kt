@@ -4,5 +4,5 @@ import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDel
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter.DragAndDropViewHolder
 
 class AddressInputAdapter(listener: AddressInputListener): BaseDraggableDelegationAdapter<AddressInputData, DragAndDropViewHolder<AddressInputData>>(
-    addressInputDelegateAdapter(listener)
+    addressInputAdapterDelegate(listener)
 )

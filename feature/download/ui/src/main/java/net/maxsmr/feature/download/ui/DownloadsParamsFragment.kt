@@ -34,7 +34,7 @@ import net.maxsmr.core.ui.fields.bindState
 import net.maxsmr.core.ui.fields.bindValue
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderListener
-import net.maxsmr.feature.download.ui.adapter.HeadersAdapter
+import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapter
 import net.maxsmr.feature.download.ui.databinding.FragmentDownloadsParamsBinding
 import net.maxsmr.feature.preferences.ui.observePostNotificationPermissionAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -63,7 +63,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
 
     private val binding by viewBinding(FragmentDownloadsParamsBinding::bind)
 
-    private val headersAdapter by lazy { HeadersAdapter(this) }
+    private val headerInfoAdapter by lazy { HeaderInfoAdapter(this) }
 
     private val contentPicker: ContentPicker = FragmentContentPickerBuilder()
         .addRequest(
@@ -171,7 +171,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
         viewModel.replaceFileField.bindValue(viewLifecycleOwner, binding.cbReplaceFile)
         viewModel.deleteUnfinishedField.bindValue(viewLifecycleOwner, binding.cbDeleteUnfinished)
 
-        binding.rvHeaders.adapter = headersAdapter
+        binding.rvHeaders.adapter = headerInfoAdapter
         binding.rvHeaders.addItemDecoration(
             DividerItemDecoration.Builder(requireContext())
                 .setDivider(Divider.Space(10), DividerItemDecoration.Mode.ALL_EXCEPT_LAST)
@@ -179,7 +179,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
         )
         viewModel.headerItems.observe {
 //            requireActivity().clearFocus()
-            headersAdapter.items = it
+            headerInfoAdapter.items = it
         }
 
         binding.ibSelectRequestBody.setOnClickListener {

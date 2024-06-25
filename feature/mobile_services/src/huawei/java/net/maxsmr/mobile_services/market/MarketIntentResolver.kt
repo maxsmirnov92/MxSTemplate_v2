@@ -2,12 +2,11 @@ package net.maxsmr.mobile_services.market
 
 import net.maxsmr.commonutils.getHuaweiMarketIntent
 import net.maxsmr.commonutils.startActivitySafe
+import net.maxsmr.mobile_services.market.MarketIntentLauncher.Companion.getMarketAppId
 
 /**
  * Ничего не делать, если соотв. сборке маркет не был обнаружен
  */
 fun startActivityMarketIntent() = MarketIntentLauncher {
-    val pkg = it.packageName
-    val id = if (pkg.endsWith(".debug")) pkg.substring(0..pkg.length - 7) else pkg
-    it.startActivitySafe(getHuaweiMarketIntent(id))
+    it.startActivitySafe(getHuaweiMarketIntent(getMarketAppId(it)))
 }
