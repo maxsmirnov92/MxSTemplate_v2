@@ -85,6 +85,7 @@ roundedimageview = "2.3.0"
 adapterdelegates4Kotlin = "4.3.0"
 ioClient = "1.0.0"
 kittinunfResult = "4.0.0"
+leakCanary = "2.14"
 
 [libraries]
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
@@ -186,6 +187,7 @@ makeramen-roundedimageview = { group = "com.makeramen", name = "roundedimageview
 hannesdorfmann-adapterdelegates4Kotlin = { group = "com.hannesdorfmann", name = "adapterdelegates4-kotlin-dsl", version.ref = "adapterdelegates4Kotlin" }
 socket-ioClient = { group = "io.socket", name = "socket.io-client", version.ref = "ioClient" }
 kittinunf-result = { group = "com.github.kittinunf.result", name = "result", version.ref = "kittinunfResult" }
+leakCanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakCanary" }
 
 huawei-agconnect-core = { group = "com.huawei.agconnect", name = "agconnect-core", version.ref = "huaweiAgconnectCore" }
 huawei-agconnect-agcp = { group = "com.huawei.agconnect", name = "agcp", version.ref = "huaweiServices" }

@@ -254,6 +254,9 @@ dependencies {
     implementation(libs.androidx.startup.runtime)
 
     implementation(libs.treessence)
+
+    // debugImplementation because LeakCanary should only run in debug builds.
+    debugImplementation(libs.leakCanary)
 }
 
 fun loadSigningConfigForBuildType(propsFile: File, signingConfigName: String, shouldCreate: Boolean) {
