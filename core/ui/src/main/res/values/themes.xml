@@ -27,6 +27,7 @@
         <item name="checkboxStyle">?android:attr/checkboxStyle</item>
         <item name="searchViewStyle">@style/AppSearchViewStyle</item>
         <item name="autoCompleteTextViewStyle">@style/AppAutoCompleteStyle</item>
+        <item name="android:windowBackground">@color/windowBackground</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

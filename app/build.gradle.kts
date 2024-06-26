@@ -54,10 +54,10 @@ fun isGoogleBuild(gradle: Gradle): Boolean? {
 }
 
 android {
-    namespace = "net.maxsmr.mxstemplate"
+    namespace = "net.maxsmr.justupdownloadit"
 
     defaultConfig {
-        applicationId = "net.maxsmr.mxstemplate"
+        applicationId = "net.maxsmr.justupdownloadit"
         versionCode = AppConfig.versionCode
         versionName = AppConfig.versionName
         project.ext.set("archivesBaseName", "${project.name}-${AppConfig.versionName}")

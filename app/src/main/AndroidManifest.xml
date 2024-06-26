@@ -13,7 +13,7 @@
     <!--  по остальным пермишнам мёрж из других манифестов  -->
 
     <application
-        android:name=".TemplateApp"
+        android:name=".App"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -44,6 +44,8 @@
         <activity
             android:name=".ui.activity.BrowserActivity"
             android:exported="true"
+            android:icon="@mipmap/ic_launcher_secondary"
+            android:roundIcon="@mipmap/ic_launcher_secondary_round"
             android:label="@string/browser_name"
             android:launchMode="standard"
             android:theme="@style/AppTheme.NoActionBar"
@@ -110,10 +112,10 @@
             android:exported="false"
             tools:node="merge">
             <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.TimberInitializer"
+                android:name="net.maxsmr.justupdownloadit.initializers.TimberInitializer"
                 android:value="androidx.startup" />
             <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.ModulesInitializer"
+                android:name="net.maxsmr.justupdownloadit.initializers.ModulesInitializer"
                 android:value="androidx.startup" />
         </provider>
         <provider

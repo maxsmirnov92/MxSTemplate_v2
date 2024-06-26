@@ -40,7 +40,7 @@
 
     <fragment
         android:id="@+id/navigationWebView"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.DownloadableWebViewFragment"
+        android:name="net.maxsmr.justupdownloadit.ui.fragment.DownloadableWebViewFragment"
         android:label="@string/webview_feature_title"
         tools:layout="@layout/fragment_webview">
 
@@ -52,7 +52,7 @@
 
     <fragment
         android:id="@+id/navigationAbout"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.AboutFragment"
+        android:name="net.maxsmr.justupdownloadit.ui.fragment.AboutFragment"
         android:label="@string/about_feature_title"
         tools:layout="@layout/fragment_about">
 
@@ -76,7 +76,7 @@
 
     <fragment
         android:id="@+id/navigationFeedback"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.FeedbackFragment"
+        android:name="net.maxsmr.justupdownloadit.ui.fragment.FeedbackFragment"
         android:label="@string/rate_feedback_title"
         tools:layout="@layout/fragment_feedback">
 
