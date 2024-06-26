@@ -3,7 +3,7 @@
     <!-- Base application theme. -->
     <!--    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">-->
     <!--    <style name="BaseTheme" parent="Theme.MaterialComponents.Light.NoActionBar">-->
-    <style name="AppTheme" parent="Theme.MaterialComponents.Light.DarkActionBar.Bridge">
+    <style name="BaseAppTheme" parent="Theme.MaterialComponents.Light.DarkActionBar.Bridge">
         <!-- Primary brand color. -->
         <item name="colorAccent">@color/colorAccent</item>
         <item name="colorPrimary">@color/colorPrimary</item>
@@ -17,6 +17,7 @@
         <item name="colorControlActivated">@color/colorControlActivated</item>
         <item name="colorControlHighlight">@color/colorControlActivated</item>
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <item name="android:windowBackground">@color/windowBackground</item>
         <!-- Customize your theme here. -->
         <item name="appHintColor">@color/textColorHint</item>
         <item name="appErrorColor">@color/textColorError</item>
@@ -26,11 +27,6 @@
         <item name="checkboxStyle">?android:attr/checkboxStyle</item>
         <item name="searchViewStyle">@style/AppSearchViewStyle</item>
         <item name="autoCompleteTextViewStyle">@style/AppAutoCompleteStyle</item>
-    </style>
-
-    <style name="AppTheme.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

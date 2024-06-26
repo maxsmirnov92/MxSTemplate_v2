@@ -225,6 +225,7 @@ dependencies {
     implementation(libs.jodaTime)
 
     //android
+//    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.constraintlayout)
 

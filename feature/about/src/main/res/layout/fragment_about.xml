@@ -50,9 +50,9 @@
 
                 <ImageView
                     android:id="@+id/ivLogo"
-                    android:layout_width="100dp"
-                    android:layout_height="100dp"
-                    android:scaleType="center"
+                    android:layout_width="200dp"
+                    android:layout_height="200dp"
+                    android:scaleType="centerCrop"
                     app:srcCompat="@drawable/ic_share" />
 
                 <TextView

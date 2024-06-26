@@ -1,3 +1,24 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="AppTheme" parent="BaseAppTheme">
+        <!--В API ниже 31-ого splash screen будет отсутствовать -->
+        <!-- Или через windowBackground в AppTheme.Splash (в манифест для главной активити)
+        с последующим выставлением темы приложения в onCreate главной активити
+        if (isAtLeastS()) {
+            handleSplashScreen();
+        } else {
+            setTheme(R.style.AppTheme);
+            setContentView(R.layout.activity_main);
+            startAnimation();
+        }
+        -->
+    </style>
 
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+<!--    <style name="AppTheme.Splash" parent="AppTheme.NoActionBar">-->
+<!--        <item name="android:windowBackground"></item>-->
+<!--    </style>-->
 </resources>
