@@ -28,6 +28,8 @@ import net.maxsmr.commonutils.openBatteryOptimizationSettings
 import net.maxsmr.commonutils.openRawResourceOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.actions.SnackbarAction
+import net.maxsmr.core.android.base.actions.SnackbarExtraData
+import net.maxsmr.core.android.base.actions.SnackbarExtraData.SnackbarLength
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.android.baseAppName
@@ -196,10 +198,10 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
     }
 
-    override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(context, delegate)
+    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(delegate)
         delegate.bindAlertDialog(DIALOG_TAG_NAVIGATE_TO_BATTERY_OPTIMIZATION) {
-            it.asOkDialog(context)
+            it.asOkDialog(delegate.context)
         }
     }
 
@@ -374,12 +376,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 }
 
                 snackbarTextMessage?.let {
-                    showSnackbar(
-                        SnackbarAction(
-                            it,
-                            SnackbarAction.SnackbarLength.LONG
-                        )
-                    )
+                    showSnackbar(it,
+                        SnackbarExtraData(length = SnackbarLength.LONG))
                 }
             } else {
                 onPickAction()

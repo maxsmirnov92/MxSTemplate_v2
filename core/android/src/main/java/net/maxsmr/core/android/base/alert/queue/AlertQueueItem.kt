@@ -1,6 +1,7 @@
 package net.maxsmr.core.android.base.alert.queue
 
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 
 /**
@@ -21,7 +22,8 @@ class AlertQueueItem private constructor(
     private val initialPriority: Int,
     val putInQueueHead: Boolean,
     val unique: UniqueStrategy,
-) : Comparable<AlertQueueItem> {
+    override val isOneShot: Boolean = false
+) : LiveQueue.QueueItem, Comparable<AlertQueueItem> {
 
     /**
      * Время создания сообщения для сортировки при одинаковом [initialPriority]
@@ -124,12 +126,17 @@ class AlertQueueItem private constructor(
         private val builder: Alert.Builder,
     ) : Alert.IBuilder<AlertQueueItem> {
 
-        @Deprecated("Конструктор для внутреннего использования. При вызове из фрагмента может приводить к утечке памяти, вместо этого используйте BaseViewModel.AlertBuilder")
+        /**
+         * Конструктор для внутреннего использования.
+         * При вызове из фрагмента может приводить к утечке памяти;
+         * Вместо этого используйте соответствующий билдер [BaseViewModel]
+         */
         internal constructor(tag: String, queue: AlertQueue) : this(tag, queue, Alert.Builder())
 
         private var priority: Int = Priority.NORMAL.value
         private var uniqueStrategy: UniqueStrategy = UniqueStrategy.None
         private var putInQueueHead: Boolean = false
+        private var isOneShot: Boolean = true
         private var onClose: (() -> Unit)? = null
 
         override fun setTitle(title: String?): Builder = apply {
@@ -189,6 +196,10 @@ class AlertQueueItem private constructor(
             this.uniqueStrategy = uniqueStrategy
         }
 
+        fun setOneShot(isOneShot: Boolean) = apply {
+            this.isOneShot = isOneShot
+        }
+
         fun setOnClose(onClose: (() -> Unit)) = apply {
             this.onClose = onClose
         }
@@ -200,6 +211,9 @@ class AlertQueueItem private constructor(
          * Может быть использовано для удаления из очереди в дальнейшем
          */
         override fun build(): AlertQueueItem? {
+            check(tag.isNotEmpty()) {
+                "Alert tag must be specified"
+            }
             var item: AlertQueueItem? = null
             val alert = builder
                 .onClose {
@@ -224,7 +238,8 @@ class AlertQueueItem private constructor(
                 alert = alert,
                 initialPriority = priority,
                 putInQueueHead = putInQueueHead,
-                unique = uniqueStrategy
+                unique = uniqueStrategy,
+                isOneShot = isOneShot
             )
             return item.takeIf { queue.add(it) }
         }

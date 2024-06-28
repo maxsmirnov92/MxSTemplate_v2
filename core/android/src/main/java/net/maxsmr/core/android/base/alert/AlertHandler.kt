@@ -4,7 +4,6 @@ import androidx.annotation.MainThread
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
 
@@ -19,8 +18,10 @@ class AlertHandler(
     lifecycleOwner: LifecycleOwner,
 ) : DefaultLifecycleObserver {
 
-    private val representations: MutableList<AlertRepresentation> = mutableListOf()
-    private var deferredHandles: MutableList<DeferredHandle> = mutableListOf()
+    private val representationsMap = mutableMapOf<String, MutableList<Pair<Alert, AlertRepresentation>>>()
+
+    private var deferredHandles = mutableListOf<DeferredHandle>()
+
     private var owner: LifecycleOwner? = null
         set(value) {
             field?.lifecycle?.removeObserver(this)
@@ -76,22 +77,37 @@ class AlertHandler(
         tag: String,
         representationFactory: (Alert) -> AlertRepresentation?,
     ) {
-        var representation: AlertRepresentation? = null
-        queue.asLiveData(tag).observe(this) { alert ->
-            representation?.let {
-                it.hide()
-                representations.remove(it)
+        queue.asLiveData(tag).observe(this) { alertInfo ->
+            val representations = representationsMap[tag] ?: mutableListOf()
+            if (alertInfo == null || alertInfo.isReplaceable) {
+                // верхний при данном тэге нульный
+                // или текущий alert предполагает удаление остальных с тем же тэгом
+                representations.forEach {
+                    it.second.hide()
+                }
+                representations.clear()
             }
-            alert?.let(representationFactory)?.also {
-                representation = it
-                representations.add(it)
-                it.show()
+            val newAlert = alertInfo?.alert
+            if (!representations.any { it.first === newAlert }) {
+                // в observer возможно попадание с последним алертом,
+                // по которому уже был вызван show в данном AlertHandler;
+                // проверка по ссылке, т.к. содержимое может совпадать
+                newAlert?.let(representationFactory)?.also {
+                    representations.add(Pair(newAlert, it))
+                    it.show()
+                }
             }
+            representationsMap[tag] = representations
         }
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
-        representations.forEach { it.hide() }
+        representationsMap.values.forEach { representations ->
+            representations.forEach {
+                it.second.hide()
+            }
+        }
+        representationsMap.clear()
     }
 
     private class DeferredHandle(

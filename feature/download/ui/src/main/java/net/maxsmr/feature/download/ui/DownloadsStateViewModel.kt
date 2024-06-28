@@ -88,19 +88,22 @@ class DownloadsStateViewModel @Inject constructor(
         }
     }
 
-    override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(context, delegate)
-        delegate.bindAlertDialog(DIALOG_TAG_CLEAR_QUEUE) {
-            it.asYesNoDialog(context)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_CANCEL_ALL) {
-            it.asYesNoDialog(context)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_RETRY_IF_SUCCESS) {
-            it.asYesNoDialog(context)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_DELETE_IF_SUCCESS) {
-            it.asYesNoDialog(context)
+    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(delegate)
+        with(delegate) {
+            val context = context
+            bindAlertDialog(DIALOG_TAG_CLEAR_QUEUE) {
+                it.asYesNoDialog(context)
+            }
+            bindAlertDialog(DIALOG_TAG_CANCEL_ALL) {
+                it.asYesNoDialog(context)
+            }
+            bindAlertDialog(DIALOG_TAG_RETRY_IF_SUCCESS) {
+                it.asYesNoDialog(context)
+            }
+            bindAlertDialog(DIALOG_TAG_DELETE_IF_SUCCESS) {
+                it.asYesNoDialog(context)
+            }
         }
     }
 
@@ -129,7 +132,7 @@ class DownloadsStateViewModel @Inject constructor(
             // по дефолту "открыть с помощью" или "поделиться"
 
             context.startActivitySafe(intent) {
-                showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.error_intent_any)))
+                showToast(TextMessage(net.maxsmr.core.ui.R.string.error_intent_any))
             }
         }
     }
@@ -214,14 +217,12 @@ class DownloadsStateViewModel @Inject constructor(
 
     private fun <T : IntentWithUriProvideStrategy<*>> navigateUriAfterCheck(downloadUri: Uri, strategy: T) {
         viewModelScope.launch(defaultDispatcher) {
-            AlertBuilder(DIALOG_TAG_PROGRESS).build()
+            AlertDialogBuilder(DIALOG_TAG_PROGRESS).build()
             if (downloadUri.isEmpty(baseApplicationContext.contentResolver)) {
                 showSnackbar(
-                    SnackbarAction(
-                        TextMessage(
-                            R.string.download_snackbar_action_view_error_format,
-                            downloadUri.toString()
-                        )
+                    TextMessage(
+                        R.string.download_snackbar_action_view_error_format,
+                        downloadUri.toString()
                     )
                 )
             } else {

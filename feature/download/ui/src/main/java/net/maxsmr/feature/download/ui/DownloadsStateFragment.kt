@@ -20,7 +20,6 @@ import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDel
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
 import net.maxsmr.commonutils.AppClickableSpan
-import net.maxsmr.commonutils.Predicate.Methods.findIndexed
 import net.maxsmr.commonutils.RangeSpanInfo
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.PopupParams
@@ -28,16 +27,13 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
-import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.download.DownloadInfo
-import net.maxsmr.core.ui.alert.representation.asIndefiniteSnackbar
+import net.maxsmr.core.ui.alert.representation.asSnackbar
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.feature.download.data.DownloadService
-import net.maxsmr.feature.download.data.DownloadService.Companion.getShareAction
-import net.maxsmr.feature.download.data.DownloadService.Companion.getViewAction
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapterData
@@ -53,7 +49,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         SearchView.OnQueryTextListener {
 
     override val connectionHandler: ConnectionHandler = ConnectionHandler.Builder().mapAlerts {
-        it.asIndefiniteSnackbar(requireView())
+        it.asSnackbar(requireView())
     }.build()
 
     @Inject
@@ -247,7 +243,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
                                 true
                             ) {
                                 copyToClipboard(requireContext(), "url", params.requestParams.url)
-                                viewModel.showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message)))
+                                viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message))
                             }
                         )))
                 }

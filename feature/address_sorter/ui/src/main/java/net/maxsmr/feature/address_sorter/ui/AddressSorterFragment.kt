@@ -102,8 +102,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
         with(locationViewModel) {
             handleAlerts(
-                requireContext(),
-                // другая dialogQueue
+                // dialogQueue не из locationViewModel
                 AlertFragmentDelegate(this@AddressSorterFragment, this)
             )
             handleEvents(this@AddressSorterFragment)

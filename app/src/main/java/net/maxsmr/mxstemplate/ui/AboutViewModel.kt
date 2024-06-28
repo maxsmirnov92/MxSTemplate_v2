@@ -28,7 +28,7 @@ class AboutViewModel @Inject constructor(
                     EntryPointFeatureMobileServices::class.java
                 ).marketIntentLauncher.startActivityMarketIntent(activity)
         ) {
-            showToast(ToastAction(TextMessage(R.string.toast_market_not_installed)))
+            showToast(TextMessage(R.string.toast_market_not_installed))
         }
     }
 

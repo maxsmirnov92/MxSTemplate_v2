@@ -1,7 +1,6 @@
 package net.maxsmr.feature.about
 
 import android.app.Activity
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.text.style.CharacterStyle
@@ -13,8 +12,8 @@ import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.RangeSpanInfo
 import net.maxsmr.commonutils.createSpanText
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.alert.Alert
+import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
@@ -41,8 +40,8 @@ abstract class BaseAboutViewModel(state: SavedStateHandle) : BaseHandleableViewM
 
     private var logoAnimatedOnce by persistableValueInitial(false)
 
-    override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(context, delegate)
+    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(delegate)
         delegate.bindAlertDialog(DIALOG_TAG_RATE_APP) {
             RateDialog(delegate.fragment, it, object : RateDialog.RateListener {
                 override fun onRateSelected(rating: Int) {
@@ -65,7 +64,7 @@ abstract class BaseAboutViewModel(state: SavedStateHandle) : BaseHandleableViewM
         viewModelScope.launch {
             repo.setAppRated()
         }
-        AlertBuilder(DIALOG_TAG_RATE_APP)
+        AlertDialogBuilder(DIALOG_TAG_RATE_APP)
             .setTitle(net.maxsmr.feature.rate.R.string.rate_dialog_app_title)
             .setAnswers(
                 Alert.Answer(net.maxsmr.feature.rate.R.string.rate_dialog_app_button_positive),
@@ -83,18 +82,19 @@ abstract class BaseAboutViewModel(state: SavedStateHandle) : BaseHandleableViewM
                     handler.removeCallbacks(logoPressedClearRunnable)
                     logoPressedCount++
                     if (logoPressedCount >= targetClickCount) {
+                        removeToastsFromQueue()
                         animatedLogoState.value = true
                         logoAnimatedOnce = true
                     } else if (clicksLeftToShowToast > 0) {
                         val clicksLeft = targetClickCount - logoPressedCount
                         if (clicksLeft <= clicksLeftToShowToast) {
                             showToast(
-                                ToastAction(
-                                    TextMessage(
-                                        R.string.about_toast_easter_egg_logo_message_format,
-                                        clicksLeft
-                                    )
-                                )
+                                TextMessage(
+                                    R.string.about_toast_easter_egg_logo_message_format,
+                                    clicksLeft
+                                ),
+                                // убираем тост, который не успел скрыться системой
+                                uniqueStrategy = AlertQueueItem.UniqueStrategy.Replace
                             )
                         }
                     }
@@ -151,6 +151,6 @@ abstract class BaseAboutViewModel(state: SavedStateHandle) : BaseHandleableViewM
 
         const val CLICK_COUNT_LOGO_DEFAULT = 5
 
-        const val DELAY_RESET_CLICK_LOGO_DEFAULT = 1000L
+        const val DELAY_RESET_CLICK_LOGO_DEFAULT = 1500L
     }
 }

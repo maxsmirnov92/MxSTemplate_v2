@@ -90,6 +90,6 @@ abstract class BaseAboutFragment<VM : BaseAboutViewModel> : BaseNavigationFragme
 
     override fun onAddressClick(address: PaymentAddress) {
         copyToClipboard(requireContext(), "payment address", address.address)
-        viewModel.showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.toast_copied_to_clipboard_message)))
+        viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_copied_to_clipboard_message))
     }
 }

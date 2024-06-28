@@ -86,13 +86,16 @@ class LocationViewModel @AssistedInject constructor(
     /**
      * Вызов для показа алертов о проблемах определения местоположения при необходимости
      */
-    override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(context, delegate)
-        delegate.bindAlertDialog(DIALOG_TAG_GPS_NOT_AVAILABLE) {
-            it.asOkDialog(context, true)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_GPS_NOT_ENABLED) { alert ->
-            alert.asYesNoDialog(context, false)
+    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(delegate)
+        val context = delegate.context
+        with(delegate) {
+            bindAlertDialog(DIALOG_TAG_GPS_NOT_AVAILABLE) {
+                it.asOkDialog(context, true)
+            }
+            bindAlertDialog(DIALOG_TAG_GPS_NOT_ENABLED) { alert ->
+                alert.asYesNoDialog(context, false)
+            }
         }
     }
 

@@ -36,9 +36,7 @@ class Alert private constructor(
 
         if (title != other.title) return false
         if (message != other.message) return false
-        if (answers != other.answers) return false
-
-        return true
+        return answers == other.answers
     }
 
     override fun hashCode(): Int {
@@ -56,7 +54,7 @@ class Alert private constructor(
     class Answer(
         val title: TextMessage,
         val tag: Any? = null,
-        val contentDescription: TextMessage? = null
+        val contentDescription: TextMessage? = null,
     ) {
 
         /**
@@ -80,14 +78,15 @@ class Alert private constructor(
             if (this === other) return true
             if (other !is Answer) return false
 
-            if (title != other.title) return false
-
-            return true
+            return title == other.title && tag == other.tag
         }
 
         override fun hashCode(): Int {
-            return title.hashCode()
+            var result = title.hashCode()
+            result = 31 * result + (tag?.hashCode() ?: 0)
+            return result
         }
+
 
         companion object {
 

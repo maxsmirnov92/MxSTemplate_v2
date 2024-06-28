@@ -1,6 +1,7 @@
 package net.maxsmr.core.ui.alert
 
 import android.content.Context
+import android.view.View
 import androidx.fragment.app.Fragment
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_NO_INTERNET
@@ -9,13 +10,18 @@ import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_PICKER_ER
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_PROGRESS
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_SERVER_ERROR
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_UNKNOWN_ERROR
+import net.maxsmr.core.android.base.BaseViewModel.Companion.SNACKBAR_TAG_QUEUE
+import net.maxsmr.core.android.base.BaseViewModel.Companion.TOAST_TAG_QUEUE
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.AlertHandler
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
 import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.alert.representation.asProgressDialog
+import net.maxsmr.core.ui.alert.representation.asSnackbar
+import net.maxsmr.core.ui.alert.representation.asToast
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
+import java.lang.ref.WeakReference
 
 /**
  * Делегат для любого типа [Fragment] с функцией отображения алертов;
@@ -28,6 +34,8 @@ class AlertFragmentDelegate<VM: BaseViewModel>(
     val viewModel: VM
 ) {
 
+    val context get() = fragment.requireContext()
+
     val alertHandler: AlertHandler by lazy { AlertHandler(fragment) }
 
     /**
@@ -35,7 +43,15 @@ class AlertFragmentDelegate<VM: BaseViewModel>(
      * возвращаемым лямбдой [representationFactory].
      */
     fun bindAlertDialog(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
-        bindAlertDialog(viewModel.dialogQueue, tag, representationFactory)
+        bindAlert(viewModel.dialogQueue, tag, representationFactory)
+    }
+
+    fun bindAlertSnackbar(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
+        bindAlert(viewModel.snackbarQueue, tag, representationFactory)
+    }
+
+    fun bindAlertToast(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
+        bindAlert(viewModel.toastQueue, tag, representationFactory)
     }
 
     /**
@@ -53,7 +69,7 @@ class AlertFragmentDelegate<VM: BaseViewModel>(
     /**
      * Упрощение функции [bind] (с захардкоженной [BaseViewModel.dialogQueue]), для показа диалогов
      */
-    fun bindAlertDialog(
+    fun bindAlert(
         dialogQueue: AlertQueue,
         tag: String,
         representationFactory: (Alert) -> AlertRepresentation?,
@@ -71,12 +87,13 @@ class AlertFragmentDelegate<VM: BaseViewModel>(
         cancelable: Boolean = false,
         onCancel: (() -> Unit)? = null,
     ) {
-        bindAlertDialog(dialogQueue, tag) {
+        bindAlert(dialogQueue, tag) {
             it.asProgressDialog(fragment.requireContext(), cancelable, onCancel = onCancel)
         }
     }
 
-    fun handleCommonAlerts(context: Context) {
+    fun handleCommonAlertDialogs() {
+        val context = context
         bindDefaultProgress()
         bindAlertDialog(DIALOG_TAG_NO_INTERNET) { it.asOkDialog(context) }
         bindAlertDialog(DIALOG_TAG_SERVER_ERROR) { it.asOkDialog(context) }
@@ -86,6 +103,20 @@ class AlertFragmentDelegate<VM: BaseViewModel>(
         }
         bindAlertDialog(DIALOG_TAG_PICKER_ERROR) {
             it.asOkDialog(context)
+        }
+    }
+
+    fun handleSnackbarAlerts() {
+        val view = fragment.requireView()
+        bindAlertSnackbar(SNACKBAR_TAG_QUEUE) {
+            it.asSnackbar(view)
+        }
+    }
+
+    fun handleToastAlerts(customView: View? = null) {
+        val context = context
+        bindAlertToast(TOAST_TAG_QUEUE) {
+            it.asToast(context, customView)
         }
     }
 }

@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import net.maxsmr.commonutils.live.zipNotNull
 import net.maxsmr.core.android.R
+import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
@@ -45,7 +46,6 @@ class ConnectionManager() {
      * @param queue очередь сообщений, куда помещаются алерты об отсутствии сети. Null, если алерты не нужны
      * @param builder опциональный билдер на случай нестандартного алерта
      */
-    @Suppress("DEPRECATION")
     constructor(queue: AlertQueue, builder: AlertQueueItem.Builder? = null) : this() {
         this.queue = queue
         asLiveData.observeForever {
@@ -57,6 +57,7 @@ class ConnectionManager() {
                         .setTitle(R.string.error_no_connection)
                         .setAnswers(Alert.Answer(R.string.check_again).also { it.select = ::check })
                         .setUniqueStrategy(AlertQueueItem.UniqueStrategy.Ignore)
+                        .setExtraData(SnackbarExtraData(SnackbarExtraData.SnackbarLength.INDEFINITE))
                         .build()
             }
         }

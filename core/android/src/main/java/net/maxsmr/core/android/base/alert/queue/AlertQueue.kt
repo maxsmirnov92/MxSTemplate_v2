@@ -19,6 +19,7 @@ import java.util.*
 class AlertQueue(
     val sortOrder: SortOrder = SortOrder.OLDER_BEFORE,
 ) {
+
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("AlertQueue")
 
     private val queue: LiveQueue<AlertQueueItem> = LiveQueue(PriorityQueue(4))
@@ -34,11 +35,22 @@ class AlertQueue(
     }
 
     /**
-     * Эмитит сообщения с тэгом [tag] либо null, если очередь пуста или в голове находится сообщение
-     * с другим тэгом
+     * Маппит сообщения с тэгом [tag] + флаг
+     * о заменяемости при том же тэге
+     * если очередь пуста или произошло добавление сообщение
+     * с тем же или другим тэгом
      */
-    fun asLiveData(tag: String): LiveData<Alert?> = queue.asLiveData()
-            .map { it?.takeIf { it.tag == tag }?.alert }
+    fun asLiveData(tag: String): LiveData<AlertInfo?> = queue.asLiveData()
+        .map {
+            it?.takeIf {
+                it.tag == tag
+            }?.let { item ->
+                AlertInfo(
+                    item.alert,
+                    item.unique == UniqueStrategy.Replace,
+                )
+            }
+        }
 
     fun isEmpty() = queue.isEmpty()
 
@@ -53,7 +65,7 @@ class AlertQueue(
      */
     fun add(item: AlertQueueItem): Boolean {
         val head = queue.peek()
-        if (item == head) return false
+//        if (item == head) return false
 
         if (item.unique == UniqueStrategy.Ignore && getFirstByTag(item.tag) != null) {
             return false
@@ -67,9 +79,12 @@ class AlertQueue(
             head?.resetMaxPriority()
             item.setMaxPriority()
         }
-        return queue.add(item).also {
-            if (item.unique == UniqueStrategy.Replace) removeWithSameTag(item)
+
+        if (item.unique == UniqueStrategy.Replace) {
+            removeWithSameTag(item)
         }
+
+        return queue.add(item)
     }
 
     fun remove(item: AlertQueueItem): Boolean = queue.remove(item)
@@ -85,18 +100,24 @@ class AlertQueue(
                 iterator.remove()
             }
         }
+
     }
 
     /**
      * Удаляет из очереди все сообщения с тэгом сообщения [item], кроме самого [item]
      */
     private fun removeWithSameTag(item: AlertQueueItem) {
+        var wasChanged = false
         val iterator = queue.iterator()
         while (iterator.hasNext()) {
             val next = iterator.next()
             if (next !== item && next.tag == item.tag) {
                 iterator.remove()
+                wasChanged = true
             }
+        }
+        if (!wasChanged) {
+            queue.removeFromHeadIf { it.tag == item.tag }
         }
     }
 
@@ -122,4 +143,9 @@ class AlertQueue(
          */
         NEWER_BEFORE(-1)
     }
+
+    data class AlertInfo(
+        val alert: Alert,
+        val isReplaceable: Boolean,
+    )
 }

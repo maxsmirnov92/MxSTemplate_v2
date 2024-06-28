@@ -17,6 +17,8 @@ import androidx.appcompat.app.AlertDialog
 import net.maxsmr.commonutils.ISpanInfo
 import net.maxsmr.commonutils.createSpanText
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.logger.BaseLogger
+import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation.Builder.MultiChoiceAnswersData.Companion.isNotEmpty
@@ -27,18 +29,19 @@ class DialogRepresentation(
     private val dialog: Dialog,
 ) : AlertRepresentation {
 
-    fun configure(block: (Dialog) -> Unit) = apply {
-        dialog.setOnShowListener { block(dialog) }
-    }
+    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("DialogRepresentation")
 
     override fun show() {
+        if (dialog.isShowing) return
         dialog.show()
     }
 
     override fun hide() {
+        if (!dialog.isShowing) return
         try {
             dialog.dismiss()
         } catch (e: Exception) {
+            logger.e(e)
         }
     }
 

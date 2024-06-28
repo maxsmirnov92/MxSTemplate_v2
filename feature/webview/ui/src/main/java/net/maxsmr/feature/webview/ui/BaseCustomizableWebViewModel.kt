@@ -56,7 +56,7 @@ abstract class BaseCustomizableWebViewModel(
     fun onCopyLinkAction(context: Context) {
         currentUrl.value?.let {
             copyToClipboard(context, context.getString(R.string.webview_url_link_title), it.toString())
-            showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message)))
+            showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message))
         }
     }
 
@@ -65,7 +65,7 @@ abstract class BaseCustomizableWebViewModel(
             context.startActivitySafe(getSendTextIntent(it.toString()).apply {
                 putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.webview_url_link_title))
             }) {
-                showToast(ToastAction(TextMessage(net.maxsmr.core.ui.R.string.error_intent_send)))
+                showToast(TextMessage(net.maxsmr.core.ui.R.string.error_intent_send))
             }
         }
     }

@@ -8,6 +8,7 @@ import androidx.lifecycle.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.isAtLeastR
 import net.maxsmr.commonutils.live.doOnNext
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.logger.BaseLogger
@@ -17,8 +18,9 @@ import net.maxsmr.core.android.R
 import net.maxsmr.core.android.base.BaseViewModel.*
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.android.base.actions.NavigationAction.NavigationCommand
-import net.maxsmr.core.android.base.actions.SnackbarAction
+import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.actions.ToastAction
+import net.maxsmr.core.android.base.actions.ToastExtraData
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
@@ -67,10 +69,6 @@ abstract class BaseViewModel(
 
     val toastCommands = _toastCommands.asStateFlow()
 
-    private val _snackbarCommands = MutableStateFlow<VmEvent<SnackbarAction>?>(null)
-
-    val snackbarCommands = _snackbarCommands.asStateFlow()
-
     // MutableStateFlow подходит лучше, чем MutableSharedFlow, т.к. гарантированно будет хранить последнее значение;
     // в то время как tryEmit у MutableSharedFlow может не сработать при переполнении буфера, т.к. не является suspend-функцией
 
@@ -80,9 +78,14 @@ abstract class BaseViewModel(
     open val dialogQueue: AlertQueue by lazy { AlertQueue() }
 
     /**
-     * Очередь сообщений для показа в снекбаре
+     * Очередь сообщений для показа снекбаров
      */
     open val snackbarQueue: AlertQueue by lazy { AlertQueue() }
+
+    /**
+     * Очередь сообщений для показа тостов
+     */
+    open val toastQueue: AlertQueue by lazy { AlertQueue() }
 
     /**
      * Определяет логику обработки событий состояния сети. Переопределите, если требуется обработка.
@@ -141,7 +144,7 @@ abstract class BaseViewModel(
         title: TextMessage? = null,
         onConfirmClick: (() -> Unit)? = null,
     ) {
-        AlertBuilder(tag)
+        AlertDialogBuilder(tag)
             .setTitle(title)
             .setMessage(message)
             .setAnswers(Alert.Answer((android.R.string.ok)).onSelect {
@@ -172,7 +175,7 @@ abstract class BaseViewModel(
         onPositiveSelect: () -> Unit,
         onNegativeSelect: (() -> Unit)? = null,
     ) {
-        AlertBuilder(tag)
+        AlertDialogBuilder(tag)
             .setTitle(title)
             .setMessage(message)
             .setAnswers(
@@ -206,7 +209,7 @@ abstract class BaseViewModel(
     }
 
     private fun showNoInternetDialog() {
-        AlertBuilder(DIALOG_TAG_NO_INTERNET)
+        AlertDialogBuilder(DIALOG_TAG_NO_INTERNET)
             .setTitle(R.string.error_server_unavailable)
             .setMessage(R.string.error_no_internet)
             .setAnswers(Alert.Answer(R.string.understand))
@@ -233,12 +236,45 @@ abstract class BaseViewModel(
         _navigationCommands.tryEmit(VmEvent(NavigationAction(NavigationCommand.Back)))
     }
 
-    fun showToast(action: ToastAction) {
-        _toastCommands.tryEmit(VmEvent(action))
+    fun showSnackbar(
+        message: TextMessage,
+        data: SnackbarExtraData = SnackbarExtraData(),
+        uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None
+    ) {
+        AlertSnackbarBuilder(SNACKBAR_TAG_QUEUE)
+            .setMessage(message)
+            .setExtraData(data)
+            .setUniqueStrategy(uniqueStrategy)
+            .setOneShot(data.length != SnackbarExtraData.SnackbarLength.INDEFINITE)
+            .build()
     }
 
-    fun showSnackbar(action: SnackbarAction) {
-        _snackbarCommands.tryEmit(VmEvent(action))
+    fun removeSnackbarsFromQueue() {
+        snackbarQueue.removeAllWithTag(SNACKBAR_TAG_QUEUE)
+    }
+
+    fun showToast(
+        message: TextMessage,
+        data: ToastExtraData = ToastExtraData(),
+        uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None
+        ) {
+       if (isAtLeastR()) {
+           AlertToastBuilder(TOAST_TAG_QUEUE)
+               .setMessage(message)
+               .setExtraData(data)
+               .setUniqueStrategy(uniqueStrategy)
+               .setOneShot(true)
+               .build()
+       } else {
+           // для API ниже 30 addCallback отсутствует,
+           // соот-но тосты будут оставаться в очереди после скрытия;
+           // пользуем способ с VmEvent
+           _toastCommands.tryEmit(VmEvent(ToastAction(message, data)))
+       }
+    }
+
+    fun removeToastsFromQueue() {
+        toastQueue.removeAllWithTag(TOAST_TAG_QUEUE)
     }
 
     fun onPickerResultError(error: PickResult.Error) {
@@ -251,9 +287,9 @@ abstract class BaseViewModel(
     /**
      * Добавляет, либо удаляет диалог с тегом [tag] из очереди в зависимости от параметра [add]
      */
-    protected fun AlertQueue.toggle(add: Boolean, tag: String, builderConfig: (AlertBuilder.() -> Unit)? = null) {
+    protected fun AlertQueue.toggle(add: Boolean, tag: String, builderConfig: (AlertDialogBuilder.() -> Unit)? = null) {
         if (add) {
-            AlertBuilder(tag, this).apply { builderConfig?.invoke(this) }.build()
+            AlertDialogBuilder(tag, this).apply { builderConfig?.invoke(this) }.build()
         } else {
             removeAllWithTag(tag)
         }
@@ -265,7 +301,7 @@ abstract class BaseViewModel(
     ): LiveData<ILoadState<T>> =
         doOnNext {
             if (it?.isLoading == true) {
-                AlertBuilder(tag).setMessage(messageRes).build()
+                AlertDialogBuilder(tag).setMessage(messageRes).build()
             } else {
                 dialogQueue.removeAllWithTag(tag)
             }
@@ -301,9 +337,16 @@ abstract class BaseViewModel(
      * утечку памяти при смене конфигурации (т.к. алерт лежит в очереди VM и содержит лямбду,
      * которая содержит ссылку на фрагмент)
      */
-    @Suppress("DEPRECATION")
-    inner class AlertBuilder(
+    inner class AlertDialogBuilder(
         tag: String, queue: AlertQueue = dialogQueue,
+    ) : AlertQueueItem.Builder(tag, queue)
+
+    inner class AlertSnackbarBuilder(
+        tag: String, queue: AlertQueue = snackbarQueue,
+    ) : AlertQueueItem.Builder(tag, queue)
+
+    inner class AlertToastBuilder(
+        tag: String, queue: AlertQueue = toastQueue,
     ) : AlertQueueItem.Builder(tag, queue)
 
     companion object {
@@ -314,5 +357,8 @@ abstract class BaseViewModel(
         const val DIALOG_TAG_PROGRESS = "progress"
         const val DIALOG_TAG_PERMISSION_YES_NO = "permission_yes_no"
         const val DIALOG_TAG_PICKER_ERROR = "content_picker_error"
+
+        const val SNACKBAR_TAG_QUEUE = "snackbar_queue"
+        const val TOAST_TAG_QUEUE = "toast_queue"
     }
 }

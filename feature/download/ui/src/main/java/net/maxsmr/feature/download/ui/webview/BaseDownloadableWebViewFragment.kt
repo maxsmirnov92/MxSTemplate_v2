@@ -31,7 +31,8 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         super.onViewCreated(view, savedInstanceState, viewModel)
         with(downloadsViewModel) {
-            handleAlerts(requireContext(), AlertFragmentDelegate(this@BaseDownloadableWebViewFragment, this))
+            // dialogQueue не из downloadsViewModel
+            handleAlerts(AlertFragmentDelegate(this@BaseDownloadableWebViewFragment, this))
             handleEvents(this@BaseDownloadableWebViewFragment)
         }
     }

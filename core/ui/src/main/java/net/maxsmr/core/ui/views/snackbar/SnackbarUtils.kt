@@ -6,62 +6,64 @@ import android.view.ViewTreeObserver
 import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
-import androidx.core.content.res.ResourcesCompat
-import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.core.android.base.actions.SnackbarAction.SnackbarLength
+import net.maxsmr.core.android.base.actions.SnackbarExtraData
+import net.maxsmr.core.android.base.actions.SnackbarExtraData.SnackbarLength
 import net.maxsmr.core.ui.R
 
 fun View.showSnackbar(
     message: TextMessage,
-    length: SnackbarLength,
-    maxLines: Int? = null,
-    callback: BaseTransientBottomBar.BaseCallback<Snackbar>? = null,
+    data: SnackbarExtraData,
+    callback: Snackbar.Callback? = null,
 ): Snackbar {
-    check(length != SnackbarLength.INDEFINITE) {
-        "Snackbar length cannot be INDEFINITE for that case"
+    with(data) {
+        check(length != SnackbarLength.INDEFINITE) {
+            "Snackbar length cannot be INDEFINITE for that case"
+        }
+        return createSnackbar(message, data, callback).apply {
+            show()
+        }
     }
-    val snackbar = createSnackbar(message, length, maxLines, callback)
-    snackbar.show()
-    return snackbar
 }
 
 fun View.createSnackbar(
     message: TextMessage,
-    length: SnackbarLength,
-    maxLines: Int? = null,
-    callback: BaseTransientBottomBar.BaseCallback<Snackbar>? = null,
+    data: SnackbarExtraData,
+    callback: Snackbar.Callback? = null,
 ): Snackbar {
+    with(data) {
+        val snackbar = Snackbar.make(this@createSnackbar, message.get(context), length.value)
+        snackbar.isGestureInsetBottomIgnored = true
 
-    val snackbar = Snackbar.make(this, message.get(context), length.value)
-    snackbar.isGestureInsetBottomIgnored = true
+        val snackbarView = snackbar.view
+        snackbarView.fitsSystemWindows = false
+        snackbarView.setBackgroundColor(ContextCompat.getColor(context, R.color.snackbarBackground))
 
-    val snackbarView = snackbar.view
-    snackbarView.fitsSystemWindows = false
-    snackbarView.setBackgroundColor(ContextCompat.getColor(context, R.color.snackbarBackground))
-
-    val snackbarTextView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-    snackbarTextView.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.resources.getDimensionPixelSize(R.dimen.snackbarMessageTextSize).toFloat())
-    maxLines?.takeIf { it > 0 }?.let {
-        snackbarTextView.maxLines = it
-    }
-
-    callback?.let {
-        snackbar.addCallback(callback)
-    }
-
-    // убираем возможность закрыть снэкбар свайпом, которая появляется автоматически, если снэкбар находится в CoordinatorLayout
-    snackbarView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
-        override fun onGlobalLayout() {
-            val lp = snackbarView.layoutParams
-            if (lp is CoordinatorLayout.LayoutParams) {
-                lp.behavior = DisableSwipeBehavior()
-                snackbarView.layoutParams = lp
-            }
-            snackbarView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+        val snackbarTextView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+        snackbarTextView.setTextSize(
+            TypedValue.COMPLEX_UNIT_PX,
+            context.resources.getDimensionPixelSize(R.dimen.snackbarMessageTextSize).toFloat()
+        )
+        maxLines?.takeIf { it > 0 }?.let {
+            snackbarTextView.maxLines = it
         }
-    })
 
-    return snackbar
+        callback?.let {
+            snackbar.addCallback(callback)
+        }
+
+        // убираем возможность закрыть снэкбар свайпом, которая появляется автоматически, если снэкбар находится в CoordinatorLayout
+        snackbarView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                val lp = snackbarView.layoutParams
+                if (lp is CoordinatorLayout.LayoutParams) {
+                    lp.behavior = DisableSwipeBehavior()
+                    snackbarView.layoutParams = lp
+                }
+                snackbarView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+            }
+        })
+        return snackbar
+    }
 }

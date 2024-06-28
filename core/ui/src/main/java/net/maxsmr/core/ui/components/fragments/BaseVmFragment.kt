@@ -94,7 +94,7 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
 
     @CallSuper
     protected open fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
-        viewModel.handleAlerts(requireContext(), delegate)
+        viewModel.handleAlerts(delegate)
     }
 
     @CallSuper
@@ -142,8 +142,16 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         alertFragmentDelegate?.bindAlertDialog(tag, representationFactory)
     }
 
-    fun bindAlertDialog(alertQueue: AlertQueue, tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
-        alertFragmentDelegate?.bindAlertDialog(alertQueue, tag, representationFactory)
+    fun bindAlertSnackbar(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
+        alertFragmentDelegate?.bindAlertSnackbar(tag, representationFactory)
+    }
+
+    fun bindAlertToast(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
+        alertFragmentDelegate?.bindAlertToast(tag, representationFactory)
+    }
+
+    fun bindAlert(alertQueue: AlertQueue, tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
+        alertFragmentDelegate?.bindAlert(alertQueue, tag, representationFactory)
     }
 
     /**
@@ -209,14 +217,14 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
 
     private fun observeNetworkConnectionHandler() {
         connectionHandler?.onNetworkStateChanged?.let { onStateChanged ->
-            viewModel.connectionManager.asLiveData?.observe {
+            viewModel.connectionManager.asLiveData.observe {
                 onStateChanged(it)
             }
         }
         connectionHandler?.alertsMapper?.let { mapper ->
             viewModel.connectionManager.queue?.let {
                 // queue разные: snackbarQueue вместо dialogQueue
-                bindAlertDialog(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
+                bindAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
                     mapper(alert)
                 }
             }

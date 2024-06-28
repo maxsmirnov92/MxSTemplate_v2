@@ -112,7 +112,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         viewModelScope.launch {
             uri.openInputStream(context.contentResolver)?.let {
                 if (!repo.addFromStream(it)) {
-                    showSnackbar(SnackbarAction(message = TextMessage(R.string.address_sorter_snackbar_address_add_error_message)))
+                    showSnackbar(TextMessage(R.string.address_sorter_snackbar_address_add_error_message))
                 }
                 it.close()
             }

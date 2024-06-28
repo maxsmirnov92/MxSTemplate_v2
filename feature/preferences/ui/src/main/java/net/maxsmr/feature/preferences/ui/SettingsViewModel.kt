@@ -138,10 +138,10 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(context, delegate)
+    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(delegate)
         delegate.bindAlertDialog(DIALOG_TAG_CONFIRM_EXIT) {
-            it.asYesNoNeutralDialog(context)
+            it.asYesNoNeutralDialog(delegate.context)
         }
     }
 
@@ -188,7 +188,7 @@ class SettingsViewModel @Inject constructor(
         navigationAction: (() -> Unit)?,
     ): Boolean {
         return if (hasChanges.value == true) {
-            AlertBuilder(DIALOG_TAG_CONFIRM_EXIT)
+            AlertDialogBuilder(DIALOG_TAG_CONFIRM_EXIT)
                 .setMessage(R.string.settings_alert_confirm_message)
                 .setAnswers(
                     Alert.Answer(R.string.settings_alert_confirm_yes_button).onSelect {

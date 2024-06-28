@@ -92,11 +92,9 @@ class DownloadsViewModel @Inject constructor(
             downloadManager.successAddedToQueueEvents.collect {
                 it.targetResourceName.takeIf { it.isNotEmpty() }?.let { name ->
                     showSnackbar(
-                        SnackbarAction(
-                            TextMessage(
-                                R.string.download_toast_success_add_to_queue_message_format,
-                                name
-                            )
+                        TextMessage(
+                            R.string.download_toast_success_add_to_queue_message_format,
+                            name
                         )
                     )
                 }
@@ -149,13 +147,16 @@ class DownloadsViewModel @Inject constructor(
         }
     }
 
-    override fun handleAlerts(context: Context, delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(context, delegate)
-        delegate.bindAlertDialog(DIALOG_TAG_FAILED_ADD_TO_QUEUE) {
-            it.asOkDialog(context)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_FAILED_START) {
-            it.asOkDialog(context)
+    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(delegate)
+        val context = delegate.context
+        with(delegate) {
+            bindAlertDialog(DIALOG_TAG_FAILED_ADD_TO_QUEUE) {
+                it.asOkDialog(context)
+            }
+            bindAlertDialog(DIALOG_TAG_FAILED_START) {
+                it.asOkDialog(context)
+            }
         }
     }
 
@@ -173,7 +174,7 @@ class DownloadsViewModel @Inject constructor(
                             delay(500)
                         }
                     } else {
-                        showSnackbar(SnackbarAction(TextMessage(R.string.download_snackbar_no_valid_params)))
+                        showSnackbar(TextMessage(R.string.download_snackbar_no_valid_params))
                     }
                 }
         }
