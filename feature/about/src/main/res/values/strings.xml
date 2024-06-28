@@ -5,4 +5,5 @@
     <string name="about_menu_action_feedback">Contact developer</string>
     <string name="about_app_description_text">This software is provided \"as is\" and is free of advertising. For all questions and suggestions, you can contact me via the feedback form</string>
     <string name="about_donate_description_text">If you enjoy this app, I would appreciate any donation</string>
+    <string name="about_toast_easter_egg_logo_message_format">You are almost there (%d)</string>
 </resources>

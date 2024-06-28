@@ -111,6 +111,7 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
                 val count = navBackStackEntryCount.takeIf { it > 0 } ?: supportFragmentManager.backStackEntryCount
                 if (count == 0 || mode.isCurrent && count > 0) {
                     if (mode.isPressTwice && !backPressedTriggered) {
+                        handler.removeCallbacks(backPressedClearRunnable)
                         backPressedTriggered = true
                         handler.postDelayed(backPressedClearRunnable, DELAY_PRESS_TWICE)
                         Toast.makeText(

@@ -1,8 +1,11 @@
 package net.maxsmr.feature.about
 
+import android.graphics.drawable.Animatable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.message.TextMessage
@@ -30,20 +33,39 @@ abstract class BaseAboutFragment<VM : BaseAboutViewModel> : BaseNavigationFragme
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         super.onViewCreated(view, savedInstanceState, viewModel)
+
         val description = description
         with(binding) {
-            ivLogo.setImageResource(description.logoResId)
             tvName.setTextOrGone(description.name)
             tvVersion.setTextOrGone(description.version)
             tvAppDescription.text = description.description?.takeIf { it.isNotEmpty() }
                 ?: getString(R.string.about_app_description_text)
-            val info = description.donateInfo
-            containerDonate.isVisible = info?.addresses?.isNotEmpty() == true
-            if (info != null) {
-                tvDonateDescription.text = info.description?.takeIf { it.isNotEmpty() }
+            val donateInfo = description.donateInfo
+            containerDonate.isVisible = donateInfo?.addresses?.isNotEmpty() == true
+            if (donateInfo != null) {
+                tvDonateDescription.text = donateInfo.description?.takeIf { it.isNotEmpty() }
                     ?: getString(R.string.about_donate_description_text)
-                adapter.items = info.addresses.map { DonateAddressAdapterData(it) }
+                adapter.items = donateInfo.addresses.map { DonateAddressAdapterData(it) }
                 rvDonation.adapter = adapter
+            }
+
+            description.easterEggInfo?.let { eggInfo ->
+                ivLogo.setOnClickListener {
+                    viewModel.onLogoClick(eggInfo)
+                }
+                viewModel.animatedLogoState.observe {
+                    // может быть animated-vector или animation-list
+                    val animatedLogo = ContextCompat.getDrawable(requireContext(), eggInfo.animatedLogoResId) as Animatable
+                    if (it) {
+                        ivLogo.setImageDrawable(animatedLogo as Drawable)
+                        animatedLogo.start()
+                    } else {
+                        animatedLogo.stop()
+                        ivLogo.setImageResource(description.logoResId)
+                    }
+                }
+            }?: run {
+                ivLogo.setImageResource(description.logoResId)
             }
         }
     }
