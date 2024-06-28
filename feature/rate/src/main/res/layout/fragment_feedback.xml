@@ -73,7 +73,7 @@
                     android:background="@drawable/background_shape_edittext"
                     android:inputType="textMultiLine"
                     android:padding="@dimen/defaultPadding"
-                    tools:hint="@string/rate_feedback_field_text_hint" />
+                    tools:hint="@string/rate_feedback_field_message_hint" />
 
                 <!--                <com.google.android.material.textfield.TextInputLayout-->
                 <!--                    android:id="@+id/tilText"-->

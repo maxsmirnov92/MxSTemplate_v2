@@ -12,7 +12,7 @@
     <string name="rate_feedback_subtitle">Help me make the app better</string>
     <string name="rate_feedback_send_button">Send</string>
     <string name="rate_feedback_field_subject_hint">Subject</string>
-    <string name="rate_feedback_field_text_hint">Text</string>
+    <string name="rate_feedback_field_message_hint">Message</string>
     <string name="rate_feedback_field_subject_empty_error">Please specify subject</string>
     <string name="rate_feedback_field_text_empty_error">Please type your message</string>
 </resources>

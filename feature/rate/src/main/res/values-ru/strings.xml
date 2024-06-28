@@ -12,7 +12,7 @@
     <string name="rate_feedback_subtitle">Помогите мне сделать приложение лучше</string>
     <string name="rate_feedback_send_button">Отправить</string>
     <string name="rate_feedback_field_subject_hint">Тема</string>
-    <string name="rate_feedback_field_text_hint">Текст</string>
+    <string name="rate_feedback_field_message_hint">Сообщение</string>
     <string name="rate_feedback_field_subject_empty_error">Пожалуйста укажите тему</string>
     <string name="rate_feedback_field_text_empty_error">Пожалуйста введите ваше сообщение</string>
 </resources>

@@ -24,7 +24,7 @@ abstract class BaseFeedbackViewModel(state: SavedStateHandle) : BaseHandleableVi
     val textField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
         .setRequired(R.string.rate_feedback_field_text_empty_error)
-        .hint(R.string.rate_feedback_field_text_hint, withAsterisk = false)
+        .hint(R.string.rate_feedback_field_message_hint, withAsterisk = false)
         .persist(state, KEY_FIELD_TEXT)
         .build()
 
