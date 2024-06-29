@@ -7,6 +7,8 @@ import android.view.MenuItem
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import net.maxsmr.commonutils.convertAnyToPx
+import net.maxsmr.commonutils.convertPxToDp
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
@@ -47,6 +49,15 @@ abstract class BaseAboutFragment<VM : BaseAboutViewModel> : BaseNavigationFragme
                     ?: getString(R.string.about_donate_description_text)
                 adapter.items = donateInfo.addresses.map { DonateAddressAdapterData(it) }
                 rvDonation.adapter = adapter
+            }
+
+            description.logoSize?.takeIf {
+                it.width > 0 && it.height > 0
+            }?.let {
+                val p = ivLogo.layoutParams
+                p.width = convertAnyToPx(it.width.toFloat(), context = requireContext()).toInt()
+                p.height = convertAnyToPx(it.height.toFloat(), context = requireContext()).toInt()
+                ivLogo.layoutParams = p
             }
 
             description.easterEggInfo?.let { eggInfo ->

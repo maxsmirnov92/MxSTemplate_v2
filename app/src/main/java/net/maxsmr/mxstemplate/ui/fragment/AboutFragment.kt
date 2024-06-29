@@ -17,6 +17,7 @@ class AboutFragment : BaseAboutFragment<AboutViewModel>() {
     override val description by lazy {
         AboutAppDescription(
             R.mipmap.ic_launcher,
+            null,
             getString(R.string.app_name),
             BuildConfig.VERSION_NAME,
             donateInfo = AboutAppDescription.DonateInfo(

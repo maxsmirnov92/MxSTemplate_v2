@@ -4,6 +4,7 @@ import android.app.Activity
 import android.os.Handler
 import android.os.Looper
 import android.text.style.CharacterStyle
+import android.util.Size
 import androidx.annotation.CallSuper
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.SavedStateHandle
@@ -112,6 +113,7 @@ abstract class BaseAboutViewModel(state: SavedStateHandle) : BaseHandleableViewM
     data class AboutAppDescription(
         @DrawableRes
         val logoResId: Int,
+        val logoSize: Size?,
         val name: String,
         val version: String,
         val description: String? = null,
