@@ -29,13 +29,76 @@
         <activity
             android:name=".ui.activity.MainBottomActivity"
             android:exported="true"
-            android:label="@string/app_name"
-            android:launchMode="singleTop"
+            android:launchMode="singleInstance"
+            android:taskAffinity=""
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <!-- Launch by default this MAIN -->
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.activity.BrowserActivity"
+            android:exported="true"
+            android:label="@string/browser_name"
+            android:launchMode="standard"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="stateHidden|adjustResize">
+            <!-- Несколько окон вместо вкладок, standard вместо singleTask -->
+            <!-- android:launchMode="singleTask" -->
+
+            <!-- We are also the main entry point of the browser. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.APP_BROWSER" />
+                <!-- Secondary MAIN launcher activity, without DEFAULT -->
+            </intent-filter>
+
+            <!-- For these schemes were not particular MIME type has been
+            supplied, we are a good candidate. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:scheme="about" />
+                <data android:scheme="javascript" />
+            </intent-filter>
+
+            <!--  For these schemes where any of these particular MIME types
+                 have been supplied, we are a good candidate. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+                <data android:scheme="inline" />
+                <data android:mimeType="text/html" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="application/xhtml+xml" />
+                <data android:mimeType="application/vnd.wap.xhtml+xml" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.WEB_SEARCH" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="http" />
+                <data android:scheme="https" />
             </intent-filter>
         </activity>
 
@@ -69,7 +132,7 @@
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:mimeType="*/*" />
-<!--            <data android:scheme="http" />-->
+            <!--        <data android:scheme="http" />        -->
         </intent>
         <intent>
             <action android:name="android.intent.action.SEND" />

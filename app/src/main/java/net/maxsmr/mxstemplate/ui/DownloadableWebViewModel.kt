@@ -7,9 +7,14 @@ import net.maxsmr.mxstemplate.ui.fragment.DownloadableWebViewFragmentArgs
 
 class DownloadableWebViewModel(state: SavedStateHandle) : BaseDownloadableWebViewModel(state) {
 
-    override var customizer: WebViewCustomizer = if (state.contains("customizer")) {
+    override var customizer: WebViewCustomizer = if (state.contains(ARG_WEB_CUSTOMIZER)) {
         DownloadableWebViewFragmentArgs.fromSavedStateHandle(state).customizer
     } else {
         WebViewCustomizer.Builder().build()
+    }
+
+    companion object {
+
+        const val ARG_WEB_CUSTOMIZER = "customizer"
     }
 }

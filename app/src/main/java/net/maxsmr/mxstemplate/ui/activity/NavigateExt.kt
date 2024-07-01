@@ -37,12 +37,10 @@ private fun NavController.navigateWithMenuFragments(
 ) {
     if (item.itemId == R.id.navigationWebView) {
         lifecycleScope.launch {
-            // FIXME за счёт этого криво будет работать navigateUp с других фрагментов на WebView
             navigate(
                 DownloadsPagerFragmentDirections.actionToWebViewFragment(
                     WebViewCustomizer.Builder()
                         .setUrl(settingsRepo.getSettings().startPageUrl)
-                        .setCanInputUrls(true)
                         .build()
                 )
             )

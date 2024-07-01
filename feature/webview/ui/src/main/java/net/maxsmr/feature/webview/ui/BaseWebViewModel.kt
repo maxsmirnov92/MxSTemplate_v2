@@ -1,32 +1,35 @@
 package net.maxsmr.feature.webview.ui
 
 import android.net.Uri
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.annotation.CallSuper
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
+import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
+import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData.Companion.fromWebViewData
 
 open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(state) {
 
     /**
      * Первые данные в WebView с состоянием загрузки/ошибки - после очередного вызова loadUrl/loadData
      */
-    private val _firstWebViewData = MutableLiveData<LoadState<WebViewData?>>(LoadState.success(null))
+    private val _firstWebViewData = MutableLiveData<LoadState<MainWebViewData?>>(LoadState.success(null))
 
-    val firstWebViewData = _firstWebViewData as LiveData<LoadState<WebViewData?>>
+    val firstWebViewData = _firstWebViewData as LiveData<LoadState<MainWebViewData?>>
 
     /**
      * Текущие данные в [WebView] с состоянием загрузки/ошибки
      */
-    private val _currentWebViewData = MutableLiveData<LoadState<WebViewData?>>(LoadState.success(null))
+    private val _currentWebViewData = MutableLiveData<LoadState<MainWebViewData?>>(LoadState.success(null))
 
-    val currentWebViewData = _currentWebViewData as LiveData<LoadState<WebViewData?>>
+    val currentWebViewData = _currentWebViewData as LiveData<LoadState<MainWebViewData?>>
 
     private val _currentWebViewProgress = MutableLiveData<Int?>(null)
 
@@ -59,20 +62,24 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
      * Вызывается из [WebView]-колбеков и меняет состояние LD с [WebViewData]
      * относ-но текущего [isFirstResourceChanged] на VM с момента создания
      */
-    @Suppress("UNCHECKED_CAST")
-    fun applyResource(resource: LoadState<WebViewData>) {
+    fun notifyResourceChanged(resource: LoadState<WebViewData>, title: String? = null) {
         val isForMainFrame = resource.data?.isForMainFrame == true
         if (!isForMainFrame) {
             // игнор ресурсов, не относящихся к главной странице / без WebViewData вовсе
             return
         }
+        @Suppress("UNCHECKED_CAST")
+        val thisData = resource.copyOf(
+            fromWebViewData(resource.data, title)
+        ) as LoadState<MainWebViewData?>
+
         val shouldChangeFirst = !isFirstResourceChanged
         if (shouldChangeFirst) {
             // переприсвоение, только если он является loading/завершённым
             // относительно последнего loadUrl/loadData !
-            _firstWebViewData.postValue(resource as LoadState<WebViewData?>)
+            _firstWebViewData.value = thisData
         }
-        _currentWebViewData.postValue(resource as LoadState<WebViewData?>)
+        _currentWebViewData.value = thisData
         if (!resource.isLoading) {
             // завершённое состояние ->
             // последующие вызовы не будут менять firstWebDataResource
@@ -83,13 +90,17 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
 
     fun onFirstLoadNotStarted(exception: WebResourceException, url: Uri?, data: String?) {
         onWebViewReload()
-        applyResource(LoadState.error(exception, if (url != null && !data.isNullOrEmpty()) {
-            WebViewData.fromUrlWithData(url, data)
-        } else if (url != null) {
-            WebViewData.fromUrl(url)
-        } else {
-            WebViewData.fromData(data)
-        }))
+        notifyResourceChanged(
+            LoadState.error(
+                exception, if (url != null && !data.isNullOrEmpty()) {
+                    WebViewData.fromUrlWithData(url, data)
+                } else if (url != null) {
+                    WebViewData.fromUrl(url)
+                } else {
+                    WebViewData.fromData(data)
+                }
+            )
+        )
     }
 
     fun onProgressChanged(progress: Int) {
@@ -97,6 +108,29 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
             progress
         } else {
             null
+        }
+    }
+
+    data class MainWebViewData(
+        val url: Uri?,
+        val data: String?,
+        val title: String?,
+        val response: WebResourceResponse? = null,
+        val responseData: String? = null,
+    ) {
+
+        val isEmpty = url == null && data.isNullOrEmpty()
+
+        companion object {
+
+            @JvmStatic
+            fun fromWebViewData(
+                data: WebViewData?,
+                title: String? = null
+            ): MainWebViewData? =
+                data?.let {
+                    MainWebViewData(it.url, it.data, title, it.response, it.responseData)
+                }
         }
     }
 }

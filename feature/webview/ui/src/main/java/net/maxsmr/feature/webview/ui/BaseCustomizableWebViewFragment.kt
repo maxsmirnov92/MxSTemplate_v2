@@ -25,13 +25,11 @@ import net.maxsmr.core.ui.alert.representation.DialogRepresentation
 import net.maxsmr.core.utils.charsetForNameOrNull
 import net.maxsmr.feature.webview.data.client.BrowserInterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
-import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
+import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData
 import net.maxsmr.feature.webview.ui.databinding.DialogInputUrlBinding
 import net.maxsmr.feature.webview.ui.databinding.FragmentWebviewBinding
-import net.maxsmr.permissionchecker.PermissionsHelper
 import okhttp3.OkHttpClient
 import java.nio.charset.Charset
-import javax.inject.Inject
 
 abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel> : BaseWebViewFragment<VM>() {
 
@@ -48,6 +46,14 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
     override val errorContainer: View by lazy { binding.errorContainer.root }
 
     override val menuResId: Int = R.menu.menu_web_view
+
+    override val shouldReloadAfterConnectionError: Boolean by lazy {
+        webViewCustomizer.reloadAfterConnectionError
+    }
+
+    protected open val title: String by lazy {
+        webViewCustomizer.title.takeIf { it.isNotEmpty() } ?: getString(R.string.webview_feature_title)
+    }
 
     protected val binding by viewBinding(FragmentWebviewBinding::bind)
 
@@ -66,9 +72,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         super.onViewCreated(view, savedInstanceState, viewModel)
         with(binding) {
-            webViewCustomizer.title.takeIf { it.isNotEmpty() }?.let {
-                toolbar.title = it
-            }
+            setTitle(title)
             toolbar.navigationIcon =
                 ContextCompat.getDrawable(requireContext(), net.maxsmr.core.ui.R.drawable.ic_close_clear_cancel_white)
             errorContainer.btReload.setOnClickListener {
@@ -117,9 +121,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
 
-        urlMenuItem = menu.findItem(R.id.action_open_url).apply {
-            isVisible = viewModel.customizer.canInputUrls
-        }
+        urlMenuItem = menu.findItem(R.id.action_open_url)
         copyMenuItem = menu.findItem(R.id.action_copy_link)
         shareMenuItem = menu.findItem(R.id.action_share_link)
         refreshMenuItemsByCurrentUri(viewModel.currentUrl.value)
@@ -239,10 +241,19 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         }
     }
 
-    override fun onResourceChanged(resource: LoadState<WebViewData?>) {
+    override fun onResourceChanged(resource: LoadState<MainWebViewData?>) {
         super.onResourceChanged(resource)
+        if (webViewCustomizer.changeTitleOnLoad) {
+            setTitle(resource.data?.title?.takeIf {
+                it.isNotEmpty()
+            } ?: title)
+        }
         refreshStopMenuItem(resource)
         refreshForwardMenuItem()
+    }
+
+    protected open fun setTitle(title: String) {
+        binding.toolbar.title = title
     }
 
     private fun refreshMenuItemsByCurrentUri(uri: Uri?) {
@@ -252,7 +263,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         shareMenuItem?.isVisible = hasUri
     }
 
-    private fun refreshStopMenuItem(resource: LoadState<WebViewData?>?) {
+    private fun refreshStopMenuItem(resource: LoadState<MainWebViewData?>?) {
         stopMenuItem?.isVisible = resource?.isLoading == true
     }
 

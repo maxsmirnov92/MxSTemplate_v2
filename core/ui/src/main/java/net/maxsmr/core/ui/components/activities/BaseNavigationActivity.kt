@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import androidx.annotation.CallSuper
+import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.NavigationRes
 import androidx.appcompat.widget.Toolbar
@@ -27,6 +27,9 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
 
     @get:NavigationRes
     protected abstract val navigationGraphResId: Int
+
+    @get:IdRes
+    protected open val startDestinationId: Int? = null
 
     protected open val startDestinationArgs: Bundle? get() = intent?.extras
 
@@ -71,16 +74,17 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
             .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
             ?: throw IllegalStateException("Wrong contentViewResId specified")
 
-        val graph = navHostFragment.navController.navInflater.inflate(navigationGraphResId)
-        onNavigationGraphInflated(graph)
+        navController = navHostFragment.navController as NavHostController
 
+        val graph = navHostFragment.navController.navInflater.inflate(navigationGraphResId)
+        startDestinationId?.let {
+            graph.setStartDestination(it)
+        }
+        onNavigationGraphInflated(graph)
         // Bundle из startDestinationArgs будет перекинут фрагменту со startDestination
         // для создания его аргументов (если предусмотрены)
         navHostFragment.navController.setGraph(graph, startDestinationArgs)
-
-        navController = navHostFragment.navController as NavHostController
-
-        this.appBarConfiguration = createAppBarConfiguration()
+        appBarConfiguration = createAppBarConfiguration()
 //        setupActionBarWithNavController(navController, appBarConfiguration)
     }
 
@@ -158,7 +162,10 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
 
     protected open fun createAppBarConfiguration(): AppBarConfiguration {
         // в дефолтной реализации без DrawerLayout
-        return AppBarConfiguration(navController.graph)
+        return AppBarConfiguration(navController.graph) {
+            finish()
+            true
+        }
     }
 
     open fun onNavigationGraphInflated(navGraph: NavGraph) {

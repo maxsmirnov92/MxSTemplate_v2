@@ -32,7 +32,6 @@ import net.maxsmr.feature.webview.data.client.exception.WebResourceException
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException.Companion.isWebConnectionError
 import java.nio.charset.Charset
 
-
 abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragment<VM>() {
 
     abstract val webView: WebView
@@ -182,7 +181,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         if (!data.isForMainFrame) {
             return
         }
-        viewModel.applyResource(LoadState.loading(data))
+        LoadState.loading(data).notifyChanged()
     }
 
     /**
@@ -195,7 +194,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         if (!data.isForMainFrame) {
             return
         }
-        viewModel.applyResource(LoadState.error(exception, data))
+        LoadState.error(exception, data).notifyChanged()
     }
 
     /**
@@ -213,7 +212,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         with(viewModel) {
             // используем инфу о состоянии для последнего ресурса с той же урлой
             val currentResource = currentWebViewData.value?.takeIf { it.data?.url == data.url }
-            applyResource((if (currentResource != null && currentResource.isError()) {
+            (if (currentResource != null && currentResource.isError()) {
                 // если до этого в onPageLoadError выставлялся еррор - оставляем статус
                 currentResource.copyOf(data)
             } else {
@@ -221,7 +220,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 hasResponseError(data)?.let {
                     LoadState.error(it, data)
                 } ?: LoadState.success(data)
-            }))
+            }).notifyChanged()
         }
     }
 
@@ -245,13 +244,13 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
      * Вызывается при загрузке,
      * инициированной последним [loadUri]/[loadData]
      */
-    protected open fun onFirstResourceChanged(resource: LoadState<WebViewData?>) {}
+    protected open fun onFirstResourceChanged(resource: LoadState<BaseWebViewModel.MainWebViewData?>) {}
 
     /**
      * При любых mainframe лоадингах (например при навигациях по странице)
      */
     @CallSuper
-    protected open fun onResourceChanged(resource: LoadState<WebViewData?>) {
+    protected open fun onResourceChanged(resource: LoadState<BaseWebViewModel.MainWebViewData?>) {
         val url = resource.data?.url
         val data = resource.data?.data
         val hasData = resource.hasData { it != null && !it.isEmpty }
@@ -403,6 +402,12 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
 
     protected open fun handleNonHtmlData(responseData: String?) = true
 
+    private fun LoadState<WebViewData>.notifyChanged() {
+        webView.post {
+            viewModel.notifyResourceChanged(this, webView.title)
+        }
+    }
+
     private fun setupWebView(savedInstanceState: Bundle?) {
 //        destroyWebView()
         if (isWebViewInitialized) return
@@ -447,7 +452,6 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             isWebViewInitialized = false
         }
     }
-
 
     companion object {
 

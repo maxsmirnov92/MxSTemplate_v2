@@ -45,6 +45,10 @@ import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.android.baseAppName
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.FileFormat
+import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
+import net.maxsmr.core.android.content.ShareStrategy
+import net.maxsmr.core.android.content.ViewStrategy
+import net.maxsmr.core.android.network.isAnyResourceScheme
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.ApplicationScope
@@ -73,10 +77,7 @@ import net.maxsmr.feature.download.data.manager.DownloadsHashManager
 import net.maxsmr.feature.download.data.model.BaseDownloadParams
 import net.maxsmr.feature.download.data.model.IntentSenderParams
 import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
-import net.maxsmr.core.android.content.ShareStrategy
-import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
-import net.maxsmr.core.android.content.ViewStrategy
-import net.maxsmr.core.android.network.SCHEME_RESOURCES
+import net.maxsmr.feature.download.data.storage.StoreException
 import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
 import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -92,7 +93,6 @@ import okhttp3.Response
 import okio.BufferedSink
 import okio.ByteString
 import okio.source
-import net.maxsmr.feature.download.data.storage.StoreException
 import java.io.*
 import java.util.Collections
 import javax.inject.Inject
@@ -1092,7 +1092,7 @@ class DownloadService : Service() {
                     val uri = android.net.Uri.parse(value)
                     val scheme = uri.scheme
                     return uri.takeIf {
-                        SCHEME_RESOURCES.any { it.equals(scheme, true) }
+                        scheme.isAnyResourceScheme()
                     } ?: throw IllegalArgumentException("Incorrect body URI scheme: $scheme")
                 }
             }

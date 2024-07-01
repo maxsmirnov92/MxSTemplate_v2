@@ -154,7 +154,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     }
 
     // вызовется при < 23 api
-    override fun onReceivedError(view: WebView?, errorCode: Int, description: String?, failingUrl: String?) {
+    override fun onReceivedError(view: WebView, errorCode: Int, description: String?, failingUrl: String?) {
         super.onReceivedError(view, errorCode, description, failingUrl)
         onWebResourceRequestError(WebResourceException(code = errorCode, message = description.toString()), null)
     }
@@ -226,7 +226,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
 
     open fun shouldInterceptFromOverrideUrl(url: String): InterceptedUrl? = null
 
-    protected open fun onUrlIntercepted(view: WebView?, interceptedUrlType: InterceptedUrl) {}
+    protected open fun onUrlIntercepted(view: WebView, interceptedUrlType: InterceptedUrl) {}
 
     // не главный поток
     @CallSuper
@@ -320,8 +320,6 @@ open class InterceptWebViewClient @JvmOverloads constructor(
         val response: WebResourceResponse? = null,
         val responseData: String? = null,
     ) {
-
-        val isEmpty = url == null && data.isNullOrEmpty()
 
         companion object {
 

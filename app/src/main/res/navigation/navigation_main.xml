@@ -18,10 +18,7 @@
             app:enterAnim="@anim/slide_in"
             app:exitAnim="@anim/slide_out"
             app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out"
-            app:popUpTo="@id/navigationDownloads"
-            app:popUpToSaveState="true"
-            app:restoreState="true" />
+            app:popExitAnim="@anim/slide_out" />
 
     </fragment>
 
@@ -37,10 +34,7 @@
             app:enterAnim="@anim/slide_in"
             app:exitAnim="@anim/slide_out"
             app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out"
-            app:popUpTo="@id/navigationSettings"
-            app:popUpToSaveState="true"
-            app:restoreState="true" />
+            app:popExitAnim="@anim/slide_out" />
 
     </fragment>
 
@@ -63,18 +57,22 @@
         tools:layout="@layout/fragment_about">
 
         <action
+            android:id="@+id/actionToWebViewFragment"
+            app:destination="@id/navigationWebView"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out" />
+
+        <action
             android:id="@+id/actionToFeedbackFragment"
             app:destination="@id/navigationFeedback"
             app:enterAnim="@anim/slide_in"
             app:exitAnim="@anim/slide_out"
             app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out"
-            app:popUpTo="@id/navigationAbout"
-            app:popUpToSaveState="true"
-            app:restoreState="true" />
+            app:popExitAnim="@anim/slide_out" />
 
     </fragment>
-
 
     <fragment
         android:id="@+id/navigationFeedback"

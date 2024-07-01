@@ -14,7 +14,8 @@ class WebViewCustomizer private constructor(
     val title: String,
     val url: String,
     val data: WebViewDataArgs?,
-    val canInputUrls: Boolean,
+    val reloadAfterConnectionError: Boolean,
+    val changeTitleOnLoad: Boolean,
     // TODO заменить на отдельные части урлы
     val queryParameters: List<String>,
 ): Serializable {
@@ -23,7 +24,8 @@ class WebViewCustomizer private constructor(
         .setTitle(title)
         .setUrl(url)
         .setData(data)
-        .setCanInputUrls(canInputUrls)
+        .setReloadAfterConnectionError(reloadAfterConnectionError)
+        .setChangeTitleOnLoad(changeTitleOnLoad)
         .setOpenSystemBrowserByQueryParameterNames(queryParameters)
 
     class Builder {
@@ -31,7 +33,8 @@ class WebViewCustomizer private constructor(
         private var title: String = EMPTY_STRING
         private var url: String  = EMPTY_STRING
         private var data: WebViewDataArgs? = null
-        private var canInputUrls: Boolean = false
+        private var reloadAfterConnectionError: Boolean = true
+        private var changeTitleOnLoad: Boolean = true
         private val queryParameters = mutableListOf<String>()
 
         fun setTitle(title: String): Builder {
@@ -58,8 +61,13 @@ class WebViewCustomizer private constructor(
             return this
         }
 
-        fun setCanInputUrls(toggle: Boolean): Builder {
-            this.canInputUrls = toggle
+        fun setReloadAfterConnectionError(toggle: Boolean): Builder {
+            this.reloadAfterConnectionError = toggle
+            return this
+        }
+
+        fun setChangeTitleOnLoad(toggle: Boolean): Builder {
+            this.changeTitleOnLoad = true
             return this
         }
 
@@ -69,7 +77,14 @@ class WebViewCustomizer private constructor(
             return this
         }
 
-        fun build() = WebViewCustomizer(title, url, data, canInputUrls, queryParameters)
+        fun build() = WebViewCustomizer(
+            title,
+            url,
+            data,
+            reloadAfterConnectionError,
+            changeTitleOnLoad,
+            queryParameters
+        )
     }
 
     data class WebViewDataArgs @JvmOverloads constructor(
