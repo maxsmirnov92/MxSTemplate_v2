@@ -22,9 +22,9 @@ fun Alert.asSnackbar(view: View): AlertRepresentation {
         "Alert must contain extra data for being displayed as snackbar"
     }
     check(extraData.length != SnackbarExtraData.SnackbarLength.INDEFINITE
-            || answers.isNotEmpty()
+            || answers.size == 1
     ) {
-        "Alert must contain 1 answer for being displayed as indefinite snackbar"
+        "Alert must contain exactly 1 answer for being displayed as indefinite snackbar"
     }
 
     val context = view.context

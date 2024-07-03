@@ -1,7 +1,7 @@
 package net.maxsmr.core.ui.location
 
 import android.Manifest
-import android.content.Context
+import android.content.DialogInterface
 import android.location.Location
 import android.os.HandlerThread
 import androidx.lifecycle.LiveData
@@ -74,7 +74,11 @@ class LocationViewModel @AssistedInject constructor(
             TextMessage(R.string.alert_gps_enable_dialog_title),
             R.string.alert_gps_enable_dialog_answer_settings,
             android.R.string.cancel,
-            onPositiveSelect = { navigateToLocationSettings() }
+            onSelect = {
+                if (it == DialogInterface.BUTTON_POSITIVE) {
+                    navigateToLocationSettings()
+                }
+            }
         )
     }
 

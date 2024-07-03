@@ -1,6 +1,6 @@
 package net.maxsmr.feature.download.ui
 
-import android.content.Context
+import android.content.DialogInterface
 import android.net.Uri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
@@ -143,7 +143,11 @@ class DownloadsStateViewModel @Inject constructor(
                 DIALOG_TAG_CLEAR_QUEUE,
                 TextMessage(R.string.download_alert_clear_queue_message),
                 TextMessage(R.string.download_alert_confirm_title),
-                onPositiveSelect = { manager.removeAllPending() }
+                onSelect = {
+                    if (it == DialogInterface.BUTTON_POSITIVE) {
+                        manager.removeAllPending()
+                    }
+                }
             )
         }
     }
@@ -154,7 +158,11 @@ class DownloadsStateViewModel @Inject constructor(
                 DIALOG_TAG_CANCEL_ALL,
                 TextMessage(R.string.download_alert_cancel_all_message),
                 TextMessage(R.string.download_alert_confirm_title),
-                onPositiveSelect = { DownloadService.cancelAll() }
+                onSelect = {
+                    if (it == DialogInterface.BUTTON_POSITIVE) {
+                        DownloadService.cancelAll()
+                    }
+                }
             )
         }
     }
@@ -169,7 +177,11 @@ class DownloadsStateViewModel @Inject constructor(
                 DIALOG_TAG_RETRY_IF_SUCCESS,
                 TextMessage(R.string.download_alert_retry_if_success_message),
                 TextMessage(R.string.download_alert_confirm_title),
-                onPositiveSelect = { manager.retryDownload(downloadId, params) }
+                onSelect = {
+                    if (it == DialogInterface.BUTTON_POSITIVE) {
+                        manager.retryDownload(downloadId, params)
+                    }
+                }
             )
         } else {
             manager.retryDownload(downloadId, params)
@@ -197,7 +209,11 @@ class DownloadsStateViewModel @Inject constructor(
             DIALOG_TAG_DELETE_IF_SUCCESS,
             TextMessage(R.string.download_alert_delete_if_success_message_format, name),
             TextMessage(R.string.download_alert_confirm_title),
-            onPositiveSelect = { manager.removeFinished(downloadId, withDb = true, withUri = true) }
+            onSelect = {
+                if (it == DialogInterface.BUTTON_POSITIVE) {
+                    manager.removeFinished(downloadId, withDb = true, withUri = true)
+                }
+            }
         )
     }
 

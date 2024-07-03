@@ -14,6 +14,7 @@ import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.DataStoreType
 import net.maxsmr.core.di.DataStores
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
+import net.maxsmr.core.domain.entities.feature.rate.RateAppInfo
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.core.utils.encodeToStringOrNull
 import javax.inject.Inject
@@ -102,15 +103,29 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun appRated(): Boolean {
+    suspend fun getAppRateInfo(): RateAppInfo {
         return dataStore.data.map { prefs ->
-            prefs[FIELD_APP_RATED]
-        }.firstOrNull() ?: false
+            prefs[FIELD_RATE_APP_INFO]?.let {
+                json.decodeFromStringOrNull(it) as RateAppInfo?
+            }
+        }.firstOrNull() ?: RateAppInfo(false, notAskAgain = false).also {
+            setRateAppInfo(it)
+        }
     }
 
     suspend fun setAppRated() {
+        setRateAppInfo(RateAppInfo(true, notAskAgain = true))
+    }
+
+    suspend fun setAppNotRated(notAskAgain: Boolean) {
+        setRateAppInfo(RateAppInfo(false, notAskAgain))
+    }
+
+    private suspend fun setRateAppInfo(rateInfo: RateAppInfo) {
+        val result: String =
+            json.encodeToStringOrNull(rateInfo).orEmpty()
         dataStore.edit { prefs ->
-            prefs[FIELD_APP_RATED] = true
+            prefs[FIELD_RATE_APP_INFO] = result
         }
     }
 
@@ -121,6 +136,6 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
         private val FIELD_ASKED_APP_DETAILS = booleanPreferencesKey("askedAppDetails")
-        private val FIELD_APP_RATED = booleanPreferencesKey("appRated")
+        private val FIELD_RATE_APP_INFO = stringPreferencesKey("rateAppInfo")
     }
 }

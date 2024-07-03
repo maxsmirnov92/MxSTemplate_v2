@@ -6,7 +6,6 @@ import android.view.View
 import android.webkit.WebSettings
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate

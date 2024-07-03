@@ -4,6 +4,7 @@ import javax.inject.Qualifier
 
 const val DI_NAME_VERSION_NAME = "version_name"
 const val DI_NAME_MAIN_ACTIVITY_CLASS = "main_activity_class"
+const val DI_NAME_RATE_APP_ASK_INTERVAL = "rate_app_ask_interval"
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)

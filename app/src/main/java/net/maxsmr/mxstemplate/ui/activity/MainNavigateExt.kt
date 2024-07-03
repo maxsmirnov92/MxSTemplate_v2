@@ -5,10 +5,10 @@ import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.feature.download.ui.DownloadsPagerFragmentDirections
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
 import net.maxsmr.mxstemplate.R
+import net.maxsmr.mxstemplate.ui.fragment.MainDownloadsPagerFragmentDirections
 
 internal fun NavController.navigateWithMenuFragments(
     item: MenuItem,
@@ -38,7 +38,7 @@ private fun NavController.navigateWithMenuFragments(
     if (item.itemId == R.id.navigationWebView) {
         lifecycleScope.launch {
             navigate(
-                DownloadsPagerFragmentDirections.actionToWebViewFragment(
+                MainDownloadsPagerFragmentDirections.actionToWebViewFragment(
                     WebViewCustomizer.Builder()
                         .setUrl(settingsRepo.getSettings().startPageUrl)
                         .build()

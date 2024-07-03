@@ -28,7 +28,7 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsDataStoreRepository,
-    private val cacheRepository: CacheDataStoreRepository,
+    val cacheRepository: CacheDataStoreRepository,
     state: SavedStateHandle,
 ) : BaseHandleableViewModel(state) {
 

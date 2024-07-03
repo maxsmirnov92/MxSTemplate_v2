@@ -7,17 +7,12 @@ import dagger.hilt.android.HiltAndroidApp
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.di.RadarIoRetrofit
-import net.maxsmr.core.network.retrofit.client.BaseRetrofitClient
 import net.maxsmr.core.network.retrofit.client.RadarIoRetrofitClient
 import net.maxsmr.mxstemplate.logger.TimberLogger
-import net.maxsmr.core.network.retrofit.client.okhttp.RadarIoOkHttpClientManager
-import net.maxsmr.mxstemplate.manager.RadarIoHostManager
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import java.io.File
 import javax.inject.Inject
 
 @HiltAndroidApp
-class TemplateApp: Application(), Application.ActivityLifecycleCallbacks {
+class App: Application(), Application.ActivityLifecycleCallbacks {
 
     init {
 //        if (BuildConfig.DEBUG) {

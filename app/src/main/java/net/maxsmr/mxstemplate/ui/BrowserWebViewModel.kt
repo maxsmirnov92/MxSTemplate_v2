@@ -3,12 +3,12 @@ package net.maxsmr.mxstemplate.ui
 import androidx.lifecycle.SavedStateHandle
 import net.maxsmr.feature.download.ui.webview.BaseDownloadableWebViewModel
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
-import net.maxsmr.mxstemplate.ui.fragment.DownloadableWebViewFragmentArgs
+import net.maxsmr.mxstemplate.ui.fragment.BrowserWebViewFragmentArgs
 
-class DownloadableWebViewModel(state: SavedStateHandle) : BaseDownloadableWebViewModel(state) {
+class BrowserWebViewModel(state: SavedStateHandle) : BaseDownloadableWebViewModel(state) {
 
     override var customizer: WebViewCustomizer = if (state.contains(ARG_WEB_CUSTOMIZER)) {
-        DownloadableWebViewFragmentArgs.fromSavedStateHandle(state).customizer
+        BrowserWebViewFragmentArgs.fromSavedStateHandle(state).customizer
     } else {
         WebViewCustomizer.Builder().build()
     }

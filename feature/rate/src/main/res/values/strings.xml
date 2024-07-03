@@ -15,4 +15,10 @@
     <string name="rate_feedback_field_message_hint">Message</string>
     <string name="rate_feedback_field_subject_empty_error">Please specify subject</string>
     <string name="rate_feedback_field_text_empty_error">Please type your message</string>
+
+    <string name="rate_dialog_app_reminder_title">Rate app</string>
+    <string name="rate_dialog_app_reminder_message">Do you want to rate this app?</string>
+    <string name="rate_dialog_app_reminder_positive">@string/yes</string>
+    <string name="rate_dialog_app_reminder_negative">@string/no</string>
+    <string name="rate_dialog_app_reminder_neutral">Later</string>
 </resources>

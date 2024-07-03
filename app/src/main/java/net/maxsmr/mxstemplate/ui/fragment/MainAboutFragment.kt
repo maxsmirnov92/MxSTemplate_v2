@@ -7,12 +7,12 @@ import net.maxsmr.feature.about.BaseAboutViewModel.AboutAppDescription
 import net.maxsmr.feature.about.BaseAboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
 import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.R
-import net.maxsmr.mxstemplate.ui.AboutViewModel
+import net.maxsmr.mxstemplate.ui.MainAboutViewModel
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class AboutFragment : BaseAboutFragment<AboutViewModel>() {
+class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
 
     override val description by lazy {
         AboutAppDescription(
@@ -31,7 +31,7 @@ class AboutFragment : BaseAboutFragment<AboutViewModel>() {
         )
     }
 
-    override val viewModel: AboutViewModel by viewModels()
+    override val viewModel: MainAboutViewModel by viewModels()
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper

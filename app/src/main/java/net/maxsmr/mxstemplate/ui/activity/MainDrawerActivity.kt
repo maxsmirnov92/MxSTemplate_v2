@@ -4,12 +4,9 @@ import android.view.LayoutInflater
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import net.maxsmr.core.ui.components.activities.BaseDrawerNavigationActivity
 import net.maxsmr.core.ui.databinding.LayoutHeaderNavigationViewBinding
-import net.maxsmr.feature.download.ui.DownloadsPagerFragmentDirections
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import net.maxsmr.feature.webview.ui.WebViewCustomizer
 import net.maxsmr.mxstemplate.R
 import javax.inject.Inject
 

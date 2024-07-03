@@ -11,4 +11,5 @@ android {
 
 dependencies {
     implementation(project(":core:di"))
+    implementation(project(":feature:preferences:data"))
 }

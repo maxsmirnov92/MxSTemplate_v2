@@ -1,5 +1,6 @@
 package net.maxsmr.core.ui.components.fragments
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -29,19 +30,19 @@ import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
-import net.maxsmr.core.android.coroutines.collectWithOwner
 import net.maxsmr.core.android.coroutines.collectFlowSafely
+import net.maxsmr.core.android.coroutines.collectWithOwner
 import net.maxsmr.core.android.permissions.formatDeniedPermissionsMessage
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
+import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.content.pick.chooser.AppIntentChooserData
 import net.maxsmr.core.ui.content.pick.chooser.AppIntentChooserDialog
 import net.maxsmr.permissionchecker.BaseDeniedPermissionsHandler
 import net.maxsmr.permissionchecker.PermissionsCallbacks
 import net.maxsmr.permissionchecker.PermissionsHelper
-
 
 /**
  * Фрагмент с конкретным типом VM и базовыми методами для подписки
@@ -56,6 +57,8 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
     abstract val viewModel: VM
 
     abstract val permissionsHelper: PermissionsHelper
+
+    protected open val delegates: List<IFragmentDelegate> = listOf()
 
     /**
      * Отвечает за реакцию фрагмента на появление/отсутствие сети
@@ -89,12 +92,17 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         handleAlerts(delegate)
         handleEvents()
 
+        delegates.forEach {
+            it.onCreated(this, viewModel, delegate)
+        }
+
         onViewCreated(view, savedInstanceState, viewModel)
     }
 
     @CallSuper
     protected open fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
         viewModel.handleAlerts(delegate)
+
     }
 
     @CallSuper
@@ -258,9 +266,14 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
             negativeAction: ((Set<String>) -> Unit)?,
         ) {
             viewModel.showYesNoPermissionDialog(
-                TextMessage(message),
-                { requireActivity().startActivityForResult(getAppSettingsIntent(requireActivity()), requestCode) },
-                { negativeAction?.invoke(deniedPerms) })
+                TextMessage(message)
+            ) {
+                if (it == DialogInterface.BUTTON_POSITIVE) {
+                    requireActivity().startActivityForResult(getAppSettingsIntent(requireActivity()), requestCode)
+                } else {
+                    negativeAction?.invoke(deniedPerms)
+                }
+            }
         }
 
         override fun formatDeniedPermissionsMessage(perms: Collection<String>): String =

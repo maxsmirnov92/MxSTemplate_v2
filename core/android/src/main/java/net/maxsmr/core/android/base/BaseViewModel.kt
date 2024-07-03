@@ -24,6 +24,8 @@ import net.maxsmr.core.android.base.actions.ToastExtraData
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
+import net.maxsmr.core.android.base.alert.showOkAlert
+import net.maxsmr.core.android.base.alert.showYesNoAlert
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.base.delegates.getPersistableKey
 import net.maxsmr.core.android.content.pick.PickResult
@@ -131,7 +133,7 @@ abstract class BaseViewModel(
         @StringRes title: Int? = null,
         onConfirmClick: (() -> Unit)? = null,
     ) {
-        showOkDialog(tag, TextMessage(messageResId), title?.let { TextMessage(it) }, onConfirmClick)
+        AlertDialogBuilder(tag).showOkAlert(messageResId, title, onConfirmClick)
     }
 
     /**
@@ -144,25 +146,17 @@ abstract class BaseViewModel(
         title: TextMessage? = null,
         onConfirmClick: (() -> Unit)? = null,
     ) {
-        AlertDialogBuilder(tag)
-            .setTitle(title)
-            .setMessage(message)
-            .setAnswers(Alert.Answer((android.R.string.ok)).onSelect {
-                onConfirmClick?.invoke()
-            })
-            .build()
+        AlertDialogBuilder(tag).showOkAlert(message, title, onConfirmClick)
     }
 
     fun showYesNoPermissionDialog(
         message: TextMessage,
-        onPositiveSelect: () -> Unit,
-        onNegativeSelect: () -> Unit,
+        onSelect: ((Int) -> Unit)? = null,
     ) {
         showYesNoDialog(
             DIALOG_TAG_PERMISSION_YES_NO,
             message,
-            onPositiveSelect = onPositiveSelect,
-            onNegativeSelect = onNegativeSelect
+            onSelect = onSelect
         )
     }
 
@@ -170,22 +164,19 @@ abstract class BaseViewModel(
         tag: String,
         message: TextMessage,
         title: TextMessage? = null,
-        positiveAnswerResId: Int = R.string.yes,
-        negativeAnswerResId: Int = R.string.no,
-        onPositiveSelect: () -> Unit,
-        onNegativeSelect: (() -> Unit)? = null,
+        @StringRes positiveAnswerResId: Int = R.string.yes,
+        @StringRes negativeAnswerResId: Int = R.string.no,
+        @StringRes neutralAnswerResId: Int? = null,
+        onSelect: ((Int) -> Unit)? = null,
     ) {
-        AlertDialogBuilder(tag)
-            .setTitle(title)
-            .setMessage(message)
-            .setAnswers(
-                Alert.Answer(positiveAnswerResId).onSelect {
-                    onPositiveSelect()
-                },
-                Alert.Answer(negativeAnswerResId).onSelect {
-                    onNegativeSelect?.invoke()
-                })
-            .build()
+        AlertDialogBuilder(tag).showYesNoAlert(
+            message,
+            title,
+            positiveAnswerResId,
+            negativeAnswerResId,
+            neutralAnswerResId,
+            onSelect
+        )
     }
 
     /**
@@ -274,7 +265,9 @@ abstract class BaseViewModel(
     }
 
     fun removeToastsFromQueue() {
-        toastQueue.removeAllWithTag(TOAST_TAG_QUEUE)
+        if (isAtLeastR()) {
+            toastQueue.removeAllWithTag(TOAST_TAG_QUEUE)
+        }
     }
 
     fun onPickerResultError(error: PickResult.Error) {

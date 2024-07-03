@@ -9,8 +9,8 @@ import net.maxsmr.core.ui.components.activities.BaseNavigationActivity
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
 import net.maxsmr.mxstemplate.R
-import net.maxsmr.mxstemplate.ui.DownloadableWebViewModel.Companion.ARG_WEB_CUSTOMIZER
-import net.maxsmr.mxstemplate.ui.fragment.DownloadableWebViewFragmentDirections
+import net.maxsmr.mxstemplate.ui.BrowserWebViewModel.Companion.ARG_WEB_CUSTOMIZER
+import net.maxsmr.mxstemplate.ui.fragment.BrowserWebViewFragmentDirections
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -37,7 +37,7 @@ class BrowserActivity : BaseNavigationActivity() {
         intent.toWebViewCustomizer()?.let {
             setIntent(intent)
             navController.navigate(
-                DownloadableWebViewFragmentDirections.actionToWebViewFragment(it)
+                BrowserWebViewFragmentDirections.actionToWebViewFragment(it)
             )
         }
     }

@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/navigationDownloads"
-        android:name="net.maxsmr.feature.download.ui.DownloadsPagerFragment"
+        android:name="net.maxsmr.mxstemplate.ui.fragment.MainDownloadsPagerFragment"
         android:label="@string/download_feature_title"
         tools:layout="@layout/fragment_downloads_pager">
 
@@ -20,11 +20,39 @@
             app:popEnterAnim="@anim/slide_in"
             app:popExitAnim="@anim/slide_out" />
 
+        <action
+            android:id="@+id/actionToAboutFragment"
+            app:destination="@id/navigationAbout"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigationWebView"
+        android:name="net.maxsmr.mxstemplate.ui.fragment.MainWebViewFragment"
+        android:label="@string/webview_feature_title"
+        tools:layout="@layout/fragment_webview">
+
+        <action
+            android:id="@+id/actionToAboutFragment"
+            app:destination="@id/navigationAbout"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out" />
+
+        <argument
+            android:name="customizer"
+            app:argType="net.maxsmr.feature.webview.ui.WebViewCustomizer" />
+
     </fragment>
 
     <fragment
         android:id="@+id/navigationSettings"
-        android:name="net.maxsmr.feature.preferences.ui.SettingsFragment"
+        android:name="net.maxsmr.mxstemplate.ui.fragment.MainSettingsFragment"
         android:label="@string/settings_feature_title"
         tools:layout="@layout/fragment_settings">
 
@@ -36,23 +64,19 @@
             app:popEnterAnim="@anim/slide_in"
             app:popExitAnim="@anim/slide_out" />
 
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigationWebView"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.DownloadableWebViewFragment"
-        android:label="@string/webview_feature_title"
-        tools:layout="@layout/fragment_webview">
-
-        <argument
-            android:name="customizer"
-            app:argType="net.maxsmr.feature.webview.ui.WebViewCustomizer" />
+        <action
+            android:id="@+id/actionToAboutFragment"
+            app:destination="@id/navigationAbout"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out" />
 
     </fragment>
 
     <fragment
         android:id="@+id/navigationAbout"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.AboutFragment"
+        android:name="net.maxsmr.mxstemplate.ui.fragment.MainAboutFragment"
         android:label="@string/about_feature_title"
         tools:layout="@layout/fragment_about">
 
@@ -72,11 +96,15 @@
             app:popEnterAnim="@anim/slide_in"
             app:popExitAnim="@anim/slide_out" />
 
+        <argument
+            android:name="isForRate"
+            app:argType="boolean" />
+
     </fragment>
 
     <fragment
         android:id="@+id/navigationFeedback"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.FeedbackFragment"
+        android:name="net.maxsmr.mxstemplate.ui.fragment.MainFeedbackFragment"
         android:label="@string/rate_feedback_title"
         tools:layout="@layout/fragment_feedback">
 

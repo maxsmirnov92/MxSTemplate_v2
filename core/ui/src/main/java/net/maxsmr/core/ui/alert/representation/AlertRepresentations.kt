@@ -11,6 +11,7 @@ import net.maxsmr.core.ui.R
 fun Alert.asOkDialog(
     context: Context,
     cancelable: Boolean = true,
+    onCancel: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ): DialogRepresentation {
     check(title != null || message != null) {
@@ -21,6 +22,7 @@ fun Alert.asOkDialog(
     }
     return DialogRepresentation.Builder(context, this)
         .setCancelable(cancelable)
+        .setOnCancelListener { onCancel?.invoke() }
         .setPositiveButton(answers[0]) { onClick?.invoke() }
         .build()
 }
@@ -29,6 +31,7 @@ fun Alert.asOkDialog(
 fun Alert.asMultiChoiceDialog(
     context: Context,
     cancelable: Boolean = true,
+    onCancel: (() -> Unit)? = null,
     onClick: ((index: Int) -> Unit)? = null,
 ): DialogRepresentation {
     check(title != null || message != null) {
@@ -39,6 +42,7 @@ fun Alert.asMultiChoiceDialog(
     }
     return DialogRepresentation.Builder(context, this)
         .setCancelable(cancelable)
+        .setOnCancelListener { onCancel?.invoke() }
         .setMultiChoiceAnswers(
             DialogRepresentation.Builder.MultiChoiceAnswersData(
                 answers,
@@ -53,6 +57,7 @@ fun Alert.asMultiChoiceDialog(
 fun Alert.asYesNoDialog(
     context: Context,
     cancelable: Boolean = true,
+    onCancel: (() -> Unit)? = null,
     onClick: ((yes: Boolean) -> Unit)? = null,
 ): DialogRepresentation {
     check(title != null || message != null) {
@@ -64,6 +69,7 @@ fun Alert.asYesNoDialog(
 
     return DialogRepresentation.Builder(context, this)
         .setCancelable(cancelable)
+        .setOnCancelListener { onCancel?.invoke() }
         .setPositiveButton(answers[0]) { onClick?.invoke(true) }
         .setNegativeButton(answers[1]) { onClick?.invoke(false) }
         .build()
@@ -73,6 +79,7 @@ fun Alert.asYesNoDialog(
 fun Alert.asYesNoNeutralDialog(
     context: Context,
     cancelable: Boolean = true,
+    onCancel: (() -> Unit)? = null,
     onClick: ((Int) -> Unit)? = null,
 ): DialogRepresentation {
     check(title != null || message != null) {
@@ -83,6 +90,7 @@ fun Alert.asYesNoNeutralDialog(
     }
     return DialogRepresentation.Builder(context, this)
         .setCancelable(cancelable)
+        .setOnCancelListener { onCancel?.invoke() }
         .setPositiveButton(answers[0]) { onClick?.invoke(DialogInterface.BUTTON_POSITIVE) }
         .setNegativeButton(answers[1]) { onClick?.invoke(DialogInterface.BUTTON_NEGATIVE) }
         .setNeutralButton(answers[2]) { onClick?.invoke(DialogInterface.BUTTON_NEUTRAL) }

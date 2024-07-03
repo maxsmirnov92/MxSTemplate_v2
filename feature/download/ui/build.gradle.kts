@@ -13,4 +13,5 @@ dependencies {
     implementation(project(":core:di"))
     implementation(project(":feature:webview:ui"))
     implementation(project(":feature:preferences:ui"))
+    implementation(project(":feature:rate"))
 }

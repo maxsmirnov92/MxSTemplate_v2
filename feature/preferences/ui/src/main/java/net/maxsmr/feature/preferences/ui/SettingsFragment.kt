@@ -22,11 +22,8 @@ import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.fields.bindValue
 import net.maxsmr.core.ui.fields.toggleFieldState
 import net.maxsmr.feature.preferences.ui.databinding.FragmentSettingsBinding
-import net.maxsmr.permissionchecker.PermissionsHelper
-import javax.inject.Inject
 
-@AndroidEntryPoint
-class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
+abstract class BaseSettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_settings
 
@@ -52,9 +49,6 @@ class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
             binding.svSettings.scrollToView(it, true, activity = requireActivity())
         }
     }
-
-    @Inject
-    override lateinit var permissionsHelper: PermissionsHelper
 
     private var saveMenuItem: MenuItem? = null
 

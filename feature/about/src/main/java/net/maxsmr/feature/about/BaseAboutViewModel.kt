@@ -46,6 +46,9 @@ abstract class BaseAboutViewModel(state: SavedStateHandle) : BaseHandleableViewM
         delegate.bindAlertDialog(DIALOG_TAG_RATE_APP) {
             RateDialog(delegate.fragment, it, object : RateDialog.RateListener {
                 override fun onRateSelected(rating: Int) {
+                    viewModelScope.launch {
+                        repo.setAppRated()
+                    }
                     if (rating >= RATE_THRESHOLD_DEFAULT) {
                         navigateToMarket(delegate.fragment.requireActivity())
                     } else {
@@ -62,9 +65,6 @@ abstract class BaseAboutViewModel(state: SavedStateHandle) : BaseHandleableViewM
 
     @CallSuper
     open fun onRateAppSelected() {
-        viewModelScope.launch {
-            repo.setAppRated()
-        }
         AlertDialogBuilder(DIALOG_TAG_RATE_APP)
             .setTitle(net.maxsmr.feature.rate.R.string.rate_dialog_app_title)
             .setAnswers(

@@ -2,15 +2,15 @@ package net.maxsmr.mxstemplate.ui.fragment
 
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
-import net.maxsmr.feature.rate.fragment.BaseFeedbackFragment
-import net.maxsmr.mxstemplate.ui.FeedbackViewModel
+import net.maxsmr.feature.download.ui.webview.BaseDownloadableWebViewFragment
+import net.maxsmr.mxstemplate.ui.BrowserWebViewModel
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class FeedbackFragment: BaseFeedbackFragment<FeedbackViewModel>() {
+class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewModel>() {
 
-    override val viewModel: FeedbackViewModel by viewModels()
+    override val viewModel: BrowserWebViewModel by viewModels()
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper

@@ -15,4 +15,10 @@
     <string name="rate_feedback_field_message_hint">Сообщение</string>
     <string name="rate_feedback_field_subject_empty_error">Пожалуйста укажите тему</string>
     <string name="rate_feedback_field_text_empty_error">Пожалуйста введите ваше сообщение</string>
+
+    <string name="rate_dialog_app_reminder_title">Оцените приложение</string>
+    <string name="rate_dialog_app_reminder_message">Вы хотели бы оценить это приложение?</string>
+    <string name="rate_dialog_app_reminder_positive">@string/yes</string>
+    <string name="rate_dialog_app_reminder_negative">@string/no</string>
+    <string name="rate_dialog_app_reminder_neutral">Позже</string>
 </resources>
