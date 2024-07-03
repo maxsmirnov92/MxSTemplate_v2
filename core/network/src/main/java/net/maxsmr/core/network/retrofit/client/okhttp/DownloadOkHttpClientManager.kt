@@ -8,7 +8,8 @@ class DownloadOkHttpClientManager(
     private val networkConnectionInterceptor: NetworkConnectionInterceptor,
     private val httpLoggingInterceptor: HttpLoggingInterceptor,
     timeout: Long,
-): BaseOkHttpClientManager(0, timeout, timeout, timeout) {
+    retryOnConnectionFailure: Boolean = true
+): BaseOkHttpClientManager(0, timeout, timeout, timeout, retryOnConnectionFailure) {
 
     override fun OkHttpClient.Builder.configureBuild() {
         addInterceptor(networkConnectionInterceptor)

@@ -67,6 +67,7 @@ import net.maxsmr.core.network.hasBytesAcceptRanges
 import net.maxsmr.core.network.hasContentDisposition
 import net.maxsmr.core.network.newCallSuspended
 import net.maxsmr.core.network.retrofit.client.okhttp.BaseOkHttpClientManager.Companion.CONNECT_TIMEOUT_DEFAULT
+import net.maxsmr.core.network.retrofit.client.okhttp.BaseOkHttpClientManager.Companion.RETRY_ON_CONNECTION_FAILURE_DEFAULT
 import net.maxsmr.core.network.retrofit.client.okhttp.BaseOkHttpClientManager.Companion.withTimeouts
 import net.maxsmr.core.network.writeBufferedOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
@@ -380,6 +381,7 @@ class DownloadService : Service() {
             try {
                 val client = okHttpClient.newBuilder().apply {
                     withTimeouts(params.requestParams.connectTimeout)
+                    retryOnConnectionFailure(params.requestParams.retryOnConnectionFailure)
                 }.addNetworkInterceptor {
                     val originalResponse: Response = it.proceed(it.request())
                     originalResponse.newBuilder()
@@ -908,6 +910,7 @@ class DownloadService : Service() {
                 ignoreFileName: Boolean = true,
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
+                retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
                 subDir: String? = null,
@@ -937,7 +940,8 @@ class DownloadService : Service() {
                         ignoreAttachment = ignoreAttachment,
                         ignoreFileName = targetIgnoreFileName,
                         storeErrorBody = storeErrorBody,
-                        connectTimeout = connectTimeout
+                        connectTimeout = connectTimeout,
+                        retryOnConnectionFailure = retryOnConnectionFailure
                     ),
                     notificationParams,
                     fileName,
@@ -965,6 +969,7 @@ class DownloadService : Service() {
                 ignoreFileName: Boolean = true,
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
+                retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
                 subDir: String? = null,
@@ -993,7 +998,8 @@ class DownloadService : Service() {
                         ignoreAttachment = ignoreAttachment,
                         ignoreFileName = targetIgnoreFileName,
                         storeErrorBody = storeErrorBody,
-                        connectTimeout = connectTimeout
+                        connectTimeout = connectTimeout,
+                        retryOnConnectionFailure = retryOnConnectionFailure
                     ),
                     notificationParams,
                     fileName,
@@ -1025,6 +1031,7 @@ class DownloadService : Service() {
         val ignoreFileName: Boolean,
         val storeErrorBody: Boolean,
         val connectTimeout: Long,
+        val retryOnConnectionFailure: Boolean
     ) : Serializable {
 
         fun createRequest(listener: ProgressListener): Request = Request.Builder()
@@ -1111,6 +1118,7 @@ class DownloadService : Service() {
                 ignoreFileName: Boolean = false,
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
+                retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT
             ): RequestParams {
                 return RequestParams(
                     url,
@@ -1121,7 +1129,8 @@ class DownloadService : Service() {
                     ignoreAttachment,
                     ignoreFileName,
                     storeErrorBody,
-                    connectTimeout
+                    connectTimeout,
+                    retryOnConnectionFailure
                 )
             }
 
@@ -1135,6 +1144,7 @@ class DownloadService : Service() {
                 ignoreFileName: Boolean = false,
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
+                retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
                 appendGetParams: ((Uri) -> Uri)? = null,
             ): RequestParams {
                 val targetUrl = if (appendGetParams != null) {
@@ -1151,7 +1161,8 @@ class DownloadService : Service() {
                     ignoreAttachment,
                     ignoreFileName,
                     storeErrorBody,
-                    connectTimeout
+                    connectTimeout,
+                    retryOnConnectionFailure
                 )
             }
         }

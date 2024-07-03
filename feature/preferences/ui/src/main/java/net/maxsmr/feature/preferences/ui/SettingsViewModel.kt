@@ -1,6 +1,5 @@
 package net.maxsmr.feature.preferences.ui
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
@@ -53,6 +52,11 @@ class SettingsViewModel @Inject constructor(
         .persist(state, KEY_FIELD_CONNECT_TIMEOUT)
         .build()
 
+    val retryOnConnectionFailureField: Field<Boolean> = Field.Builder(false)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_RETRY_ON_CONNECTION_FAILURE)
+        .build()
+
     val retryDownloadsField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
         .persist(state, KEY_FIELD_RETRY_DOWNLOADS)
@@ -86,6 +90,7 @@ class SettingsViewModel @Inject constructor(
     private val allFields = listOf<Field<*>>(
         maxDownloadsField,
         connectTimeoutField,
+        retryOnConnectionFailureField,
         retryDownloadsField,
         disableNotificationsField,
         updateNotificationIntervalStateField,
@@ -118,6 +123,9 @@ class SettingsViewModel @Inject constructor(
             appSettings.value = currentAppSettings.copy(connectTimeout = it)
         }
 
+        retryOnConnectionFailureField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(retryOnConnectionFailure = it)
+        }
         retryDownloadsField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(retryDownloads = it)
         }
@@ -168,8 +176,9 @@ class SettingsViewModel @Inject constructor(
                 AppSettings(
                     maxDownloadsField.value,
                     connectTimeoutField.value,
-                    disableNotifications,
+                    retryOnConnectionFailureField.value,
                     retryDownloadsField.value,
+                    disableNotifications,
                     updateNotificationIntervalStateField.value.value,
                     startPageUrlField.value.takeIf { it.isNotEmpty() } ?: URL_PAGE_BLANK
                 )
@@ -211,6 +220,7 @@ class SettingsViewModel @Inject constructor(
         // используется для того, чтобы выставить initial'ы в филды
         maxDownloadsField.value = settings.maxDownloads
         connectTimeoutField.value = settings.connectTimeout
+        retryOnConnectionFailureField.value = settings.retryOnConnectionFailure
         retryDownloadsField.value = settings.retryDownloads
         disableNotificationsField.value = settings.disableNotifications
         updateNotificationIntervalStateField.value =
@@ -231,6 +241,7 @@ class SettingsViewModel @Inject constructor(
 
         const val KEY_FIELD_MAX_DOWNLOADS = "max_downloads"
         const val KEY_FIELD_CONNECT_TIMEOUT = "connect_timeout"
+        const val KEY_FIELD_RETRY_ON_CONNECTION_FAILURE = "retry_on_connection_failure"
         const val KEY_FIELD_RETRY_DOWNLOADS = "retry_downloads"
         const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
         const val KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE = "update_notification_interval_state"

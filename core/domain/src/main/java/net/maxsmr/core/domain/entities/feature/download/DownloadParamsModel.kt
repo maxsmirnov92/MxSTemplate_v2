@@ -17,4 +17,4 @@ data class DownloadParamsModel(
     val replaceFile: Boolean = false,
     val deleteUnfinished: Boolean = true,
     val headers: HashMap<String, String> = hashMapOf(),
-)
+): java.io.Serializable

@@ -326,7 +326,8 @@ class DownloadManager @Inject constructor(
                         var previousFinishedItem: QueueItem? = null
                         newFinishedSet.refreshWith(newFinishedItem) {
                             if (it.id == newFinishedItem.id
-                                    || it.downloadId == newFinishedItem.downloadId) {
+                                    || it.downloadId == newFinishedItem.downloadId
+                            ) {
                                 // если был стартован через retry, такого уже не будет
                                 previousFinishedItem = it
                                 true
@@ -423,8 +424,8 @@ class DownloadManager @Inject constructor(
     fun removeFinished(
         downloadId: Long,
         withDb: Boolean = true,
-        withUri: Boolean = false
-        ) {
+        withUri: Boolean = false,
+    ) {
         scope.launch {
             removeFinishedSuspended(downloadId, withDb, withUri)
         }
@@ -512,7 +513,7 @@ class DownloadManager @Inject constructor(
     private suspend fun removeFinishedSuspended(
         downloadId: Long,
         withDb: Boolean = true,
-        withUri: Boolean = false
+        withUri: Boolean = false,
     ) {
         // поиск только в завершённых
         val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
@@ -573,7 +574,10 @@ class DownloadManager @Inject constructor(
 
                 fun DownloadService.Params.getActualParams(): DownloadService.Params {
                     return DownloadService.Params(
-                        requestParams.copy(connectTimeout = settings.connectTimeout),
+                        requestParams.copy(
+                            connectTimeout = settings.connectTimeout,
+                            retryOnConnectionFailure = settings.retryOnConnectionFailure
+                        ),
                         if (settings.disableNotifications) {
                             null
                         } else {

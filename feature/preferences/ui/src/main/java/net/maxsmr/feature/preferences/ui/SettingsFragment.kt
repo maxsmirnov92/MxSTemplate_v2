@@ -43,7 +43,6 @@ class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
                 put(connectTimeoutField, binding.tilConnectTimeout)
                 put(updateNotificationIntervalStateField, binding.tilUpdateNotificationInterval)
                 put(startPageUrlField, binding.tilStartPageUrl)
-
             }
         }
     }
@@ -93,6 +92,7 @@ class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
         }
         viewModel.connectTimeoutField.bindHintError(viewLifecycleOwner, binding.tilConnectTimeout)
 
+        viewModel.retryOnConnectionFailureField.bindValue(viewLifecycleOwner, binding.switchRetryOnConnectionFailureField)
         viewModel.retryDownloadsField.bindValue(viewLifecycleOwner, binding.switchRetryDownloads)
         viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.switchDisableNotifications)
 

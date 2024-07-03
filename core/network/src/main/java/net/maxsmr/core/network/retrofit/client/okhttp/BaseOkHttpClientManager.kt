@@ -8,6 +8,7 @@ abstract class BaseOkHttpClientManager(
     private val readTimeout: Long = 0L,
     private val writeTimeout: Long = 0L,
     private val connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
+    private val retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT
 ) {
 
     protected abstract fun OkHttpClient.Builder.configureBuild()
@@ -17,6 +18,7 @@ abstract class BaseOkHttpClientManager(
             withTimeouts(
                 connectTimeout, readTimeout, writeTimeout, callTimeout
             )
+            retryOnConnectionFailure(retryOnConnectionFailure)
             configureBuild()
         }.build()
     }
@@ -24,6 +26,7 @@ abstract class BaseOkHttpClientManager(
     companion object {
 
         const val CONNECT_TIMEOUT_DEFAULT = 10L
+        const val RETRY_ON_CONNECTION_FAILURE_DEFAULT = true
 
         fun OkHttpClient.Builder.withTimeouts(
             connectTimeout: Long,
@@ -35,7 +38,6 @@ abstract class BaseOkHttpClientManager(
                 .readTimeout(readTimeout, TimeUnit.SECONDS)
                 .writeTimeout(writeTimeout, TimeUnit.SECONDS)
                 .connectTimeout(connectTimeout, TimeUnit.SECONDS)
-                .retryOnConnectionFailure(false)
         }
     }
 }
