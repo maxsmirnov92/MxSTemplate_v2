@@ -25,7 +25,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MxSTemplate"
+rootProject.name = "Just Updownload It"
 include(":app")
 
 //include(":lint")
@@ -38,8 +38,6 @@ include(":core:database")
 include(":core:ui")
 include(":core:utils")
 include(":core:di")
-include(":feature:address_sorter:data")
-include(":feature:address_sorter:ui")
 include(":feature:mobile_services")
 include(":feature:download:data")
 include(":feature:download:ui")

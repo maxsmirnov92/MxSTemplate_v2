@@ -145,42 +145,6 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/defaultPadding">
-
-                <TextView
-                    android:id="@+id/tvRoutingAppName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_toStartOf="@+id/spinnerRoutingApp"
-                    android:gravity="center_vertical"
-                    android:text="@string/settings_field_routing_app"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                    android:textColor="@color/textColorPrimary"
-                    android:textSize="@dimen/textSizeNormal" />
-
-                <androidx.appcompat.widget.AppCompatSpinner
-                    android:id="@+id/spinnerRoutingApp"
-                    android:layout_width="160dp"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="20dp" />
-
-            </RelativeLayout>
-
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switchRoutingAppFromCurrent"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/defaultPadding"
-                android:text="@string/settings_field_routing_app_from_current"
-                android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                app:switchPadding="4dp" />
-
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

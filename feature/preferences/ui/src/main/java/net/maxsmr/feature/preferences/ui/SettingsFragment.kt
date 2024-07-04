@@ -18,7 +18,6 @@ import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.observeFrom
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.viewBinding
-import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.fields.bindValue
@@ -114,26 +113,6 @@ abstract class BaseSettingsFragment : BaseNavigationFragment<SettingsViewModel>(
         binding.etStartPageUrl.bindToTextNotNull(viewModel.startPageUrlField)
         viewModel.startPageUrlField.observeFromText(binding.etStartPageUrl, viewLifecycleOwner)
         viewModel.startPageUrlField.bindHintError(viewLifecycleOwner, binding.tilStartPageUrl)
-
-        binding.spinnerRoutingApp.adapter = ArrayAdapter(
-            requireContext(),
-            net.maxsmr.core.ui.R.layout.item_spinner,
-            net.maxsmr.core.ui.R.id.tvSpinner,
-            resources.getStringArray(R.array.settings_field_routing_app_values)
-        )
-        viewModel.routingAppField.valueLive.observe {
-            binding.spinnerRoutingApp.setSelection(RoutingApp.entries.indexOf(it))
-        }
-        binding.spinnerRoutingApp.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.routingAppField.value = RoutingApp.entries[position]
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-            }
-        }
-
-        viewModel.routingAppFromCurrentField.bindValue(viewLifecycleOwner, binding.switchRoutingAppFromCurrent)
 
         viewModel.hasChanges.observe {
             refreshSaveMenuItem(it)

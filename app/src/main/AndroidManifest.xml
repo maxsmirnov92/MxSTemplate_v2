@@ -15,6 +15,13 @@
         tools:node="remove" />
 
     <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        tools:node="remove" />
+
+    <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
     <uses-permission
@@ -126,13 +133,10 @@
             android:exported="false"
             tools:node="merge">
             <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.TimberInitializer"
+                android:name="net.maxsmr.justupdownloadit.initializers.TimberInitializer"
                 android:value="androidx.startup" />
             <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.RetrofitInitializer"
-                android:value="androidx.startup" />
-            <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.ModulesInitializer"
+                android:name="net.maxsmr.justupdownloadit.initializers.ModulesInitializer"
                 android:value="androidx.startup" />
         </provider>
         <provider
@@ -147,12 +151,12 @@
                 tools:replace="android:resource" />
         </provider>
 
-<!--        <meta-data-->
-<!--            android:name="android.webkit.WebView.EnableSafeBrowsing"-->
-<!--            android:value="true" />-->
-<!--        <meta-data-->
-<!--            android:name="com.android.webview.WebViewUpdateService"-->
-<!--            android:value="com.google.android.webview" />-->
+        <!--        <meta-data-->
+        <!--            android:name="android.webkit.WebView.EnableSafeBrowsing"-->
+        <!--            android:value="true" />-->
+        <!--        <meta-data-->
+        <!--            android:name="com.android.webview.WebViewUpdateService"-->
+        <!--            android:value="com.google.android.webview" />-->
     </application>
     <queries>
         <intent>

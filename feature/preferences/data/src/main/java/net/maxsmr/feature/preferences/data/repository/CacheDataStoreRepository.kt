@@ -14,7 +14,6 @@ import kotlinx.serialization.json.Json
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.DataStoreType
 import net.maxsmr.core.di.DataStores
-import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.rate.RateAppInfo
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.core.utils.encodeToStringOrNull
@@ -147,18 +146,6 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun getDoubleGisRoutingKey(): String {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_DOUBLE_GIS_ROUTING]
-        }.firstOrNull().orEmpty()
-    }
-
-    suspend fun setDoubleGisRoutingKey(key: String) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_KEY_DOUBLE_GIS_ROUTING] = key
-        }
-    }
-
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
@@ -168,6 +155,5 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_RATE_APP_INFO = stringPreferencesKey("rateAppInfo")
         private val FIELD_SEEN_RELEASE_NOTES_VERSION_CODES = stringPreferencesKey("seenReleaseNotesVersionCodes")
         private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")
-        private val FIELD_KEY_DOUBLE_GIS_ROUTING = stringPreferencesKey("keyDoubleGisRouting")
     }
 }

@@ -4,7 +4,6 @@ import androidx.annotation.CallSuper
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.network.client.okhttp.interceptors.ExceptionHandlingInterceptor
-import net.maxsmr.core.network.client.okhttp.interceptors.ResponseErrorMessageInterceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit

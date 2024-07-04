@@ -48,39 +48,17 @@ data class AppVersion(
 val appVersion = AppVersion(1, "common")
 
 android {
-    namespace = "net.maxsmr.mxstemplate"
+    namespace = "net.maxsmr.justupdownloadit"
 
     defaultConfig {
-        applicationId = "net.maxsmr.mxstemplate"
+        applicationId = "net.maxsmr.justupdownloadit"
         versionCode = appVersion.code
         versionName = appVersion.name
         project.ext.set("archivesBaseName", "${project.name}_${appVersion.name}_${appVersion.type}")
 
-        buildConfigField("int", "PROTOCOL_VERSION", "1")
-
         val appProperties = Properties()
         appProperties.load(FileInputStream(File(rootDir, "app/app.properties")))
 
-        buildConfigField(
-            "String",
-            "AUTHORIZATION_RADAR_IO",
-            "\"${appProperties.getProperty("authorizationRadarIo")}\""
-        )
-        buildConfigField(
-            "String",
-            "API_KEY_YANDEX_SUGGEST",
-            "\"${appProperties.getProperty("apiKeyYandexSuggest")}\""
-        )
-        buildConfigField(
-            "String",
-            "API_KEY_YANDEX_GEOCODE",
-            "\"${appProperties.getProperty("apiKeyYandexGeocode")}\""
-        )
-        buildConfigField(
-            "String",
-            "URL_DEMO_KEY_DOUBLE_GIS_ROUTING",
-            "\"${appProperties.getProperty("urlDemoKeyDoubleGisRouting")}\""
-        )
         buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getProperty("devEmailAddress")}\"")
 
         val donateProperties = Properties()
@@ -237,7 +215,6 @@ dependencies {
     implementation(project(":feature:mobile_services"))
     implementation(project(":feature:preferences:ui"))
     implementation(project(":feature:download:ui"))
-    implementation(project(":feature:address_sorter:ui"))
     implementation(project(":feature:webview:ui"))
 
     implementation(project(":feature:rate"))
@@ -247,17 +224,11 @@ dependencies {
 
     //android
 //    implementation(libs.androidx.core.splashscreen)
-    implementation(libs.androidx.exifinterface)
     implementation(libs.androidx.constraintlayout)
 
     //paging
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.runtime.ktx)
-
-    //ui
-    implementation(libs.hdodenhof.circleimageview)
-    implementation(libs.yalantis.ucrop)
-    implementation(libs.jaredrummler.deviceNames)
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)

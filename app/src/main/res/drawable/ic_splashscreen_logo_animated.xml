@@ -4,5 +4,20 @@
     <!-- здесь описываются все фреймы от растрового логотипа   -->
     <item android:drawable="@drawable/ic_splashscreen_logo_frame1" android:duration="100" />
     <item android:drawable="@drawable/ic_splashscreen_logo_frame2" android:duration="100" />
-    <!-- Добавьте остальные кадры вашей анимации -->
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame3" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame4" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame5" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame6" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame7" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame8" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame9" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame10" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame11" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame12" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame13" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame14" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame15" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame16" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame17" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame18" android:duration="100" />
 </animation-list>

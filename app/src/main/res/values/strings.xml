@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name" translatable="false">MxSTemplate</string>
-    <string name="browser_name">Browser</string>
+    <string name="app_name" translatable="false">Just Updownload It</string>
+    <string name="browser_name" translatable="false">Just Browse It</string>
 </resources>

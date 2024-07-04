@@ -36,7 +36,5 @@ enum class HttpErrorCode(val code: Int) {
 
 enum class CustomErrorCode(val code: Int) {
 
-    NETWORK_OFFLINE(600),
-
-    JSON_PARSE(601)
+    NETWORK_OFFLINE(600)
 }

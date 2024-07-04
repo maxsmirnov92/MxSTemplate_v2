@@ -1,8 +1,6 @@
 <resources>
+
     <style name="AppTheme" parent="BaseAppTheme">
-        <!--        <item name="android:windowSplashScreenAnimatedIcon">-->
-        <!--            @drawable/ic_splashscreen_logo_sample_vector_animated-->
-        <!--        </item>-->
         <item name="android:windowSplashScreenAnimatedIcon">
             @drawable/ic_splashscreen_logo_animated
         </item>
@@ -12,14 +10,4 @@
             @drawable/ic_splashscreen_branding_centered
         </item>
     </style>
-
-    <!--    <style name="AppTheme.Splash" parent="Theme.SplashScreen">-->
-    <!--        <item name="windowSplashScreenBackground">@color/splashscreenBackground</item>-->
-    <!--        <item name="windowSplashScreenAnimatedIcon">-->
-    <!--            @drawable/ic_splashscreen_logo_animated-->
-    <!--        </item>-->
-    <!--        <item name="windowSplashScreenAnimationDuration">2147483647</item>-->
-    <!--        <item name="android:windowSplashScreenBrandingImage">@drawable/ic_splashscreen_branding_centered</item>-->
-    <!--        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>-->
-    <!--    </style>-->
 </resources>
