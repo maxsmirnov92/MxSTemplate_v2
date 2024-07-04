@@ -13,7 +13,7 @@
     <!--  по остальным пермишнам мёрж из других манифестов  -->
 
     <application
-        android:name=".TemplateApp"
+        android:name=".App"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"

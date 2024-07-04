@@ -230,6 +230,7 @@ abstract class BaseViewModel(
     fun showSnackbar(
         message: TextMessage,
         data: SnackbarExtraData = SnackbarExtraData(),
+        answer: Alert.Answer? = null,
         uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None
     ) {
         AlertSnackbarBuilder(SNACKBAR_TAG_QUEUE)
@@ -237,7 +238,12 @@ abstract class BaseViewModel(
             .setExtraData(data)
             .setUniqueStrategy(uniqueStrategy)
             .setOneShot(data.length != SnackbarExtraData.SnackbarLength.INDEFINITE)
-            .build()
+            .also { b ->
+                answer?.let {
+                    b.setAnswers(answer)
+                }
+            }.build()
+
     }
 
     fun removeSnackbarsFromQueue() {

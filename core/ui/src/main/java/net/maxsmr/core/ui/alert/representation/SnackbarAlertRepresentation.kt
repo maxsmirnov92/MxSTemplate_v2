@@ -45,7 +45,9 @@ fun Alert.asSnackbar(view: View): AlertRepresentation {
         snackbar.setActionTextColor(ContextCompat.getColor(context, R.color.snackbarActionColor))
         snackbar.setAction(answer.title.get(context)) {
             answer.select?.invoke()
-            snackbar.dismiss()
+            if (answer.closeAfterSelect) {
+                snackbar.dismiss()
+            }
         }
     }
 

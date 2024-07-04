@@ -12,7 +12,7 @@ import net.maxsmr.mobile_services.market.MarketIntentLauncher
  */
 @[EntryPoint
 InstallIn(SingletonComponent::class)]
-interface EntryPointFeatureMobileServices {
+interface MobileServicesFeatureEntryPoint {
 
     /**
      * [Intent] для перехода к маркету

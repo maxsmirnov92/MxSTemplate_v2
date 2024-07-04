@@ -55,7 +55,7 @@ class ConnectionManager() {
                 builder?.build()
                     ?: AlertQueueItem.Builder(SNACKBAR_TAG_CONNECTIVITY, queue)
                         .setTitle(R.string.error_no_connection)
-                        .setAnswers(Alert.Answer(R.string.check_again).also { it.select = ::check })
+                        .setAnswers(Alert.Answer(R.string.check_again).also { alert -> alert.onSelect { check() } })
                         .setUniqueStrategy(AlertQueueItem.UniqueStrategy.Ignore)
                         .setExtraData(SnackbarExtraData(SnackbarExtraData.SnackbarLength.INDEFINITE))
                         .build()

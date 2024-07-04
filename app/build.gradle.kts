@@ -17,16 +17,15 @@ plugins {
     alias(libs.plugins.navigation.safeargs.kotlin)
 }
 
-object AppConfig {
-
-    private const val defaultBuildNumber = "dev"
-    private const val defaultBranchName = "HEAD"
-
-    private val buildNumber = System.getenv("BUILD_NUMBER") ?: defaultBuildNumber
-
-    val versionName = "1.$buildNumber"
-    val versionCode = Integer.parseInt(System.getenv("BUILD_NUMBER") ?: "1")
+data class AppVersion(
+    val code: Int,
+    val name: String,
+    val type: String
+) {
+    constructor(code: Int, type: String) : this(code, getVersionName(gradle, code), type)
 }
+
+val appVersion = AppVersion(1, "common")
 
 if (isGoogleBuild(gradle) == false) {
     System.out.println("Applying plugin: com.huawei.agconnect")
@@ -53,14 +52,33 @@ fun isGoogleBuild(gradle: Gradle): Boolean? {
     }
 }
 
+fun isDevBuild(gradle: Gradle): Boolean? {
+    val taskNames = gradle.startParameter.taskNames
+    if (taskNames.isEmpty()) {
+        return null
+    }
+    return taskNames.any { task ->
+        task.contains("dev", true)
+    }
+}
+
+fun getVersionName(gradle: Gradle, versionCode: Int): String {
+    val postfix = if (isDevBuild(gradle) != false) {
+        "dev"
+    } else {
+        "prod"
+    }
+    return "1.0$versionCode.$postfix"
+}
+
 android {
     namespace = "net.maxsmr.mxstemplate"
 
     defaultConfig {
         applicationId = "net.maxsmr.mxstemplate"
-        versionCode = AppConfig.versionCode
-        versionName = AppConfig.versionName
-        project.ext.set("archivesBaseName", "${project.name}-${AppConfig.versionName}")
+        versionCode = appVersion.code
+        versionName = appVersion.name
+        project.ext.set("archivesBaseName", "${project.name}-${appVersion.name}")
 
         buildConfigField("int", "PROTOCOL_VERSION", "1")
 
@@ -92,6 +110,8 @@ android {
             "DEV_PAYMENT_ADDRESSES",
             addressesString
         )
+
+        buildConfigField("String", "MOBILE_BUILD_TYPE", "\"${appVersion.type}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -126,6 +146,7 @@ android {
 //            }
         }
         getByName("release") {
+            isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             //signingConfig = signingConfigs.getAt("debug")

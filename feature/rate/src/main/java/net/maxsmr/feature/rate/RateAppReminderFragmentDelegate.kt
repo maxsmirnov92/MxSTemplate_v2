@@ -23,7 +23,7 @@ class RateAppReminderFragmentDelegate(
         }
     }
 
-    override fun onCreated(
+    override fun onViewCreated(
         fragment: BaseVmFragment<*>,
         viewModel: BaseViewModel,
         delegate: AlertFragmentDelegate<*>,

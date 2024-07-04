@@ -5,6 +5,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
@@ -43,6 +46,11 @@ internal class AppIntentChooserDialog : BottomSheetDialogFragment() {
         ViewModelProvider(requireActivity())[ContentPickerViewModel::class.java]
     }
 
+    private val settingsLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+        SettingsResultCallback()
+    )
+
     @Inject
     lateinit var permissionsHelper: PermissionsHelper
 
@@ -54,14 +62,6 @@ internal class AppIntentChooserDialog : BottomSheetDialogFragment() {
         init()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CODE_SETTINGS) {
-            init()
-            setHeight()
-        }
-    }
-
     private fun init() = binding.run {
         val data = arguments?.getParcelable(EXTRA_DATA) as? AppIntentChooserData ?: return@run
         val adapterData = data.intents.toAdapterData()
@@ -71,23 +71,27 @@ internal class AppIntentChooserDialog : BottomSheetDialogFragment() {
         val itemWidth = screenWidth / spanCount
 
         val adapter = AppIntentChooserAdapter(
-                adapterData,
-                itemWidth,
-                { params, intent ->
-                    viewModel.appChoices.value = VmEvent(ContentPickerViewModel.AppChoice(data.requestCode, params, intent))
-                    dismiss()
-                },
-                { startActivityForResult(getAppSettingsIntent(requireContext()), REQUEST_CODE_SETTINGS) }
+            adapterData,
+            itemWidth,
+            { params, intent ->
+                viewModel.appChoices.value =
+                    VmEvent(ContentPickerViewModel.AppChoice(data.requestCode, params, intent))
+                dismiss()
+            },
+            {
+                settingsLauncher.launch(getAppSettingsIntent(requireContext()))
+            }
         )
 
-        rvIntents.layoutManager = GridLayoutManager(requireContext(), spanCount, GridLayoutManager.VERTICAL, false).apply {
-            spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
-                override fun getSpanSize(position: Int): Int = when (adapter.data[position]) {
-                    is IntentChooserAdapterData.App -> 1
-                    else -> spanCount
+        rvIntents.layoutManager =
+            GridLayoutManager(requireContext(), spanCount, GridLayoutManager.VERTICAL, false).apply {
+                spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                    override fun getSpanSize(position: Int): Int = when (adapter.data[position]) {
+                        is IntentChooserAdapterData.App -> 1
+                        else -> spanCount
+                    }
                 }
             }
-        }
         rvIntents.adapter = adapter
         tvTitle.text = data.title.get(requireContext())
     }
@@ -97,7 +101,10 @@ internal class AppIntentChooserDialog : BottomSheetDialogFragment() {
         val pm = requireContext().packageManager
         val deniedNotAskAgain = mutableSetOf<String>()
         this.forEach { (params, intentWithPermissions) ->
-            val denied = permissionsHelper.filterDeniedNotAskAgain(requireContext(), intentWithPermissions.permissions.toList())
+            val denied = permissionsHelper.filterDeniedNotAskAgain(
+                requireContext(),
+                intentWithPermissions.permissions.toList()
+            )
             if (denied.isEmpty()) {
                 pm.queryIntentActivities(intentWithPermissions.intent, 0).forEach {
                     val packageName = it.activityInfo.packageName
@@ -105,12 +112,13 @@ internal class AppIntentChooserDialog : BottomSheetDialogFragment() {
                         IntentChooserAdapterData.App(
                             params = params,
                             intentWithPermissions = IntentWithPermissions(
-                                    Intent(intentWithPermissions.intent).apply { setPackage(packageName) },
-                                    intentWithPermissions.permissions
+                                Intent(intentWithPermissions.intent).apply { setPackage(packageName) },
+                                intentWithPermissions.permissions
                             ),
                             icon = it.loadIcon(pm),
                             label = it.loadLabel(pm),
-                    ))
+                        )
+                    )
                 }
             } else {
                 deniedNotAskAgain.addAll(denied)
@@ -142,10 +150,17 @@ internal class AppIntentChooserDialog : BottomSheetDialogFragment() {
     }
 
 
+    private inner class SettingsResultCallback : ActivityResultCallback<ActivityResult> {
+
+        override fun onActivityResult(result: ActivityResult) {
+            init()
+            setHeight()
+        }
+    }
+
     companion object {
 
         private const val EXTRA_DATA = "EXTRA_DATA"
-        private const val REQUEST_CODE_SETTINGS = 9715
 
         fun show(src: Fragment, data: AppIntentChooserData): AppIntentChooserDialog {
             return AppIntentChooserDialog().apply {

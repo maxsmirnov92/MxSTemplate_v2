@@ -6,9 +6,11 @@ import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 
 interface IFragmentDelegate {
 
-    fun onCreated(
+    fun onViewCreated(
         fragment: BaseVmFragment<*>,
         viewModel: BaseViewModel,
-        delegate: AlertFragmentDelegate<*>
+        delegate: AlertFragmentDelegate<*>,
     )
+
+    fun onViewDestroyed() {}
 }

@@ -11,7 +11,7 @@ import net.maxsmr.core.ui.R
 import net.maxsmr.feature.about.BaseAboutViewModel
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.mxstemplate.BuildConfig
-import net.maxsmr.mxstemplate.di.EntryPointFeatureMobileServices
+import net.maxsmr.mxstemplate.di.MobileServicesFeatureEntryPoint
 import net.maxsmr.mxstemplate.ui.fragment.MainAboutFragmentArgs
 import net.maxsmr.mxstemplate.ui.fragment.MainAboutFragmentDirections
 import javax.inject.Inject
@@ -38,7 +38,7 @@ class MainAboutViewModel @Inject constructor(
     override fun navigateToMarket(activity: Activity) {
         if (!EntryPointAccessors.fromApplication(
                     baseApplicationContext,
-                    EntryPointFeatureMobileServices::class.java
+                    MobileServicesFeatureEntryPoint::class.java
                 ).marketIntentLauncher.startActivityMarketIntent(activity)
         ) {
             showToast(TextMessage(R.string.toast_market_not_installed))

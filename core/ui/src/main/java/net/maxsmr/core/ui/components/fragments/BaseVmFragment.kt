@@ -93,7 +93,7 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         handleEvents()
 
         delegates.forEach {
-            it.onCreated(this, viewModel, delegate)
+            it.onViewCreated(this, viewModel, delegate)
         }
 
         onViewCreated(view, savedInstanceState, viewModel)
@@ -113,6 +113,9 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
     @CallSuper
     override fun onDestroyView() {
         super.onDestroyView()
+        delegates.forEach {
+            it.onViewDestroyed()
+        }
         alertFragmentDelegate = null
     }
 
@@ -239,7 +242,7 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         }
     }
 
-    inner class FragmentContentPickerBuilder() : ContentPicker.Builder(this,
+    inner class FragmentContentPickerBuilder : ContentPicker.Builder(this,
         object : ContentPicker.PermissionHandler {
 
             override val permissionHelper: PermissionsHelper

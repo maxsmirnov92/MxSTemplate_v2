@@ -9,10 +9,14 @@ android {
 dependencies {
     implementation(project(":core:utils"))
     implementation(project(":core:android"))
+    implementation(project(":core:ui"))
 
     // ### В обоих реализациях можно обращаться к play-services-location
     implementation(libs.google.location)
 
     "huaweiImplementation"(libs.huawei.agconnect.core)
     "huaweiImplementation"(libs.huawei.location)
+
+    "googleImplementation"(libs.google.play.app.update)
+    "googleImplementation"(libs.google.play.app.update.ktx)
 }
