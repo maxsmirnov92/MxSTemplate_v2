@@ -20,7 +20,6 @@ import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
-import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.core.ui.field.BooleanFieldWithState
@@ -108,15 +107,6 @@ class SettingsViewModel @Inject constructor(
         isValidByBlank = true
     )
 
-    val routingAppField: Field<RoutingApp> = createNonEmptyField(
-        initialValue = RoutingApp.DOUBLEGIS,
-        key = KEY_FIELD_ROUTING_APP
-    )
-
-    val routingAppFromCurrentField: Field<Boolean> = createNonEmptyField(
-        initialValue = false,
-        key = KEY_FIELD_ROUTING_APP_FROM_CURRENT
-    )
 
     val hasChanges: StateFlow<Boolean> by lazy {
         _appSettings.map {
@@ -134,8 +124,6 @@ class SettingsViewModel @Inject constructor(
         updateNotificationIntervalStateField,
         openLinksInExternalAppsField,
         startPageUrlField,
-        routingAppField,
-        routingAppFromCurrentField
     )
 
     private val _appSettings =
@@ -192,14 +180,6 @@ class SettingsViewModel @Inject constructor(
 
         startPageUrlField.observeWithClearError(viewModelScope) {
             _appSettings.tryEmit(currentAppSettings.copy(startPageUrl = it))
-        }
-
-        routingAppField.valueFlow.observe {
-            _appSettings.tryEmit(currentAppSettings.copy(routingApp = it))
-        }
-
-        routingAppFromCurrentField.valueFlow.observe {
-            _appSettings.tryEmit(currentAppSettings.copy(routingAppFromCurrent = it))
         }
     }
 
@@ -272,8 +252,6 @@ class SettingsViewModel @Inject constructor(
         openLinksInExternalAppsField.value =
             BooleanFieldWithState(settings.openLinksInExternalApps, isAtLeastTiramisu())
         startPageUrlField.value = settings.startPageUrl
-        routingAppField.value = settings.routingApp
-        routingAppFromCurrentField.value = settings.routingAppFromCurrent
     }
 
     private suspend fun updateSettings() {
@@ -295,7 +273,5 @@ class SettingsViewModel @Inject constructor(
         const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
         const val KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE = "update_notification_interval_state"
         const val KEY_FIELD_OPEN_LINKS_IN_EXTERNAL_APPS = "open_links_in_external_apps"
-        const val KEY_FIELD_ROUTING_APP = "routing_app"
-        const val KEY_FIELD_ROUTING_APP_FROM_CURRENT = "routing_app_from_current"
     }
 }

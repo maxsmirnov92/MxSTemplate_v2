@@ -9,9 +9,7 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.PgnLoadState
-import net.maxsmr.core.network.NO_ERROR_API
 import net.maxsmr.core.network.exceptions.NetworkException
-import net.maxsmr.core.network.getErrorCode
 
 sealed class ExecuteResult<out R> {
 
@@ -19,7 +17,7 @@ sealed class ExecuteResult<out R> {
 
     data class Error(
         val exception: Exception,
-        private val message: TextMessage? = null
+        private val message: TextMessage? = null,
     ) : ExecuteResult<Nothing>() {
 
         /**
@@ -58,14 +56,14 @@ val <T> ExecuteResult<T>.data: T?
     get() = (this as? ExecuteResult.Success)?.data
 
 fun <D> ExecuteResult<D>.hasData(
-    dataValidator: ((D) -> Boolean)? = null
+    dataValidator: ((D) -> Boolean)? = null,
 ): Boolean {
     val data = data
     return data != null && (dataValidator == null || dataValidator(data))
 }
 
 fun <D> ExecuteResult<D>.getData(
-    dataValidator: ((D) -> Boolean)? = null
+    dataValidator: ((D) -> Boolean)? = null,
 ): D? {
     return if (hasData(dataValidator)) {
         data
@@ -75,7 +73,7 @@ fun <D> ExecuteResult<D>.getData(
 }
 
 fun <T> Flow<ExecuteResult<T>>.flattenData(
-    dataValidator: ((T) -> Boolean)? = null
+    dataValidator: ((T) -> Boolean)? = null,
 ): Flow<T> {
     return mapNotNull { it.getData(dataValidator) }
 }
@@ -116,6 +114,7 @@ fun <T> ILoadState<T>.asExecuteResult() = when {
             ExecuteResult.Loading
         }
     }
+
     isSuccess -> ExecuteResult.Success(data)
     else -> ExecuteResult.Error(error?.error ?: Exception(), error?.message as? TextMessage)
 }
@@ -132,6 +131,7 @@ fun <T, U> ILoadState<T>.asExecuteResult(mapOnSuccess: (data: T) -> U) = when {
             ExecuteResult.Loading
         }
     }
+
     isSuccess -> {
         val data = data
         if (data != null) {
@@ -158,7 +158,7 @@ fun <T> ExecuteResult<T>.asPgnState(data: T? = null): PgnLoadState<T> = when (th
 }
 
 fun <T, U> ExecuteResult<T>.mapData(
-    mapData: (data: T) -> U
+    mapData: (data: T) -> U,
 ): ExecuteResult<U> = when (this) {
     is ExecuteResult.Loading -> ExecuteResult.Loading
     is ExecuteResult.PgnLoading -> ExecuteResult.PgnLoading
@@ -169,14 +169,10 @@ fun <T, U> ExecuteResult<T>.mapData(
             ExecuteResult.Error(e)
         }
     }
+
     is ExecuteResult.Error -> ExecuteResult.Error(this.exception, this.errorMessage())
 }
 
 fun <T> ExecuteResult<T>?.isNetworkError(): Boolean {
     return this is ExecuteResult.Error && this.exception is NetworkException
-}
-
-fun <T> ExecuteResult<T>.getErrorCode(): Int = when (this) {
-    is ExecuteResult.Error -> exception.getErrorCode()
-    else -> NO_ERROR_API
 }

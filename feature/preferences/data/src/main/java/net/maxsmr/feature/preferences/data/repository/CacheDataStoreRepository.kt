@@ -35,13 +35,6 @@ class CacheDataStoreRepository @Inject constructor(
 
     val batteryOptimizationAsked: Flow<Boolean> = data.map { it[FIELD_BATTERY_OPTIMIZATION_ASKED] ?: false }
 
-    val canDrawOverlaysAsked: Flow<Boolean>? = data.map { it[FIELD_CAN_DRAW_OVERLAYS_ASKED] ?: false }
-        .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.O }
-
-    val isDemoPeriodExpired: Flow<Boolean> = data.map { it[FIELD_KEY_DEMO_PERIOD_EXPIRED] ?: false }
-
-    val isTutorialCompleted: Flow<Boolean> = data.map { it[FIELD_KEY_TUTORIAL_COMPLETED] ?: false }
-
     suspend fun wasPostNotificationAsked() = postNotificationAsked?.firstOrNull() ?: false
 
     suspend fun setPostNotificationAsked() {
@@ -64,16 +57,6 @@ class CacheDataStoreRepository @Inject constructor(
 
     suspend fun clearBatteryOptimizationAsked() {
         setBatteryOptimizationAsked(false)
-    }
-
-    suspend fun wasCanDrawOverlaysAsked() = canDrawOverlaysAsked?.firstOrNull() ?: false
-
-    suspend fun setCanDrawOverlaysAsked() {
-        setCanDrawOverlaysAsked(true)
-    }
-
-    suspend fun clearCanDrawOverlaysAsked() {
-        setCanDrawOverlaysAsked(false)
     }
 
     suspend fun getLastQueueId(): Int {
@@ -148,35 +131,9 @@ class CacheDataStoreRepository @Inject constructor(
         setLastCheckInAppUpdate(0)
     }
 
-    suspend fun getDoubleGisRoutingApiKey(): String {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY]
-        }.firstOrNull().orEmpty()
-    }
-
-    suspend fun setDoubleGisRoutingApiKey(key: String) {
+    private suspend fun setLastCheckInAppUpdate(timestamp: Long) {
         dataStore.edit { prefs ->
-            prefs[FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY] = key
-        }
-    }
-
-    suspend fun isDemoPeriodExpired() = isDemoPeriodExpired.firstOrNull() ?: false
-
-    suspend fun setDemoPeriodExpired() {
-        setDemoPeriodExpired(true)
-    }
-
-    suspend fun clearDemoPeriodExpired() {
-        setDemoPeriodExpired(false)
-    }
-
-    suspend fun isTutorialCompeted(): Boolean {
-        return isTutorialCompleted.firstOrNull() ?: false
-    }
-
-    suspend fun setTutorialCompleted(toggle: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_KEY_TUTORIAL_COMPLETED] = toggle
+            prefs[FIELD_LAST_CHECK_IN_APP_UPDATE] = timestamp
         }
     }
 
@@ -194,14 +151,6 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    private suspend fun setCanDrawOverlaysAsked(toggle: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            dataStore.edit { prefs ->
-                prefs[FIELD_CAN_DRAW_OVERLAYS_ASKED] = toggle
-            }
-        }
-    }
-
     private suspend fun setRateAppInfo(rateInfo: RateAppInfo) {
         val result: String =
             json.encodeToStringOrNull(rateInfo).orEmpty()
@@ -210,30 +159,14 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    private suspend fun setLastCheckInAppUpdate(timestamp: Long) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_LAST_CHECK_IN_APP_UPDATE] = timestamp
-        }
-    }
-
-    private suspend fun setDemoPeriodExpired(toggle: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_KEY_DEMO_PERIOD_EXPIRED] = toggle
-        }
-    }
-
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
         private val FIELD_BATTERY_OPTIMIZATION_ASKED = booleanPreferencesKey("batteryOptimizationAsked")
-        private val FIELD_CAN_DRAW_OVERLAYS_ASKED = booleanPreferencesKey("canDrawOverlaysAsked")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
         private val FIELD_RATE_APP_INFO = stringPreferencesKey("rateAppInfo")
         private val FIELD_SEEN_RELEASE_NOTES_VERSION_CODES = stringPreferencesKey("seenReleaseNotesVersionCodes")
         private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")
-        private val FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY = stringPreferencesKey("keyDoubleGisRoutingApiKey")
-        private val FIELD_KEY_DEMO_PERIOD_EXPIRED = booleanPreferencesKey("demoPeriodExpired")
-        private val FIELD_KEY_TUTORIAL_COMPLETED = booleanPreferencesKey("tutorialCompleted")
     }
 }

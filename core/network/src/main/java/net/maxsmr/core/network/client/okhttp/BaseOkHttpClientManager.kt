@@ -1,8 +1,6 @@
 package net.maxsmr.core.network.client.okhttp
 
 import androidx.annotation.CallSuper
-import net.maxsmr.commonutils.logger.BaseLogger
-import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.network.client.okhttp.interceptors.OkHttpExceptionTransformInterceptor
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit

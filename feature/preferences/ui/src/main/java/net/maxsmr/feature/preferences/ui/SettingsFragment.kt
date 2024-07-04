@@ -5,8 +5,6 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.viewModels
 import com.google.android.material.textfield.TextInputLayout
@@ -19,7 +17,6 @@ import net.maxsmr.commonutils.gui.bindTo
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.scrollToView
 import net.maxsmr.core.android.base.delegates.viewBinding
-import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
@@ -115,26 +112,6 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
         )
 
         viewModel.startPageUrlField.observeTextWithBind(binding.tilStartPageUrl)
-
-        binding.spinnerRoutingApp.adapter = ArrayAdapter(
-            requireContext(),
-            net.maxsmr.core.ui.view.R.layout.item_spinner,
-            net.maxsmr.core.ui.view.R.id.tvSpinner,
-            resources.getStringArray(R.array.settings_field_routing_app_values)
-        )
-        viewModel.routingAppField.valueFlow.observeSafe {
-            binding.spinnerRoutingApp.setSelection(RoutingApp.entries.indexOf(it))
-        }
-        binding.spinnerRoutingApp.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                viewModel.routingAppField.value = RoutingApp.entries[position]
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-            }
-        }
-
-        viewModel.routingAppFromCurrentField.bindValue(viewLifecycleOwner, binding.switchRoutingAppFromCurrent)
 
         viewModel.hasChanges.observeSafe {
             refreshSaveMenuItem(it)

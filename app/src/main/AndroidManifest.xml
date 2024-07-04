@@ -15,6 +15,13 @@
         tools:node="remove" />
 
     <uses-permission
+        android:name="android.permission.ACCESS_COARSE_LOCATION"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_FINE_LOCATION"
+        tools:node="remove" />
+
+    <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
     <uses-permission
@@ -61,6 +68,8 @@
             android:exported="true"
             android:label="@string/browser_name"
             android:launchMode="standard"
+            android:icon="@mipmap/ic_launcher_secondary"
+            android:roundIcon="@mipmap/ic_launcher_secondary_round"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="stateHidden|adjustResize">
             <!-- Несколько окон вместо вкладок, standard вместо singleTask -->
@@ -128,16 +137,13 @@
             android:exported="false"
             tools:node="merge">
             <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.TimberInitializer"
+                android:name="net.maxsmr.justupdownloadit.initializers.TimberInitializer"
                 android:value="androidx.startup" />
             <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.ModulesInitializer"
+                android:name="net.maxsmr.justupdownloadit.initializers.ModulesInitializer"
                 android:value="androidx.startup" />
             <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.RetrofitInitializer"
-                android:value="androidx.startup" />
-            <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.AppSettingsInitializer"
+                android:name="net.maxsmr.justupdownloadit.initializers.AppSettingsInitializer"
                 android:value="androidx.startup" />
         </provider>
         <provider
@@ -158,12 +164,6 @@
 <!--        <meta-data-->
 <!--            android:name="com.android.webview.WebViewUpdateService"-->
 <!--            android:value="com.google.android.webview" />-->
-        <meta-data
-            android:name="com.google.mlkit.vision.DEPENDENCIES"
-            android:value="ocr" />
-        <meta-data
-            android:name="com.huawei.hms.ml.DEPENDENCY"
-            android:value="ocr" />
     </application>
     <queries>
         <intent>
