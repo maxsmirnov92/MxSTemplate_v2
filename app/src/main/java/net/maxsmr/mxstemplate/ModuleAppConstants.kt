@@ -14,6 +14,10 @@ val baseJson by lazy {
     EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java).baseJson()
 }
 
+val uuidManager by lazy {
+    EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java).uuidManager()
+}
+
 val mobileServicesAvailability by lazy {
     EntryPointAccessors.fromApplication(
         baseApplicationContext,

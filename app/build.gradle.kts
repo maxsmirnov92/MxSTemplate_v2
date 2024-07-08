@@ -276,6 +276,10 @@ dependencies {
 
     implementation(libs.treessence)
 
+    //firebase
+//    implementation(libs.firebase.analytics)
+//    implementation(libs.firebase.crashlytics)
+
     // debugImplementation because LeakCanary should only run in debug builds.
     debugImplementation(libs.leakCanary)
 }

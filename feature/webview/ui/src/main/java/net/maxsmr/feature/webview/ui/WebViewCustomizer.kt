@@ -5,6 +5,7 @@ import android.text.TextUtils
 import net.maxsmr.commonutils.CHARSET_DEFAULT
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.content.FileFormat
+import net.maxsmr.core.domain.entities.feature.DoNotObfuscate
 import java.io.Serializable
 
 /**
@@ -18,7 +19,7 @@ class WebViewCustomizer private constructor(
     val changeTitleOnLoad: Boolean,
     // TODO заменить на отдельные части урлы
     val queryParameters: List<String>,
-): Serializable {
+): Serializable, DoNotObfuscate {
 
     fun buildUpon() = Builder()
         .setTitle(title)

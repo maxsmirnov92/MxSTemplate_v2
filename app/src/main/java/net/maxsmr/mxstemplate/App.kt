@@ -39,7 +39,7 @@ class App: Application(), Application.ActivityLifecycleCallbacks {
 
     override fun onCreate() {
         super.onCreate()
-//        FirebaseCrashlytics.getInstance().setUserId(UUIDManager.instance().uuid)
+//        FirebaseCrashlytics.getInstance().setUserId(uuidManager.uuid)
 
         registerActivityLifecycleCallbacks(this)
         radarIoRetrofitClient.init()
