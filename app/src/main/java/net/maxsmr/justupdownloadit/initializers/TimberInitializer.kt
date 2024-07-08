@@ -7,6 +7,7 @@ import android.util.Log
 import dagger.hilt.EntryPoint
 import fr.bipi.tressence.common.filters.TagFilter
 import net.maxsmr.justupdownloadit.BuildConfig
+import net.maxsmr.justupdownloadit.timber.CrashReportingTree
 import net.maxsmr.justupdownloadit.timber.CustomFileLoggerTree
 import java.util.regex.Pattern
 
@@ -34,7 +35,7 @@ class TimberInitializer : Initializer<Unit> {
             )
         }
 
-//        Timber.plant(CrashReportingTree())
+        Timber.plant(CrashReportingTree())
     }
 
     override fun dependencies(): List<Class<out Initializer<*>>> = listOf()

@@ -1,23 +1,23 @@
 package net.maxsmr.justupdownloadit.timber
 
 import android.util.Log
-//import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import net.maxsmr.justupdownloadit.BuildConfig
 import timber.log.Timber
 
 class CrashReportingTree : Timber.Tree() {
 
     override fun isLoggable(tag: String?, priority: Int): Boolean {
-//        return !(priority == Log.VERBOSE || priority == Log.DEBUG || priority == Log.INFO)
-        return false
+        return !BuildConfig.DEBUG && !(priority == Log.VERBOSE || priority == Log.DEBUG || priority == Log.INFO)
     }
 
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-//        val crashlytics = FirebaseCrashlytics.getInstance()
-//
-//        if (t == null) {
-//            crashlytics.recordException(Exception(message))
-//        } else {
-//            crashlytics.recordException(t)
-//        }
+        val crashlytics = FirebaseCrashlytics.getInstance()
+
+        if (t == null) {
+            crashlytics.recordException(Exception(message))
+        } else {
+            crashlytics.recordException(t)
+        }
     }
 }

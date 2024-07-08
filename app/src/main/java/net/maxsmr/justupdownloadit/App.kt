@@ -1,5 +1,6 @@
 package net.maxsmr.justupdownloadit
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
@@ -22,7 +23,7 @@ class App : BaseApplication() {
 
     override fun onCreate() {
         super.onCreate()
-//        FirebaseCrashlytics.getInstance().setUserId(uuidManager.uuid)
+        FirebaseCrashlytics.getInstance().setUserId(uuidManager.uuid)
 
 //        if (isAtLeastPie()) {
 //            kotlin.runCatching {
