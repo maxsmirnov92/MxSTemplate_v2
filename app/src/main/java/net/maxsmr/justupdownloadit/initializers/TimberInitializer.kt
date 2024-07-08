@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.startup.Initializer
 import fr.bipi.treessence.file.FileLoggerTree
 import net.maxsmr.justupdownloadit.BuildConfig
+import net.maxsmr.justupdownloadit.timber.CrashReportingTree
 import timber.log.Timber
 
 class TimberInitializer : Initializer<Unit> {
@@ -31,7 +32,7 @@ class TimberInitializer : Initializer<Unit> {
             )
         }
 
-//        Timber.plant(CrashReportingTree())
+        Timber.plant(CrashReportingTree())
     }
 
     override fun dependencies(): List<Class<out Initializer<*>>> = listOf()

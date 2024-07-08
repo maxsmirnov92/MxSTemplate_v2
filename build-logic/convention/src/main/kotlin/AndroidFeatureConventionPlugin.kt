@@ -1,4 +1,5 @@
 import com.android.build.gradle.LibraryExtension
+import net.maxsmr.mxstemplate.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
@@ -19,7 +20,7 @@ internal class AndroidFeatureConventionPlugin : Plugin<Project> {
             }
 
             dependencies {
-//                add("implementation", libs.findLibrary("firebase.analytics").get())
+                add("implementation", libs.findLibrary("firebase.analytics").get())
             }
         }
     }

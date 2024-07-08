@@ -7,7 +7,7 @@ import net.maxsmr.mxstemplate.getPropertyNotNull
 import net.maxsmr.mxstemplate.getStringPropertyNotNull
 import net.maxsmr.mxstemplate.loadProperties
 import net.maxsmr.mxstemplate.toFieldMapInfo
-//import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
+import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.util.Locale
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -17,8 +17,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.parcelize)
     //Используем FirebaseCrashlytics до тех пор, пока Huawei это позволяет
-//    alias(libs.plugins.gms)
-//    alias(libs.plugins.firebase.crashlytics)
+    alias(libs.plugins.gms)
+    alias(libs.plugins.firebase.crashlytics)
 //    alias(libs.plugins.firebase.appdistribution)
     alias(libs.plugins.mxs.template.hilt)
     alias(libs.plugins.mxs.template.room)
@@ -85,9 +85,9 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             multiDexKeepProguard = file("multidex-config.pro")
-//            configure<CrashlyticsExtension> {
-//                mappingFileUploadEnabled = true
-//            }
+            configure<CrashlyticsExtension> {
+                mappingFileUploadEnabled = true
+            }
 
             applySigningConfig(
                 signingConfigs,
@@ -113,7 +113,9 @@ android {
          * дебаг вариант сборки с отличным от релиза package name
          */
         getByName("appDev") {
-            applicationIdSuffix = ".debug"
+            if (!plugins.hasPlugin("com.google.firebase.crashlytics")) {
+                applicationIdSuffix = ".debug"
+            }
 
 //            firebaseAppDistribution {
 //                groups = "App-dev"
@@ -235,8 +237,8 @@ dependencies {
     implementation(libs.r8)
 
     //firebase
-//    implementation(libs.firebase.analytics)
-//    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.crashlytics)
 
     // debugImplementation because LeakCanary should only run in debug builds.
 //    debugImplementation(libs.leakCanary)
