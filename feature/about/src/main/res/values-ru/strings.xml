@@ -6,4 +6,7 @@
     <string name="about_app_description_text">Данное ПО распространяется \"как есть\" и является свободным от рекламы.\nПо всем интересующим вопросам и предложениям можно связаться со мной через форму обратной связи.</string>
     <string name="about_donate_description_text">Если Вам нравится моё приложение, буду крайне признателен за любое пожертвование</string>
     <string name="about_toast_easter_egg_logo_message_format">Вы почти у цели (%d)</string>
+    <string name="about_dialog_release_notes_title">Что нового в этой версии</string>
+    <string name="about_dialog_release_notes_title_format">Что нового в этой версии (%s)</string>
+    <string name="about_dialog_release_notes_button">Понятно</string>
 </resources>

@@ -6,4 +6,7 @@
     <string name="about_app_description_text">This software is provided \"as is\" and is free of advertising. For all questions and suggestions, you can contact me via the feedback form</string>
     <string name="about_donate_description_text">If you enjoy this app, I would appreciate any donation</string>
     <string name="about_toast_easter_egg_logo_message_format">You are almost there (%d)</string>
+    <string name="about_dialog_release_notes_title">What\'s new in this version</string>
+    <string name="about_dialog_release_notes_title_format">What\'s new in this version (%s)</string>
+    <string name="about_dialog_release_notes_button">Understood</string>
 </resources>

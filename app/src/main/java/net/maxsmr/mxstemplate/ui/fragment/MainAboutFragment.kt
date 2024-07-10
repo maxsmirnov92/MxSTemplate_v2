@@ -2,6 +2,8 @@ package net.maxsmr.mxstemplate.ui.fragment
 
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
+import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.feature.about.BaseAboutFragment
 import net.maxsmr.feature.about.BaseAboutViewModel.AboutAppDescription
 import net.maxsmr.feature.about.BaseAboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
@@ -10,6 +12,7 @@ import net.maxsmr.mxstemplate.R
 import net.maxsmr.mxstemplate.ui.MainAboutViewModel
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
+import javax.inject.Named
 
 @AndroidEntryPoint
 class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
@@ -19,7 +22,7 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
             R.mipmap.ic_launcher,
             null,
             getString(R.string.app_name),
-            BuildConfig.VERSION_NAME,
+            versionName,
             donateInfo = AboutAppDescription.DonateInfo(
                 addresses = BuildConfig.DEV_PAYMENT_ADDRESSES.map { PaymentAddress(it.key, it.value) }
             ),
@@ -36,4 +39,8 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
 
+    @Inject
+    @Named(DI_NAME_VERSION_NAME)
+    @JvmField
+    var versionName: String = EMPTY_STRING
 }

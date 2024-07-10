@@ -5,14 +5,14 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import net.maxsmr.commonutils.convertAnyToPx
-import net.maxsmr.commonutils.convertPxToDp
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
-import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.about.BaseAboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
@@ -54,10 +54,10 @@ abstract class BaseAboutFragment<VM : BaseAboutViewModel> : BaseNavigationFragme
             description.logoSize?.takeIf {
                 it.width > 0 && it.height > 0
             }?.let {
-                val p = ivLogo.layoutParams
-                p.width = convertAnyToPx(it.width.toFloat(), context = requireContext()).toInt()
-                p.height = convertAnyToPx(it.height.toFloat(), context = requireContext()).toInt()
-                ivLogo.layoutParams = p
+                ivLogo.updateLayoutParams<ViewGroup.LayoutParams> {
+                    this.width = convertAnyToPx(it.width.toFloat(), context = requireContext()).toInt()
+                    this.height = convertAnyToPx(it.height.toFloat(), context = requireContext()).toInt()
+                }
             }
 
             description.easterEggInfo?.let { eggInfo ->

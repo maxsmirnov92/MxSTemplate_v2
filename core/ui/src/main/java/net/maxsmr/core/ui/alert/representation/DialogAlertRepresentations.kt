@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.DialogInterface
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.ui.R
+import net.maxsmr.core.ui.alert.dialog.CommonWrapBottomSheetDialog
+import net.maxsmr.core.ui.alert.dialog.ProgressDialog
 
 //Файл содержит различные варианты отображения [Alert] в UI.
 
@@ -108,4 +110,11 @@ fun Alert.asProgressDialog(
         "Alert must contain no answers for being displayed as progress dialog"
     }
     return ProgressDialog(context, this, cancelable, dimBackground, onCancel).toRepresentation()
+}
+
+fun Alert.asCommonWrapBottomSheetDialog(
+    context: Context,
+    cancelable: Boolean = true,
+): DialogRepresentation {
+    return CommonWrapBottomSheetDialog(context, this, cancelable).toRepresentation()
 }

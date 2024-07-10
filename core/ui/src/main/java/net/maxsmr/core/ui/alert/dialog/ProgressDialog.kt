@@ -1,4 +1,4 @@
-package net.maxsmr.core.ui.alert.representation
+package net.maxsmr.core.ui.alert.dialog
 
 import android.content.Context
 import android.graphics.Color

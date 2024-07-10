@@ -10,6 +10,7 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.os.bundleOf
 import androidx.core.view.doOnLayout
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
@@ -142,13 +143,13 @@ internal class AppIntentChooserDialog : BottomSheetDialogFragment() {
         view?.doOnLayout {
             val behavior = BottomSheetBehavior.from(bottomSheet)
             val height = binding.rvIntents.height + binding.tvTitle.height
-
             behavior.peekHeight = height
-            bottomSheet.layoutParams.height = height
+            bottomSheet.updateLayoutParams<ViewGroup.LayoutParams> {
+                this.height = height
+            }
             it.requestLayout()
         }
     }
-
 
     private inner class SettingsResultCallback : ActivityResultCallback<ActivityResult> {
 

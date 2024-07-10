@@ -15,7 +15,7 @@ import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.Alert.Answer.Companion.findByTag
-import net.maxsmr.core.ui.alert.representation.BaseCustomBottomSheetDialog
+import net.maxsmr.core.ui.alert.dialog.BaseCustomBottomSheetDialog
 import net.maxsmr.core.ui.views.sendAnnouncementEvent
 import net.maxsmr.feature.rate.R
 
@@ -24,11 +24,21 @@ abstract class BaseRateBottomSheetDialog<D : BaseRateBottomSheetDialog.RateData>
     @LayoutRes
     layoutResId: Int,
     alert: Alert,
+    cancelable: Boolean = true,
+    shouldMatchHeight: Boolean = false,
+    initialState: BottomSheetState = BottomSheetState.STATE_COLLAPSED,
     private val lifecycleOwner: LifecycleOwner,
     private val orderRating: MutableLiveData<Int>,
     private val orderRatingIgnore: MutableLiveData<Boolean>?,
     private val rateData: D,
-) : BaseCustomBottomSheetDialog(context, layoutResId = layoutResId, alert = alert) {
+) : BaseCustomBottomSheetDialog(
+    context,
+    layoutResId = layoutResId,
+    alert = alert,
+    cancelable = cancelable,
+    shouldMatchHeight = shouldMatchHeight,
+    initialState = initialState
+) {
 
     protected abstract val titleTextView: TextView
     protected abstract val ratingBar: RatingBar

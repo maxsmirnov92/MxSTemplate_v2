@@ -179,6 +179,13 @@ abstract class BaseViewModel(
         )
     }
 
+    fun showCustomDialog(tag: String, configBlock: (AlertQueueItem.Builder) -> Unit) {
+        AlertDialogBuilder(tag).also {
+            configBlock(it)
+            it.build()
+        }
+    }
+
     /**
      * Использовать для показа ошибок запрсов.
      */
@@ -231,7 +238,7 @@ abstract class BaseViewModel(
         message: TextMessage,
         data: SnackbarExtraData = SnackbarExtraData(),
         answer: Alert.Answer? = null,
-        uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None
+        uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None,
     ) {
         AlertSnackbarBuilder(SNACKBAR_TAG_QUEUE)
             .setMessage(message)
@@ -253,21 +260,21 @@ abstract class BaseViewModel(
     fun showToast(
         message: TextMessage,
         data: ToastExtraData = ToastExtraData(),
-        uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None
-        ) {
-       if (isAtLeastR()) {
-           AlertToastBuilder(TOAST_TAG_QUEUE)
-               .setMessage(message)
-               .setExtraData(data)
-               .setUniqueStrategy(uniqueStrategy)
-               .setOneShot(true)
-               .build()
-       } else {
-           // для API ниже 30 addCallback отсутствует,
-           // соот-но тосты будут оставаться в очереди после скрытия;
-           // пользуем способ с VmEvent
-           _toastCommands.tryEmit(VmEvent(ToastAction(message, data)))
-       }
+        uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None,
+    ) {
+        if (isAtLeastR()) {
+            AlertToastBuilder(TOAST_TAG_QUEUE)
+                .setMessage(message)
+                .setExtraData(data)
+                .setUniqueStrategy(uniqueStrategy)
+                .setOneShot(true)
+                .build()
+        } else {
+            // для API ниже 30 addCallback отсутствует,
+            // соот-но тосты будут оставаться в очереди после скрытия;
+            // пользуем способ с VmEvent
+            _toastCommands.tryEmit(VmEvent(ToastAction(message, data)))
+        }
     }
 
     fun removeToastsFromQueue() {
@@ -286,7 +293,11 @@ abstract class BaseViewModel(
     /**
      * Добавляет, либо удаляет диалог с тегом [tag] из очереди в зависимости от параметра [add]
      */
-    protected fun AlertQueue.toggle(add: Boolean, tag: String, builderConfig: (AlertDialogBuilder.() -> Unit)? = null) {
+    protected fun AlertQueue.toggle(
+        add: Boolean,
+        tag: String,
+        builderConfig: (AlertDialogBuilder.() -> Unit)? = null,
+    ) {
         if (add) {
             AlertDialogBuilder(tag, this).apply { builderConfig?.invoke(this) }.build()
         } else {
