@@ -39,15 +39,15 @@ class ReleaseNotesFragmentDelegate(
                         .filter { it.isNotEmpty() }.joinToString(System.lineSeparator())
                     if (message.isNotEmpty()) {
                         viewModel.showCustomDialog(DIALOG_TAG_RELEASE_NOTES) {
-                            it.setTitle(
+                            setTitle(
                                 if (versionName.isNotEmpty()) {
                                     TextMessage(R.string.about_dialog_release_notes_title_format, versionName)
                                 } else {
                                     TextMessage(R.string.about_dialog_release_notes_title)
                                 }
                             )
-                            it.setMessage(message)
-                            it.setAnswers(Alert.Answer(R.string.about_dialog_release_notes_button).onSelect {
+                            setMessage(message)
+                            setAnswers(Alert.Answer(R.string.about_dialog_release_notes_button).onSelect {
                                 viewModel.viewModelScope.launch {
                                     repo.setLastReleaseNoteVersionCode(versionCode)
                                 }

@@ -4,7 +4,7 @@ import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegate
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.commonutils.AppClickableSpan
 import net.maxsmr.commonutils.gui.setTextWithMovementMethod
-import net.maxsmr.feature.about.BaseAboutViewModel.AboutAppDescription.DonateInfo
+import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription.DonateInfo
 import net.maxsmr.feature.about.R
 import net.maxsmr.feature.about.databinding.ItemDonateAddressBinding
 

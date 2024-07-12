@@ -1,4 +1,4 @@
-package net.maxsmr.justupdownloadit.di
+package net.maxsmr.mxstemplate.di
 
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn

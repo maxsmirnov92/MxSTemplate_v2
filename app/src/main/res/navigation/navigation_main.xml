@@ -112,6 +112,10 @@
             android:name="emailAddress"
             app:argType="string" />
 
+        <argument
+            android:name="shouldNavigateToMarket"
+            app:argType="boolean" />
+
     </fragment>
 
     <!--  остальные destination, которых нет в menu,

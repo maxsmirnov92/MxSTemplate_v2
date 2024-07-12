@@ -2,6 +2,7 @@ package net.maxsmr.feature.rate.fragment
 
 import android.os.Bundle
 import android.view.View
+import androidx.annotation.CallSuper
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.viewBinding
@@ -30,7 +31,12 @@ abstract class BaseFeedbackFragment<VM : BaseFeedbackViewModel>: BaseVmFragment<
         }
 
         binding.btSend.setOnClickListener {
-            viewModel.openEmailIntent(requireContext())
+            onSendClick()
         }
+    }
+
+    @CallSuper
+    protected open fun onSendClick() {
+        viewModel.openEmailIntent(requireContext())
     }
 }

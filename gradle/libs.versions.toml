@@ -86,8 +86,8 @@ adapterdelegates4Kotlin = "4.3.0"
 ioClient = "1.0.0"
 kittinunfResult = "4.0.0"
 leakCanary = "2.14"
-googlePlayAppUpdate = "2.1.0"
-googlePlayAppUpdateKtx = "2.1.0"
+googlePlayReview = "2.0.1"
+googlePlayAppUpdates = "2.1.0"
 
 [libraries]
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
@@ -158,8 +158,10 @@ google-zxing-core = { group = "com.google.zxing", name = "core", version.ref = "
 google-zxing-parent = { group = "com.google.zxing", name = "zxing-parent", version.ref = "zxingParent" }
 google-http-client-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttpClientGson" }
 
-google-play-app-update = { group ="com.google.android.play", name = "app-update", version.ref = "googlePlayAppUpdate"}
-google-play-app-update-ktx = { group ="com.google.android.play", name = "app-update-ktx", version.ref = "googlePlayAppUpdateKtx"}
+google-play-review = { group ="com.google.android.play", name = "review", version.ref = "googlePlayReview"}
+google-play-review-ktx = { group ="com.google.android.play", name = "review-ktx", version.ref = "googlePlayReview"}
+google-play-app-update = { group ="com.google.android.play", name = "app-update", version.ref = "googlePlayAppUpdates"}
+google-play-app-update-ktx = { group ="com.google.android.play", name = "app-update-ktx", version.ref = "googlePlayAppUpdates"}
 
 huawei-agconnect-core = { group = "com.huawei.agconnect", name = "agconnect-core", version.ref = "huaweiAgconnectCore" }
 huawei-agconnect-agcp = { group = "com.huawei.agconnect", name = "agcp", version.ref = "huaweiServices" }

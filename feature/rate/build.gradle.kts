@@ -12,4 +12,9 @@ android {
 dependencies {
     implementation(project(":core:di"))
     implementation(project(":feature:preferences:data"))
+
+    implementation(project(":feature:mobile_services"))
+
+    "googleImplementation"(libs.google.play.review)
+    "googleImplementation"(libs.google.play.review.ktx)
 }

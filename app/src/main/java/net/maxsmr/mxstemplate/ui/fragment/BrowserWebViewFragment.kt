@@ -62,6 +62,5 @@ class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewMod
 
     @Inject
     @Named(DI_NAME_VERSION_NAME)
-    @JvmField
-    var versionName: String = EMPTY_STRING
+    lateinit var versionName: String
 }

@@ -13,17 +13,21 @@ import net.maxsmr.commonutils.convertAnyToPx
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.feature.about.BaseAboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
+import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
 import net.maxsmr.feature.about.adapter.DonateAddressAdapter
 import net.maxsmr.feature.about.adapter.DonateAddressAdapterData
 import net.maxsmr.feature.about.adapter.DonateAddressClickListener
 import net.maxsmr.feature.about.databinding.FragmentAboutBinding
+import net.maxsmr.feature.rate.BaseRateAppFragmentDelegate
 
-abstract class BaseAboutFragment<VM : BaseAboutViewModel> : BaseNavigationFragment<VM>(), DonateAddressClickListener {
+abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<VM>(), DonateAddressClickListener {
 
-    abstract val description: BaseAboutViewModel.AboutAppDescription
+    abstract val rateDelegate: BaseRateAppFragmentDelegate
+
+    abstract val description: AboutViewModel.AboutAppDescription
 
     override val layoutId: Int = R.layout.fragment_about
 
@@ -84,12 +88,12 @@ abstract class BaseAboutFragment<VM : BaseAboutViewModel> : BaseNavigationFragme
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.actionRateApp -> {
-                viewModel.onRateAppSelected()
+                rateDelegate.onRateAppSelected()
                 true
             }
 
             R.id.actionFeedback -> {
-                viewModel.navigateToFeedback()
+                rateDelegate.navigateToFeedback(false)
                 true
             }
 
@@ -103,4 +107,5 @@ abstract class BaseAboutFragment<VM : BaseAboutViewModel> : BaseNavigationFragme
         copyToClipboard(requireContext(), "payment address", address.address)
         viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_copied_to_clipboard_message))
     }
+
 }

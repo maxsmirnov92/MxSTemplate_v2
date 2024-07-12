@@ -179,7 +179,7 @@ abstract class BaseViewModel(
         )
     }
 
-    fun showCustomDialog(tag: String, configBlock: (AlertQueueItem.Builder) -> Unit) {
+    fun showCustomDialog(tag: String, configBlock: AlertQueueItem.Builder.() -> Unit) {
         AlertDialogBuilder(tag).also {
             configBlock(it)
             it.build()
