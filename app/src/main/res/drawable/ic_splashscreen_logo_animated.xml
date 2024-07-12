@@ -2,22 +2,22 @@
 <animation-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:oneshot="false">
     <!-- здесь описываются все фреймы от растрового логотипа   -->
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame1" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame2" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame3" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame4" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame5" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame6" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame7" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame8" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame9" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame10" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame11" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame12" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame13" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame14" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame15" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame16" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame17" android:duration="100" />
-    <item android:drawable="@drawable/ic_splashscreen_logo_frame18" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame1_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame2_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame3_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame4_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame5_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame6_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame7_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame8_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame9_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame10_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame11_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame12_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame13_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame14_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame15_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame16_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame17_inset" android:duration="100" />
+    <item android:drawable="@drawable/ic_splashscreen_logo_frame18_inset" android:duration="100" />
 </animation-list>
