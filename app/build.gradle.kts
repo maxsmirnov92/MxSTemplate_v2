@@ -1,7 +1,9 @@
 import com.android.build.api.dsl.ApkSigningConfig
 //import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.io.FileInputStream
+import java.util.Locale
 import java.util.Properties
+import java.util.regex.Pattern
 
 plugins {
     alias(libs.plugins.mxs.template.application)
@@ -20,8 +22,9 @@ plugins {
 data class AppVersion(
     val code: Int,
     val name: String,
-    val type: String
+    val type: String,
 ) {
+
     constructor(code: Int, type: String) : this(code, getVersionName(gradle, code), type)
 }
 
@@ -68,7 +71,7 @@ fun getVersionName(gradle: Gradle, versionCode: Int): String {
     } else {
         "prod"
     }
-    return "1.0$versionCode.$postfix"
+    return "1.0$versionCode.${postfix}_${getCurrentBuildType()}"
 }
 
 android {
@@ -281,7 +284,7 @@ dependencies {
 //    implementation(libs.firebase.crashlytics)
 
     // debugImplementation because LeakCanary should only run in debug builds.
-    debugImplementation(libs.leakCanary)
+//    debugImplementation(libs.leakCanary)
 }
 
 fun loadSigningConfigForBuildType(propsFile: File, signingConfigName: String, shouldCreate: Boolean) {
@@ -309,4 +312,48 @@ fun loadSigningConfigForBuildType(propsFile: File, signingConfigName: String, sh
             }
         }
     }
+}
+
+fun getCurrentFlavorName(): String {
+    val tskRequests = gradle.startParameter.taskRequests.toString()
+    val pattern = if (tskRequests.contains("assemble")) {
+        // to run ./gradlew assembleRelease to build APK
+        Pattern.compile("assemble(\\w+)(Release|Debug)")
+    } else if (tskRequests.contains("bundle")) {// to run ./gradlew bundleRelease to build .aab
+        Pattern.compile("bundle(\\w+)(Release|Debug)")
+    } else {
+        Pattern.compile("generate(\\w+)(Release|Debug)")
+    }
+
+    val matcher = pattern.matcher(tskRequests)
+    return if (matcher.find())
+        matcher.group(1).lowercase(Locale.getDefault())
+    else {
+        ""
+    }
+}
+
+fun getCurrentBuildType(): String {
+    val tskRequests = gradle.startParameter.taskRequests.toString()
+    val pattern = if (tskRequests.contains("assemble")) {
+        // to run ./gradlew assembleRelease to build APK
+        Pattern.compile("assemble(\\w+)(Release|Debug)")
+    } else {
+        Pattern.compile("generate(\\w+)(Release|Debug)")
+    }
+
+    val matcher = pattern.matcher(tskRequests)
+
+    return if (matcher.find())
+        matcher.group(2).lowercase(Locale.getDefault())
+    else {
+        ""
+    }
+}
+
+fun getCurrentApplicationId(): String {
+    val currFlavor: String = getCurrentFlavorName()
+    return android.productFlavors.find { flavor ->
+        flavor.name == currFlavor
+    }?.applicationId ?: ""
 }
