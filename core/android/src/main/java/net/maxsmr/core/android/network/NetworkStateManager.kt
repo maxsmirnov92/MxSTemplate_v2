@@ -7,45 +7,51 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.map
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import net.maxsmr.commonutils.isAtLeastMarshmallow
+import net.maxsmr.commonutils.live.postValueIfNew
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.network.NetworkStateManager.asLiveData
+import net.maxsmr.core.android.network.NetworkStateManager.asStateLiveData
 import net.maxsmr.core.android.network.NetworkStateManager.hasConnection
+import java.io.Serializable
 
 /**
  * Менеджер доступности сетевого подключения.
- * Получение текущего значения - [hasConnection], подписка - [asLiveData]
+ * Получение текущего значения - [hasConnection], подписка - [asStateLiveData]
  */
 object NetworkStateManager {
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(NetworkStateManager::class.java)
 
-    private val connectivityManager = baseApplicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private val connectivityManager =
+        baseApplicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     private val connectionLiveData: ConnectionLiveData = ConnectionLiveData()
 
-    fun asLiveData(): LiveData<Boolean> = connectionLiveData
+    fun asLiveData(): LiveData<ConnectionInfo> = connectionLiveData
 
-    fun asFlow(scope: CoroutineScope): StateFlow<Boolean> = callbackFlow {
+    fun asStateLiveData() = connectionLiveData.map { it.has }
 
-        var isConnected = hasConnection()
+    fun asFlow(scope: CoroutineScope): StateFlow<ConnectionInfo> = callbackFlow {
 
         val callback = object : BaseNetworkCallback() {
 
             override fun onConnectivityChanged(newState: Boolean) {
-                val wasConnected = isConnected
-                isConnected = newState
-                if (wasConnected != newState) {
-                    trySend(newState)
-                }
+                trySend(if (newState) {
+                    getConnectionInfo()
+                } else {
+                    ConnectionInfo()
+                })
             }
         }
 
@@ -57,25 +63,30 @@ object NetworkStateManager {
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
         }
-    }.stateIn(scope, SharingStarted.WhileSubscribed(5_000), hasConnection())
+    }.stateIn(scope, SharingStarted.WhileSubscribed(5_000), getConnectionInfo())
+
+    fun asStateFlow(scope: CoroutineScope): Flow<Boolean> = asFlow(scope).map { it.has }
 
     /**
      * Принудительно обновить LD. **Не использовать** - см. описание класса.
      */
     fun updateConnectionLiveDataState() {
-        connectionLiveData.postValue(hasConnection())
+        connectionLiveData.postValue(getConnectionInfo())
     }
 
-    fun hasConnection(): Boolean {
+    fun hasConnection() = getConnectionInfo().has
+
+    fun getConnectionInfo(): ConnectionInfo {
         return if (isAtLeastMarshmallow()) {
             val capabilities = connectivityManager
-                .getNetworkCapabilities(connectivityManager.activeNetwork) ?: return false
+                .getNetworkCapabilities(connectivityManager.activeNetwork) ?: return ConnectionInfo()
             val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             val hasCellular = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
             val hasWifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-            hasInternet && (hasCellular || hasWifi)
+            val has = hasInternet && (hasCellular || hasWifi)
+            ConnectionInfo(has, has && hasCellular, has && hasWifi)
         } else {
-            connectivityManager.activeNetworkInfo?.let { it.isConnected && it.isAvailable } ?: false
+            ConnectionInfo(connectivityManager.activeNetworkInfo?.let { it.isConnected && it.isAvailable } ?: false)
         }
     }
 
@@ -86,14 +97,28 @@ object NetworkStateManager {
         }
     }
 
+    data class ConnectionInfo(
+        val has: Boolean,
+        val hasCellular: Boolean? = null,
+        val hasWiFi: Boolean? = null,
+    ) : Serializable {
 
-    private class ConnectionLiveData : MutableLiveData<Boolean>(hasConnection()) {
+        constructor() : this(false, false, false)
+    }
+
+    private class ConnectionLiveData : MutableLiveData<ConnectionInfo>(getConnectionInfo()) {
 
         private val callback = object : BaseNetworkCallback() {
 
             override fun onConnectivityChanged(newState: Boolean) {
                 //Методы могут вызываться не в Main потоке, поэтому post
-                this@ConnectionLiveData.postValue(newState)
+                this@ConnectionLiveData.postValueIfNew(
+                    if (newState) {
+                        getConnectionInfo()
+                    } else {
+                        ConnectionInfo()
+                    }
+                )
             }
         }
 
@@ -114,7 +139,7 @@ object NetworkStateManager {
                 //3. Отключили сеть
                 //4. Переоткрыли апп
                 //ФР: LD стала активна, но не пересоздается (остается в памяти), initial не влияет, коллбек не срабатывает
-                postValue(hasConnection())
+                postValueIfNew(getConnectionInfo())
             }
             logger.d("registerNetworkCallback")
         }
@@ -126,8 +151,8 @@ object NetworkStateManager {
             logger.d("unregisterNetworkCallback")
         }
 
-        override fun getValue(): Boolean {
-            return super.getValue() ?: false
+        override fun getValue(): ConnectionInfo {
+            return super.getValue() ?: ConnectionInfo()
         }
     }
 

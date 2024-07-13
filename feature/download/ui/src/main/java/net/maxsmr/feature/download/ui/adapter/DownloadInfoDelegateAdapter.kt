@@ -20,6 +20,9 @@ import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.text.capFirstChar
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.network.exceptions.NoConnectivityException
+import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
+import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType.CELLULAR
+import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType.WIFI
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState
 import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
@@ -238,10 +241,28 @@ fun downloadInfoAdapterDelegate(listener: DownloadListener) =
                         is DownloadState.Failed -> {
                             statusColorResId = R.color.textColorDownloadFailed
 
-                            val message = if (state.e is NoConnectivityException) {
+                            val error = state.e
+                            val message = if (error is NoPreferableConnectivityException) {
+                                val typeNames = error.types.map {
+                                    when (it) {
+                                        CELLULAR -> context.getString(net.maxsmr.core.android.R.string.network_type_cellular)
+                                        WIFI -> context.getString(net.maxsmr.core.android.R.string.network_type_wifi)
+                                    }
+                                }
+                                if (typeNames.isNotEmpty()) {
+                                    context.getString(
+                                        net.maxsmr.core.android.R.string.error_no_preferable_connection_format,
+                                        typeNames.joinToString("/")
+                                    )
+                                } else {
+                                    context.getString(
+                                        net.maxsmr.core.android.R.string.error_no_preferable_connection
+                                    )
+                                }
+                            } else if (error is NoConnectivityException) {
                                 context.getString(net.maxsmr.core.android.R.string.error_no_connection)
                             } else {
-                                state.e?.message?.takeIf { it.isNotEmpty() }
+                                error?.message?.takeIf { it.isNotEmpty() }
                             }
                             if (message != null) {
                                 context.getString(R.string.download_status_failed_format, message)
@@ -275,7 +296,8 @@ fun downloadInfoAdapterDelegate(listener: DownloadListener) =
 
                 ibCancel.isVisible = state is DownloadState.Loading || state == null // для этапа выполнения запроса
                 ibRetry.isVisible = state !is DownloadState.Loading && state != null
-                containerSuccessButtons.isVisible = state is DownloadState.Success && state.downloadInfo.localUri != null
+                containerSuccessButtons.isVisible =
+                    state is DownloadState.Success && state.downloadInfo.localUri != null
             }
         }
     }

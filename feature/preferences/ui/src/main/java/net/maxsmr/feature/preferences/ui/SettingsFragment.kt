@@ -86,6 +86,7 @@ abstract class BaseSettingsFragment : BaseNavigationFragment<SettingsViewModel>(
         }
         viewModel.connectTimeoutField.bindHintError(viewLifecycleOwner, binding.tilConnectTimeout)
 
+        viewModel.loadByWiFiOnlyField.bindValue(viewLifecycleOwner, binding.switchLoadByWiFiOnly)
         viewModel.retryOnConnectionFailureField.bindValue(viewLifecycleOwner, binding.switchRetryOnConnectionFailureField)
         viewModel.retryDownloadsField.bindValue(viewLifecycleOwner, binding.switchRetryDownloads)
         viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.switchDisableNotifications)

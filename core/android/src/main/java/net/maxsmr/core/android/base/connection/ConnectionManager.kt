@@ -24,7 +24,7 @@ class ConnectionManager() {
     val asLiveData: LiveData<Boolean> by lazy {
         zipNotNull(
             manualCheck,
-            networkStateManager.asLiveData()
+            networkStateManager.asStateLiveData()
         ) { manual, status ->
             manual == true || status == true
         }

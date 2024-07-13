@@ -48,6 +48,7 @@ import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
+import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.network.isAnyResourceScheme
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.AppDispatchers
@@ -61,6 +62,8 @@ import net.maxsmr.core.network.ContentDispositionType
 import net.maxsmr.core.network.ProgressRequestBody
 import net.maxsmr.core.network.ProgressResponseBody
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
+import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
+import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType
 import net.maxsmr.core.network.getContentTypeHeader
 import net.maxsmr.core.network.getFileNameFromAttachmentHeader
 import net.maxsmr.core.network.hasBytesAcceptRanges
@@ -379,6 +382,30 @@ class DownloadService : Service() {
             }
 
             try {
+                var hasPreferableConnection = true
+                val connectionInfo = NetworkStateManager.getConnectionInfo()
+                val types = params.requestParams.preferredConnectionTypes
+                if (connectionInfo.has &&
+                        (connectionInfo.hasWiFi != null || connectionInfo.hasCellular != null)
+                        && types.isNotEmpty()) {
+                    // предпочтительные типы указаны и в API информация возвращается
+                    hasPreferableConnection = false
+                    types.forEach {
+                        when (it) {
+                            PreferableType.CELLULAR -> if (connectionInfo.hasCellular == true) {
+                                hasPreferableConnection = true
+                            }
+
+                            PreferableType.WIFI -> if (connectionInfo.hasWiFi == true) {
+                                hasPreferableConnection = true
+                            }
+                        }
+                    }
+                }
+                if (!hasPreferableConnection) {
+                    throw NoPreferableConnectivityException(types)
+                }
+
                 val client = okHttpClient.newBuilder().apply {
                     withTimeouts(params.requestParams.connectTimeout)
                     retryOnConnectionFailure(params.requestParams.retryOnConnectionFailure)
@@ -1031,7 +1058,8 @@ class DownloadService : Service() {
         val ignoreFileName: Boolean,
         val storeErrorBody: Boolean,
         val connectTimeout: Long,
-        val retryOnConnectionFailure: Boolean
+        val retryOnConnectionFailure: Boolean,
+        val preferredConnectionTypes: Set<PreferableType> = setOf()
     ) : Serializable {
 
         fun createRequest(listener: ProgressListener): Request = Request.Builder()
@@ -1118,7 +1146,8 @@ class DownloadService : Service() {
                 ignoreFileName: Boolean = false,
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
-                retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT
+                retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
+                preferredConnectionTypes: Set<PreferableType> = setOf()
             ): RequestParams {
                 return RequestParams(
                     url,
@@ -1130,7 +1159,8 @@ class DownloadService : Service() {
                     ignoreFileName,
                     storeErrorBody,
                     connectTimeout,
-                    retryOnConnectionFailure
+                    retryOnConnectionFailure,
+                    preferredConnectionTypes
                 )
             }
 
@@ -1145,6 +1175,7 @@ class DownloadService : Service() {
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
                 retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
+                preferredConnectionTypes: Set<PreferableType> = setOf(),
                 appendGetParams: ((Uri) -> Uri)? = null,
             ): RequestParams {
                 val targetUrl = if (appendGetParams != null) {
@@ -1162,7 +1193,8 @@ class DownloadService : Service() {
                     ignoreFileName,
                     storeErrorBody,
                     connectTimeout,
-                    retryOnConnectionFailure
+                    retryOnConnectionFailure,
+                    preferredConnectionTypes
                 )
             }
         }

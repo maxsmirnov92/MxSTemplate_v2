@@ -52,6 +52,11 @@ class SettingsViewModel @Inject constructor(
         .persist(state, KEY_FIELD_CONNECT_TIMEOUT)
         .build()
 
+    val loadByWiFiOnlyField: Field<Boolean> = Field.Builder(false)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_LOAD_BY_WI_FI_ONLY)
+        .build()
+
     val retryOnConnectionFailureField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
         .persist(state, KEY_FIELD_RETRY_ON_CONNECTION_FAILURE)
@@ -90,6 +95,7 @@ class SettingsViewModel @Inject constructor(
     private val allFields = listOf<Field<*>>(
         maxDownloadsField,
         connectTimeoutField,
+        loadByWiFiOnlyField,
         retryOnConnectionFailureField,
         retryDownloadsField,
         disableNotificationsField,
@@ -123,6 +129,9 @@ class SettingsViewModel @Inject constructor(
             appSettings.value = currentAppSettings.copy(connectTimeout = it)
         }
 
+        loadByWiFiOnlyField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(loadByWiFiOnly = it)
+        }
         retryOnConnectionFailureField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(retryOnConnectionFailure = it)
         }
@@ -176,6 +185,7 @@ class SettingsViewModel @Inject constructor(
                 AppSettings(
                     maxDownloadsField.value,
                     connectTimeoutField.value,
+                    loadByWiFiOnlyField.value,
                     retryOnConnectionFailureField.value,
                     retryDownloadsField.value,
                     disableNotifications,
@@ -220,6 +230,7 @@ class SettingsViewModel @Inject constructor(
         // используется для того, чтобы выставить initial'ы в филды
         maxDownloadsField.value = settings.maxDownloads
         connectTimeoutField.value = settings.connectTimeout
+        loadByWiFiOnlyField.value = settings.loadByWiFiOnly
         retryOnConnectionFailureField.value = settings.retryOnConnectionFailure
         retryDownloadsField.value = settings.retryDownloads
         disableNotificationsField.value = settings.disableNotifications
@@ -241,6 +252,7 @@ class SettingsViewModel @Inject constructor(
 
         const val KEY_FIELD_MAX_DOWNLOADS = "max_downloads"
         const val KEY_FIELD_CONNECT_TIMEOUT = "connect_timeout"
+        const val KEY_FIELD_LOAD_BY_WI_FI_ONLY = "load_by_wi_fi_only"
         const val KEY_FIELD_RETRY_ON_CONNECTION_FAILURE = "retry_on_connection_failure"
         const val KEY_FIELD_RETRY_DOWNLOADS = "retry_downloads"
         const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"

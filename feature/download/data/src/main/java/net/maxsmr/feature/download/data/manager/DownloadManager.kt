@@ -35,6 +35,7 @@ import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.exceptions.NoConnectivityException
+import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.core.utils.readObject
 import net.maxsmr.core.utils.writeObject
 import net.maxsmr.feature.download.data.DownloadService
@@ -368,10 +369,10 @@ class DownloadManager @Inject constructor(
             combine(
                 NetworkStateManager.asFlow(scope),
                 settingsRepo.settingsFlow
-            ) { hasConnection: Boolean, settings: AppSettings ->
-                Pair(hasConnection, settings.retryDownloads)
+            ) { connectionInfo: NetworkStateManager.ConnectionInfo, settings: AppSettings ->
+                Triple(connectionInfo, settings.retryDownloads, settings.loadByWiFiOnly)
             }.collectLatest {
-                retryFailedByNetwork(it.first, it.second)
+                retryFailedByNetwork(it.first, it.second, it.third)
             }
         }
     }
@@ -492,19 +493,37 @@ class DownloadManager @Inject constructor(
         enqueueDownloadSuspended(params)
     }
 
-    private suspend fun retryFailedByNetwork(hasConnection: Boolean, shouldRetry: Boolean) {
-        if (hasConnection && shouldRetry) {
-            val failedDownloads = downloadsRepo.getRaw().filter {
-                val reason = it.statusAsError?.reason
-                reason is NoConnectivityException || reason is SocketException
+    private suspend fun retryFailedByNetwork(
+        connectionInfo: NetworkStateManager.ConnectionInfo,
+        shouldRetry: Boolean,
+        loadByWiFiOnly: Boolean,
+    ) {
+        if (!shouldRetry) return
+        val retryDownloads = downloadsRepo.getRaw().filter {
+            when (it.statusAsError?.reason) {
+                is NoPreferableConnectivityException -> {
+                    // поиск зафейленных загрузок по причине отсутствия WiFi, если это соединение появилось
+                    connectionInfo.hasWiFi == true && loadByWiFiOnly
+                }
+
+                is NoConnectivityException, is SocketException -> {
+                    // или по причине любой сети, если она появилась
+                    connectionInfo.has
+                }
+
+                else -> {
+                    false
+                }
             }
-            if (failedDownloads.isNotEmpty()) {
-                logger.i("Has connection, retrying previous failed by connectivity...")
-                val finishedItems = downloadsFinishedQueue.value
-                failedDownloads.forEach {
-                    finishedItems.find { item -> item.downloadId == it.id }?.let {
-                        retryDownloadSuspended(it.downloadId, it.params)
-                    }
+        }
+
+
+        if (retryDownloads.isNotEmpty()) {
+            logger.i("Has connection, retrying previous failed by connectivity...")
+            val finishedItems = downloadsFinishedQueue.value
+            retryDownloads.forEach {
+                finishedItems.find { item -> item.downloadId == it.id }?.let {
+                    retryDownloadSuspended(it.downloadId, it.params)
                 }
             }
         }
@@ -576,7 +595,12 @@ class DownloadManager @Inject constructor(
                     return DownloadService.Params(
                         requestParams.copy(
                             connectTimeout = settings.connectTimeout,
-                            retryOnConnectionFailure = settings.retryOnConnectionFailure
+                            retryOnConnectionFailure = settings.retryOnConnectionFailure,
+                            preferredConnectionTypes = if (settings.loadByWiFiOnly) {
+                                setOf(NoPreferableConnectivityException.PreferableType.WIFI)
+                            } else {
+                                setOf()
+                            }
                         ),
                         if (settings.disableNotifications) {
                             null

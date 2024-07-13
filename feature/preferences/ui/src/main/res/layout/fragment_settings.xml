@@ -50,7 +50,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etMaxDownloads"
                     style="@style/SingleLineInputText"
-                    android:inputType="text|numberDecimal"
+                    android:inputType="numberDecimal"
                     android:maxLength="10"
                     tools:hint="@string/settings_field_max_downloads_hint" />
 
@@ -67,11 +67,20 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etConnectTimeout"
                     style="@style/SingleLineInputText"
-                    android:inputType="text|numberDecimal"
+                    android:inputType="numberDecimal"
                     android:maxLength="10"
                     tools:hint="@string/settings_field_connect_timeout_hint" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchLoadByWiFiOnly"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/settings_field_load_by_wi_fi_only"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                app:switchPadding="4dp" />
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switchRetryOnConnectionFailureField"
@@ -111,7 +120,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etUpdateNotificationInterval"
                     style="@style/SingleLineInputText"
-                    android:inputType="text|numberDecimal"
+                    android:inputType="numberDecimal"
                     android:maxLength="10"
                     tools:hint="@string/settings_field_update_notification_interval_hint" />
 

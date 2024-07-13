@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit
 data class AppSettings(
     val maxDownloads: Int = 3,
     val connectTimeout: Long = 30,
+    val loadByWiFiOnly: Boolean = false,
     val retryOnConnectionFailure: Boolean = true,
     val retryDownloads: Boolean = true,
     val disableNotifications: Boolean = false,
