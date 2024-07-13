@@ -22,7 +22,7 @@ class MainFeedbackFragment: BaseFeedbackFragment<MainFeedbackViewModel>() {
 
     private val rateDelegate by lazy {
         MainRateAppFragmentDelegate(
-            availability,
+            null,
             mobileBuildType,
             cacheRepo
         )
@@ -32,9 +32,6 @@ class MainFeedbackFragment: BaseFeedbackFragment<MainFeedbackViewModel>() {
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
-
-    @Inject
-    lateinit var availability: IMobileServicesAvailability
 
     @Inject
     lateinit var cacheRepo: CacheDataStoreRepository

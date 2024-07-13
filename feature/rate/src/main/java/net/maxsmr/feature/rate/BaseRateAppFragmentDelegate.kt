@@ -15,11 +15,14 @@ import net.maxsmr.feature.rate.dialog.RateDialog
 import net.maxsmr.mobile_services.IMobileServicesAvailability
 import net.maxsmr.mobile_services.MobileBuildType
 
+/**
+ * @param availability null, если использование [ReviewManager] не предусматривается
+ */
 abstract class BaseRateAppFragmentDelegate(
-    private val availability: IMobileServicesAvailability,
+    private val availability: IMobileServicesAvailability?,
     private val mobileBuildType: MobileBuildType,
-    private val repo: CacheDataStoreRepository
-): IFragmentDelegate, ReviewManager.Callbacks {
+    private val repo: CacheDataStoreRepository,
+) : IFragmentDelegate, ReviewManager.Callbacks {
 
     protected var viewModel: BaseViewModel? = null
     protected var activity: Activity? = null
@@ -34,11 +37,13 @@ abstract class BaseRateAppFragmentDelegate(
 
         this.viewModel = viewModel
         this.activity = activity
-        this.reviewManager = ReviewManager(
-            activity,
-            availability,
-            this
-        )
+        this.reviewManager = availability?.let {
+            ReviewManager(
+                activity,
+                availability,
+                this
+            )
+        }
 
         delegate.bindAlertDialog(DIALOG_TAG_RATE_APP) {
             RateDialog(delegate.fragment, it, object : RateDialog.RateListener {
@@ -80,8 +85,12 @@ abstract class BaseRateAppFragmentDelegate(
 
     @CallSuper
     fun onRateAppSelected() {
-        if (mobileBuildType == MobileBuildType.COMMON && availability.isAnyServiceAvailable) {
-            reviewManager?.requestReviewFlow()
+        val manager = reviewManager
+        if (manager != null
+                && mobileBuildType == MobileBuildType.COMMON
+                && availability?.isAnyServiceAvailable == true
+        ) {
+            manager.requestReviewFlow()
         } else {
             showRateDialog()
         }

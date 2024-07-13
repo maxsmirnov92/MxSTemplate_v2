@@ -14,7 +14,7 @@ import net.maxsmr.mxstemplate.di.MobileServicesFeatureEntryPoint
 import net.maxsmr.mxstemplate.ui.fragment.MainAboutFragmentDirections
 
 class MainRateAppFragmentDelegate(
-    availability: IMobileServicesAvailability,
+    availability: IMobileServicesAvailability?,
     mobileBuildType: MobileBuildType,
     repo: CacheDataStoreRepository
 ): BaseRateAppFragmentDelegate(availability, mobileBuildType, repo) {

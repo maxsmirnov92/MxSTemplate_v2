@@ -4,6 +4,10 @@ import android.app.Activity
 import com.google.android.play.core.review.ReviewManagerFactory
 import net.maxsmr.mobile_services.IMobileServicesAvailability
 
+/**
+ * Пользование нежелательно,
+ * т.к. непоявление гугловского диалога и действия на нём невозможно отследить
+ */
 class ReviewManager(
     private val activity: Activity,
     private val availability: IMobileServicesAvailability,

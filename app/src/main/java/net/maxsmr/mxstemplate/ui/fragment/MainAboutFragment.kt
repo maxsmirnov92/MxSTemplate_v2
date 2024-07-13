@@ -50,7 +50,7 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
 
     override val rateDelegate by lazy {
         MainRateAppFragmentDelegate(
-            availability,
+            null,
             mobileBuildType,
             cacheRepo
         )
@@ -62,9 +62,6 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
     @Inject
     @Named(DI_NAME_VERSION_NAME)
     lateinit var versionName: String
-
-    @Inject
-    lateinit var availability: IMobileServicesAvailability
 
     @Inject
     lateinit var cacheRepo: CacheDataStoreRepository
