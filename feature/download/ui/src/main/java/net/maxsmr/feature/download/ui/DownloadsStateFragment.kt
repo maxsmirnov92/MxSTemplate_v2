@@ -27,7 +27,6 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
-import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.download.DownloadInfo
@@ -109,9 +108,13 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
                 binding.rvDownloads.isVisible = false
                 binding.containerEmpty.isVisible = true
             }
+
+            val position = binding.svDownloads.scrollY
             infoAdapter.items = items
-            // FIXME скролл
-//            binding.rvDownloads.scrollToPosition(items.size - 1)
+            binding.svDownloads.post {
+                // при выставлении итемов с разным контентом скролл сбивается
+                binding.svDownloads.scrollTo(0, position)
+            }
 
             binding.ibClearFinished.isVisible = items.any { item -> !item.downloadInfo.isLoading }
 

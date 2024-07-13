@@ -4,9 +4,12 @@ import android.net.Uri
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
+import kotlinx.coroutines.CancellationException
 import net.maxsmr.commonutils.text.appendExtension
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
+import java.io.InterruptedIOException
 import java.io.Serializable
+import java.net.SocketTimeoutException
 
 /**
  * Информация о загрузке
@@ -96,7 +99,15 @@ data class DownloadInfo(
             override val uriString: String? = null,
             // нельзя сделать @kotlinx.serialization.Serializable из-за этого Exception
             val reason: Exception? = null,
-        ) : Status()
+        ) : Status() {
+
+            companion object {
+
+                @JvmStatic
+                fun Exception.isCancelled() = this is CancellationException
+                        || (this is InterruptedIOException && this !is SocketTimeoutException)
+            }
+        }
 
         /**
          * @param uriString урла успешно загруженного файла

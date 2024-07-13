@@ -136,7 +136,7 @@ class AlertQueueItem private constructor(
         private var priority: Int = Priority.NORMAL.value
         private var uniqueStrategy: UniqueStrategy = UniqueStrategy.None
         private var putInQueueHead: Boolean = false
-        private var isOneShot: Boolean = true
+        private var isOneShot: Boolean = false
         private var onClose: (() -> Unit)? = null
 
         override fun setTitle(title: String?): Builder = apply {

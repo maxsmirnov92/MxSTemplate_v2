@@ -8,16 +8,15 @@ import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.media.isEmpty
 import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.commonutils.wrapChooserWithInitial
-import net.maxsmr.core.android.base.actions.SnackbarAction
-import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
@@ -233,7 +232,9 @@ class DownloadsStateViewModel @Inject constructor(
 
     private fun <T : IntentWithUriProvideStrategy<*>> navigateUriAfterCheck(downloadUri: Uri, strategy: T) {
         viewModelScope.launch(defaultDispatcher) {
-            AlertDialogBuilder(DIALOG_TAG_PROGRESS).build()
+            withContext(Dispatchers.Main.immediate) {
+                AlertDialogBuilder(DIALOG_TAG_PROGRESS).build()
+            }
             if (downloadUri.isEmpty(baseApplicationContext.contentResolver)) {
                 showSnackbar(
                     TextMessage(
@@ -244,9 +245,9 @@ class DownloadsStateViewModel @Inject constructor(
             } else {
                 navigateUriEvent.emit(VmEvent(strategy))
             }
-            // нечастый баг с тем, что крутилка остаётся
-            delay(100)
-            dialogQueue.removeAllWithTag(DIALOG_TAG_PROGRESS)
+            withContext(Dispatchers.Main.immediate) {
+                dialogQueue.removeAllWithTag(DIALOG_TAG_PROGRESS)
+            }
         }
     }
 

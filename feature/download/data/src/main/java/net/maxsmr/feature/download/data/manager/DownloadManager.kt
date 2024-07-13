@@ -31,6 +31,7 @@ import net.maxsmr.core.android.coroutines.appendToSet
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.network.isUrlValid
 import net.maxsmr.core.database.model.download.DownloadInfo
+import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.network.Method
@@ -46,9 +47,9 @@ import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.preferences.data.domain.AppSettings
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.File
-import java.io.InterruptedIOException
 import java.io.Serializable
 import java.net.SocketException
+import java.net.SocketTimeoutException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -146,7 +147,7 @@ class DownloadManager @Inject constructor(
 
                             is DownloadInfo.Status.Error -> {
                                 val reason = info.statusAsError?.reason
-                                if (reason is CancellationException || reason is InterruptedIOException) {
+                                if (reason?.isCancelled() == true) {
                                     DownloadStateNotifier.DownloadState.Cancelled(info, params, params)
                                 } else {
                                     DownloadStateNotifier.DownloadState.Failed(reason, info, params, params)
@@ -500,15 +501,15 @@ class DownloadManager @Inject constructor(
     ) {
         if (!shouldRetry) return
         val retryDownloads = downloadsRepo.getRaw().filter {
-            when (it.statusAsError?.reason) {
-                is NoPreferableConnectivityException -> {
-                    // поиск зафейленных загрузок по причине отсутствия WiFi, если это соединение появилось
-                    connectionInfo.hasWiFi == true && loadByWiFiOnly
-                }
-
-                is NoConnectivityException, is SocketException -> {
-                    // или по причине любой сети, если она появилась
-                    connectionInfo.has
+            when (val reason = it.statusAsError?.reason) {
+                is NoConnectivityException, is SocketException, is SocketTimeoutException -> {
+                    if (loadByWiFiOnly && reason is NoPreferableConnectivityException) {
+                        // поиск зафейленных загрузок по причине отсутствия WiFi, если это соединение появилось
+                        connectionInfo.hasWiFi == true
+                    } else {
+                        // или по причине любой сети, если она появилась
+                        connectionInfo.has
+                    }
                 }
 
                 else -> {
@@ -516,7 +517,6 @@ class DownloadManager @Inject constructor(
                 }
             }
         }
-
 
         if (retryDownloads.isNotEmpty()) {
             logger.i("Has connection, retrying previous failed by connectivity...")

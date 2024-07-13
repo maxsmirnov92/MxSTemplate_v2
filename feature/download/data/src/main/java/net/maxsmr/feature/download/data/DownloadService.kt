@@ -51,6 +51,7 @@ import net.maxsmr.core.android.content.ViewStrategy
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.network.isAnyResourceScheme
 import net.maxsmr.core.database.model.download.DownloadInfo
+import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.ApplicationScope
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
@@ -341,24 +342,24 @@ class DownloadService : Service() {
                 currentJobs[downloadInfo.id] = it
             }
 
-            suspend fun onException(e: Exception, localUri: Uri? = null) {
+            fun onException(e: Exception, localUri: Uri? = null) {
                 logger.e("onException: $e, localUri: $localUri")
-                val info = downloadInfo.copy(
-                    status = DownloadInfo.Status.Error(localUri?.toString(), e)
-                )
-                if (e is CancellationException) {
-                    onDownloadCancelled(info, params, oldParams)
-                } else {
-                    onDownloadFailed(info, params, oldParams, e)
+                applicationScope.launch(ioDispatcher) {
+                    // для перестраховки при любых исключениях suspend'ы
+                    // запускаем в другом неотменённом скопе
+                    val info = downloadInfo.copy(
+                        status = DownloadInfo.Status.Error(localUri?.toString(), e)
+                    )
+                    if (e.isCancelled()) {
+                        onDownloadCancelled(info, params, oldParams)
+                    } else {
+                        onDownloadFailed(info, params, oldParams, e)
+                    }
                 }
             }
 
-            fun onCancellationException(e: Exception) {
-                applicationScope.launch(ioDispatcher) {
-                    // после отмены корутины на вызове suspend функций будет брошен эксепшн ->
-                    // надо запустить в другом неотменённом скопе
-                    onException(e, unfinishedLocalUri)
-                }
+            fun onCancellationException(e: CancellationException) {
+                onException(e, unfinishedLocalUri)
             }
 
             class ServiceProgressListener(val type: Loading.Type) : ProgressListener() {
@@ -910,20 +911,25 @@ class DownloadService : Service() {
             if (subDirPath != other.subDirPath) return false
             if (targetHashInfo != other.targetHashInfo) return false
             if (skipIfDownloaded != other.skipIfDownloaded) return false
-            return deleteUnfinished == other.deleteUnfinished
+            if (replaceFile != other.replaceFile) return false
+            if (deleteUnfinished != other.deleteUnfinished) return false
+            return retryWithNotifier == other.retryWithNotifier
         }
 
         override fun hashCode(): Int {
             var result = super.hashCode()
             result = 31 * result + requestParams.hashCode()
-            result = 31 * result + notificationParams.hashCode()
+            result = 31 * result + (notificationParams?.hashCode() ?: 0)
             result = 31 * result + storageType.hashCode()
             result = 31 * result + (subDirPath?.hashCode() ?: 0)
             result = 31 * result + (targetHashInfo?.hashCode() ?: 0)
             result = 31 * result + skipIfDownloaded.hashCode()
+            result = 31 * result + replaceFile.hashCode()
             result = 31 * result + deleteUnfinished.hashCode()
+            result = 31 * result + retryWithNotifier.hashCode()
             return result
         }
+
 
         companion object {
 
