@@ -8,7 +8,7 @@ import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 internal fun Project.configureKotlinAndroid(
-    commonExtension: CommonExtension<*, *, *, *, *>,
+    commonExtension: CommonExtension<*, *, *, *, *, *>,
 ) {
     commonExtension.apply {
         compileSdk = BuildConfig.compileSdk
@@ -17,9 +17,6 @@ internal fun Project.configureKotlinAndroid(
             minSdk = BuildConfig.minSdk
         }
 
-        buildTypes {
-            register("debugMinified")
-        }
         buildFeatures {
             viewBinding = true
         }

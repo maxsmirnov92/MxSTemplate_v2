@@ -3,6 +3,7 @@ import com.android.build.api.dsl.ApkSigningConfig
 import java.io.FileInputStream
 import java.util.Locale
 import java.util.Properties
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 plugins {
@@ -71,7 +72,12 @@ fun getVersionName(gradle: Gradle, versionCode: Int): String {
     } else {
         "prod"
     }
-    return "1.0$versionCode.${postfix}_${getCurrentBuildType()}"
+    val buildType = getCurrentBuildType()
+    var result = "1.0$versionCode.${postfix}"
+    if (buildType.isNotEmpty()) {
+        result += "_$buildType"
+    }
+    return result
 }
 
 android {
@@ -137,16 +143,6 @@ android {
             isMinifyEnabled = false
             multiDexKeepProguard = file("multidex-config.pro")
             signingConfig = null
-        }
-        getByName("debugMinified") {
-            isDebuggable = true
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            multiDexKeepProguard = file("multidex-config.pro")
-//            configure<CrashlyticsExtension> {
-//                mappingFileUploadEnabled = true
-//            }
         }
         getByName("release") {
             isDebuggable = false
@@ -223,6 +219,12 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+//    sourceSets {
+//        named("main") {
+//            java.srcDir("")
+//        }
+//    }
 }
 
 dependencies {
@@ -279,6 +281,8 @@ dependencies {
 
     implementation(libs.treessence)
 
+    implementation(libs.r8)
+
     //firebase
 //    implementation(libs.firebase.analytics)
 //    implementation(libs.firebase.crashlytics)
@@ -315,17 +319,7 @@ fun loadSigningConfigForBuildType(propsFile: File, signingConfigName: String, sh
 }
 
 fun getCurrentFlavorName(): String {
-    val tskRequests = gradle.startParameter.taskRequests.toString()
-    val pattern = if (tskRequests.contains("assemble")) {
-        // to run ./gradlew assembleRelease to build APK
-        Pattern.compile("assemble(\\w+)(Release|Debug)")
-    } else if (tskRequests.contains("bundle")) {// to run ./gradlew bundleRelease to build .aab
-        Pattern.compile("bundle(\\w+)(Release|Debug)")
-    } else {
-        Pattern.compile("generate(\\w+)(Release|Debug)")
-    }
-
-    val matcher = pattern.matcher(tskRequests)
+    val matcher = getTasksMatcher()
     return if (matcher.find())
         matcher.group(1).lowercase(Locale.getDefault())
     else {
@@ -334,16 +328,7 @@ fun getCurrentFlavorName(): String {
 }
 
 fun getCurrentBuildType(): String {
-    val tskRequests = gradle.startParameter.taskRequests.toString()
-    val pattern = if (tskRequests.contains("assemble")) {
-        // to run ./gradlew assembleRelease to build APK
-        Pattern.compile("assemble(\\w+)(Release|Debug)")
-    } else {
-        Pattern.compile("generate(\\w+)(Release|Debug)")
-    }
-
-    val matcher = pattern.matcher(tskRequests)
-
+    val matcher = getTasksMatcher()
     return if (matcher.find())
         matcher.group(2).lowercase(Locale.getDefault())
     else {
@@ -356,4 +341,17 @@ fun getCurrentApplicationId(): String {
     return android.productFlavors.find { flavor ->
         flavor.name == currFlavor
     }?.applicationId ?: ""
+}
+
+fun getTasksMatcher(): Matcher {
+    val requests = gradle.startParameter.taskRequests.toString()
+    val pattern = if (requests.contains("assemble")) {
+        // to run ./gradlew assembleRelease to build APK
+        Pattern.compile("assemble(\\w+)(Release|Debug)")
+    } else if (requests.contains("bundle")) {// to run ./gradlew bundleRelease to build .aab
+        Pattern.compile("bundle(\\w+)(Release|Debug)")
+    } else {
+        Pattern.compile("generate(\\w+)(Release|Debug)")
+    }
+    return pattern.matcher(requests)
 }

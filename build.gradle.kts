@@ -22,5 +22,6 @@ buildscript {
         classpath(libs.android.gradle)
         classpath(libs.androidx.navigation.plugin)
         classpath(libs.huawei.agconnect.agcp)
+        classpath(libs.kotlin.compose)
     }
 }

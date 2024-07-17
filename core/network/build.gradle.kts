@@ -22,7 +22,6 @@ dependencies {
     implementation(libs.retrofit.kotlinx.serializationConverter)
     implementation(libs.okhttp.loggingInterceptor)
 
-    implementation(libs.json)
     implementation(libs.androidx.datastore.preferences.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.serialization.json.okio)

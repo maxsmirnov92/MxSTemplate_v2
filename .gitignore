@@ -1,11 +1,24 @@
-*.iml
-.gradle
-/local.properties
-/.idea
-!/.idea/codeStyles/*
 .DS_Store
-/build
 /captures
-.externalNativeBuild
+
+#################
+## Android Studio project files
+*.iml
+*.ipr
+*.iws
+
+.gradle
+.kotlin
+.idea/
+!.idea/codeStyles/*
+
+#################
+# generated files
+/build
 .cxx
+
+.externalNativeBuild
+/temp
+_mirror
+
 local.properties

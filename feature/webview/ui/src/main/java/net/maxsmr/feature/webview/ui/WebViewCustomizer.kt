@@ -2,15 +2,16 @@ package net.maxsmr.feature.webview.ui
 
 import android.net.Uri
 import android.text.TextUtils
+import androidx.annotation.Keep
 import net.maxsmr.commonutils.CHARSET_DEFAULT
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.content.FileFormat
-import net.maxsmr.core.domain.entities.feature.DoNotObfuscate
 import java.io.Serializable
 
 /**
  * Инкапсулирет задание свойств для [android.webkit.WebView]
  */
+@Keep
 class WebViewCustomizer private constructor(
     val title: String,
     val url: String,
@@ -19,7 +20,7 @@ class WebViewCustomizer private constructor(
     val changeTitleOnLoad: Boolean,
     // TODO заменить на отдельные части урлы
     val queryParameters: List<String>,
-): Serializable, DoNotObfuscate {
+): Serializable {
 
     fun buildUpon() = Builder()
         .setTitle(title)

@@ -22,11 +22,23 @@
 
 #-dontwarn pub.devrel.easypermissions.*
 
--repackageclasses ''
--allowaccessmodification
--keepattributes *Annotation*
--keepattributes InnerClasses
--optimizationpasses 3
+# Сохранение всех классов с аннотацией @Keep
+-keep @androidx.annotation.Keep class * { *; }
+
+# Отключение агрессивных оптимизаций (если необходимо)
+#-dontoptimize
+
+# Сохранение всех классов, используемых в рефлексии
+#-keepclassmembers class * {
+#    ** MODULE;
+#    ** Companion;
+#    *;
+#}
+
+# Сохранение всех классов с указанными методами
+#-keep class * {
+#    public <methods>;
+#}
 
 -keep public class * extends android.app.Activity
 -keep public class * extends android.app.Application
@@ -35,6 +47,11 @@
 -keep public class * extends android.content.ContentProvider
 -keep public class com.google.** {*;}
 -dontwarn java.lang.invoke.**
+
+# Сохранение всех JNI вызовов
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
 
 #To maintain custom components names that are used on layouts XML:
 -keep public class * extends android.view.View {
@@ -74,6 +91,37 @@
     public static <fields>;
 }
 
+# Исключение от обфускации и оптимизации классов R и их внутренних классов
+-keep class **.R
+-keep class **.R$* { *; }
+
+-keep class net.maxsmr.mxstemplate.R
+-keep class net.maxsmr.mxstemplate.R$* { *; }
+
+# Сохранение всех ViewBinding классов
+-keep class **ViewBinding { *; }
+-keepnames class * implements androidx.viewbinding.ViewBinding
+-keep class * implements androidx.viewbinding.ViewBinding { *; }
+
+# Сохранение всех классов, которые аннотированы @BindingAdapter и @Bindable
+-keepclassmembers class ** {
+    @androidx.databinding.BindingAdapter <methods>;
+    @androidx.databinding.Bindable <methods>;
+}
+
+# Исключение от обфускации и оптимизации классов ViewBinding и связанных ресурсов
+-keep class androidx.viewbinding.** { *; }
+-keep class androidx.databinding.** { *; }
+
+# Исключение от обфускации и оптимизации классов, используемых в DataBinding
+-keep class **BR { *; }
+-keep class **.databinding.** { *; }
+-keep class **.databinding.adapters.** { *; }
+
+# Исключение предупреждений
+-dontwarn androidx.databinding.**
+-dontwarn androidx.viewbinding.**
+
 #dagger
 -dontwarn com.google.errorprone.annotations.*
 
@@ -91,8 +139,6 @@
 -keep interface org.apache.**
 
 # OkHttp
--keepattributes Signature
--keepattributes *Annotation*
 -keep class okhttp3.** { *; }
 -keep interface okhttp3.** { *; }
 -dontwarn okhttp3.**
@@ -106,8 +152,6 @@
 # retrofit2
 -dontwarn retrofit2.**
 -keep class retrofit2.** { *; }
--keepattributes Signature
--keepattributes Exceptions
 -keepclasseswithmembers class * {
     @retrofit2.http.* <methods>;
 }
@@ -143,8 +187,6 @@
 -keep public class androidx.lifecycle.** {*;}
 -keepclasseswithmembers class androidx.lifecycle.** {*;}
 
--keep public class * extends net.maxsmr.core.domain.entities.feature.DoNotObfuscate
-
 # kotlinx.serialization
 # Keep `Companion` object fields of serializable classes.
 # This avoids serializer lookup through `getDeclaredClasses` as done for named companion objects.
@@ -173,7 +215,6 @@
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
 
-
 # Huawei
 -keep class com.huawei.agconnect.**{*;}
 -keep class com.huawei.hianalytics.**{*;}
@@ -183,20 +224,46 @@
 -keep public class com.huawei.location.nlp.network.** {*; }
 -keep class com.huawei.wisesecurity.ucs.**{*;}
 
+# Сохранение всех классов и методов библиотеки Gson
+-keep class com.google.gson.** { *; }
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * extends com.google.gson.reflect.TypeToken
+
+# Сохранение всех классов и методов библиотеки org.json
+-keep class org.json.** { *; }
+-dontwarn org.json.**
+
+# Сохранение сериализуемых классов
+-keep class * implements java.io.Serializable { *; }
+
 #Common rules
 -ignorewarnings
 -repackageclasses
 -verbose
 -keepparameternames
--keepattributes Signature,*Annotation*,EnclosingMethod,SourceFile,LineNumberTable
+
+# Сохранение аннотаций
+-keepattributes *Annotation*
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
+
+# Сохранение всех метаданных
+-keepattributes Signature
+-keepattributes *Annotation*
+-keepattributes SourceFile,LineNumberTable
+
+-keepattributes Exceptions
+
 -keepclassmembers,includedescriptorclasses class * { native <methods>; }
 -keepclasseswithmembernames,includedescriptorclasses class * {native <methods>;}
 -optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
 -optimizationpasses 5
 -allowaccessmodification
 -dontusemixedcaseclassnames
--dontskipnonpubliclibraryclasses
--dontpreverify
+#-dontskipnonpubliclibraryclasses
+#-dontpreverify
 
 #Google and Java rules
 -dontwarn android.support.**
@@ -214,7 +281,6 @@
 -dontwarn android.**
 -keep class androidx.** { *; }
 -dontwarn androidx.**
--keep class * extends android.app.Activity
 -keep class androidx.core.app.CoreComponentFactory { *; }
 -keepnames class com.google.vr.ndk.** { *; }
 -keepnames class com.google.vr.sdk.** { *; }
