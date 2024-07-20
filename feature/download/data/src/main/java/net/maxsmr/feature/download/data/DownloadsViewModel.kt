@@ -90,7 +90,7 @@ class DownloadsViewModel @Inject constructor(
         super.onInitialized()
         viewModelScope.launch {
             downloadManager.successAddedToQueueEvents.collect {
-                it.targetResourceName.takeIf { it.isNotEmpty() }?.let { name ->
+                it.targetResourceName.takeIf { res -> res.isNotEmpty() }?.let { name ->
                     showSnackbar(
                         TextMessage(
                             R.string.download_toast_success_add_to_queue_message_format,

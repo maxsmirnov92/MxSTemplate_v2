@@ -29,7 +29,7 @@ data class DownloadInfo(
 ) : Serializable {
 
     @Ignore
-    val nameWithExt = appendExtension(name, extension, false)
+    val nameWithExt = name.appendExtension(extension, false)
 
     @Ignore
     val localUri = status.localUri

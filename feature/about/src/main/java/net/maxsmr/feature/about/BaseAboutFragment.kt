@@ -58,9 +58,10 @@ abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<V
             description.logoSize?.takeIf {
                 it.width > 0 && it.height > 0
             }?.let {
+                val res = requireContext().resources
                 ivLogo.updateLayoutParams<ViewGroup.LayoutParams> {
-                    this.width = convertAnyToPx(it.width.toFloat(), context = requireContext()).toInt()
-                    this.height = convertAnyToPx(it.height.toFloat(), context = requireContext()).toInt()
+                    this.width = res.convertAnyToPx(it.width.toFloat()).toInt()
+                    this.height = res.convertAnyToPx(it.height.toFloat()).toInt()
                 }
             }
 
@@ -104,7 +105,7 @@ abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<V
     }
 
     override fun onAddressClick(address: PaymentAddress) {
-        copyToClipboard(requireContext(), "payment address", address.address)
+        requireContext().copyToClipboard("payment address", address.address)
         viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_copied_to_clipboard_message))
     }
 

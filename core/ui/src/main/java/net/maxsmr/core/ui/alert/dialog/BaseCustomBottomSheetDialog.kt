@@ -127,8 +127,8 @@ abstract class BaseCustomBottomSheetDialog(
         fun Dialog.setExpanded() {
             val bottomSheet = findViewById<View>(com.google.android.material.R.id.design_bottom_sheet) ?: return
             val height = (bottomSheet.resources.displayMetrics.heightPixels
-                    - getActionBarHeight(bottomSheet.context)
-                    - if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) getStatusBarHeight(bottomSheet.context) else 0)
+                    - bottomSheet.context.getActionBarHeight()
+                    - if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) bottomSheet.resources.getStatusBarHeight() else 0)
             BottomSheetBehavior.from(bottomSheet).peekHeight = height
             bottomSheet.updateLayoutParams {
                 this.height = height

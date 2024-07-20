@@ -145,11 +145,11 @@ class DownloadService : Service() {
     }
 
     private val successSoundUri: Uri by lazy {
-        getUriFromRawResource(context, R.raw.sound_download_success)
+        context.getUriFromRawResource(R.raw.sound_download_success)
     }
 
     private val failedSoundUri: Uri by lazy {
-        getUriFromRawResource(context, R.raw.sound_download_failed)
+        context.getUriFromRawResource(R.raw.sound_download_failed)
     }
 
     private val successNotificationChannel: NotificationWrapper.ChannelParams by lazy {

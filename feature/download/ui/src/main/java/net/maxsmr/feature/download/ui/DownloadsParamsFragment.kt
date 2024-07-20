@@ -215,8 +215,8 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
         if (wasResumedOnce) {
             if (requireActivity().currentFocus == null) {
                 // костыль для борьбы с пустым пространством на месте клавиатуры
-                showKeyboard(binding.etUrl)
-                hideKeyboard(requireActivity(), flags = WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
+                binding.etUrl.showKeyboard()
+                requireActivity().hideKeyboard(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
             }
         } else {
             wasResumedOnce = true

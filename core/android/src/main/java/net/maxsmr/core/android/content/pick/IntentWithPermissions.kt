@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import net.maxsmr.commonutils.flatten
-import net.maxsmr.permissionchecker.PermissionsHelper
 
 @Parcelize
 class IntentWithPermissions(

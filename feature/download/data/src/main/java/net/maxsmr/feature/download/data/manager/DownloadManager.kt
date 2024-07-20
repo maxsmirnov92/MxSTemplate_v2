@@ -749,7 +749,7 @@ class DownloadManager @Inject constructor(
 
         @Synchronized
         fun addItem(item: QueueItem): Boolean {
-            createFile(FILE_NAME_FORMAT.format(item.id), queueDir.absolutePath).openOutputStream()?.let {
+            createFile(FILE_NAME_FORMAT.format(item.id), queueDir.absolutePath)?.openOutputStream()?.let {
                 return it.writeObject(item).also { result ->
                     if (result) {
                         logger.d("Added item with id: ${item.id}")

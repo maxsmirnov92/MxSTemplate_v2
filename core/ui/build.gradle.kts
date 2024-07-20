@@ -9,8 +9,10 @@ android {
 }
 
 dependencies {
-    api("core_ui.libs:recyclerview-lib-debug-1.1.2.2@aar")
-    api("core_utils.libs:commonutils-jre-1.0@jar")
+    // TODO по непонятным причинам api из core_utils через core_android не видит в этом модуле
+    api("core_ui.libs:recyclerview-lib-release-1.1.2.2@aar")
+    api("core_utils.libs:commonutils-jre-1.1@jar")
+
     implementation(project(":core:di"))
     implementation(project(":core:android"))
     implementation(project(":designsystem:shared_res"))

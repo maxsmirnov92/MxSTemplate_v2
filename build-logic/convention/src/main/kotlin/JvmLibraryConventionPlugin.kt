@@ -14,6 +14,7 @@ class JvmLibraryConventionPlugin : Plugin<Project> {
             configureKotlinJvm()
 
             dependencies {
+//                add("api", fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
                 add("testImplementation", libs.findLibrary("junit4").get())
             }
         }

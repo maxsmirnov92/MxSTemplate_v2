@@ -29,10 +29,4 @@ class HashInfo(
     override fun toString(): String {
         return "HashInfo(algorithm='$algorithm', hash='$hash')"
     }
-
-    companion object {
-
-        // FIXME все работают медленно на больших файлах
-
-    }
 }

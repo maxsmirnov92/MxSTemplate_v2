@@ -8,7 +8,6 @@ import net.maxsmr.commonutils.text.removeExtension
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.dialog.BaseCustomBottomSheetDialog.Companion.ANSWER_TAG_CLOSE
 import net.maxsmr.core.ui.alert.representation.asCommonWrapBottomSheetDialog
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
@@ -33,9 +32,9 @@ class ReleaseNotesFragmentDelegate(
             val lastCode: Int? = repo.getLastReleaseNoteVersionCode()
             if (lastCode == null || lastCode < versionCode) {
                 noteAssetsNames.find {
-                    removeExtension(it).split("_").lastOrNull()?.toIntOrNull() == versionCode
+                    it.removeExtension().split("_").lastOrNull()?.toIntOrNull() == versionCode
                 }?.let { assetName ->
-                    val message = readStringsFromAsset(context, noteAssetsFolderName + File.separator + assetName)
+                    val message = context.assets.readStringsFromAsset(noteAssetsFolderName + File.separator + assetName)
                         .filter { it.isNotEmpty() }.joinToString(System.lineSeparator())
                     if (message.isNotEmpty()) {
                         viewModel.showCustomDialog(DIALOG_TAG_RELEASE_NOTES) {

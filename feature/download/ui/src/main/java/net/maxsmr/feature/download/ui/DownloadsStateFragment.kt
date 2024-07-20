@@ -84,12 +84,6 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         touchHelper.attachToRecyclerView(binding.rvDownloads)
         infoAdapter.registerItemsEventsListener(this)
 
-        // FIXME декоратор не работает?
-//        binding.rvDownloads.addItemDecoration(
-//            DividerItemDecoration.Builder(requireContext())
-//                .setDivider(Divider.Space(16), DividerItemDecoration.Mode.ALL_EXCEPT_LAST)
-//                .build()
-//        )
         viewModel.queueNames.observe {
             binding.tvQueueCount.text = it.size.toString()
             binding.containerQueue.isVisible = it.isNotEmpty()
@@ -245,7 +239,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
                             AppClickableSpan(
                                 true
                             ) {
-                                copyToClipboard(requireContext(), "url", params.requestParams.url)
+                                requireContext().copyToClipboard("url", params.requestParams.url)
                                 viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message))
                             }
                         )))

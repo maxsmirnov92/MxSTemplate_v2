@@ -51,7 +51,7 @@ abstract class DownloadServiceStorage(
                 "$name ${uniquePostfix(index)}"
             } else {
                 "${name.substringBeforeLast('.')} ${uniquePostfix(index)}." +
-                        getExtension(name)
+                        name.getExtension()
             }
         }
 

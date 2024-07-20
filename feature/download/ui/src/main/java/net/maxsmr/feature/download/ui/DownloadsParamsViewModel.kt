@@ -25,7 +25,6 @@ import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
 import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStreamOrThrow
 import net.maxsmr.commonutils.openBatteryOptimizationSettings
-import net.maxsmr.commonutils.openRawResourceOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
@@ -355,8 +354,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                     resource.getOrNull()?.let {
                         try {
                             // ассеты не допускаются в либах
-                            openRawResourceOrThrow(context, R.raw.download_params_model_sample).let { assetStream ->
-                                it.writeFromStreamOrThrow(context.contentResolver, assetStream)
+                            context.resources.openRawResource(R.raw.download_params_model_sample).let { resStream ->
+                                it.writeFromStreamOrThrow(context.contentResolver, resStream)
 
                                 snackbarTextMessage = TextMessage(
                                     R.string.download_alert_params_sample_copy_success_format,

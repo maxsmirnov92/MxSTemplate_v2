@@ -12,8 +12,8 @@ android {
 }
 
 dependencies {
-    api("core_android.libs:commonutils-debug-1.1.1.0@aar")
-    api("core_android.libs:permissionchecker-debug-1.2.1.0@aar")
+    api("core_android.libs:commonutils-release-1.1.1.1@aar")
+    api("core_android.libs:permissionchecker-release-1.2.1.0@aar")
 
     implementation(project(":core:di"))
     implementation(project(":core:network"))

@@ -55,7 +55,7 @@ abstract class BaseCustomizableWebViewModel(
 
     fun onCopyLinkAction(context: Context) {
         currentUrl.value?.let {
-            copyToClipboard(context, context.getString(R.string.webview_url_link_title), it.toString())
+            context.copyToClipboard(context.getString(R.string.webview_url_link_title), it.toString())
             showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message))
         }
     }

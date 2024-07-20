@@ -7,7 +7,7 @@ plugins {
 }
 
 dependencies {
-    api("core_utils.libs:commonutils-jre-1.0@jar")
+    api("core_utils.libs:commonutils-jre-1.1@jar")
 
     implementation(libs.decoro)
     implementation(libs.picasso)

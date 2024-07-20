@@ -24,7 +24,7 @@ abstract class BaseDownloadsPagerFragment : BaseNavigationFragment<DownloadsView
     private val pageChangeCallback: ViewPager2.OnPageChangeCallback = object : ViewPager2.OnPageChangeCallback() {
         override fun onPageSelected(position: Int) {
             super.onPageSelected(position)
-            hideKeyboard(requireActivity(), flags = WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
+            requireActivity().hideKeyboard(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
         }
     }
 

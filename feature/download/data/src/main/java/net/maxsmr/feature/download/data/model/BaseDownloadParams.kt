@@ -6,6 +6,7 @@ import net.maxsmr.commonutils.media.getMimeTypeFromUrl
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.text.appendExtension
 import net.maxsmr.commonutils.text.getExtension
+import net.maxsmr.commonutils.text.removeExtension
 import java.io.Serializable
 
 /**
@@ -17,14 +18,14 @@ open class BaseDownloadParams(
     private val withExtFromContentType: Boolean = true
 ) : Serializable {
 
-    val resourceNameWithoutExt get() = resourceName.substringBeforeLast('.')
+    val resourceNameWithoutExt get() = resourceName.removeExtension()
 
     /**
      * Расширение на основе исходного или обновлённого [resourceMimeType]
      */
     val extension: String
         get() {
-            val extFromName = getExtension(resourceName)
+            val extFromName = resourceName.getExtension()
             val extFromType = if (withExtFromContentType || extFromName.isEmpty()) {
                 getExtensionFromMimeType(resourceMimeType).takeIf { it.isNotEmpty() }
             } else {
@@ -39,11 +40,11 @@ open class BaseDownloadParams(
     /**
      * @return целевое имя ресурса с [extension]
      */
-    val targetResourceName get() = appendExtension(resourceName, extension)
+    val targetResourceName get() = resourceName.appendExtension(extension)
 
     /**
      * опциональное MimeType ресурса, задаётся как запасной при отсутствии [HEADER_CONTENT_TYPE]
-     * или форсируется его текущее значение при ignoreHeaderMimeType=true
+     * или форсируется его текущее значение при withExtFromContentType=true
      */
     var resourceMimeType: String = EMPTY_STRING
         set(value) {

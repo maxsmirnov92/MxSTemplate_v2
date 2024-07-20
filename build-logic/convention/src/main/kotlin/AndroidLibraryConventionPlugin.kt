@@ -22,6 +22,8 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
                 defaultConfig.vectorDrawables.useSupportLibrary = true
             }
             dependencies {
+//                Direct local .aar file dependencies are not supported when building an AAR.
+//                add("api", fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
                 add("coreLibraryDesugaring", libs.findLibrary("android.desugarJdkLibs").get())
 //                add("implementation", project(":core:kotlinx_datetime:common"))
                 add("testImplementation", kotlin("test"))

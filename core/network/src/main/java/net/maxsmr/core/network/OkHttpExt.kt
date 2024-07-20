@@ -8,9 +8,9 @@ import net.maxsmr.commonutils.copyStreamOrThrow
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.commonutils.text.charsetForNameOrNull
 import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
-import net.maxsmr.core.utils.charsetForNameOrNull
 import okhttp3.*
 import okhttp3.internal.readBomAsCharset
 import okio.Buffer

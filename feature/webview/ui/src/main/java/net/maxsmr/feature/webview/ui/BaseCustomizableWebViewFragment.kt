@@ -17,12 +17,12 @@ import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.commonutils.text.charsetForNameOrNull
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation
-import net.maxsmr.core.utils.charsetForNameOrNull
 import net.maxsmr.feature.webview.data.client.BrowserInterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData
