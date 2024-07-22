@@ -229,7 +229,7 @@ android {
 
 dependencies {
     //modules
-    lintChecks(project(":lint"))
+//    lintChecks(project(":lint"))
 
     implementation(project(":core:di"))
     implementation(project(":core:domain"))

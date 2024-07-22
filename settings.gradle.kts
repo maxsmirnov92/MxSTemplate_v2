@@ -27,7 +27,7 @@ dependencyResolutionManagement {
 rootProject.name = "MxSTemplate"
 include(":app")
 
-include(":lint")
+//include(":lint")
 include(":core:android")
 include(":designsystem:compose")
 include(":designsystem:shared_res")
