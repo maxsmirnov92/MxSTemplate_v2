@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -141,6 +142,18 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
+    suspend fun getLastCheckInAppUpdate(): Long {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_LAST_CHECK_IN_APP_UPDATE]
+        }.firstOrNull() ?: 0L
+    }
+
+    suspend fun setCurrentLastCheckInAppUpdate() {
+        dataStore.edit { prefs ->
+            prefs[FIELD_LAST_CHECK_IN_APP_UPDATE] = System.currentTimeMillis()
+        }
+    }
+
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
@@ -150,5 +163,6 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_ASKED_APP_DETAILS = booleanPreferencesKey("askedAppDetails")
         private val FIELD_RATE_APP_INFO = stringPreferencesKey("rateAppInfo")
         private val FIELD_LAST_RELEASE_NOTE_VERSION_CODE = intPreferencesKey("lastReleaseNoteVersionCode")
+        private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")
     }
 }

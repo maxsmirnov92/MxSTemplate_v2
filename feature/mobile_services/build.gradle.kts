@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":core:utils"))
     implementation(project(":core:android"))
     implementation(project(":core:ui"))
+    implementation(project(":feature:preferences:data"))
 
     // ### В обоих реализациях можно обращаться к play-services-location
     implementation(libs.google.location)

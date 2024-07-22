@@ -26,7 +26,7 @@ import java.lang.ref.WeakReference
 /**
  * Делегат для любого типа [Fragment] с функцией отображения алертов;
  * 1. Использование "из коробки" при наличии прикреплённой [BaseViewModel]:
- * подразумевается создание в onViewCreated!
+ * подразумевается первое использование не ранее onViewCreated!
  * 2. Использование по месту при связывании целевого фрагмента с [viewModel], диалоги с которой он должен обрабатывать
  */
 class AlertFragmentDelegate<VM: BaseViewModel>(

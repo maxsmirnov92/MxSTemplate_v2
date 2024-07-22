@@ -50,7 +50,7 @@ class LiveQueue<E : LiveQueue.QueueItem>(
     override fun remove(element: E): Boolean {
         return queue.remove(element).also {
             if (it) {
-                applyToHead()
+                applyToHead(element, true)
             } else {
                 // изменений в очереди не было
                 // (возможно, при isOneShot этот итем уже был убран)
@@ -122,7 +122,10 @@ class LiveQueue<E : LiveQueue.QueueItem>(
         }
     }
 
-    private fun applyToHead()  {
+    private fun applyToHead(
+        removedItem: E? = null,
+        checkHead: Boolean = false,
+    ) {
         val peekValue = peek()
         if (peekValue != null && peekValue.isOneShot) {
             shouldNotify = false
@@ -130,6 +133,15 @@ class LiveQueue<E : LiveQueue.QueueItem>(
             shouldNotify = true
         }
         if (shouldNotify) {
+            if (checkHead) {
+                val headValue = headLiveData.value
+                if (removedItem != headValue && headValue?.isOneShot == true) {
+                    // очередь была изменена, но oneShot в голове пока висит -
+                    // не сбиваем, чтобы не вызвался hide до срабатывания своего колбека
+                    // (если только сейчас заремувлен не был он сам)
+                    return
+                }
+            }
             // не использовать post, т.к. кто-то может успеть вмешаться,
             // например, при dismiss
             headLiveData.setValueIfNew(peekValue)

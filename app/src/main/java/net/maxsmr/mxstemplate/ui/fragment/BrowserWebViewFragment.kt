@@ -2,9 +2,6 @@ package net.maxsmr.mxstemplate.ui.fragment
 
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
-import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.di.DI_NAME_VERSION_CODE
-import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_IN_APP_UPDATES
 import net.maxsmr.feature.about.ReleaseNotesFragmentDelegate
@@ -13,12 +10,12 @@ import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.mobile_services.IMobileServicesAvailability
 import net.maxsmr.mobile_services.update.ui.InAppUpdatesFragmentDelegate
 import net.maxsmr.mxstemplate.BuildConfig
+import net.maxsmr.mxstemplate.CHECK_IN_APP_UPDATES_INTERVAL
 import net.maxsmr.mxstemplate.RELEASE_NOTES_ASSETS_FOLDER_NAME
 import net.maxsmr.mxstemplate.mobileBuildType
 import net.maxsmr.mxstemplate.ui.BrowserWebViewModel
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
-import javax.inject.Named
 
 @AndroidEntryPoint
 class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewModel>() {
@@ -30,6 +27,9 @@ class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewMod
     private val appUpdateDelegate by lazy {
         InAppUpdatesFragmentDelegate(
             this,
+            viewModel,
+            cacheRepo,
+            CHECK_IN_APP_UPDATES_INTERVAL,
             REQUEST_CODE_IN_APP_UPDATES,
             availability,
             mobileBuildType
@@ -38,8 +38,10 @@ class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewMod
 
     private val releaseNotesDelegate by lazy {
         ReleaseNotesFragmentDelegate(
-            versionCode,
-            versionName,
+            this,
+            viewModel,
+            BuildConfig.VERSION_CODE,
+            BuildConfig.VERSION_NAME,
             RELEASE_NOTES_ASSETS_FOLDER_NAME,
             requireContext().assets.list(RELEASE_NOTES_ASSETS_FOLDER_NAME)?.toSet().orEmpty(),
             cacheRepo
@@ -54,13 +56,4 @@ class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewMod
 
     @Inject
     lateinit var cacheRepo: CacheDataStoreRepository
-
-    @Inject
-    @Named(DI_NAME_VERSION_CODE)
-    @JvmField
-    var versionCode: Int = 0
-
-    @Inject
-    @Named(DI_NAME_VERSION_NAME)
-    lateinit var versionName: String
 }

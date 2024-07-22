@@ -239,11 +239,14 @@ abstract class BaseViewModel(
         data: SnackbarExtraData = SnackbarExtraData(),
         answer: Alert.Answer? = null,
         uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None,
+        priority: AlertQueueItem.Priority = AlertQueueItem.Priority.NORMAL,
+        putInQueueHead: Boolean = false
     ) {
         AlertSnackbarBuilder(SNACKBAR_TAG_QUEUE)
             .setMessage(message)
             .setExtraData(data)
             .setUniqueStrategy(uniqueStrategy)
+            .setPriority(priority, putInQueueHead)
             .setOneShot(data.length != SnackbarExtraData.SnackbarLength.INDEFINITE)
             .also { b ->
                 answer?.let {

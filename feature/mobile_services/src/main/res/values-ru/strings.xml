@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="mobile_services_toast_update_not_started_message">Загрузка обновления приложения не была начата</string>
-    <string name="mobile_services_toast_update_downloading_message">Обновление приложения загружается</string>
+    <string name="mobile_services_toast_update_download_not_started_message">Загрузка обновления приложения не была начата</string>
+    <string name="mobile_services_toast_update_failed_message">Обновление приложения неудачно</string>
+    <string name="mobile_services_toast_update_cancelled_message">Обновление приложения отменено</string>
+    <string name="mobile_services_snackbar_update_downloading_message">Обновление приложения загружается</string>
     <string name="mobile_services_snackbar_update_downloaded_message">Обновление готово к установке</string>
     <string name="mobile_services_snackbar_update_downloaded_action">Завершить</string>
 </resources>

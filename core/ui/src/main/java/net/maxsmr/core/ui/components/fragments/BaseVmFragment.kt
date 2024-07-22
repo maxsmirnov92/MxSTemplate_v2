@@ -75,7 +75,9 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         DialogDeniedPermissionsHandler()
     }
 
-    private var alertFragmentDelegate: AlertFragmentDelegate<VM>? = null
+    private val alertFragmentDelegate: AlertFragmentDelegate<VM> by lazy {
+        AlertFragmentDelegate(this, viewModel)
+    }
 
     final override fun onCreateView(
         inflater: LayoutInflater,
@@ -85,24 +87,28 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
 
     final override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val delegate = AlertFragmentDelegate(this, viewModel)
-        alertFragmentDelegate = delegate
 
         observeNetworkConnectionHandler()
-        handleAlerts(delegate)
+        handleAlerts(alertFragmentDelegate)
         handleEvents()
 
         delegates.forEach {
-            it.onViewCreated(this, viewModel, delegate)
+            it.onViewCreated(alertFragmentDelegate)
         }
 
         onViewCreated(view, savedInstanceState, viewModel)
     }
 
+    override fun onResume() {
+        super.onResume()
+        delegates.forEach {
+            it.onResume()
+        }
+    }
+
     @CallSuper
     protected open fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
         viewModel.handleAlerts(delegate)
-
     }
 
     @CallSuper
@@ -116,7 +122,6 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         delegates.forEach {
             it.onViewDestroyed()
         }
-        alertFragmentDelegate = null
     }
 
     /**
@@ -150,19 +155,19 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
      * Вызов обёрнутой функции привязки для показа диалогов только при проинициализированном [AlertFragmentDelegate]
      */
     fun bindAlertDialog(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
-        alertFragmentDelegate?.bindAlertDialog(tag, representationFactory)
+        alertFragmentDelegate.bindAlertDialog(tag, representationFactory)
     }
 
     fun bindAlertSnackbar(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
-        alertFragmentDelegate?.bindAlertSnackbar(tag, representationFactory)
+        alertFragmentDelegate.bindAlertSnackbar(tag, representationFactory)
     }
 
     fun bindAlertToast(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
-        alertFragmentDelegate?.bindAlertToast(tag, representationFactory)
+        alertFragmentDelegate.bindAlertToast(tag, representationFactory)
     }
 
     fun bindAlert(alertQueue: AlertQueue, tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
-        alertFragmentDelegate?.bindAlert(alertQueue, tag, representationFactory)
+        alertFragmentDelegate.bindAlert(alertQueue, tag, representationFactory)
     }
 
     /**
@@ -175,7 +180,7 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         cancelable: Boolean = false,
         onCancel: (() -> Unit)? = null,
     ) {
-        alertFragmentDelegate?.bindDefaultProgress(tag, cancelable, onCancel)
+        alertFragmentDelegate.bindDefaultProgress(tag, cancelable, onCancel)
     }
 
     @JvmOverloads

@@ -1,6 +1,5 @@
 package net.maxsmr.feature.rate
 
-import android.app.Activity
 import androidx.annotation.CallSuper
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
@@ -19,27 +18,21 @@ import net.maxsmr.mobile_services.MobileBuildType
  * @param availability null, если использование [ReviewManager] не предусматривается
  */
 abstract class BaseRateAppFragmentDelegate(
+    override val fragment: BaseVmFragment<*>,
+    override val viewModel: BaseViewModel,
     private val availability: IMobileServicesAvailability?,
     private val mobileBuildType: MobileBuildType,
     private val repo: CacheDataStoreRepository,
 ) : IFragmentDelegate, ReviewManager.Callbacks {
 
-    protected var viewModel: BaseViewModel? = null
-    protected var activity: Activity? = null
     private var reviewManager: ReviewManager? = null
 
     override fun onViewCreated(
-        fragment: BaseVmFragment<*>,
-        viewModel: BaseViewModel,
         delegate: AlertFragmentDelegate<*>,
     ) {
-        val activity = fragment.requireActivity()
-
-        this.viewModel = viewModel
-        this.activity = activity
         this.reviewManager = availability?.let {
             ReviewManager(
-                activity,
+                fragment.requireActivity(),
                 availability,
                 this
             )
@@ -64,13 +57,11 @@ abstract class BaseRateAppFragmentDelegate(
 
     override fun onViewDestroyed() {
         super.onViewDestroyed()
-        viewModel = null
-        activity = null
         reviewManager = null
     }
 
     override fun onReviewSuccess() {
-        viewModel?.viewModelScope?.launch {
+        viewModel.viewModelScope.launch {
             repo.setAppRated()
         }
     }
@@ -100,7 +91,7 @@ abstract class BaseRateAppFragmentDelegate(
      * Показ внутриаппового диалога оценки
      */
     private fun showRateDialog() {
-        viewModel?.showCustomDialog(DIALOG_TAG_RATE_APP) {
+        viewModel.showCustomDialog(DIALOG_TAG_RATE_APP) {
             setTitle(R.string.rate_dialog_app_title)
             setAnswers(
                 Alert.Answer(R.string.rate_dialog_app_button_positive),

@@ -11,4 +11,5 @@ class MainAboutViewModel(state: SavedStateHandle): AboutViewModel(state) {
         MainAboutFragmentArgs.fromSavedStateHandle(state).isForRate
     } else {
         false
-    }}
+    }
+}

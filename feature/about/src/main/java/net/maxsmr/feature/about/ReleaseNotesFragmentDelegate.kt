@@ -15,6 +15,8 @@ import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import java.io.File
 
 class ReleaseNotesFragmentDelegate(
+    override val fragment: BaseVmFragment<*>,
+    override val viewModel: BaseViewModel,
     private val versionCode: Int,
     private val versionName: String,
     private val noteAssetsFolderName: String,
@@ -22,11 +24,7 @@ class ReleaseNotesFragmentDelegate(
     private val repo: CacheDataStoreRepository,
 ) : IFragmentDelegate {
 
-    override fun onViewCreated(
-        fragment: BaseVmFragment<*>,
-        viewModel: BaseViewModel,
-        delegate: AlertFragmentDelegate<*>,
-    ) {
+    override fun onViewCreated(delegate: AlertFragmentDelegate<*>) {
         val context = fragment.requireContext()
         viewModel.viewModelScope.launch {
             val lastCode: Int? = repo.getLastReleaseNoteVersionCode()

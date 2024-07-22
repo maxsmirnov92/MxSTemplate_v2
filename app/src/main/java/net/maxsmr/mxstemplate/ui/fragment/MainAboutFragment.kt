@@ -5,7 +5,6 @@ import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.navArgs
 import dagger.hilt.android.AndroidEntryPoint
-import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.feature.about.AboutViewModel
 import net.maxsmr.feature.about.BaseAboutFragment
@@ -30,7 +29,7 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
             R.mipmap.ic_launcher,
             null,
             getString(R.string.app_name),
-            versionName,
+            BuildConfig.VERSION_NAME,
             donateInfo = AboutAppDescription.DonateInfo(
                 addresses = BuildConfig.DEV_PAYMENT_ADDRESSES.map { PaymentAddress(it.key, it.value) }
             ),
@@ -50,6 +49,8 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
 
     override val rateDelegate by lazy {
         MainRateAppFragmentDelegate(
+            this,
+            viewModel,
             null,
             mobileBuildType,
             cacheRepo
@@ -58,10 +59,6 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
-
-    @Inject
-    @Named(DI_NAME_VERSION_NAME)
-    lateinit var versionName: String
 
     @Inject
     lateinit var cacheRepo: CacheDataStoreRepository

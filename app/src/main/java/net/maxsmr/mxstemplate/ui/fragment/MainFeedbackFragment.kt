@@ -22,6 +22,8 @@ class MainFeedbackFragment: BaseFeedbackFragment<MainFeedbackViewModel>() {
 
     private val rateDelegate by lazy {
         MainRateAppFragmentDelegate(
+            this,
+            viewModel,
             null,
             mobileBuildType,
             cacheRepo
