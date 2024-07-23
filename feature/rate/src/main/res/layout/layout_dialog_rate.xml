@@ -15,7 +15,7 @@
         android:layout_marginBottom="16dp"
         android:textColor="@color/black"
         android:textSize="18sp"
-        app:fontFamily="@font/roboto_bold"
+        app:fontFamily="@font/tektur_narrow_bold"
         tools:text="@string/rate_dialog_app_title" />
 
     <androidx.appcompat.widget.AppCompatRatingBar
@@ -56,7 +56,7 @@
             android:layout_weight="1"
             android:textAllCaps="false"
             android:textColor="@color/azure"
-            app:fontFamily="@font/roboto_bold"
+            app:fontFamily="@font/tektur_narrow_bold"
             tools:text="@string/rate_dialog_app_button_positive" />
     </LinearLayout>
 </LinearLayout>

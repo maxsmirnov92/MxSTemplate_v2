@@ -8,11 +8,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import net.maxsmr.designsystem.shared_res.R
 
-val robotoFontFamily = FontFamily(
-    Font(R.font.ttf_roboto_light, FontWeight.Light),
-    Font(R.font.ttf_roboto_regular, FontWeight.Normal),
-    Font(R.font.ttf_roboto_medium, FontWeight.Medium),
-    Font(R.font.ttf_roboto_bold, FontWeight.Bold),
+val tekturNarrowFontFamily = FontFamily(
+    Font(R.font.ttf_tektur_narrow_regular, FontWeight.Normal),
+    Font(R.font.ttf_tektur_narrow_medium, FontWeight.Medium),
+    Font(R.font.ttf_tektur_narrow_bold, FontWeight.Bold),
 )
 
 @Immutable

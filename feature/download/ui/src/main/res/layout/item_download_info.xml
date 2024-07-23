@@ -24,7 +24,7 @@
             android:ellipsize="end"
             android:maxLines="3"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            app:fontFamily="@font/roboto_italic"
+            android:textStyle="italic"
             tools:text="downloadName\n\n\n\n" />
 
         <LinearLayout

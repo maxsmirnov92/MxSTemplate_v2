@@ -32,8 +32,8 @@
         <item name="buttonStyle">@style/Button</item>
         <item name="android:textColorPrimary">@color/textColorPrimary</item>
         <!--     Базовый шрифт для всего аппа   -->
-        <item name="android:fontFamily">@font/roboto_regular</item>
-        <item name="fontFamily">@font/roboto_regular</item>
+        <item name="android:fontFamily">@font/tektur_narrow_regular</item>
+        <item name="fontFamily">@font/tektur_narrow_regular</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

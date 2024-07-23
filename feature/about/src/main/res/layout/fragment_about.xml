@@ -62,7 +62,7 @@
                     android:layout_marginTop="14dp"
                     android:gravity="center"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
-                    app:fontFamily="@font/roboto_bold"
+                    app:fontFamily="@font/tektur_narrow_bold"
                     tools:text="App Name" />
 
                 <TextView

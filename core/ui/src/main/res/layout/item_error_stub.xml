@@ -27,7 +27,7 @@
             android:gravity="center"
             android:textColor="@color/textColorPrimary"
             android:textSize="18sp"
-            app:fontFamily="@font/roboto_medium"
+            app:fontFamily="@font/tektur_narrow_medium"
             tools:text="Не удалось загрузить данные" />
 
         <TextView

@@ -37,7 +37,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
                     android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                    app:fontFamily="@font/roboto_bold"
+                    app:fontFamily="@font/tektur_narrow_bold"
                     tools:text="5" />
 
                 <ImageButton
