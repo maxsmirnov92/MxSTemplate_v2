@@ -9,7 +9,7 @@ import net.maxsmr.commonutils.SendAction
 import net.maxsmr.commonutils.openDocument
 import net.maxsmr.commonutils.openEmailIntent
 import net.maxsmr.commonutils.openSendDataIntent
-import net.maxsmr.commonutils.openSystemBrowser
+import net.maxsmr.commonutils.openViewUrl
 
 @JvmOverloads
 fun Context.openEmailIntentWithToastError(
@@ -92,11 +92,11 @@ fun Context.openDocumentWithToastError(
 }
 
 @JvmOverloads
-fun Context.openSystemBrowserWithToastError(
+fun Context.openViewUrlWithToastError(
     uri: String,
     mimeType: String? = null,
     flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
     options: Bundle? = null,
-): Boolean = openSystemBrowser(uri, mimeType, flags, options) {
+): Boolean = openViewUrl(uri, mimeType, flags, options) {
     Toast.makeText(this, R.string.error_intent_open_url, Toast.LENGTH_SHORT).show()
 }

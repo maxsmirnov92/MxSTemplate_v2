@@ -6,6 +6,7 @@ import androidx.annotation.Keep
 import net.maxsmr.commonutils.CHARSET_DEFAULT
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.content.FileFormat
+import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import java.io.Serializable
 
 /**
@@ -18,8 +19,7 @@ class WebViewCustomizer private constructor(
     val data: WebViewDataArgs?,
     val reloadAfterConnectionError: Boolean,
     val changeTitleOnLoad: Boolean,
-    // TODO заменить на отдельные части урлы
-    val queryParameters: List<String>,
+    val strategy: ExternalViewUrlStrategy
 ): Serializable {
 
     fun buildUpon() = Builder()
@@ -28,7 +28,7 @@ class WebViewCustomizer private constructor(
         .setData(data)
         .setReloadAfterConnectionError(reloadAfterConnectionError)
         .setChangeTitleOnLoad(changeTitleOnLoad)
-        .setOpenSystemBrowserByQueryParameterNames(queryParameters)
+        .setBrowserInterceptStrategy(strategy)
 
     class Builder {
 
@@ -37,7 +37,7 @@ class WebViewCustomizer private constructor(
         private var data: WebViewDataArgs? = null
         private var reloadAfterConnectionError: Boolean = true
         private var changeTitleOnLoad: Boolean = true
-        private val queryParameters = mutableListOf<String>()
+        private var viewUrlStrategy: ExternalViewUrlStrategy = ExternalViewUrlStrategy.NonBrowserFirst
 
         fun setTitle(title: String): Builder {
             this.title = title
@@ -73,9 +73,8 @@ class WebViewCustomizer private constructor(
             return this
         }
 
-        fun setOpenSystemBrowserByQueryParameterNames(names: List<String>): Builder {
-            this.queryParameters.clear()
-            this.queryParameters.addAll(names)
+        fun setBrowserInterceptStrategy(strategy: ExternalViewUrlStrategy): Builder {
+            this.viewUrlStrategy = strategy
             return this
         }
 
@@ -85,7 +84,7 @@ class WebViewCustomizer private constructor(
             data,
             reloadAfterConnectionError,
             changeTitleOnLoad,
-            queryParameters
+            viewUrlStrategy
         )
     }
 
@@ -95,4 +94,49 @@ class WebViewCustomizer private constructor(
         val charset: String = CHARSET_DEFAULT,
         val forceBase64: Boolean = true
     ): Serializable
+
+    sealed class ExternalViewUrlStrategy: Serializable {
+
+        data object None : ExternalViewUrlStrategy() {
+
+            private fun readResolve(): Any = None
+        }
+
+        data class UrlMatch(
+            val protocols: List<String>,
+            val hosts: List<String>,
+            val queryParameters: List<String>,
+        ): ExternalViewUrlStrategy() {
+
+            fun match(uri: Uri): Boolean {
+                val protocolPassed = if (protocols.isNotEmpty()) {
+                    protocols.any {
+                        uri.scheme?.equals(it) == true
+                    }
+                } else {
+                    true
+                }
+                val hostPassed = if (hosts.isNotEmpty()) {
+                    hosts.any {
+                        uri.host.equalsIgnoreSubDomain(it)
+                    }
+                } else {
+                    true
+                }
+                val parametersPassed = if (queryParameters.isNotEmpty()) {
+                    uri.queryParameterNames.any { name ->
+                        queryParameters.any { name == it }
+                    }
+                } else {
+                    true
+                }
+                return protocolPassed && hostPassed && parametersPassed
+            }
+        }
+
+        data object NonBrowserFirst : ExternalViewUrlStrategy() {
+
+            private fun readResolve(): Any = NonBrowserFirst
+        }
+    }
 }

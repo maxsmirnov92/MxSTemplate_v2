@@ -17,14 +17,11 @@ import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewFragment
 import okhttp3.OkHttpClient
 import java.lang.IllegalStateException
 
-//@AndroidEntryPoint
 abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel> : BaseCustomizableWebViewFragment<VM>() {
 
     private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
-//    @Inject
-//    @DownloaderOkHttpClient
-    // при перехватах по некоторым урлам циклические редиректы
+    // TODO при перехватах по некоторым урлам циклические редиректы
     override var okHttpClient: OkHttpClient? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {

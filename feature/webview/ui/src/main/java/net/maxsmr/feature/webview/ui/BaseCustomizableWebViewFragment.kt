@@ -18,14 +18,16 @@ import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.text.charsetForNameOrNull
+import net.maxsmr.commonutils.text.isEmpty
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation
-import net.maxsmr.feature.webview.data.client.BrowserInterceptWebViewClient
+import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData
+import net.maxsmr.feature.webview.ui.WebViewCustomizer.ExternalViewUrlStrategy
 import net.maxsmr.feature.webview.ui.databinding.DialogInputUrlBinding
 import net.maxsmr.feature.webview.ui.databinding.FragmentWebviewBinding
 import okhttp3.OkHttpClient
@@ -181,18 +183,34 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         }
     }
 
-    override fun createWebViewClient(): InterceptWebViewClient =
-        object : BrowserInterceptWebViewClient(requireContext(), okHttpClient) {
+    override fun createWebViewClient(): InterceptWebViewClient {
+        val context = requireContext()
+        return when (val strategy = webViewCustomizer.strategy) {
+            is ExternalViewUrlStrategy.None -> {
+                InterceptWebViewClient(context, okHttpClient)
+            }
 
-            override fun shouldOpenSystemBrowser(url: String): Boolean {
-                val uri = Uri.parse(url)
-                // переход во внешний браузер при наличии указанных названий параметров
-                val hasNames = uri.queryParameterNames.any { name ->
-                    webViewCustomizer.queryParameters.any { name == it }
+            is ExternalViewUrlStrategy.UrlMatch -> {
+                object : ExternalViewUrlWebViewClient(context, okHttpClient) {
+
+                    override fun getViewUrlMode(url: String): ViewUrlMode {
+                        // переход во внешний браузер при совпадении указанных критериев
+                        return if (strategy.match(Uri.parse(url))) {
+                            ViewUrlMode.EXTERNAL
+                        } else {
+                            ViewUrlMode.INTERNAL
+                        }
+                    }
                 }
-                return hasNames
+            }
+
+            is ExternalViewUrlStrategy.NonBrowserFirst -> {
+                ExternalViewUrlWebViewClient(context,
+                    okHttpClient,
+                    defaultMode = ExternalViewUrlWebViewClient.ViewUrlMode.NON_BROWSER)
             }
         }
+    }
 
     override fun doInitReloadWebView() {
         val customizer = webViewCustomizer
@@ -235,8 +253,9 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     override fun onResourceError(hasData: Boolean, url: Uri?, data: String?, exception: NetworkException?) {
         with(binding.errorContainer) {
-            tvErrorUrl.setTextOrGone(url.toString())
-            tvErrorDescription.setTextOrGone(exception?.message)
+            val isEmptyFunc = { s: CharSequence? -> isEmpty(s, true) }
+            tvErrorUrl.setTextOrGone(url.toString(), isEmptyFunc = isEmptyFunc)
+            tvErrorDescription.setTextOrGone(exception?.message, isEmptyFunc = isEmptyFunc)
 //            binding.scrollWebView.isFillViewport = true
         }
     }

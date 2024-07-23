@@ -88,6 +88,8 @@ data class DownloadInfo(
 
         data object Loading : Status() {
 
+            private fun readResolve(): Any = Loading
+
             override val uriString: String? = null
         }
 

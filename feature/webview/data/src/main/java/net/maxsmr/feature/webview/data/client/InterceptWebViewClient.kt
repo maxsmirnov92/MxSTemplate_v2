@@ -271,8 +271,13 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     private fun shouldInterceptFromOverrideUrlWithCheck(url: String): InterceptedUrl? {
         val uri = Uri.parse(url)
         val scheme = uri.scheme
-        return if (scheme == URL_SCHEME_MAIL) {
-            context.openEmailIntentWithToastError(uri)
+        var handled = false
+        if (scheme == URL_SCHEME_MAIL) {
+            handled = context.openEmailIntentWithToastError(uri)
+        }
+        // возможно перебирать остальные известные не http/https схемы
+        // для открытия аппов напрямую
+        return if (handled) {
             InterceptedUrl(InterceptedUrl.Type.OK, url)
         } else {
             shouldInterceptFromOverrideUrl(url)
