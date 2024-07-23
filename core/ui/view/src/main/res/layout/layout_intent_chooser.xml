@@ -16,7 +16,7 @@
         android:textAlignment="center"
         android:textColor="@color/textColorPrimary"
         android:textSize="16sp"
-        app:fontFamily="@font/roboto_medium"
+        app:fontFamily="@font/tektur_narrow_medium"
         tools:text="Выберите приложение" />
 
     <androidx.recyclerview.widget.RecyclerView

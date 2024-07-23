@@ -38,7 +38,7 @@
             android:layout_marginTop="10dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@color/textColorPrimary"
-            app:fontFamily="@font/roboto_bold"
+            app:fontFamily="@font/tektur_narrow_bold"
             tools:text="https://dfhdfhdfh" />
 
         <TextView

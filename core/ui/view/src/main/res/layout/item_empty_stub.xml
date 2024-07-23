@@ -18,7 +18,7 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textColor="@color/textColorPrimary"
         android:textSize="22sp"
-        app:fontFamily="@font/roboto_medium"
+        app:fontFamily="@font/tektur_narrow_medium"
         tools:text="Нет данных" />
 
     <TextView
