@@ -119,8 +119,9 @@ class CommonInAppUpdateChecker(
         val appUpdateInfoTask = appUpdateManager.appUpdateInfo
         appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
             logger.i("Check success, availableVersionCode: ${appUpdateInfo.availableVersionCode()}, updateAvailability: ${appUpdateInfo.updateAvailability()}")
-            if (fragment.requireActivity().isFinishing) {
-                logger.w("Activity is finishing, not updating")
+            val activity = fragment.activity
+            if (activity == null || activity.isFinishing) {
+                logger.w("Not attached to activity or it is finishing, not updating")
                 return@addOnSuccessListener
             }
             if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED) {

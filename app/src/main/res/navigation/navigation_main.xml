@@ -108,6 +108,14 @@
         android:label="@string/rate_feedback_title"
         tools:layout="@layout/fragment_feedback">
 
+        <action
+            android:id="@+id/actionToWebViewFragment"
+            app:destination="@id/navigationWebView"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out" />
+
         <argument
             android:name="emailAddress"
             app:argType="string" />
