@@ -41,6 +41,7 @@ fun View.createSnackbar(
         snackbarView.setBackgroundColor(ContextCompat.getColor(context, R.color.snackbarBackground))
 
         val snackbarTextView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
+        snackbarTextView.setTextColor(ContextCompat.getColor(context, R.color.snackbarTextColor))
         snackbarTextView.setTextSize(
             TypedValue.COMPLEX_UNIT_PX,
             context.resources.getDimensionPixelSize(R.dimen.snackbarMessageTextSize).toFloat()
