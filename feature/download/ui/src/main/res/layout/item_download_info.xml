@@ -24,7 +24,6 @@
             android:ellipsize="end"
             android:maxLines="3"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:textColor="@color/textColorPrimary"
             app:fontFamily="@font/roboto_italic"
             tools:text="downloadName\n\n\n\n" />
 

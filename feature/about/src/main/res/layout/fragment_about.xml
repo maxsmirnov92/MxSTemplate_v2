@@ -62,7 +62,6 @@
                     android:layout_marginTop="14dp"
                     android:gravity="center"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
-                    android:textColor="@color/textColorPrimary"
                     android:textStyle="bold"
                     tools:text="App Name" />
 
@@ -83,7 +82,6 @@
                     android:layout_marginTop="34dp"
                     android:gravity="center"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
-                    android:textColor="@color/textColorPrimary"
                     tools:text="@string/about_app_description_text" />
 
             </LinearLayout>

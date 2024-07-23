@@ -39,7 +39,6 @@
             android:lineSpacingMultiplier="1.2"
             android:textColor="@color/textColorPrimary"
             android:textSize="14sp"
-            app:fontFamily="@font/roboto_regular"
             tools:text="это не хорошо" />
 
         <Button

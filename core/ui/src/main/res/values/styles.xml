@@ -22,7 +22,6 @@
 
     <style name="ToolbarTextAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
         <item name="android:textColor">@color/white</item>
-        <item name="fontFamily">@font/roboto_regular</item>
     </style>
 
     <style name="AppHintAppearance" parent="TextAppearance.Design.Hint">
@@ -55,10 +54,17 @@
         <item name="closeIcon">@android:drawable/ic_menu_close_clear_cancel</item>
         <item name="queryHint">@string/search_hint</item>
         <item name="android:imeActionId">6</item>
-        <item name="fontFamily">@font/roboto_regular</item>
     </style>
 
     <style name="AppAutoCompleteStyle" parent="Widget.AppCompat.AutoCompleteTextView">
         <item name="android:textCursorDrawable">@drawable/shape_cursor_white</item>
+    </style>
+
+    <style name="CheckboxStyle" parent="@style/Widget.AppCompat.CompoundButton.CheckBox">
+        <item name="android:textColor">@color/textColorPrimary</item>
+    </style>
+
+    <style name="SwitchStyle" parent="@style/Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:textColor">@color/textColorPrimary</item>
     </style>
 </resources>

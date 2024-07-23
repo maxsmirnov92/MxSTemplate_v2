@@ -43,12 +43,10 @@
                     android:layout_height="wrap_content"
                     android:padding="@dimen/defaultPadding"
                     android:text="@string/rate_feedback_subtitle"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Title"
-                    android:textColor="@color/textColorPrimary" />
+                    android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/tilSubject"
-                    style="@style/AppTextInputLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"

@@ -8,7 +8,6 @@
         <item name="hintTextColor">@color/colorAccent</item>
         <item name="errorTextColor">?attr/appErrorColor</item>
 <!--        <item name="boxStrokeColor">?attr/appHintColor</item>-->
-        <item name="fontFamily">@font/roboto_regular</item>
     </style>
 
     <style name="TextInputOutlinedWithCorners" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
@@ -29,7 +28,6 @@
     <style name="AppEditText" parent="Widget.AppCompat.EditText">
         <item name="android:textColor">?attr/appEditTextColor</item>
         <item name="android:textCursorDrawable">@drawable/shape_cursor_accent</item>
-        <item name="fontFamily">@font/roboto_regular</item>
     </style>
 
     <style name="InputText" parent="AppEditText">

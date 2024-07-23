@@ -35,7 +35,6 @@
         android:textColor="@color/textColorPrimary"
         android:textSize="14sp"
         android:visibility="gone"
-        app:fontFamily="@font/roboto_regular"
         tools:text="TextView asd asd asd asd asd asd asd asd asd asd "
         tools:visibility="visible" />
 
