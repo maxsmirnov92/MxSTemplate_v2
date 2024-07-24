@@ -22,6 +22,9 @@ fun String?.isUrlValid(
     charset: String = CHARSET_DEFAULT,
     orBlank: Boolean = false,
 ): Boolean {
+    if (this == null) {
+        return false
+    }
     if (orBlank && this.equals(URL_PAGE_BLANK, true)) {
         return true
     }

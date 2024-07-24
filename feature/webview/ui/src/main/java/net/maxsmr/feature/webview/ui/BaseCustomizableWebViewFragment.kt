@@ -61,7 +61,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     protected val webViewCustomizer: WebViewCustomizer get() = viewModel.customizer
 
-    private var urlMenuItem: MenuItem? = null
+    private var openHomeMenuItem: MenuItem? = null
 
     private var copyMenuItem: MenuItem? = null
 
@@ -84,6 +84,9 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         }
         viewModel.currentUrl.observe {
             refreshMenuItemsByCurrentUri(it)
+        }
+        viewModel.hasInitialUrl.observe {
+            refreshOpenHomeItem(it)
         }
     }
 
@@ -123,7 +126,9 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
 
-        urlMenuItem = menu.findItem(R.id.action_open_url)
+        openHomeMenuItem =  menu.findItem(R.id.action_open_home)
+        refreshOpenHomeItem(viewModel.hasInitialUrl.value ?: false)
+
         copyMenuItem = menu.findItem(R.id.action_copy_link)
         shareMenuItem = menu.findItem(R.id.action_share_link)
         refreshMenuItemsByCurrentUri(viewModel.currentUrl.value)
@@ -138,6 +143,11 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         return when (menuItem.itemId) {
             R.id.action_open_url -> {
                 viewModel.onOpenUrlAction()
+                true
+            }
+            R.id.action_open_home -> {
+                viewModel.onOpenHomePageAction()
+                doInitReloadWebView()
                 true
             }
 
@@ -262,7 +272,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     override fun onResourceChanged(resource: LoadState<MainWebViewData?>) {
         super.onResourceChanged(resource)
-        if (webViewCustomizer.changeTitleOnLoad) {
+        if (webViewCustomizer.changeTitleByState && !resource.isLoading) {
             setTitle(resource.data?.title?.takeIf {
                 it.isNotEmpty()
             } ?: title)
@@ -275,9 +285,12 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         binding.toolbar.title = title
     }
 
+    private fun refreshOpenHomeItem(hasInitialUrl: Boolean) {
+        openHomeMenuItem?.isVisible = hasInitialUrl
+    }
+
     private fun refreshMenuItemsByCurrentUri(uri: Uri?) {
         val hasUri = uri != null
-        urlMenuItem?.isVisible = hasUri
         copyMenuItem?.isVisible = hasUri
         shareMenuItem?.isVisible = hasUri
     }

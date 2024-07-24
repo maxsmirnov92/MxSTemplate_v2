@@ -18,7 +18,7 @@ class WebViewCustomizer private constructor(
     val url: String,
     val data: WebViewDataArgs?,
     val reloadAfterConnectionError: Boolean,
-    val changeTitleOnLoad: Boolean,
+    val changeTitleByState: Boolean,
     val strategy: ExternalViewUrlStrategy
 ): Serializable {
 
@@ -27,8 +27,40 @@ class WebViewCustomizer private constructor(
         .setUrl(url)
         .setData(data)
         .setReloadAfterConnectionError(reloadAfterConnectionError)
-        .setChangeTitleOnLoad(changeTitleOnLoad)
+        .setChangeTitleOnLoad(changeTitleByState)
         .setBrowserInterceptStrategy(strategy)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is WebViewCustomizer) return false
+
+        if (title != other.title) return false
+        if (url != other.url) return false
+        if (data != other.data) return false
+        if (reloadAfterConnectionError != other.reloadAfterConnectionError) return false
+        if (changeTitleByState != other.changeTitleByState) return false
+        if (strategy != other.strategy) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = title.hashCode()
+        result = 31 * result + url.hashCode()
+        result = 31 * result + (data?.hashCode() ?: 0)
+        result = 31 * result + reloadAfterConnectionError.hashCode()
+        result = 31 * result + changeTitleByState.hashCode()
+        result = 31 * result + strategy.hashCode()
+        return result
+    }
+
+    override fun toString(): String {
+        return "WebViewCustomizer(title='$title'," +
+                "url='$url'," +
+                "data=$data, reloadAfterConnectionError=$reloadAfterConnectionError," +
+                "changeTitleOnLoad=$changeTitleByState," +
+                "strategy=$strategy)"
+    }
 
     class Builder {
 

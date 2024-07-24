@@ -235,6 +235,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         logger.d("onWebViewStateRestored")
     }
 
+    @CallSuper
     protected open fun onWebViewFirstInit() {
         logger.d("onWebViewFirstInit")
         doInitReloadWebView()

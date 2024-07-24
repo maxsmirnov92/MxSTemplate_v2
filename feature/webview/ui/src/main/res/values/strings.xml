@@ -2,6 +2,7 @@
 <resources>
     <string name="webview_feature_title">Browser</string>
     <string name="webview_menu_action_open_url">Open URL</string>
+    <string name="webview_menu_action_open_home">Open home page</string>
     <string name="webview_menu_action_copy_link">Copy link</string>
     <string name="webview_menu_action_share_link">Share link</string>
     <string name="webview_menu_action_forward">Forward</string>
