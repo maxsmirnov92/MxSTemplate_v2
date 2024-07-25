@@ -14,7 +14,8 @@ class NestedWebView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = android.R.attr.webViewStyle,
-) : WebView(context, attrs, defStyleAttr), NestedScrollingChild {
+    defStyleRes: Int = 0,
+) : WebView(context, attrs, defStyleAttr, defStyleRes), NestedScrollingChild {
 
     private var mLastY = 0
     private val mScrollOffset = IntArray(2)
