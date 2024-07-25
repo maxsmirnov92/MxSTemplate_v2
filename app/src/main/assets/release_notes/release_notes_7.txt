@@ -1,0 +1,2 @@
+• Minimum supported Android 6.0
+• Minor bug fixes
