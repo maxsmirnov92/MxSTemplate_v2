@@ -10,7 +10,14 @@ import android.webkit.*
 import androidx.annotation.CallSuper
 import androidx.annotation.MainThread
 import androidx.annotation.RequiresApi
+import net.maxsmr.commonutils.URL_SCHEME_GEO
+import net.maxsmr.commonutils.URL_SCHEME_GEO_GOOGLE
 import net.maxsmr.commonutils.URL_SCHEME_MAIL
+import net.maxsmr.commonutils.URL_SCHEME_MARKET
+import net.maxsmr.commonutils.URL_SCHEME_TEL
+import net.maxsmr.commonutils.getDialIntent
+import net.maxsmr.commonutils.getViewLocationIntent
+import net.maxsmr.commonutils.getViewUrlIntent
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.media.getMimeTypeFromUrl
@@ -21,14 +28,15 @@ import net.maxsmr.core.network.asStringCloned
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.executeCall
 import net.maxsmr.core.network.getContentTypeHeader
+import net.maxsmr.core.ui.openAnyIntentWithToastError
 import net.maxsmr.core.ui.openEmailIntentWithToastError
-import okhttp3.OkHttpClient
-import okhttp3.Response
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
 import net.maxsmr.feature.webview.data.client.exception.WebResourceSslException
 import net.maxsmr.feature.webview.data.client.interceptor.IWebViewInterceptor
 import net.maxsmr.feature.webview.data.client.interceptor.IWebViewInterceptor.InterceptedUrl
 import net.maxsmr.feature.webview.data.client.interceptor.WebViewInterceptor
+import okhttp3.OkHttpClient
+import okhttp3.Response
 import java.nio.charset.Charset
 
 /**
@@ -272,11 +280,32 @@ open class InterceptWebViewClient @JvmOverloads constructor(
         val uri = Uri.parse(url)
         val scheme = uri.scheme
         var handled = false
-        if (scheme == URL_SCHEME_MAIL) {
-            handled = context.openEmailIntentWithToastError(uri)
+        when (scheme) {
+            URL_SCHEME_MAIL -> {
+                handled = context.openEmailIntentWithToastError(uri)
+            }
+
+            URL_SCHEME_TEL -> {
+                getDialIntent(uri)?.let {
+                    handled = context.openAnyIntentWithToastError(it)
+                }
+            }
+
+            URL_SCHEME_GEO, URL_SCHEME_GEO_GOOGLE -> {
+                getViewLocationIntent(uri)?.let {
+                    handled = context.openAnyIntentWithToastError(it)
+                }
+            }
+
+            URL_SCHEME_MARKET -> {
+                handled = context.openAnyIntentWithToastError(
+                    getViewUrlIntent(uri, null)
+                )
+            }
+            // перебирать остальные известные не http/https схемы
+            // для открытия аппов напрямую,
+            // не полагаясь на обработку NON_BROWSER, доступную начиная с S
         }
-        // возможно перебирать остальные известные не http/https схемы
-        // для открытия аппов напрямую
         return if (handled) {
             InterceptedUrl(InterceptedUrl.Type.OK, url)
         } else {

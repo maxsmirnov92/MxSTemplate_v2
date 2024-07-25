@@ -10,6 +10,8 @@ import net.maxsmr.commonutils.openDocument
 import net.maxsmr.commonutils.openEmailIntent
 import net.maxsmr.commonutils.openSendDataIntent
 import net.maxsmr.commonutils.openViewUrl
+import net.maxsmr.commonutils.startActivitySafe
+import net.maxsmr.commonutils.wrapChooser
 
 @JvmOverloads
 fun Context.openEmailIntentWithToastError(
@@ -99,4 +101,25 @@ fun Context.openViewUrlWithToastError(
     options: Bundle? = null,
 ): Boolean = openViewUrl(uri, mimeType, flags, options) {
     Toast.makeText(this, R.string.error_intent_open_url, Toast.LENGTH_SHORT).show()
+}
+
+fun Context.openAnyIntentWithToastError(
+    intent: Intent,
+    chooserTitle: String? = null,
+    intentFunc: ((Intent) -> Unit)? = null,
+    chooserIntentFunc: ((Intent) -> Unit)? = null,
+    flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
+    options: Bundle? = null,
+): Boolean {
+    return startActivitySafe(
+        intent.apply {
+            intentFunc?.invoke(this)
+            addFlags(flags)
+        }.wrapChooser(chooserTitle).apply {
+            chooserIntentFunc?.invoke(this)
+        },
+        options = options,
+    ) {
+        Toast.makeText(this, R.string.error_intent_any, Toast.LENGTH_SHORT).show()
+    }
 }

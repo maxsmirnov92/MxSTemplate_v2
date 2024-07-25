@@ -62,11 +62,11 @@ fun String?.isAnyNetScheme() = !this.isNullOrEmpty() && NET_SCHEMES.any { this.e
 
 const val URL_PAGE_BLANK = "about:blank"
 
-const val SCHEME_HTTPS = "https"
-const val SCHEME_HTTP = "http"
+const val URL_SCHEME_HTTPS = "https"
+const val URL_SCHEME_HTTP = "http"
 
 private val RESOURCE_SCHEMES = listOf(ContentResolver.SCHEME_CONTENT,
     ContentResolver.SCHEME_FILE,
     ContentResolver.SCHEME_ANDROID_RESOURCE)
 
-private val NET_SCHEMES = listOf(SCHEME_HTTPS, SCHEME_HTTP, "about", "javascript")
+private val NET_SCHEMES = listOf(URL_SCHEME_HTTPS, URL_SCHEME_HTTP, "about", "javascript")

@@ -3,7 +3,7 @@ package net.maxsmr.feature.about.adapter
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegate
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.commonutils.AppClickableSpan
-import net.maxsmr.commonutils.gui.setTextWithMovementMethod
+import net.maxsmr.commonutils.gui.setLinkableText
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription.DonateInfo
 import net.maxsmr.feature.about.R
 import net.maxsmr.feature.about.databinding.ItemDonateAddressBinding
@@ -14,7 +14,7 @@ fun donateAdapterDelegate(listener: DonateAddressClickListener) =
     ) {
         bind {
             with(ItemDonateAddressBinding.bind(itemView).tvDonateAddress) {
-                setTextWithMovementMethod(item.address.toSpanText(AppClickableSpan(false) {
+                setLinkableText(item.address.toSpanText(AppClickableSpan(false) {
                     listener.onAddressClick(item.address)
                 }))
             }

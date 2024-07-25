@@ -11,7 +11,7 @@ import net.maxsmr.commonutils.getSendTextIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.startActivitySafe
-import net.maxsmr.core.android.network.SCHEME_HTTPS
+import net.maxsmr.core.android.network.URL_SCHEME_HTTPS
 import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import net.maxsmr.core.android.network.isUrlValid
 import net.maxsmr.core.ui.fields.urlField
@@ -21,7 +21,7 @@ abstract class BaseCustomizableWebViewModel(
 ) : BaseWebViewModel(state) {
 
     val urlField: Field<String> = state.urlField(
-        initialValue = "$SCHEME_HTTPS://",
+        initialValue = "$URL_SCHEME_HTTPS://",
         hintResId = R.string.webview_alert_open_url_field_hint,
         withAsterisk = false,
         isRequired = true
@@ -53,7 +53,7 @@ abstract class BaseCustomizableWebViewModel(
             return false
         }
         customizer = customizer.buildUpon().setUrl(newValue).build()
-        urlField.value = "$SCHEME_HTTPS://"
+        urlField.value = "$URL_SCHEME_HTTPS://"
         return true
     }
 

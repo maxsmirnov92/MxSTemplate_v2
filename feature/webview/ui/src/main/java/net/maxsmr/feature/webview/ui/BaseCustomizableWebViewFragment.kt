@@ -37,7 +37,6 @@ import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData
 import net.maxsmr.feature.webview.ui.WebViewCustomizer.ExternalViewUrlStrategy
 import net.maxsmr.feature.webview.ui.databinding.DialogInputUrlBinding
 import net.maxsmr.feature.webview.ui.databinding.FragmentWebviewBinding
-import net.maxsmr.feature.webview.ui.view.WebSwipeRefreshLayout
 import okhttp3.OkHttpClient
 import java.nio.charset.Charset
 
