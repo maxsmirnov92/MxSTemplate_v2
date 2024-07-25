@@ -18,8 +18,8 @@
         android:orientation="vertical">
 
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
             app:srcCompat="@drawable/ic_no_internet" />
 
         <TextView
@@ -37,10 +37,11 @@
             android:layout_marginTop="10dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
             android:textColor="@color/textColorPrimary"
-            android:textStyle="bold"
+            app:fontFamily="@font/roboto_bold"
             tools:text="https://dfhdfhdfh" />
 
         <TextView
+            android:id="@+id/tvErrorCheckConnectionHint"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
@@ -54,7 +55,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:textColor="@color/textColorPrimary"
+            android:textColor="@color/textColorError"
             android:textSize="@dimen/textSizeMini"
             tools:text="ERR:" />
 

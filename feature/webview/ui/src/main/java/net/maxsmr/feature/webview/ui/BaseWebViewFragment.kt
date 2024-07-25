@@ -270,7 +270,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 errorContainer?.isVisible = false
                 onResourceSuccess(url, data)
             } else {
-                val shouldShowError = !hasData || resource.error?.isWebConnectionError() == true
+                val shouldShowError = !hasData || resource.isError()
                 // свайп доступен только при видимой webview
                 swipeRefresh?.isEnabled = !shouldShowError
                 webView.isVisible = !shouldShowError

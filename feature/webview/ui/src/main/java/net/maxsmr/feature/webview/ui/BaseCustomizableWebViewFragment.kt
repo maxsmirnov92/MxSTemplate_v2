@@ -11,8 +11,14 @@ import android.webkit.WebView
 import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import net.maxsmr.commonutils.AppClickableSpan
+import net.maxsmr.commonutils.RangeSpanInfo
+import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.bindToTextNotNull
+import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.commonutils.states.LoadState
@@ -26,10 +32,12 @@ import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
+import net.maxsmr.feature.webview.data.client.exception.WebResourceException.Companion.isWebConnectionError
 import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData
 import net.maxsmr.feature.webview.ui.WebViewCustomizer.ExternalViewUrlStrategy
 import net.maxsmr.feature.webview.ui.databinding.DialogInputUrlBinding
 import net.maxsmr.feature.webview.ui.databinding.FragmentWebviewBinding
+import net.maxsmr.feature.webview.ui.view.WebSwipeRefreshLayout
 import okhttp3.OkHttpClient
 import java.nio.charset.Charset
 
@@ -41,7 +49,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     override val webView: WebView by lazy { binding.webView }
 
-    override val swipeRefresh: SwipeRefreshLayout? by lazy { binding.swipeWebView }
+    override val swipeRefresh: SwipeRefreshLayout by lazy { binding.swipeWebView }
 
     override val progress: ProgressBar by lazy { binding.pbToolbar }
 
@@ -80,7 +88,6 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             errorContainer.btReload.setOnClickListener {
                 doReloadWebView()
             }
-
         }
         viewModel.currentUrl.observe {
             refreshMenuItemsByCurrentUri(it)
@@ -145,6 +152,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
                 viewModel.onOpenUrlAction()
                 true
             }
+
             R.id.action_open_home -> {
                 viewModel.onOpenHomePageAction()
                 doInitReloadWebView()
@@ -215,9 +223,11 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             }
 
             is ExternalViewUrlStrategy.NonBrowserFirst -> {
-                ExternalViewUrlWebViewClient(context,
+                ExternalViewUrlWebViewClient(
+                    context,
                     okHttpClient,
-                    defaultMode = ExternalViewUrlWebViewClient.ViewUrlMode.NON_BROWSER)
+                    defaultMode = ExternalViewUrlWebViewClient.ViewUrlMode.NON_BROWSER
+                )
             }
         }
     }
@@ -264,8 +274,22 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
     override fun onResourceError(hasData: Boolean, url: Uri?, data: String?, exception: NetworkException?) {
         with(binding.errorContainer) {
             val isEmptyFunc = { s: CharSequence? -> isEmpty(s, true) }
-            tvErrorUrl.setTextOrGone(url.toString(), isEmptyFunc = isEmptyFunc)
+            val urlText = url?.toString().orEmpty()
+            if (!isEmptyFunc.invoke(urlText)) {
+                tvErrorUrl.setSpanText(urlText, RangeSpanInfo(0, urlText.length, listOf(
+                    AppClickableSpan(
+                        true
+                    ) {
+                        requireContext().copyToClipboard("url", urlText)
+                        viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message))
+                    }
+                )))
+                tvErrorUrl.isVisible = true
+            } else {
+                tvErrorUrl.isVisible = false
+            }
             tvErrorDescription.setTextOrGone(exception?.message, isEmptyFunc = isEmptyFunc)
+            tvErrorCheckConnectionHint.isVisible = exception?.isWebConnectionError() == true
 //            binding.scrollWebView.isFillViewport = true
         }
     }
