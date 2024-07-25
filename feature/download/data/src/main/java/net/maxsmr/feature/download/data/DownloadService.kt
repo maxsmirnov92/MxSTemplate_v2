@@ -8,6 +8,7 @@ import android.app.RecoverableSecurityException
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Bundle
@@ -25,6 +26,7 @@ import net.maxsmr.commonutils.getSerializableExtraCompat
 import net.maxsmr.commonutils.getUriFromRawResource
 import net.maxsmr.commonutils.isAtLeastOreo
 import net.maxsmr.commonutils.isAtLeastQ
+import net.maxsmr.commonutils.isAtLeastUpsideDownCake
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
@@ -227,7 +229,15 @@ class DownloadService : Service() {
         logger.d("onCreate")
         val notification =
             foregroundNotification(getString(R.string.download_notification_initial_text), null)
-        startForeground(NOTIFICATION_ID_FOREGROUND, notification)
+        if (isAtLeastUpsideDownCake()) {
+            startForeground(
+                NOTIFICATION_ID_FOREGROUND,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            )
+        } else {
+            startForeground(NOTIFICATION_ID_FOREGROUND, notification)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -388,7 +398,8 @@ class DownloadService : Service() {
                 val types = params.requestParams.preferredConnectionTypes
                 if (connectionInfo.has &&
                         (connectionInfo.hasWiFi != null || connectionInfo.hasCellular != null)
-                        && types.isNotEmpty()) {
+                        && types.isNotEmpty()
+                ) {
                     // предпочтительные типы указаны и в API информация возвращается
                     hasPreferableConnection = false
                     types.forEach {
@@ -1065,7 +1076,7 @@ class DownloadService : Service() {
         val storeErrorBody: Boolean,
         val connectTimeout: Long,
         val retryOnConnectionFailure: Boolean,
-        val preferredConnectionTypes: Set<PreferableType> = setOf()
+        val preferredConnectionTypes: Set<PreferableType> = setOf(),
     ) : Serializable {
 
         fun createRequest(listener: ProgressListener): Request = Request.Builder()
@@ -1091,14 +1102,15 @@ class DownloadService : Service() {
         class Body(val content: Serializable, val mimeType: String? = null) : Serializable {
 
             // не бросает исключения
-            val isEmpty: Boolean get() = when (content) {
-                is Uri -> content.toUri()?.isEmpty(baseApplicationContext.contentResolver) != false
-                is File -> getFileLength(content) == 0L
-                is ByteArray -> content.isEmpty()
-                is String -> content.isEmpty()
-                is ByteString -> content.size == 0
-                else -> true
-            }
+            val isEmpty: Boolean
+                get() = when (content) {
+                    is Uri -> content.toUri()?.isEmpty(baseApplicationContext.contentResolver) != false
+                    is File -> getFileLength(content) == 0L
+                    is ByteArray -> content.isEmpty()
+                    is String -> content.isEmpty()
+                    is ByteString -> content.size == 0
+                    else -> true
+                }
 
             fun createRequestBody(): RequestBody {
                 val type = mimeType?.toMediaTypeOrNull()
@@ -1153,7 +1165,7 @@ class DownloadService : Service() {
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
                 retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
-                preferredConnectionTypes: Set<PreferableType> = setOf()
+                preferredConnectionTypes: Set<PreferableType> = setOf(),
             ): RequestParams {
                 return RequestParams(
                     url,

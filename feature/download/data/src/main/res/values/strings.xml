@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="download_service_label">Downloads service</string>
+
     <string name="download_notification_channel_name">Downloads channel</string>
     <string name="download_notification_channel_success_name">Success downloads channel</string>
     <string name="download_notification_channel_failed_name">Failed downloads channel</string>

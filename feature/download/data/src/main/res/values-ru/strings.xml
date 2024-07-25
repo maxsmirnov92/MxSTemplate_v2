@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="download_service_label">Сервис загрузок</string>
+
     <string name="download_notification_channel_name">Канал загрузок</string>
     <string name="download_notification_channel_success_name">Канал успешных загрузок</string>
     <string name="download_notification_channel_failed_name">Канал неуспешных загрузок</string>
