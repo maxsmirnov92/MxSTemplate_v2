@@ -51,7 +51,7 @@ data class AppVersion(
     ) : this(code, getVersionName(code), type)
 }
 
-val appVersion = AppVersion(1, "common")
+val appVersion = AppVersion(12, "common")
 
 android {
     namespace = "net.maxsmr.justupdownloadit"

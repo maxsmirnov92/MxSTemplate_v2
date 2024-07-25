@@ -1,0 +1,14 @@
+First public release.
+
+Introducing key features:
+• Built-in browser with download URL interception and navigation to external apps
+• Specifying file and subfolder name for saving
+• Configurable simultaneous downloads
+• Downloading files in the background
+• Batch downloads via parameters from a selected JSON file
+• Optional notification about the process in the notification area
+• Ability to specify different parameters for the request
+• Support for downloading and uploading large files
+• Retrying failed downloads when the network appears
+• Download option only if Wi-Fi is available
+• Automatically resuming interrupted downloads after restarting the application

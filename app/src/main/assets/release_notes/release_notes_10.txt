@@ -1,0 +1,5 @@
+Fixes and improvements:
+• Screen navigation
+• URL transitions
+• Download status updates
+• Input fields optimizations
