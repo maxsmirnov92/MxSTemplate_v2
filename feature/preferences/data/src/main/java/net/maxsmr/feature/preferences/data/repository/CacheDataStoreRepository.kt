@@ -130,15 +130,15 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun getLastReleaseNoteVersionCode(): Int? {
+    suspend fun getLastReleaseNotesVersionCode(): Int? {
         return dataStore.data.map { prefs ->
-            prefs[FIELD_LAST_RELEASE_NOTE_VERSION_CODE]
+            prefs[FIELD_LAST_RELEASE_NOTES_VERSION_CODE]
         }.firstOrNull()
     }
 
-    suspend fun setLastReleaseNoteVersionCode(id: Int) {
+    suspend fun setLastReleaseNotesVersionCode(id: Int) {
         dataStore.edit { prefs ->
-            prefs[FIELD_LAST_RELEASE_NOTE_VERSION_CODE] = id
+            prefs[FIELD_LAST_RELEASE_NOTES_VERSION_CODE] = id
         }
     }
 
@@ -162,7 +162,7 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
         private val FIELD_ASKED_APP_DETAILS = booleanPreferencesKey("askedAppDetails")
         private val FIELD_RATE_APP_INFO = stringPreferencesKey("rateAppInfo")
-        private val FIELD_LAST_RELEASE_NOTE_VERSION_CODE = intPreferencesKey("lastReleaseNoteVersionCode")
+        private val FIELD_LAST_RELEASE_NOTES_VERSION_CODE = intPreferencesKey("lastReleaseNotesVersionCode")
         private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")
     }
 }

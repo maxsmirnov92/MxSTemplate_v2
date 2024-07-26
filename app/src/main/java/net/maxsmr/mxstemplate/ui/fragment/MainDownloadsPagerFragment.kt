@@ -13,7 +13,8 @@ import net.maxsmr.mobile_services.update.ui.InAppUpdatesFragmentDelegate
 import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.CHECK_IN_APP_UPDATES_INTERVAL
 import net.maxsmr.mxstemplate.RATE_APP_ASK_INTERVAL
-import net.maxsmr.mxstemplate.RELEASE_NOTES_ASSETS_FOLDER_NAME
+import net.maxsmr.mxstemplate.RELEASE_NOTES_ASSETS_FOLDER_NAME_EN
+import net.maxsmr.mxstemplate.RELEASE_NOTES_ASSETS_FOLDER_NAME_RU
 import net.maxsmr.mxstemplate.mobileBuildType
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
@@ -56,8 +57,10 @@ class MainDownloadsPagerFragment: BaseDownloadsPagerFragment() {
             viewModel,
             BuildConfig.VERSION_CODE,
             BuildConfig.VERSION_NAME,
-            RELEASE_NOTES_ASSETS_FOLDER_NAME,
-            requireContext().assets.list(RELEASE_NOTES_ASSETS_FOLDER_NAME)?.toSet().orEmpty(),
+            mapOf(
+                "en" to RELEASE_NOTES_ASSETS_FOLDER_NAME_EN,
+                "ru" to RELEASE_NOTES_ASSETS_FOLDER_NAME_RU
+            ),
             cacheRepo,
         )
     }
