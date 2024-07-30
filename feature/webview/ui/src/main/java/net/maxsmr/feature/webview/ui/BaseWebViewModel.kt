@@ -111,6 +111,11 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(s
         }
     }
 
+    /**
+     * [WebViewData] только для isMainFrame=true
+     * [url] исходный URL, по которому была инициализирована загрузка через loadUrl, или текущий
+     * [data] исходные данные для загрузки с [url] или без
+     */
     data class MainWebViewData(
         val url: Uri?,
         val data: String?,

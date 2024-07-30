@@ -268,7 +268,7 @@ class DownloadsViewModel @Inject constructor(
         return downloadsInfos
             .mapNotNull { info ->
                 info.find { it.name == resourceName }?.let {
-                    DownloadInfoWithUri(Uri.parse(params.requestParams.url), it)
+                    DownloadInfoWithUri(params.requestParams.url.toUri(), it)
                 }
             }
             .map {

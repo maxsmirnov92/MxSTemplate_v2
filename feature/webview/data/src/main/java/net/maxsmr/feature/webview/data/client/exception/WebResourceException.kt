@@ -18,10 +18,4 @@ open class WebResourceException(
     override fun toString(): String {
         return "WebResourceException(code=$code, message=$message, isConnectionError=$isConnectionError)"
     }
-
-    companion object {
-
-        @JvmStatic
-        fun Throwable.isWebConnectionError() = this is WebResourceException && this.isConnectionError
-    }
 }

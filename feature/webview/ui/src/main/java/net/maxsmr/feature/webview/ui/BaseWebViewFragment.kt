@@ -11,6 +11,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ProgressBar
 import androidx.annotation.CallSuper
+import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import net.maxsmr.commonutils.CHARSET_DEFAULT
@@ -18,18 +19,22 @@ import net.maxsmr.commonutils.gui.BaseUrlParams
 import net.maxsmr.commonutils.gui.loadDataCompat
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.content.FileFormat
+import net.maxsmr.core.android.network.URL_PAGE_BLANK
 import net.maxsmr.core.android.network.isUrlValid
+import net.maxsmr.core.network.exceptions.HttpProtocolException
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.isResponseOk
+import net.maxsmr.core.network.toPairs
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.webview.data.client.BaseWebChromeClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
 import net.maxsmr.feature.webview.data.client.exception.EmptyWebResourceException
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
-import net.maxsmr.feature.webview.data.client.exception.WebResourceException.Companion.isWebConnectionError
+import okhttp3.Headers.Companion.toHeaders
 import java.nio.charset.Charset
 
 abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragment<VM>() {
@@ -47,7 +52,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             if (it && shouldReloadAfterConnectionError) {
                 val data = viewModel.currentWebViewData.value
                 data?.error?.let { error ->
-                    if (error.isWebConnectionError()) {
+                    if (error is WebResourceException && error.isConnectionError) {
                         // с задержкой, т.к. после появления сети коннект может не пройти сразу
                         webView.postDelayed({
                             // если последняя ошибка была обусловлена сетью,
@@ -270,12 +275,20 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 errorContainer?.isVisible = false
                 onResourceSuccess(url, data)
             } else {
-                val shouldShowError = !hasData || resource.isError()
+                val webResourceException = resource.error as? WebResourceException
+                val shouldShowError = resource.isError()
+                        // не отображаем стейт с ошибкой, если это http-ошибка (>400),
+                        // и должно иметь свою обработку в WebView
+                        // (а если контент отсутвует - заглушки на этот случай нет)
+                        && webResourceException != null
+                        && webResourceException !is EmptyWebResourceException
                 // свайп доступен только при видимой webview
                 swipeRefresh?.isEnabled = !shouldShowError
                 webView.isVisible = !shouldShowError
                 errorContainer?.isVisible = shouldShowError
-                onResourceError(hasData, url, data, resource.error as? NetworkException)
+                if (shouldShowError) {
+                    onResourceError(hasData, url, data, webResourceException as WebResourceException)
+                }
             }
         }
     }
@@ -287,7 +300,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
     /**
      * Для дополнительной логики при ерроре
      */
-    protected open fun onResourceError(hasData: Boolean, url: Uri?, data: String?, exception: NetworkException?) {}
+    protected open fun onResourceError(hasData: Boolean, url: Uri?, data: String?, exception: WebResourceException) {}
 
     protected open fun onShowProgress(progress: Int) {
         logger.d("onShowProgress, progress: $progress")
@@ -302,15 +315,20 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
     }
 
     protected fun loadUrl(url: String) {
-        loadUri(Uri.parse(url))
+        // toValidUri можно не использовать, т.к. дальше проверяется валидность у строки
+        loadUri(url.toUri())
     }
 
     protected fun loadUri(uri: Uri): Boolean {
         logger.d("loadUrl, url: '$uri'")
         with(viewModel) {
             val uriString = uri.toString()
-            return if (isWebViewInitialized && uriString.isUrlValid(orBlank = true)) {
+            return if (isWebViewInitialized && uriString.isUrlValid(orBlank = true, isNonResource = false)) {
                 webView.loadUrl(uriString)
+                if (uriString.equals(URL_PAGE_BLANK, true)) {
+                    // по about:blank колбеков нет
+                    onPageFinished(WebViewData(uri, null, true))
+                }
                 true
             } else {
                 onFirstLoadNotStarted(EmptyWebResourceException(), uri, null)
@@ -370,29 +388,37 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 )
                 true
             } else {
-                onFirstLoadNotStarted(EmptyWebResourceException(), baseUrl?.let { Uri.parse(it) }, data)
+                onFirstLoadNotStarted(EmptyWebResourceException(), baseUrl?.toUri(), data)
                 false
             }
         }
     }
 
-    protected open fun hasResponseError(data: WebViewData?): WebResourceException? {
-        var result: WebResourceException? = null
+    protected open fun hasResponseError(data: WebViewData?): NetworkException? {
+        var result: NetworkException? = null
         data?.response?.let { response ->
+            val url = data.url?.toString()
             val code = response.statusCode
             // перестраховка, не должны попасть сюда с еррорным http-кодом
-            if (!isResponseOk(code)) {
-                result = WebResourceException(code = code)
+            if (url != null && !isResponseOk(code)) {
+                // request здесь отсутствует
+                result = HttpProtocolException(
+                    url,
+                    EMPTY_STRING,
+                    responseCode = code,
+                    responseMessage = response.reasonPhrase,
+                    responseBodyHeaders = ArrayList(response.responseHeaders.toHeaders().toPairs())
+                )
             } else {
-                val mimePart = response.mimeType.split(";").getOrNull(0).orEmpty()
-                if (mimePart != FileFormat.HTML.mimeType) {
-                    if (!handleNonHtmlData(data.responseData)) {
-                        result = WebResourceException(code = WebViewClient.ERROR_UNKNOWN)
-                    }
+                // пустой запрос также считается ошибкой
+                if (TextUtils.isEmpty(data.responseData)) {
+                    result = EmptyWebResourceException()
                 } else {
-                    // пустой запрос также считается ошибкой
-                    if (TextUtils.isEmpty(data.responseData)) {
-                        result = EmptyWebResourceException()
+                    val mimePart = response.mimeType.split(";").getOrNull(0).orEmpty()
+                    if (mimePart != FileFormat.HTML.mimeType) {
+                        if (!shouldAcceptNonHtmlData(data.responseData)) {
+                            result = WebResourceException(code = WebViewClient.ERROR_UNKNOWN)
+                        }
                     }
                 }
             }
@@ -401,7 +427,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         return result
     }
 
-    protected open fun handleNonHtmlData(responseData: String?) = true
+    protected open fun shouldAcceptNonHtmlData(responseData: String?) = true
 
     private fun LoadState<WebViewData>.notifyChanged() {
         webView.post {

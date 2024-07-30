@@ -2,6 +2,7 @@ package net.maxsmr.feature.download.ui
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -10,7 +11,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -26,7 +26,6 @@ import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStreamOrThrow
 import net.maxsmr.commonutils.openBatteryOptimizationSettings
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.actions.SnackbarExtraData.SnackbarLength
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
@@ -164,7 +163,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             this.value = if (value) {
                 BooleanFieldState(value = true, isEnabled = false)
             } else {
-                this.value?.copy(isEnabled = true) ?: BooleanFieldState(value = false, isEnabled = true)
+                this.value.copy(isEnabled = true)
             }
         }
 
@@ -499,7 +498,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         val isEmpty = bodyUri.isNullOrEmpty()
 
         fun getName(context: Context): String {
-            return bodyUri?.let { Uri.parse(it).name(context.contentResolver) }.orEmpty()
+            return bodyUri?.toUri()?.name(context.contentResolver).orEmpty()
         }
     }
 

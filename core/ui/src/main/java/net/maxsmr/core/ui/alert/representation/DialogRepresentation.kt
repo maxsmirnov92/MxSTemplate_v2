@@ -156,21 +156,18 @@ class DialogRepresentation(
                         setPositiveButton(it.title.get(context)) { _, _ ->
                             it.select?.invoke()
                             onPositiveClick?.invoke()
-                            onDismiss?.invoke()
                         }
                     }
                     negativeAnswer?.let {
                         setNegativeButton(it.title.get(context)) { _, _ ->
                             it.select?.invoke()
                             onNegativeClick?.invoke()
-                            onDismiss?.invoke()
                         }
                     }
                     neutralAnswer?.let {
                         setNeutralButton(it.title.get(context)) { _, _ ->
                             it.select?.invoke()
                             onNeutralClick?.invoke()
-                            onDismiss?.invoke()
                         }
                     }
                     val multiChoiceAnswers = multiChoiceAnswers
@@ -193,17 +190,18 @@ class DialogRepresentation(
                         setAdapter(adapter) { _, which ->
                             multiChoiceAnswers.answers[which].select?.invoke()
                             onMultiChoiceClick?.invoke(which)
-                            onDismiss?.invoke()
                         }
                     }
                     customView?.let { setView(it) }
                     customViewResId?.let { setView(it) }
                 }
                 .setCancelable(cancelable)
+                .setOnDismissListener {
+                    onDismiss?.invoke()
+                }
                 .setOnCancelListener {
                     alert.close()
                     onCancel?.invoke()
-                    onDismiss?.invoke()
                 }
                 .create()
                 .also { dialog ->

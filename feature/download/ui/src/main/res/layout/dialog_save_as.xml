@@ -15,7 +15,8 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etFileName"
-            style="@style/SingleLineInputText" />
+            style="@style/SingleLineInputText"
+            android:imeOptions="actionNext" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
@@ -28,7 +29,8 @@
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSubDirName"
-            style="@style/SingleLineInputText" />
+            style="@style/SingleLineInputText"
+            android:imeOptions="actionDone" />
 
     </com.google.android.material.textfield.TextInputLayout>
 

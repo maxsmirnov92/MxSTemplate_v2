@@ -7,16 +7,19 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.EditorInfo.IME_ACTION_DONE
 import android.webkit.WebView
 import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import net.maxsmr.commonutils.AppClickableSpan
 import net.maxsmr.commonutils.RangeSpanInfo
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.bindToTextNotNull
+import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
@@ -27,12 +30,12 @@ import net.maxsmr.commonutils.text.charsetForNameOrNull
 import net.maxsmr.commonutils.text.isEmpty
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.FileFormat
-import net.maxsmr.core.network.exceptions.NetworkException
+import net.maxsmr.core.android.network.isAnyResourceScheme
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
-import net.maxsmr.feature.webview.data.client.exception.WebResourceException.Companion.isWebConnectionError
+import net.maxsmr.feature.webview.data.client.exception.WebResourceException
 import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData
 import net.maxsmr.feature.webview.ui.WebViewCustomizer.ExternalViewUrlStrategy
 import net.maxsmr.feature.webview.ui.databinding.DialogInputUrlBinding
@@ -99,6 +102,9 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
     override fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
         super.handleAlerts(delegate)
         bindAlertDialog(BaseCustomizableWebViewModel.DIALOG_TAG_OPEN_URL) {
+            val positiveAnswer =
+                it.answers.getOrNull(0) ?: throw IllegalStateException("Required positive answer is missing")
+
             val dialogBinding = DialogInputUrlBinding.inflate(LayoutInflater.from(requireContext()))
 
             dialogBinding.etUrl.bindToTextNotNull(viewModel.urlField)
@@ -108,6 +114,23 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             // еррор не выставляем - вместо этого дисейбл кнопки
             viewModel.urlField.hintLive.observe { hint ->
                 dialogBinding.tilUrl.hint = hint?.get(requireContext())
+            }
+
+            val onAction: () -> Unit = {
+                if (viewModel.onUrlConfirmed()) {
+                    doInitReloadWebView()
+                    requireActivity().hideKeyboard()
+                }
+            }
+
+            dialogBinding.etUrl.setOnEditorActionListener { v, actionId, event ->
+                if (actionId == IME_ACTION_DONE) {
+                    positiveAnswer.select?.invoke()
+                    onAction.invoke()
+                    true
+                } else {
+                    false
+                }
             }
 
             dialogBinding.ibClear.setOnClickListener {
@@ -120,11 +143,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
                         (this as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = error == null
                     }
                 }
-                .setPositiveButton(it.answers[0]) {
-                    if (viewModel.onUrlConfirmed()) {
-                        doInitReloadWebView()
-                    }
-                }
+                .setPositiveButton(positiveAnswer, onAction)
                 .build()
         }
     }
@@ -132,7 +151,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
 
-        openHomeMenuItem =  menu.findItem(R.id.action_open_home)
+        openHomeMenuItem = menu.findItem(R.id.action_open_home)
         refreshOpenHomeItem(viewModel.hasInitialUrl.value ?: false)
 
         copyMenuItem = menu.findItem(R.id.action_copy_link)
@@ -202,7 +221,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     override fun createWebViewClient(): InterceptWebViewClient {
         val context = requireContext()
-        return when (val strategy = webViewCustomizer.strategy) {
+        return when (val strategy = webViewCustomizer.viewUrlStrategy) {
             is ExternalViewUrlStrategy.None -> {
                 InterceptWebViewClient(context, okHttpClient)
             }
@@ -212,7 +231,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
                     override fun getViewUrlMode(url: String): ViewUrlMode {
                         // переход во внешний браузер при совпадении указанных критериев
-                        return if (strategy.match(Uri.parse(url))) {
+                        return if (strategy.match(url.toUri())) {
                             ViewUrlMode.EXTERNAL
                         } else {
                             ViewUrlMode.INTERNAL
@@ -236,10 +255,6 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         val url = customizer.url
         val data = customizer.data
         when {
-            url.isNotEmpty() -> {
-                loadUrl(url)
-            }
-
             data != null -> {
                 loadDataWithBaseUrl(
                     url,
@@ -248,6 +263,10 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
                     data.charset.charsetForNameOrNull() ?: Charset.defaultCharset(),
                     forceBase64 = data.forceBase64
                 )
+            }
+
+            url.isNotEmpty() -> {
+                loadUrl(url)
             }
 
             else -> {
@@ -270,7 +289,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 //        binding.scrollWebView.isFillViewport = false
 //    }
 
-    override fun onResourceError(hasData: Boolean, url: Uri?, data: String?, exception: NetworkException?) {
+    override fun onResourceError(hasData: Boolean, url: Uri?, data: String?, exception: WebResourceException) {
         with(binding.errorContainer) {
             val isEmptyFunc = { s: CharSequence? -> isEmpty(s, true) }
             val urlText = url?.toString().orEmpty()
@@ -287,8 +306,15 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             } else {
                 tvErrorUrl.isVisible = false
             }
-            tvErrorDescription.setTextOrGone(exception?.message, isEmptyFunc = isEmptyFunc)
-            tvErrorCheckConnectionHint.isVisible = exception?.isWebConnectionError() == true
+            tvErrorTitle.setText(
+                if (url?.scheme.isAnyResourceScheme() || !data.isNullOrEmpty()) {
+                    R.string.webview_error_connect_resource
+                } else {
+                    R.string.webview_error_connect_host
+                }
+            )
+            tvErrorDescription.setTextOrGone(exception.message, isEmptyFunc = isEmptyFunc)
+            tvErrorCheckConnectionHint.isVisible = exception.isConnectionError
 //            binding.scrollWebView.isFillViewport = true
         }
     }

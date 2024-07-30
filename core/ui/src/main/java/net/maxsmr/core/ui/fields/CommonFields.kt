@@ -14,14 +14,20 @@ fun SavedStateHandle.urlField(
     isRequired: Boolean = false,
     initialValue: String = EMPTY_STRING,
     withAsterisk: Boolean = true,
-    isValidByBlank: Boolean = false
-    ): Field<String> = object : Field.Builder<String>(initialValue) {
+    isValidByBlank: Boolean = false,
+    isNonResource: Boolean = true,
+    schemeIfEmpty: String = EMPTY_STRING,
+): Field<String> = object : Field.Builder<String>(initialValue) {
     override fun valueGetter(fieldValue: MutableLiveData<String>): () -> String = {
         fieldValue.value.orEmpty().trim()
     }
 }.emptyIf { it.isEmpty() }
     .validators(Field.Validator(R.string.field_url_error) {
-        it.isUrlValid(orBlank = isValidByBlank)
+        it.isUrlValid(
+            orBlank = isValidByBlank,
+            schemeIfEmpty = schemeIfEmpty,
+            isNonResource = isNonResource
+        )
     })
     .hint(hintResId, withAsterisk = withAsterisk)
     .persist(this, KEY_FIELD_URL)

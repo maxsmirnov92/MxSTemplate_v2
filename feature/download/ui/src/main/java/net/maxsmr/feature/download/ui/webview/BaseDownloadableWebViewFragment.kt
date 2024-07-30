@@ -3,10 +3,12 @@ package net.maxsmr.feature.download.ui.webview
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.inputmethod.EditorInfo.IME_ACTION_DONE
 import android.webkit.WebSettings
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.activityViewModels
 import net.maxsmr.commonutils.gui.bindToTextNotNull
+import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation
@@ -40,6 +42,9 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
             val modelWithType = it.extraData as? ParamsModelWithType ?: throw IllegalStateException("Extra data for this dialog not specified")
             val model = modelWithType.first
 
+            val positiveAnswer = it.answers.getOrNull(0) ?: throw IllegalStateException("Required positive answer is missing")
+            val negativeAnswer = it.answers.getOrNull(1) ?: throw IllegalStateException("Required negative answer is missing")
+
             val dialogBinding = DialogSaveAsBinding.inflate(LayoutInflater.from(requireContext()))
 
             dialogBinding.etFileName.bindToTextNotNull(viewModel.fileNameField)
@@ -50,6 +55,24 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
             viewModel.subDirNameField.observeFromText(dialogBinding.etSubDirName, viewLifecycleOwner)
             viewModel.subDirNameField.bindHintError(viewLifecycleOwner, dialogBinding.tilSubDirName)
 
+            val onAction: () -> Unit = {
+                downloadsViewModel.enqueueDownload(model.copy(
+                    fileName = viewModel.fileNameField.value,
+                    subDirName = viewModel.subDirNameField.value
+                ), modelWithType.second)
+                requireActivity().hideKeyboard()
+            }
+
+            dialogBinding.etSubDirName.setOnEditorActionListener { v, actionId, event ->
+                if (actionId == IME_ACTION_DONE) {
+                    positiveAnswer.select?.invoke()
+                    onAction.invoke()
+                    true
+                } else {
+                    false
+                }
+            }
+
             DialogRepresentation.Builder(requireContext(), it)
                 .setCustomView(dialogBinding.root) {
                     viewModel.canStartDownload.observe {isEnabled ->
@@ -57,13 +80,8 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
                     }
                 }
                 .setCancelable(false)
-                .setPositiveButton(it.answers[0]) {
-                    downloadsViewModel.enqueueDownload(model.copy(
-                        fileName = viewModel.fileNameField.value,
-                        subDirName = viewModel.subDirNameField.value
-                    ), modelWithType.second)
-                }
-                .setNegativeButton(it.answers[1])
+                .setPositiveButton(positiveAnswer, onAction)
+                .setNegativeButton(negativeAnswer)
                 .build()
         }
     }

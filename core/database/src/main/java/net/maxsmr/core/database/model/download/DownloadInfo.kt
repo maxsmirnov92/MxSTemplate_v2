@@ -1,6 +1,7 @@
 package net.maxsmr.core.database.model.download
 
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
@@ -83,7 +84,7 @@ data class DownloadInfo(
         protected abstract val uriString: String?
 
         open val localUri
-            get() = uriString?.let { Uri.parse(it) }
+            get() = uriString?.toUri()
 
 
         data object Loading : Status() {

@@ -11,9 +11,11 @@ import net.maxsmr.commonutils.getSendTextIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.startActivitySafe
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.network.URL_SCHEME_HTTPS
 import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import net.maxsmr.core.android.network.isUrlValid
+import net.maxsmr.core.android.network.toValidUri
 import net.maxsmr.core.ui.fields.urlField
 
 abstract class BaseCustomizableWebViewModel(
@@ -21,17 +23,18 @@ abstract class BaseCustomizableWebViewModel(
 ) : BaseWebViewModel(state) {
 
     val urlField: Field<String> = state.urlField(
-        initialValue = "$URL_SCHEME_HTTPS://",
         hintResId = R.string.webview_alert_open_url_field_hint,
         withAsterisk = false,
-        isRequired = true
+        isRequired = true,
+        isValidByBlank = true,
+        schemeIfEmpty = URL_SCHEME_HTTPS
     )
 
     private val initialCustomizer = MutableLiveData<WebViewCustomizer?>(null)
 
     val hasInitialUrl: LiveData<Boolean> = initialCustomizer.map {
-        // наличие домашней страницы == валидная исходная http/https-урла
-        it?.url.isUrlValid()
+        // наличие домашней страницы == валидная исходная http/https-урла или about:blank
+        it?.url.isUrlValid(orBlank = true)
     }
 
     abstract var customizer: WebViewCustomizer
@@ -48,12 +51,12 @@ abstract class BaseCustomizableWebViewModel(
         if (urlField.hasError) {
             return false
         }
-        val newValue = urlField.value
-        if (currentUrl.value.toString().equalsIgnoreSubDomain(newValue)) {
+        val newValue = urlField.value.toValidUri(orBlank = true, schemeIfEmpty = URL_SCHEME_HTTPS) ?: return false
+        if (currentUrl.value?.host.equalsIgnoreSubDomain(newValue.host)) {
             return false
         }
-        customizer = customizer.buildUpon().setUrl(newValue).build()
-        urlField.value = "$URL_SCHEME_HTTPS://"
+        customizer = customizer.buildUpon().setUri(newValue).build()
+        urlField.value = EMPTY_STRING
         return true
     }
 

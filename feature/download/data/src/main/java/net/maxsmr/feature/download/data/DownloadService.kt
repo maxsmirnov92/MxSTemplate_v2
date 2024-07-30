@@ -52,6 +52,7 @@ import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.network.isAnyResourceScheme
+import net.maxsmr.core.android.network.toValidUri
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.di.AppDispatchers
@@ -1197,7 +1198,12 @@ class DownloadService : Service() {
                 appendGetParams: ((Uri) -> Uri)? = null,
             ): RequestParams {
                 val targetUrl = if (appendGetParams != null) {
-                    Uri.parse(url)?.let { appendGetParams(it) }?.toString() ?: url
+                    // урла должна быть не ресурсной и не blank для подстановки параметров
+                    url.toValidUri(orBlank = false, isNonResource = true)?.let {
+                        appendGetParams(it)
+                    }?.toString()?.takeIf {
+                        it.isNotEmpty()
+                    } ?: url
                 } else {
                     url
                 }

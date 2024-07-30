@@ -1,16 +1,18 @@
 package net.maxsmr.feature.webview.ui
 
 import android.net.Uri
-import android.text.TextUtils
 import androidx.annotation.Keep
 import net.maxsmr.commonutils.CHARSET_DEFAULT
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.content.FileFormat
+import net.maxsmr.core.android.network.URL_PAGE_BLANK
 import net.maxsmr.core.android.network.equalsIgnoreSubDomain
+import net.maxsmr.core.android.network.isUrlValid
 import java.io.Serializable
 
 /**
  * Инкапсулирет задание свойств для [android.webkit.WebView]
+ * @param url любая URL, включая [URL_PAGE_BLANK] или ресурсные схемы
  */
 @Keep
 class WebViewCustomizer private constructor(
@@ -19,7 +21,7 @@ class WebViewCustomizer private constructor(
     val data: WebViewDataArgs?,
     val reloadAfterConnectionError: Boolean,
     val changeTitleByState: Boolean,
-    val strategy: ExternalViewUrlStrategy
+    val viewUrlStrategy: ExternalViewUrlStrategy
 ): Serializable {
 
     fun buildUpon() = Builder()
@@ -28,7 +30,7 @@ class WebViewCustomizer private constructor(
         .setData(data)
         .setReloadAfterConnectionError(reloadAfterConnectionError)
         .setChangeTitleOnLoad(changeTitleByState)
-        .setBrowserInterceptStrategy(strategy)
+        .setViewUrlStrategy(viewUrlStrategy)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -39,7 +41,7 @@ class WebViewCustomizer private constructor(
         if (data != other.data) return false
         if (reloadAfterConnectionError != other.reloadAfterConnectionError) return false
         if (changeTitleByState != other.changeTitleByState) return false
-        if (strategy != other.strategy) return false
+        if (viewUrlStrategy != other.viewUrlStrategy) return false
 
         return true
     }
@@ -50,7 +52,7 @@ class WebViewCustomizer private constructor(
         result = 31 * result + (data?.hashCode() ?: 0)
         result = 31 * result + reloadAfterConnectionError.hashCode()
         result = 31 * result + changeTitleByState.hashCode()
-        result = 31 * result + strategy.hashCode()
+        result = 31 * result + viewUrlStrategy.hashCode()
         return result
     }
 
@@ -59,7 +61,7 @@ class WebViewCustomizer private constructor(
                 "url='$url'," +
                 "data=$data, reloadAfterConnectionError=$reloadAfterConnectionError," +
                 "changeTitleOnLoad=$changeTitleByState," +
-                "strategy=$strategy)"
+                "strategy=$viewUrlStrategy)"
     }
 
     class Builder {
@@ -76,17 +78,21 @@ class WebViewCustomizer private constructor(
             return this
         }
 
+        /**
+         * Выставить [url] с любой схемой или [URL_PAGE_BLANK], если валидная
+         */
         fun setUrl(url: String?): Builder {
-            this.url = if (TextUtils.isEmpty(url)) {
-                EMPTY_STRING
-            } else {
-                val uri = Uri.parse(url)
-                if (uri.scheme.isNullOrEmpty()) {
-                    uri.buildUpon().scheme("http").build()
-                } else {
-                    uri
-                }.toString()
-            }
+            this.url = url.takeIf {
+                it.isUrlValid(orBlank = true, isNonResource = false)
+            }?.toString().orEmpty()
+            return this
+        }
+
+        /**
+         * Выставить готовую [uri] без проверок
+         */
+        fun setUri(uri: Uri) : Builder {
+            this.url = uri.toString()
             return this
         }
 
@@ -105,7 +111,7 @@ class WebViewCustomizer private constructor(
             return this
         }
 
-        fun setBrowserInterceptStrategy(strategy: ExternalViewUrlStrategy): Builder {
+        fun setViewUrlStrategy(strategy: ExternalViewUrlStrategy): Builder {
             this.viewUrlStrategy = strategy
             return this
         }
@@ -134,35 +140,39 @@ class WebViewCustomizer private constructor(
             private fun readResolve(): Any = None
         }
 
+        /**
+         * Соответствие текущей урлы по возможным
+         * схемам / хостам / параметрам
+         */
         data class UrlMatch(
-            val protocols: List<String>,
+            val schemes: List<String>,
             val hosts: List<String>,
             val queryParameters: List<String>,
         ): ExternalViewUrlStrategy() {
 
             fun match(uri: Uri): Boolean {
-                val protocolPassed = if (protocols.isNotEmpty()) {
-                    protocols.any {
+                val schemePassed = if (schemes.any { it.isNotEmpty() }) {
+                    schemes.any {
                         uri.scheme?.equals(it) == true
                     }
                 } else {
                     true
                 }
-                val hostPassed = if (hosts.isNotEmpty()) {
+                val hostPassed = if (hosts.any { it.isNotEmpty() }) {
                     hosts.any {
                         uri.host.equalsIgnoreSubDomain(it)
                     }
                 } else {
                     true
                 }
-                val parametersPassed = if (queryParameters.isNotEmpty()) {
+                val parametersPassed = if (queryParameters.any { it.isNotEmpty() }) {
                     uri.queryParameterNames.any { name ->
-                        queryParameters.any { name == it }
+                        queryParameters.any { name.equals(it, true) }
                     }
                 } else {
                     true
                 }
-                return protocolPassed && hostPassed && parametersPassed
+                return schemePassed && hostPassed && parametersPassed
             }
         }
 

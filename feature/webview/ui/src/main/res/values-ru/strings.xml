@@ -11,7 +11,8 @@
     <string name="webview_menu_action_clear_history">Очистить историю</string>
     <string name="webview_alert_open_url_title">URL для перехода</string>
     <string name="webview_alert_open_url_field_hint">Введите URL</string>
-    <string name="webview_error_no_connection">Не удаётся установить соединение с хостом</string>
+    <string name="webview_error_connect_host">Не удаётся установить соединение с хостом</string>
+    <string name="webview_error_connect_resource">Не удаётся загрузить ресурс</string>
     <string name="webview_button_reload">Перезагрузить</string>
     <string name="webview_check_internet">Проверьте настройки интернет-соединения. Если включен VPN - отключите его и повторите попытку</string>
     <string name="webview_url_link_title">Ссылка на страницу</string>

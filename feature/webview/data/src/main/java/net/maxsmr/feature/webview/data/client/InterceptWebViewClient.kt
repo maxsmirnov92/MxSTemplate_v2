@@ -10,6 +10,7 @@ import android.webkit.*
 import androidx.annotation.CallSuper
 import androidx.annotation.MainThread
 import androidx.annotation.RequiresApi
+import androidx.core.net.toUri
 import net.maxsmr.commonutils.URL_SCHEME_GEO
 import net.maxsmr.commonutils.URL_SCHEME_GEO_GOOGLE
 import net.maxsmr.commonutils.URL_SCHEME_MAIL
@@ -25,9 +26,11 @@ import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.asStringCloned
+import net.maxsmr.core.network.exceptions.HttpProtocolException
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.executeCall
 import net.maxsmr.core.network.getContentTypeHeader
+import net.maxsmr.core.network.toPairs
 import net.maxsmr.core.ui.openAnyIntentWithToastError
 import net.maxsmr.core.ui.openEmailIntentWithToastError
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
@@ -35,6 +38,7 @@ import net.maxsmr.feature.webview.data.client.exception.WebResourceSslException
 import net.maxsmr.feature.webview.data.client.interceptor.IWebViewInterceptor
 import net.maxsmr.feature.webview.data.client.interceptor.IWebViewInterceptor.InterceptedUrl
 import net.maxsmr.feature.webview.data.client.interceptor.WebViewInterceptor
+import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import java.nio.charset.Charset
@@ -157,7 +161,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
             // если урла не совпала
             // или currentMainFrameData отсутствует (главная была завершена)
             // -> это загрузка какой-то части страницы, просто оповещаем
-            onPageFinished?.invoke(WebViewData(Uri.parse(url), null, false))
+            onPageFinished?.invoke(WebViewData(url.toUri(), null, false))
         }
     }
 
@@ -187,9 +191,13 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     ) {
         super.onReceivedHttpError(view, request, errorResponse)
         onWebResourceRequestError(
-            WebResourceException(
-                code = errorResponse.statusCode,
-                message = errorResponse.reasonPhrase
+            HttpProtocolException(
+                request.url.toString(),
+                request.method,
+                ArrayList(request.requestHeaders.toHeaders().toPairs()),
+                responseCode = errorResponse.statusCode,
+                responseMessage = errorResponse.reasonPhrase,
+                responseBodyHeaders = ArrayList(errorResponse.responseHeaders.toHeaders().toPairs())
             ), request
         )
         // далее последует onPageFinished
@@ -239,7 +247,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     // не главный поток
     @CallSuper
     protected open fun onStartLoading(url: String, isForMainFrame: Boolean) {
-        val data = WebViewData(Uri.parse(url), null, isForMainFrame)
+        val data = WebViewData(url.toUri(), null, isForMainFrame)
         if (isForMainFrame) {
             currentMainFrameData = data
         }
@@ -277,7 +285,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
      * затем идёт [shouldInterceptRequest]
      */
     private fun shouldInterceptFromOverrideUrlWithCheck(url: String): InterceptedUrl? {
-        val uri = Uri.parse(url)
+        val uri = url.toUri()
         val scheme = uri.scheme
         var handled = false
         when (scheme) {
@@ -339,7 +347,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
                 body?.byteStream()
             )
         }
-        return WebViewData(Uri.parse(url), null, isForMainFrame, response, responseBody)
+        return WebViewData(url.toUri(), null, isForMainFrame, response, responseBody)
     }
 
     /**

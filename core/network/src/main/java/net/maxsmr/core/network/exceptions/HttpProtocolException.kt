@@ -19,7 +19,7 @@ open class HttpProtocolException(
     val responseMessage: String = EMPTY_STRING,
     val responseBodyString: String = EMPTY_STRING,
     val responseBodyHeaders: ArrayList<Pair<String, String>> = arrayListOf(),
-    message: String?,
+    message: String? = null,
 ) : NetworkException(responseCode, message) {
 
     constructor(source: HttpProtocolException) : this(
