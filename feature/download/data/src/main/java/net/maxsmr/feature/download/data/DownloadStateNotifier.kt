@@ -1,6 +1,5 @@
 package net.maxsmr.feature.download.data
 
-import android.content.Context
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -166,7 +165,7 @@ class DownloadStateNotifier @Inject constructor(
             oldParams: DownloadService.Params,
         ) : DownloadState(downloadInfo, params, oldParams) {
 
-            fun getLength() = downloadInfo.localUri?.length(baseApplicationContext.contentResolver) ?: 0
+            val resourceLength get() = downloadInfo.localUri?.length(baseApplicationContext.contentResolver) ?: 0
 
             override fun toString(): String {
                 return "DownloadState.Success(downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"

@@ -18,10 +18,4 @@ data class DownloadInfoResultData(
     }
 
     val id = downloadInfo.id
-
-    val length get() = if (state is DownloadStateNotifier.DownloadState.Success) {
-        state.getLength()
-    } else {
-        0
-    }
 }

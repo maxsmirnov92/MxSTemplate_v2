@@ -21,12 +21,15 @@ import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelper
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
 import net.maxsmr.commonutils.AppClickableSpan
 import net.maxsmr.commonutils.RangeSpanInfo
+import net.maxsmr.commonutils.conversion.SizeUnit
 import net.maxsmr.commonutils.copyToClipboard
+import net.maxsmr.commonutils.format.formatSizeSingle
 import net.maxsmr.commonutils.gui.PopupParams
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
+import net.maxsmr.commonutils.media.path
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.download.DownloadInfo
@@ -173,7 +176,9 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         state: DownloadStateNotifier.DownloadState?,
         anchorView: View,
     ) {
-        showDetailsPopup(params, anchorView)
+        state?.let {
+            showDetailsPopup(state, anchorView)
+        }
     }
 
     override fun onDeleteResource(downloadId: Long, name: String) {
@@ -196,16 +201,17 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         viewModel.onRemoveFinishedDownload(item.id)
     }
 
-    private fun showDetailsPopup(params: DownloadService.Params, anchorView: View) {
+    private fun showDetailsPopup(state: DownloadStateNotifier.DownloadState, anchorView: View) {
+        val context = requireContext()
         detailsPopupWindow = showPopupWindowWithObserver(
-            requireContext(),
+            context,
             detailsPopupWindow,
             PopupParams(anchorView,
                 onDismissed = {
                     detailsPopupWindow = null
                     false
                 },
-                windowConfigurator = { window, context ->
+                windowConfigurator = { window, _ ->
                     with(window) {
                         width = (context.resources.displayMetrics.widthPixels * 0.8).toInt()
                         height = ViewGroup.LayoutParams.WRAP_CONTENT
@@ -226,23 +232,51 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
             ),
             contentViewCreator = {
                 val binding = LayoutPopupDownloadDetailsBinding.inflate(
-                    LayoutInflater.from(requireContext()),
+                    LayoutInflater.from(context),
                     it.parent as ViewGroup,
                     false
                 ).apply {
                     ibClose.setOnClickListener {
                         hideDetailsPopup()
                     }
-                    tvDetails.setSpanText(params.requestParams.url, RangeSpanInfo(0,
-                        params.requestParams.url.length,
-                        listOf(
-                            AppClickableSpan(
-                                true
-                            ) {
-                                requireContext().copyToClipboard("url", params.requestParams.url)
-                                viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message))
+                    val params = state.params
+
+                    with(StringBuilder()) {
+                        append(params.requestParams.url)
+
+                        fun appendSeparator(count: Int) {
+                            repeat(count) {
+                                append(System.lineSeparator())
                             }
-                        )))
+                        }
+
+                        val localUri = state.downloadInfo.localUri
+                        if (localUri != null) {
+                            localUri.path(context.contentResolver).takeIf {
+                                it.isNotEmpty()
+                            }?.let { path ->
+                                appendSeparator(2)
+                                append(path)
+                            }
+                            if (state is DownloadStateNotifier.DownloadState.Success) {
+                                formatSizeSingle(state.resourceLength, SizeUnit.BYTES, precision = 2)?.let { size ->
+                                    appendSeparator(2)
+                                    append(size.get(context))
+                                }
+                            }
+                        }
+
+                        tvDetails.setSpanText(this, RangeSpanInfo(0,
+                            params.requestParams.url.length,
+                            listOf(
+                                AppClickableSpan(
+                                    true
+                                ) {
+                                    requireContext().copyToClipboard("url", params.requestParams.url)
+                                    viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message))
+                                }
+                            )))
+                    }
                 }
                 return@showPopupWindowWithObserver binding.root
             }
