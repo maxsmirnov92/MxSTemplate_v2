@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Bundle
 import android.text.TextUtils
+import android.util.Log
 import android.view.View
 import android.webkit.WebBackForwardList
 import android.webkit.WebSettings
@@ -29,9 +30,9 @@ import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.isResponseOk
 import net.maxsmr.core.network.toPairs
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.feature.webview.data.client.BaseWebChromeClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
+import net.maxsmr.feature.webview.data.client.ProgressWebChromeClient
 import net.maxsmr.feature.webview.data.client.exception.EmptyWebResourceException
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
 import okhttp3.Headers.Companion.toHeaders
@@ -99,6 +100,16 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
                 it.isEnabled = webView.scrollY == 0
             }
         }
+
+        webView.evaluateJavascript(
+            "(function() { return !!window.WebGLRenderingContext && !!document.createElement('canvas').getContext('webgl'); })();"
+        ) { value ->
+            if ("true" == value) {
+                Log.d("WebView", "WebGL поддерживается")
+            } else {
+                Log.d("WebView", "WebGL не поддерживается")
+            }
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -145,7 +156,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
 
     protected abstract fun createWebViewClient(): InterceptWebViewClient
 
-    protected open fun createWebChromeClient(): BaseWebChromeClient? = BaseWebChromeClient()
+    protected open fun createWebChromeClient(): ProgressWebChromeClient? = ProgressWebChromeClient()
 
     /**
      * Перезагрузка с текущим состоянием WebView
@@ -170,6 +181,11 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             displayZoomControls = false
             builtInZoomControls = true
             defaultTextEncodingName = CHARSET_DEFAULT
+            allowContentAccess = true
+            allowFileAccess = true
+        }
+        if (BuildConfig.DEBUG) {
+            WebView.setWebContentsDebuggingEnabled(true)
         }
     }
 

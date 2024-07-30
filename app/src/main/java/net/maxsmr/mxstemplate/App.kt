@@ -43,6 +43,12 @@ class App: Application(), Application.ActivityLifecycleCallbacks {
 
         registerActivityLifecycleCallbacks(this)
         radarIoRetrofitClient.init()
+
+//        if (isAtLeastPie()) {
+//            kotlin.runCatching {
+//                WebView.setDataDirectorySuffix("chromeWebView")
+//            }
+//        }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {

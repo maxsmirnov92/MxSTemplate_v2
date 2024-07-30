@@ -27,6 +27,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true"
         tools:targetApi="31">
 
         <!--  при  adjustPan проблемы с пустым пространством при отсутствующей клавиатуре остаются   -->
@@ -134,6 +135,13 @@
                 android:resource="@xml/provider_paths"
                 tools:replace="android:resource" />
         </provider>
+
+<!--        <meta-data-->
+<!--            android:name="android.webkit.WebView.EnableSafeBrowsing"-->
+<!--            android:value="true" />-->
+<!--        <meta-data-->
+<!--            android:name="com.android.webview.WebViewUpdateService"-->
+<!--            android:value="com.google.android.webview" />-->
     </application>
     <queries>
         <intent>

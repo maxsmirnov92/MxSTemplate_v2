@@ -19,11 +19,11 @@ import net.maxsmr.commonutils.URL_SCHEME_TEL
 import net.maxsmr.commonutils.getDialIntent
 import net.maxsmr.commonutils.getViewLocationIntent
 import net.maxsmr.commonutils.getViewUrlIntent
+import net.maxsmr.commonutils.isAtLeastNougat
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.media.getMimeTypeFromUrl
 import net.maxsmr.core.android.content.FileFormat
-import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.asStringCloned
 import net.maxsmr.core.network.exceptions.HttpProtocolException
@@ -66,9 +66,6 @@ open class InterceptWebViewClient @JvmOverloads constructor(
             field = value
         }
 
-    /**
-     * [WebViewData] здесь всегда только с заполненным url и флагом
-     */
     var onPageStarted: ((WebViewData) -> Unit)? = null
 
     var onPageFinished: ((WebViewData) -> Unit)? = null
@@ -101,6 +98,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
         headers: Map<String, String>?,
         isForMainFrame: Boolean,
     ): WebResourceResponse? {
+        logger.d("shouldInterceptRequest, url: $url, method: $method, headers: $headers, isForMainFrame: $isForMainFrame")
         onStartLoading(url, isForMainFrame)
         return if (shouldInterceptCommand(view, url, ::shouldInterceptFromRequest)) {
             webViewInterceptor?.getStubForInterceptedRequest()
@@ -139,21 +137,23 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     @MainThread
     override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
+        logger.d("onPageStarted, url: $url")
     }
 
     @MainThread
     override fun onPageFinished(view: WebView, url: String) {
         super.onPageFinished(view, url)
-        val data = currentMainFrameData
+        logger.d("onPageFinished, url: $url")
+        val uri = url.toUri()
+        val lastData = currentMainFrameData
         var isHandled = false
-        if (data != null
-                && (url.equalsIgnoreSubDomain(data.url.toString())
-                        || !data.data.isNullOrEmpty())
-        ) {
-            // загрузка завершилась для той же "главной" урлы!
-            // или вызывалось loadData/loadDataWithBaseUrl;
+        if (lastData != null) {
+            // проверку пришлось убрать из-за того, что при редиректах приходит завершение по другой урле
+            /*&& lastData.url != null && uri.equalsIgnoreSubDomain(lastData.url)*/
+
+            // загрузка завершилась для текущей WebViewData;
             // как индикатор завершения текущей цепочки - забываем
-            onPageFinished?.invoke(data)
+            onPageFinished?.invoke(lastData.copy(url = uri, data = null)) // актуализация урлы, т.к. это может быть редирект
             currentMainFrameData = null
             isHandled = true
         }
@@ -161,7 +161,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
             // если урла не совпала
             // или currentMainFrameData отсутствует (главная была завершена)
             // -> это загрузка какой-то части страницы, просто оповещаем
-            onPageFinished?.invoke(WebViewData(url.toUri(), null, false))
+            onPageFinished?.invoke(WebViewData(uri, null, false))
         }
     }
 
@@ -211,8 +211,9 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     }
 
     @CallSuper
+    @Synchronized
     open fun onWebResourceRequestError(error: NetworkException, request: WebResourceRequest?) {
-        logger.e("onWebResourceRequestError, error: $error, request: $request")
+        logger.e("onWebResourceRequestError, error: $error, request: ${request?.toReadableString()}")
         val data = currentMainFrameData
         if (data != null && request == null) {
             // если WebResourceRequest отсутствует (при ошибке SSL)
@@ -220,21 +221,23 @@ open class InterceptWebViewClient @JvmOverloads constructor(
             onPageError?.invoke(data, error)
             // забываем, т.к. onPageFinished дальше не вызовется
             currentMainFrameData = null
-        } else {
+        } else if (request != null) {
             // иначе просто оповещаем об ошибке, оставляя currentMainFrameData,
             // чтобы далее правильно вызвался onPageFinished
-            if (request != null) {
-                val isForMainFrame = request.isForMainFrame
-                val url = request.url
-                val newData = if (data != null && isForMainFrame && url.equalsIgnoreSubDomain(data.url)) {
-                    // можно идентифицировать как главный, начатый ранее
-                    data
-                } else {
-                    // такого быть не должно, т.к. должен был быть запомнен currentMainFrameData при старте
-                    WebViewData(url, null, isForMainFrame)
+            val isForMainFrame = request.isForMainFrame
+            val url = request.url
+            val newData = if (data != null && isForMainFrame) {
+                // можно идентифицировать как главный, начатый ранее
+                data.copy(url = url)
+            } else {
+                // такого быть не должно, т.к. должен был быть запомнен currentMainFrameData при старте
+                WebViewData(url, null, isForMainFrame)
+            }.also {
+                if (isForMainFrame) {
+                    currentMainFrameData = it
                 }
-                onPageError?.invoke(newData, error)
             }
+            onPageError?.invoke(newData, error)
         }
     }
 
@@ -247,22 +250,26 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     // не главный поток
     @CallSuper
     protected open fun onStartLoading(url: String, isForMainFrame: Boolean) {
-        val data = WebViewData(url.toUri(), null, isForMainFrame)
-        if (isForMainFrame) {
-            currentMainFrameData = data
+        synchronized(this) {
+            val data = WebViewData(url.toUri(), null, isForMainFrame)
+            if (isForMainFrame) {
+                currentMainFrameData = data
+            }
+            onPageStarted?.invoke(data)
         }
-        onPageStarted?.invoke(data)
     }
 
     // не главный поток
     @CallSuper
     protected open fun onFinishLoading(webViewData: WebViewData, isForMainFrame: Boolean) {
-        if (isForMainFrame) {
-            currentMainFrameData = webViewData
+        synchronized(this) {
+            if (isForMainFrame) {
+                currentMainFrameData = webViewData
+            }
+            // далее ожидаем еррор + onPageFinished
+            // или только onPageFinished
+            // или только onReceivedSslError
         }
-        // далее ожидаем еррор + onPageFinished
-        // или только onPageFinished
-        // или только onReceivedSslError
     }
 
     private fun shouldInterceptCommand(
@@ -386,6 +393,19 @@ open class InterceptWebViewClient @JvmOverloads constructor(
             } else {
                 null
             }
+        }
+    }
+
+    companion object {
+
+        fun WebResourceRequest.toReadableString(): String {
+            return "WebResourceRequest(url='$url', isForMainFrame='$isForMainFrame', isRedirect=${
+                if (isAtLeastNougat()) {
+                    isRedirect
+                } else {
+                    null
+                }
+            }, hasGesture=${hasGesture()}, method=$method)"
         }
     }
 }
