@@ -8,7 +8,6 @@ import net.maxsmr.commonutils.writeBytesOrThrow
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.Serializable
-import java.util.concurrent.TimeUnit
 
 @kotlinx.serialization.Serializable
 data class AppSettings(
@@ -19,8 +18,9 @@ data class AppSettings(
     val retryDownloads: Boolean = true,
     val disableNotifications: Boolean = false,
     val updateNotificationInterval: Long = 300,
-    val startPageUrl: String = "https://google.com"
-): Serializable {
+    val openLinksInExternalApps: Boolean = true,
+    val startPageUrl: String = "https://google.com",
+) : Serializable {
 
     companion object {
 

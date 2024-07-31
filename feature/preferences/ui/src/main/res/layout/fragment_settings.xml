@@ -83,7 +83,7 @@
                 app:switchPadding="4dp" />
 
             <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switchRetryOnConnectionFailureField"
+                android:id="@+id/switchRetryOnConnectionFailure"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -125,6 +125,15 @@
                     tools:hint="@string/settings_field_update_notification_interval_hint" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switch_open_links_in_external_apps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/settings_field_open_links_in_external_apps"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                app:switchPadding="4dp" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilStartPageUrl"

@@ -43,7 +43,7 @@ import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
-import net.maxsmr.core.ui.fields.BooleanFieldState
+import net.maxsmr.core.ui.fields.BooleanFieldWithState
 import net.maxsmr.core.ui.fields.fileNameField
 import net.maxsmr.core.ui.fields.subDirNameField
 import net.maxsmr.core.ui.fields.urlField
@@ -77,7 +77,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     val fileNameField: Field<String> = state.fileNameField()
 
-    val fileNameChangeStateField: Field<BooleanFieldState> = Field.Builder(BooleanFieldState(false))
+    val fileNameChangeStateField: Field<BooleanFieldWithState> = Field.Builder(BooleanFieldWithState(false))
         .emptyIf { false }
         .persist(state, KEY_FIELD_FILE_NAME_CHANGE_STATE)
         .build()
@@ -98,7 +98,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         .persist(state, KEY_FIELD_IGNORE_SERVER_ERRORS)
         .build()
 
-    val ignoreAttachmentStateField: Field<BooleanFieldState> = Field.Builder(BooleanFieldState(false))
+    val ignoreAttachmentStateField: Field<BooleanFieldWithState> = Field.Builder(BooleanFieldWithState(false))
         .emptyIf { false }
         .persist(state, KEY_FIELD_IGNORE_ATTACHMENT_STATE)
         .build()
@@ -159,9 +159,9 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     override fun onInitialized() {
         super.onInitialized()
 
-        fun Field<BooleanFieldState>.toggleState(value: Boolean) {
+        fun Field<BooleanFieldWithState>.toggleState(value: Boolean) {
             this.value = if (value) {
-                BooleanFieldState(value = true, isEnabled = false)
+                BooleanFieldWithState(value = true, isEnabled = false)
             } else {
                 this.value.copy(isEnabled = true)
             }
@@ -169,7 +169,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
         urlField.clearErrorOnChange(this)
         methodField.valueLive.observe {
-            var body = bodyField.value ?: UriBodyContainer()
+            var body = bodyField.value
             body = if (it == Method.POST) {
                 bodyField.setRequired(R.string.download_field_request_body_empty_error)
                 body.copy(isEnabled = true)

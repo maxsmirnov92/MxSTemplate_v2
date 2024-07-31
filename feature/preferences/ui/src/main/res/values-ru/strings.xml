@@ -8,6 +8,7 @@
     <string name="settings_field_retry_failed_downloads">Повторять неудавшиеся из-за сети загрузки при её появлении</string>
     <string name="settings_field_disable_notifications">Отключить уведомления сервиса загрузок</string>
     <string name="settings_field_update_notification_interval_hint">Интервал обновления уведомлений с активной загрузкой (мс)</string>
+    <string name="settings_field_open_links_in_external_apps">Открывать поддерживаемые ссылки во внешних приложениях</string>
     <string name="settings_field_start_page_url_hint">Стартовая страница</string>
     <string name="settings_alert_confirm_message">Есть изменения</string>
     <string name="settings_alert_confirm_yes_button">Сохранить</string>

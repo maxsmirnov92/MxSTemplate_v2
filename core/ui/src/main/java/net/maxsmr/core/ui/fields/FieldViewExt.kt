@@ -3,6 +3,7 @@ package net.maxsmr.core.ui.fields
 import android.widget.CompoundButton
 import android.widget.EditText
 import androidx.annotation.StringRes
+import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleOwner
 import com.google.android.material.textfield.TextInputLayout
 import net.maxsmr.commonutils.gui.bindTo
@@ -10,10 +11,10 @@ import net.maxsmr.commonutils.gui.setCheckedDistinct
 import net.maxsmr.commonutils.live.field.Field
 import java.io.Serializable
 
-typealias BooleanFieldState = FieldState<Boolean>
-typealias StringFieldState = FieldState<String>
-typealias IntFieldState = FieldState<Int>
-typealias LongFieldState = FieldState<Long>
+typealias BooleanFieldWithState = FieldWithState<Boolean>
+typealias StringFieldWithState = FieldWithState<String>
+typealias IntFieldWithState = FieldWithState<Int>
+typealias LongFieldWithState = FieldWithState<Long>
 
 fun Field<Boolean>.bindValue(lifecycleOwner: LifecycleOwner, checkBox: CompoundButton) {
     checkBox.bindTo(this)
@@ -22,13 +23,20 @@ fun Field<Boolean>.bindValue(lifecycleOwner: LifecycleOwner, checkBox: CompoundB
     }
 }
 
-fun Field<BooleanFieldState>.bindState(lifecycleOwner: LifecycleOwner, checkBox: CompoundButton) {
-    checkBox.setOnCheckedChangeListener { _, isChecked ->
-        this.toggleFieldState(isChecked)
+fun Field<BooleanFieldWithState>.bindValueWithState(
+    lifecycleOwner: LifecycleOwner,
+    compoundButton: CompoundButton,
+    hideIfDisabled: Boolean = false
+) {
+    compoundButton.setOnCheckedChangeListener { _, isChecked ->
+        this.setFieldValueIfEnabled(isChecked)
     }
     this.valueLive.observe(lifecycleOwner) {
-        checkBox.setCheckedDistinct(it.value)
-        checkBox.isEnabled = it.isEnabled
+        compoundButton.setCheckedDistinct(it.value)
+        compoundButton.isEnabled = it.isEnabled
+        if (hideIfDisabled) {
+            compoundButton.isVisible = it.isEnabled
+        }
     }
 }
 
@@ -57,15 +65,15 @@ fun <D> Field<D>.bindHintError(
 }
 
 
-fun <D : Serializable> Field<FieldState<D>>.toggleFieldState(value: D) {
+fun <D : Serializable> Field<FieldWithState<D>>.setFieldValueIfEnabled(value: D) {
     val flags = this.value /*?: FieldState(value = value)*/
     if (flags.isEnabled) {
         this.value = flags.copy(value = value)
     }
 }
 
-fun <D : Serializable> Field<FieldState<D>>.toggleRequiredFieldState(required: Boolean, @StringRes errorResId: Int) {
-    val currentValue: FieldState<D> = value /*?: defaultValue*/
+fun <D : Serializable> Field<FieldWithState<D>>.toggleRequiredFieldState(required: Boolean, @StringRes errorResId: Int) {
+    val currentValue: FieldWithState<D> = value /*?: defaultValue*/
     value = if (required) {
         this.setRequired(errorResId)
         currentValue.copy(isEnabled = true)
@@ -75,7 +83,7 @@ fun <D : Serializable> Field<FieldState<D>>.toggleRequiredFieldState(required: B
     }
 }
 
-data class FieldState<D : Serializable>(
+data class FieldWithState<D : Serializable>(
     val value: D,
     val isEnabled: Boolean = false,
 ) : Serializable

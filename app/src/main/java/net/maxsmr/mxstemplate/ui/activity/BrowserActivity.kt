@@ -1,13 +1,15 @@
 package net.maxsmr.mxstemplate.ui.activity
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import androidx.core.net.toUri
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.runBlocking
-import net.maxsmr.core.android.network.isAnyNetScheme
 import net.maxsmr.core.ui.components.activities.BaseNavigationActivity
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
+import net.maxsmr.feature.webview.ui.WebViewCustomizer.ExternalViewUrlStrategy
 import net.maxsmr.mxstemplate.R
 import net.maxsmr.mxstemplate.ui.BrowserWebViewModel.Companion.ARG_WEB_CUSTOMIZER
 import net.maxsmr.mxstemplate.ui.fragment.BrowserWebViewFragmentDirections
@@ -43,20 +45,24 @@ class BrowserActivity : BaseNavigationActivity() {
     }
 
     private fun Intent?.toWebViewCustomizer(): WebViewCustomizer? {
-        val uri = this?.data
-        val scheme = this?.scheme
-        val url = if (uri == null || !scheme.isAnyNetScheme()) {
-            if (this?.action == Intent.ACTION_MAIN) {
-                // стартовая урла, если был предполагаемый запуск из лаунчера
-                runBlocking { settingsRepo.getSettings().startPageUrl }
-            } else {
-                null
-            }
+        val settings = runBlocking { settingsRepo.getSettings() }
+        val uri: Uri? = this?.data ?: if (this?.action == Intent.ACTION_MAIN) {
+            // стартовая урла, если был предполагаемый запуск из лаунчера
+            settings.startPageUrl.toUri()
         } else {
-            uri.toString()
+            null
         }
-        return if (url != null) {
-            WebViewCustomizer.Builder().setUrl(url).build()
+        return if (uri != null) {
+            WebViewCustomizer.Builder()
+                .setUri(uri)
+                .setViewUrlStrategy(
+                    if (settings.openLinksInExternalApps) {
+                        ExternalViewUrlStrategy.NonBrowserFirst
+                    } else {
+                        ExternalViewUrlStrategy.None
+                    }
+                )
+                .build()
         } else {
             null
         }

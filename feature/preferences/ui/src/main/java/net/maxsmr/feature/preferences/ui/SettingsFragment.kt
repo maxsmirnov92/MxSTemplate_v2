@@ -7,7 +7,6 @@ import android.view.MenuItem
 import android.view.View
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.viewModels
-import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.conversion.toIntNotNull
 import net.maxsmr.commonutils.conversion.toLongNotNull
 import net.maxsmr.commonutils.gui.bindTo
@@ -19,8 +18,9 @@ import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.fields.bindHintError
+import net.maxsmr.core.ui.fields.bindValueWithState
 import net.maxsmr.core.ui.fields.bindValue
-import net.maxsmr.core.ui.fields.toggleFieldState
+import net.maxsmr.core.ui.fields.setFieldValueIfEnabled
 import net.maxsmr.feature.preferences.ui.databinding.FragmentSettingsBinding
 
 abstract class BaseSettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
@@ -87,12 +87,12 @@ abstract class BaseSettingsFragment : BaseNavigationFragment<SettingsViewModel>(
         viewModel.connectTimeoutField.bindHintError(viewLifecycleOwner, binding.tilConnectTimeout)
 
         viewModel.loadByWiFiOnlyField.bindValue(viewLifecycleOwner, binding.switchLoadByWiFiOnly)
-        viewModel.retryOnConnectionFailureField.bindValue(viewLifecycleOwner, binding.switchRetryOnConnectionFailureField)
+        viewModel.retryOnConnectionFailureField.bindValue(viewLifecycleOwner, binding.switchRetryOnConnectionFailure)
         viewModel.retryDownloadsField.bindValue(viewLifecycleOwner, binding.switchRetryDownloads)
         viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.switchDisableNotifications)
 
         binding.etUpdateNotificationInterval.addTextChangedListener {
-            viewModel.updateNotificationIntervalStateField.toggleFieldState(it.toString().toLongNotNull())
+            viewModel.updateNotificationIntervalStateField.setFieldValueIfEnabled(it.toString().toLongNotNull())
         }
         viewModel.updateNotificationIntervalStateField.observeFrom(
             binding.etUpdateNotificationInterval,
@@ -105,6 +105,8 @@ abstract class BaseSettingsFragment : BaseNavigationFragment<SettingsViewModel>(
             viewLifecycleOwner,
             binding.tilUpdateNotificationInterval
         )
+
+        viewModel.openLinksInExternalAppsField.bindValueWithState(viewLifecycleOwner, binding.switchOpenLinksInExternalApps, true)
 
         binding.etStartPageUrl.bindToTextNotNull(viewModel.startPageUrlField)
         viewModel.startPageUrlField.observeFromText(binding.etStartPageUrl, viewLifecycleOwner)

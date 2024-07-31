@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
 import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
@@ -16,7 +17,8 @@ import net.maxsmr.core.android.network.URL_PAGE_BLANK
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
-import net.maxsmr.core.ui.fields.LongFieldState
+import net.maxsmr.core.ui.fields.BooleanFieldWithState
+import net.maxsmr.core.ui.fields.LongFieldWithState
 import net.maxsmr.core.ui.fields.toggleRequiredFieldState
 import net.maxsmr.core.ui.fields.urlField
 import net.maxsmr.feature.preferences.data.domain.AppSettings
@@ -72,7 +74,7 @@ class SettingsViewModel @Inject constructor(
         .persist(state, KEY_FIELD_DISABLE_NOTIFICATIONS)
         .build()
 
-    val updateNotificationIntervalStateField: Field<LongFieldState> = Field.Builder(LongFieldState(0))
+    val updateNotificationIntervalStateField: Field<LongFieldWithState> = Field.Builder(LongFieldWithState(0))
         .emptyIf { false }
         .validators(Field.Validator({
             return@Validator TextMessage(
@@ -84,6 +86,11 @@ class SettingsViewModel @Inject constructor(
         })
         .hint(R.string.settings_field_update_notification_interval_hint)
         .persist(state, KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE)
+        .build()
+
+    val openLinksInExternalAppsField: Field<BooleanFieldWithState> = Field.Builder(BooleanFieldWithState(false))
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_OPEN_LINKS_IN_EXTERNAL_APPS)
         .build()
 
     val startPageUrlField = state.urlField(
@@ -100,6 +107,7 @@ class SettingsViewModel @Inject constructor(
         retryDownloadsField,
         disableNotificationsField,
         updateNotificationIntervalStateField,
+        openLinksInExternalAppsField,
         startPageUrlField
     )
 
@@ -132,6 +140,7 @@ class SettingsViewModel @Inject constructor(
         loadByWiFiOnlyField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(loadByWiFiOnly = it)
         }
+
         retryOnConnectionFailureField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(retryOnConnectionFailure = it)
         }
@@ -150,6 +159,11 @@ class SettingsViewModel @Inject constructor(
         updateNotificationIntervalStateField.clearErrorOnChange(this) {
             appSettings.value = currentAppSettings.copy(updateNotificationInterval = it.value)
         }
+
+        openLinksInExternalAppsField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(openLinksInExternalApps = it.value)
+        }
+
         startPageUrlField.clearErrorOnChange(this) {
             appSettings.value = currentAppSettings.copy(startPageUrl = it)
         }
@@ -190,6 +204,7 @@ class SettingsViewModel @Inject constructor(
                     retryDownloadsField.value,
                     disableNotifications,
                     updateNotificationIntervalStateField.value.value,
+                    openLinksInExternalAppsField.value.value,
                     startPageUrlField.value.takeIf { it.isNotEmpty() } ?: URL_PAGE_BLANK
                 )
             )
@@ -235,7 +250,8 @@ class SettingsViewModel @Inject constructor(
         retryDownloadsField.value = settings.retryDownloads
         disableNotificationsField.value = settings.disableNotifications
         updateNotificationIntervalStateField.value =
-            LongFieldState(settings.updateNotificationInterval, !settings.disableNotifications)
+            LongFieldWithState(settings.updateNotificationInterval, !settings.disableNotifications)
+        openLinksInExternalAppsField.value = BooleanFieldWithState(settings.openLinksInExternalApps, isAtLeastTiramisu())
         startPageUrlField.value = settings.startPageUrl
     }
 
@@ -257,5 +273,6 @@ class SettingsViewModel @Inject constructor(
         const val KEY_FIELD_RETRY_DOWNLOADS = "retry_downloads"
         const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
         const val KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE = "update_notification_interval_state"
+        const val KEY_FIELD_OPEN_LINKS_IN_EXTERNAL_APPS = "open_links_in_external_apps"
     }
 }

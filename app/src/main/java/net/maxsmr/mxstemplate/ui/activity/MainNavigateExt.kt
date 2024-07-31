@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
+import net.maxsmr.feature.webview.ui.WebViewCustomizer.ExternalViewUrlStrategy
 import net.maxsmr.mxstemplate.R
 import net.maxsmr.mxstemplate.ui.fragment.MainDownloadsPagerFragmentDirections
 
@@ -37,10 +38,18 @@ private fun NavController.navigateWithMenuFragments(
 ) {
     if (item.itemId == R.id.navigationWebView) {
         lifecycleScope.launch {
+            val settings = settingsRepo.getSettings()
             navigate(
                 MainDownloadsPagerFragmentDirections.actionToWebViewFragment(
                     WebViewCustomizer.Builder()
-                        .setUrl(settingsRepo.getSettings().startPageUrl)
+                        .setUrl(settings.startPageUrl)
+                        .setViewUrlStrategy(
+                            if (settings.openLinksInExternalApps) {
+                                ExternalViewUrlStrategy.NonBrowserFirst
+                            } else {
+                                ExternalViewUrlStrategy.None
+                            }
+                        )
                         .build()
                 )
             )

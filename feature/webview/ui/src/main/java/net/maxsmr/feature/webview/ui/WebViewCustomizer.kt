@@ -79,7 +79,7 @@ class WebViewCustomizer private constructor(
         }
 
         /**
-         * Выставить [url] с любой схемой или [URL_PAGE_BLANK], если валидная
+         * Выставить [url] с любой валидной схемой или [URL_PAGE_BLANK]
          */
         fun setUrl(url: String?): Builder {
             this.url = url.takeIf {

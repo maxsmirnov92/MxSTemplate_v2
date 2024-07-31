@@ -30,7 +30,7 @@ import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.core.ui.fields.bindHintError
-import net.maxsmr.core.ui.fields.bindState
+import net.maxsmr.core.ui.fields.bindValueWithState
 import net.maxsmr.core.ui.fields.bindValue
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderListener
@@ -156,7 +156,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
         binding.etFileName.bindToTextNotNull(viewModel.fileNameField)
         viewModel.fileNameField.observeFromText(binding.etFileName, viewLifecycleOwner)
         viewModel.fileNameField.bindHintError(viewLifecycleOwner, binding.tilFileName)
-        viewModel.fileNameChangeStateField.bindState(viewLifecycleOwner, binding.cbFileNameFix)
+        viewModel.fileNameChangeStateField.bindValueWithState(viewLifecycleOwner, binding.cbFileNameFix)
 
         binding.etSubDirName.bindToTextNotNull(viewModel.subDirNameField)
         viewModel.subDirNameField.observeFromText(binding.etSubDirName, viewLifecycleOwner)
@@ -167,7 +167,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
         viewModel.targetHashField.bindHintError(viewLifecycleOwner, binding.tilTargetHash)
 
         viewModel.ignoreServerErrorsField.bindValue(viewLifecycleOwner, binding.cbIgnoreServerError)
-        viewModel.ignoreAttachmentStateField.bindState(viewLifecycleOwner, binding.cbIgnoreAttachment)
+        viewModel.ignoreAttachmentStateField.bindValueWithState(viewLifecycleOwner, binding.cbIgnoreAttachment)
         viewModel.replaceFileField.bindValue(viewLifecycleOwner, binding.cbReplaceFile)
         viewModel.deleteUnfinishedField.bindValue(viewLifecycleOwner, binding.cbDeleteUnfinished)
 
