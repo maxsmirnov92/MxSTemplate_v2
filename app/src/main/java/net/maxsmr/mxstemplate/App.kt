@@ -21,21 +21,12 @@ class App: Application(), Application.ActivityLifecycleCallbacks {
 //                kotlinx.coroutines.DEBUG_PROPERTY_VALUE_ON
 //            )
 //        }
+        initLogging()
     }
 
     @Inject
     @RadarIoRetrofit
     lateinit var radarIoRetrofitClient: RadarIoRetrofitClient
-
-    init {
-        BaseLoggerHolder.initInstance {
-            object : BaseLoggerHolder() {
-
-                override fun createLogger(className: String): BaseLogger = TimberLogger(className)
-            }
-        }
-
-    }
 
     override fun onCreate() {
         super.onCreate()
@@ -70,5 +61,19 @@ class App: Application(), Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityDestroyed(activity: Activity) {
+    }
+
+    private fun initLogging() {
+        BaseLoggerHolder.init {
+            object : BaseLoggerHolder() {
+
+                override fun createLogger(className: String): BaseLogger = TimberLogger(className)
+            }
+        }
+        BaseLoggerHolder.instance.loggerLevel = if (BuildConfig.DEBUG) {
+            BaseLogger.Level.VERBOSE
+        } else {
+            BaseLogger.Level.INFO
+        }
     }
 }

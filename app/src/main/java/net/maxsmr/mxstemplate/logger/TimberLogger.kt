@@ -5,92 +5,92 @@ import timber.log.Timber
 
 class TimberLogger(tag: String): BaseLogger(tag) {
 
-    override fun d(message: String) {
+    override fun _d(message: String) {
         Timber.tag(tag)
         Timber.d(message)
     }
 
-    override fun d(message: String, exception: Throwable?) {
+    override fun _d(message: String, exception: Throwable?) {
         Timber.tag(tag)
         Timber.d(exception, message)
     }
 
-    override fun d(exception: Throwable) {
+    override fun _d(exception: Throwable) {
         Timber.tag(tag)
         Timber.d(exception)
     }
 
-    override fun e(message: String) {
+    override fun _e(message: String) {
         Timber.tag(tag)
         Timber.e(message)
     }
 
-    override fun e(message: String, exception: Throwable?) {
+    override fun _e(message: String, exception: Throwable?) {
         Timber.tag(tag)
         Timber.e(exception, message)
     }
 
-    override fun e(exception: Throwable) {
+    override fun _e(exception: Throwable) {
         Timber.tag(tag)
         Timber.d(exception)
     }
 
-    override fun i(message: String) {
+    override fun _i(message: String) {
         Timber.tag(tag)
         Timber.i(message)
     }
 
-    override fun i(message: String, exception: Throwable?) {
+    override fun _i(message: String, exception: Throwable?) {
         Timber.tag(tag)
         Timber.i(exception, message)
     }
 
-    override fun i(exception: Throwable) {
+    override fun _i(exception: Throwable) {
         Timber.tag(tag)
         Timber.i(exception)
     }
 
-    override fun v(message: String) {
+    override fun _v(message: String) {
         Timber.tag(tag)
         Timber.v(message)
     }
 
-    override fun v(message: String, exception: Throwable?) {
+    override fun _v(message: String, exception: Throwable?) {
         Timber.tag(tag)
         Timber.v(exception, message)
     }
 
-    override fun v(exception: Throwable) {
+    override fun _v(exception: Throwable) {
         Timber.tag(tag)
         Timber.v(exception)
     }
 
-    override fun w(message: String) {
+    override fun _w(message: String) {
         Timber.tag(tag)
         Timber.w(message)
     }
 
-    override fun w(message: String, exception: Throwable?) {
+    override fun _w(message: String, exception: Throwable?) {
         Timber.tag(tag)
         Timber.w(exception, message)
     }
 
-    override fun w(exception: Throwable) {
+    override fun _w(exception: Throwable) {
         Timber.tag(tag)
         Timber.w(exception)
     }
 
-    override fun wtf(message: String) {
+    override fun _wtf(message: String) {
         Timber.tag(tag)
         Timber.wtf(message)
     }
 
-    override fun wtf(message: String, exception: Throwable?) {
+    override fun _wtf(message: String, exception: Throwable?) {
         Timber.tag(tag)
         Timber.wtf(exception, message)
     }
 
-    override fun wtf(exception: Throwable) {
+    override fun _wtf(exception: Throwable) {
         Timber.tag(tag)
         Timber.wtf(exception)
     }
