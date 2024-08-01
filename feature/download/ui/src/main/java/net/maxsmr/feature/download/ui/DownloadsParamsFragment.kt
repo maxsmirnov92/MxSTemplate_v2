@@ -13,12 +13,13 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
+import net.maxsmr.commonutils.gui.addSoftInputStateListener
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.clearFocus
 import net.maxsmr.commonutils.gui.hideKeyboard
+import net.maxsmr.commonutils.gui.runOnceLayoutChanges
 import net.maxsmr.commonutils.gui.scrollToView
 import net.maxsmr.commonutils.gui.setTextOrGone
-import net.maxsmr.commonutils.gui.showKeyboard
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
@@ -30,11 +31,11 @@ import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.core.ui.fields.bindHintError
-import net.maxsmr.core.ui.fields.bindValueWithState
 import net.maxsmr.core.ui.fields.bindValue
+import net.maxsmr.core.ui.fields.bindValueWithState
 import net.maxsmr.feature.download.data.DownloadsViewModel
-import net.maxsmr.feature.download.ui.adapter.HeaderListener
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapter
+import net.maxsmr.feature.download.ui.adapter.HeaderListener
 import net.maxsmr.feature.download.ui.databinding.FragmentDownloadsParamsBinding
 import net.maxsmr.feature.preferences.ui.observePostNotificationPermissionAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -188,7 +189,6 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
         binding.ibClearRequestBody.setOnClickListener {
             viewModel.onClearRequestBodyUri()
         }
-
         binding.ibAdd.setOnClickListener {
             viewModel.onAddHeader()
         }
@@ -200,10 +200,17 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
                 listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE) // post_notifications не является обязательным для работы сервиса
             ) {
                 viewModel.onStartDownloadClick { field ->
+                    requireActivity().hideKeyboard()
                     fieldViewsMap[field]?.let {
                         binding.svParams.scrollToView(it, true, activity = requireActivity())
                     }
                 }
+            }
+        }
+
+        binding.root.addSoftInputStateListener() {
+            if (!it) {
+                binding.svParams.requestLayout()
             }
         }
 
@@ -212,14 +219,16 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
 
     override fun onResume() {
         super.onResume()
-        if (wasResumedOnce) {
+//        костыль для борьбы с пустым пространством на месте клавиатуры
+        if (!wasResumedOnce) {
             if (requireActivity().currentFocus == null) {
-                // костыль для борьбы с пустым пространством на месте клавиатуры
-                binding.etUrl.showKeyboard()
-                requireActivity().hideKeyboard(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
+//                binding.etUrl.showKeyboard()
+                requireActivity().hideKeyboard(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
             }
-        } else {
             wasResumedOnce = true
+        }
+        binding.svParams.runOnceLayoutChanges {
+            binding.svParams.requestLayout()
         }
     }
 
