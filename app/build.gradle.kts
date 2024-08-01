@@ -1,4 +1,6 @@
 import com.android.build.api.dsl.ApkSigningConfig
+import com.android.build.api.dsl.ApplicationVariantDimension
+import dagger.hilt.android.plugin.util.capitalize
 //import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.io.FileInputStream
 import java.util.Locale
@@ -20,65 +22,29 @@ plugins {
     alias(libs.plugins.navigation.safeargs.kotlin)
 }
 
-data class AppVersion(
-    val code: Int,
-    val name: String,
-    val type: String,
-) {
+val gradleTaskNames: List<String>  = gradle.startParameter.taskNames
+val gradleTaskRequests: List<TaskExecutionRequest> = gradle.startParameter.taskRequests
 
-    constructor(code: Int, type: String) : this(code, getVersionName(gradle, code), type)
-}
+logger.info("=== Running tasks: $gradleTaskNames ===")
 
-val appVersion = AppVersion(1, "common")
-
-if (isGoogleBuild(gradle) == false) {
-    System.out.println("Applying plugin: com.huawei.agconnect")
+if (isHuaweiBuild() == true) {
+    logger.info("Applying plugin: com.huawei.agconnect")
 
     with(pluginManager) {
         apply("com.huawei.agconnect")
     }
 }
 
-/**
- * Проверка всех возможных google-флаворов от 'app'
- * исходя из запущенной таски
- */
-fun isGoogleBuild(gradle: Gradle): Boolean? {
-    val googleFlavors = arrayOf("appProdGoogle", "appDevGoogle")
-    val taskNames = gradle.startParameter.taskNames
-    if (taskNames.isEmpty()) {
-        return null
-    }
-    return taskNames.any { task ->
-        googleFlavors.any { flavorName ->
-            task.contains(flavorName, true)
-        }
-    }
+data class AppVersion(
+    val code: Int,
+    val name: String,
+    val type: String,
+) {
+
+    constructor(code: Int, type: String) : this(code, getVersionName(code), type)
 }
 
-fun isDevBuild(gradle: Gradle): Boolean? {
-    val taskNames = gradle.startParameter.taskNames
-    if (taskNames.isEmpty()) {
-        return null
-    }
-    return taskNames.any { task ->
-        task.contains("dev", true)
-    }
-}
-
-fun getVersionName(gradle: Gradle, versionCode: Int): String {
-    val postfix = if (isDevBuild(gradle) != false) {
-        "dev"
-    } else {
-        "prod"
-    }
-    val buildType = getCurrentBuildType()
-    var result = "1.0$versionCode.${postfix}"
-    if (buildType.isNotEmpty()) {
-        result += "_$buildType"
-    }
-    return result
-}
+val appVersion = AppVersion(1, "common")
 
 android {
     namespace = "net.maxsmr.mxstemplate"
@@ -87,7 +53,7 @@ android {
         applicationId = "net.maxsmr.mxstemplate"
         versionCode = appVersion.code
         versionName = appVersion.name
-        project.ext.set("archivesBaseName", "${project.name}-${appVersion.name}")
+        project.ext.set("archivesBaseName", "${project.name}_${appVersion.name}_${appVersion.type}")
 
         buildConfigField("int", "PROTOCOL_VERSION", "1")
 
@@ -125,36 +91,43 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    signingConfigs {
-
-        create("release") {
-            val properties = Properties()
-            properties.load(FileInputStream(File(rootDir, "app/keystore.properties")))
-            storeFile = File("${System.getenv("ANDROID_HOME")}/release.keystore")
-            keyAlias = properties.getProperty("alias")
-            keyPassword = properties.getProperty("signingPassword")
-            storePassword = properties.getProperty("signingPassword")
-        }
-    }
+//    signingConfigs {
+//    }
 
     buildTypes {
         getByName("debug") {
             isDebuggable = true
             isMinifyEnabled = false
             multiDexKeepProguard = file("multidex-config.pro")
-            signingConfig = null
+//            signingConfig = null
         }
         getByName("release") {
             isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
-            //signingConfig = signingConfigs.getAt("debug")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             multiDexKeepProguard = file("multidex-config.pro")
 //            configure<CrashlyticsExtension> {
 //                mappingFileUploadEnabled = true
 //            }
-//            loadSigningConfigForBuildType(File(rootDir, "app/keystore.properties"), "release", true)
+
+            if (gradleTaskNames.any { it.endsWith("Release") }) {
+                applySigningConfig(
+                    signingConfigs,
+                    "release",
+                    File(rootDir, "app/keystore.properties"),
+                )
+            }
+
+//            val configureSigningTask = tasks.register("configureSigning") {
+//                doFirst {
+//                    // создавать конфиг в таком месте запрещается;
+            // выставление signingConfig сработает, но подписи apk не будет
+//                }
+//            }
+//            tasks.matching { it.name.endsWith("Release") }.configureEach {
+//                dependsOn(configureSigningTask)
+//            }
         }
     }
 
@@ -169,8 +142,6 @@ android {
 //                groups = "App-dev"
 //                releaseNotesFile = "app/notes.txt"
 //            }
-
-            signingConfig = signingConfigs.getByName("debug")
         }
 
         /**
@@ -181,8 +152,6 @@ android {
 //                groups = "App"
 //                releaseNotesFile = "app/notes.txt"
 //            }
-
-            signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -192,10 +161,10 @@ android {
             .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
             .forEach { output ->
                 val flavour = variant.flavorName
-                val builtType = variant.buildType.name
+                val buildTypeName = variant.buildType.name
                 val versionName = variant.versionName
                 output.outputFileName =
-                    "${flavour}${builtType.capitalize()}_${versionName}.apk"
+                    "${flavour}${buildTypeName.capitalize()}_${versionName}_${appVersion.type}.apk"
             }
     }
 
@@ -242,7 +211,7 @@ dependencies {
     implementation(project(":feature:mobile_services"))
     implementation(project(":feature:preferences:ui"))
     implementation(project(":feature:download:ui"))
-    implementation(project(":feature:address_sorter:ui"))
+//    implementation(project(":feature:address_sorter:ui"))
     implementation(project(":feature:webview:ui"))
 
     implementation(project(":feature:rate"))
@@ -291,31 +260,93 @@ dependencies {
 //    debugImplementation(libs.leakCanary)
 }
 
-fun loadSigningConfigForBuildType(propsFile: File, signingConfigName: String, shouldCreate: Boolean) {
-    fun ApkSigningConfig.set(properties: Properties) {
-        storeFile = File("${System.getenv("ANDROID_HOME")}/release.keystore")
-        keyAlias = properties.getProperty("alias")
-        keyPassword = properties.getProperty("signingPassword")
-        storePassword = properties.getProperty("signingPassword")
+
+fun ApplicationVariantDimension.applySigningConfig(
+    signingConfigs: NamedDomainObjectCollection<out ApkSigningConfig>,
+    signingConfigName: String,
+    propsFile: File,
+) {
+    check(signingConfigName.isNotEmpty()) {
+        "Name for signingConfig is not specified"
     }
 
-    if (propsFile.exists()) {
+    fun createSigningConfig() {
+        check(propsFile.isFile && propsFile.exists()) {
+            "No valid properties file ('$propsFile') for \"$signingConfigName\""
+        }
+
         val properties = Properties()
         properties.load(FileInputStream(propsFile))
         android {
             signingConfigs {
-                if (shouldCreate) {
-                    create(signingConfigName) {
-                        set(properties)
-                    }
-                } else {
-                    getByName(signingConfigName) {
-                        set(properties)
-                    }
+                create(signingConfigName) {
+                    storeFile = File("${System.getenv("ANDROID_HOME")}/$signingConfigName.keystore")
+                    keyAlias = properties.getProperty("alias")
+                    keyPassword = properties.getProperty("signingPassword")
+                    storePassword = properties.getProperty("signingPassword")
                 }
+                logger.info("Signing config \"$signingConfigName\" created")
             }
         }
     }
+
+    var config = signingConfigs.findByName(signingConfigName)
+    if (config == null) {
+        // не найдено - пробуем создать, если есть валидный файл с properties
+        createSigningConfig()
+        config = signingConfigs.findByName(signingConfigName)
+            ?: throw IllegalStateException("Cannot create signingConfig \"$signingConfigName\"")
+    }
+    logger.info("Applying signingConfig \"$signingConfigName\"")
+    signingConfig = config
+}
+
+/**
+ * Проверка всех возможных google-флаворов от 'app'
+ * исходя из запущенной таски
+ */
+fun isGoogleBuild(): Boolean? {
+    return containsFlavors(arrayOf("appProdGoogle", "appDevGoogle"))
+}
+
+fun isHuaweiBuild(): Boolean? {
+    return containsFlavors(arrayOf("appProdHuawei", "appDevHuawei"))
+}
+
+fun containsFlavors(flavors: Array<String>): Boolean? {
+    val taskNames = gradleTaskNames
+    if (taskNames.isEmpty()) {
+        return null
+    }
+    return taskNames.any { task ->
+        flavors.any { flavorName ->
+            task.contains(flavorName, true)
+        }
+    }
+}
+
+fun isDevBuild(): Boolean? {
+    val taskNames = gradleTaskNames
+    if (taskNames.isEmpty()) {
+        return null
+    }
+    return taskNames.any { task ->
+        task.contains("dev", true)
+    }
+}
+
+fun getVersionName(versionCode: Int): String {
+    val postfix = if (isDevBuild() != false) {
+        "dev"
+    } else {
+        "prod"
+    }
+    val buildType = getCurrentBuildType()
+    var result = "1.0$versionCode.${postfix}"
+    if (buildType.isNotEmpty()) {
+        result += buildType.capitalize()
+    }
+    return result
 }
 
 fun getCurrentFlavorName(): String {
@@ -344,7 +375,7 @@ fun getCurrentApplicationId(): String {
 }
 
 fun getTasksMatcher(): Matcher {
-    val requests = gradle.startParameter.taskRequests.toString()
+    val requests = gradleTaskRequests.toString()
     val pattern = if (requests.contains("assemble")) {
         // to run ./gradlew assembleRelease to build APK
         Pattern.compile("assemble(\\w+)(Release|Debug)")
