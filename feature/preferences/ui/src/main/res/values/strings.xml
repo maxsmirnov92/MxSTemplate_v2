@@ -10,9 +10,9 @@
     <string name="settings_field_update_notification_interval_hint">Notification update interval for active download (ms)</string>
     <string name="settings_field_open_links_in_external_apps">Open supported links in external apps</string>
     <string name="settings_field_start_page_url_hint">Start page</string>
-    <string name="settings_alert_confirm_message">There are some changes</string>
-    <string name="settings_alert_confirm_yes_button">Save</string>
-    <string name="settings_alert_confirm_neutral_button">Don\'t save</string>
-    <string name="settings_alert_confirm_negative_button">@android:string/cancel</string>
+    <string name="settings_dialog_confirm_message">There are some changes</string>
+    <string name="settings_dialog_confirm_yes_button">Save</string>
+    <string name="settings_dialog_confirm_neutral_button">Don\'t save</string>
+    <string name="settings_dialog_confirm_negative_button">@android:string/cancel</string>
     <string name="settings_menu_action_save">Save</string>
 </resources>

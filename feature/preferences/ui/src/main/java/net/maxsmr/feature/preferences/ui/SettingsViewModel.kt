@@ -223,16 +223,16 @@ class SettingsViewModel @Inject constructor(
     ): Boolean {
         return if (hasChanges.value == true) {
             AlertDialogBuilder(DIALOG_TAG_CONFIRM_EXIT)
-                .setMessage(R.string.settings_alert_confirm_message)
+                .setMessage(R.string.settings_dialog_confirm_message)
                 .setAnswers(
-                    Alert.Answer(R.string.settings_alert_confirm_yes_button).onSelect {
+                    Alert.Answer(R.string.settings_dialog_confirm_yes_button).onSelect {
                         saveChanges(errorFieldResult, navigationAction)
                     },
-                    Alert.Answer(R.string.settings_alert_confirm_neutral_button).onSelect {
+                    Alert.Answer(R.string.settings_dialog_confirm_neutral_button).onSelect {
 //                        navigateBack()
                         navigationAction?.invoke()
                     },
-                    Alert.Answer(R.string.settings_alert_confirm_negative_button),
+                    Alert.Answer(R.string.settings_dialog_confirm_negative_button),
                 )
                 .build()
             true

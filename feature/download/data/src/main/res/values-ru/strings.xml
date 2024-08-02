@@ -18,13 +18,13 @@
     <string name="download_notification_failed_title">Не удалось загрузить файл</string>
     <string name="download_notification_cancelled_title">Загрузка файла отменена</string>
     <string name="download_toast_success_add_to_queue_message_format">Загрузка файла \"%s\" добавлена в очередь</string>
-    <string name="download_alert_failed_add_to_queue_name_message_format">Загрузка файла \"%1$s\" не была добавлена в очередь, причина: %2$s</string>
-    <string name="download_alert_failed_add_to_queue_url_message_format">Загрузка файла по URL \"%1$s\" не была добавлена в очередь, причина: %2$s</string>
+    <string name="download_dialog_failed_add_to_queue_name_message_format">Загрузка файла \"%1$s\" не была добавлена в очередь, причина: %2$s</string>
+    <string name="download_dialog_failed_add_to_queue_url_message_format">Загрузка файла по URL \"%1$s\" не была добавлена в очередь, причина: %2$s</string>
     <string name="download_failed_add_to_queue_reason_not_valid">некорректные параметры</string>
     <string name="download_failed_add_to_queue_reason_already_added">уже в очереди</string>
     <string name="download_failed_add_to_queue_reason_already_loading">уже загружается</string>
-    <string name="download_alert_failed_start_title">Не удалось запустить сервис</string>
-    <string name="download_alert_failed_start_message_format">Для загрузки файла \"%s\".\n(Приложение было свёрнуто?)</string>
+    <string name="download_dialog_failed_start_title">Не удалось запустить сервис</string>
+    <string name="download_dialog_failed_start_message_format">Для загрузки файла \"%s\".\n(Приложение было свёрнуто?)</string>
     <string name="download_snackbar_no_valid_params">Отсутствуют корректные параметры</string>
     <string name="download_error">Ошибка при загрузке файла</string>
 </resources>

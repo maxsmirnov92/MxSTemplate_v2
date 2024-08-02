@@ -28,14 +28,14 @@
     <string name="download_field_header_value_empty_error">Header value cannot be empty</string>
     <string name="download_start_button_text">Start</string>
 
-    <string name="download_alert_confirm_title">Confirm</string>
-    <string name="download_alert_clear_queue_message">Clear pending loads queue?</string>
-    <string name="download_alert_cancel_all_message">Cancel all currently running downloads?</string>
-    <string name="download_alert_retry_if_success_message">This load was finished successfully. Retry anyway?</string>
-    <string name="download_alert_delete_if_success_message_format">Are you sure you want to delete downloaded file \"%s\"?</string>
-    <string name="download_alert_params_sample_copy_success_format">Sample JSON-file copied to %s</string>
-    <string name="download_alert_params_sample_copy_failed">Sample JSON-file failed to copy to %s</string>
-    <string name="download_alert_params_sample_copy_failed_format">Sample JSON-file failed to copy to %1$s, reason: %2$s</string>
+    <string name="download_dialog_confirm_title">Confirm</string>
+    <string name="download_dialog_clear_queue_message">Clear pending loads queue?</string>
+    <string name="download_dialog_cancel_all_message">Cancel all currently running downloads?</string>
+    <string name="download_dialog_retry_if_success_message">This load was finished successfully. Retry anyway?</string>
+    <string name="download_dialog_delete_if_success_message_format">Are you sure you want to delete downloaded file \"%s\"?</string>
+    <string name="download_snackbar_params_sample_copy_success_format">Sample JSON-file copied to %s</string>
+    <string name="download_snackbar_params_sample_copy_failed">Sample JSON-file failed to copy to %s</string>
+    <string name="download_snackbar_params_sample_copy_failed_format">Sample JSON-file failed to copy to %1$s, reason: %2$s</string>
     <string name="download_queued_count_subtitle">Queued:</string>
     <string name="download_active_empty_text">No active loads</string>
 
@@ -66,5 +66,5 @@
     <string name="download_snackbar_action_view_error_format">Cannot view URI \"%s\"</string>
     <string name="download_snackbar_action_share_error_format">Cannot share URI \"%s\"</string>
 
-    <string name="download_alert_save_as_title">Save as</string>
+    <string name="download_dialog_save_as_title">Save as</string>
 </resources>

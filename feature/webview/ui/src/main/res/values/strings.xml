@@ -9,8 +9,8 @@
     <string name="webview_menu_action_stop_loading">Stop</string>
     <string name="webview_menu_action_clear_cache">Clear cache</string>
     <string name="webview_menu_action_clear_history">Clear history</string>
-    <string name="webview_alert_open_url_title">URL to navigate</string>
-    <string name="webview_alert_open_url_field_hint">Type URL</string>
+    <string name="webview_dialog_open_url_title">URL to navigate</string>
+    <string name="webview_dialog_open_url_field_hint">Type URL or host</string>
     <string name="webview_error_connect_host">Cannot establish connection to host</string>
     <string name="webview_error_connect_resource">Cannot load from resource</string>
     <string name="webview_button_reload">Reload</string>

@@ -338,12 +338,12 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
                 fun String?.asTextMessage() = this?.takeIf { it.isNotEmpty() }?.let {
                     TextMessage(
-                        R.string.download_alert_params_sample_copy_failed_format,
+                        R.string.download_snackbar_params_sample_copy_failed_format,
                         storage.path,
                         it
                     )
                 } ?: TextMessage(
-                    R.string.download_alert_params_sample_copy_failed,
+                    R.string.download_snackbar_params_sample_copy_failed,
                     storage.path
                 )
 
@@ -357,7 +357,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                                 it.writeFromStreamOrThrow(context.contentResolver, resStream)
 
                                 snackbarTextMessage = TextMessage(
-                                    R.string.download_alert_params_sample_copy_success_format,
+                                    R.string.download_snackbar_params_sample_copy_success_format,
                                     storage.path
                                 )
 

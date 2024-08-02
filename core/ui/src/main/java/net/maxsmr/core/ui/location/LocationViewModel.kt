@@ -70,9 +70,9 @@ class LocationViewModel @AssistedInject constructor(
     override fun onGpsProviderNotEnabled() {
         showYesNoDialog(
             DIALOG_TAG_GPS_NOT_ENABLED,
-            TextMessage(R.string.alert_gps_enable_dialog_message),
-            TextMessage(R.string.alert_gps_enable_dialog_title),
-            R.string.alert_gps_enable_dialog_answer_settings,
+            TextMessage(R.string.alert_gps_enable_message),
+            TextMessage(R.string.alert_gps_enable_title),
+            R.string.alert_gps_enable_answer_settings,
             android.R.string.cancel,
             onSelect = {
                 if (it == DialogInterface.BUTTON_POSITIVE) {

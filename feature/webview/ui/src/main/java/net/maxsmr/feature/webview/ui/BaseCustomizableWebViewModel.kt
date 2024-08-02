@@ -23,7 +23,7 @@ abstract class BaseCustomizableWebViewModel(
 ) : BaseWebViewModel(state) {
 
     val urlField: Field<String> = state.urlField(
-        hintResId = R.string.webview_alert_open_url_field_hint,
+        hintResId = R.string.webview_dialog_open_url_field_hint,
         withAsterisk = false,
         isRequired = true,
         isValidByBlank = true,
@@ -65,7 +65,7 @@ abstract class BaseCustomizableWebViewModel(
         currentUrl.value?.let {
             urlField.value = it.toString()
         }
-        showOkDialog(DIALOG_TAG_OPEN_URL, TextMessage(R.string.webview_alert_open_url_title))
+        showOkDialog(DIALOG_TAG_OPEN_URL, TextMessage(R.string.webview_dialog_open_url_title))
     }
 
     fun onOpenHomePageAction() {

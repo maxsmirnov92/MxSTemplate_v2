@@ -65,7 +65,7 @@ abstract class BaseDownloadableWebViewModel(state: SavedStateHandle) : BaseCusto
         fileNameField.value = fileName
 
         AlertDialogBuilder(DIALOG_TAG_SAVE_AS)
-            .setTitle(TextMessage(R.string.download_alert_save_as_title))
+            .setTitle(TextMessage(R.string.download_dialog_save_as_title))
             .setAnswers(
                 Alert.Answer(android.R.string.ok),
                 Alert.Answer(android.R.string.cancel)

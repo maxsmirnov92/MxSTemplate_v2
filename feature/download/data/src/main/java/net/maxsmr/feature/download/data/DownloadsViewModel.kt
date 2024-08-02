@@ -33,7 +33,6 @@ import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.Status
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.database.model.download.DownloadInfo
@@ -112,7 +111,7 @@ class DownloadsViewModel @Inject constructor(
                 )
                 val message: TextMessage? = if (name.isNotEmpty()) {
                     TextMessage(
-                        R.string.download_alert_failed_add_to_queue_name_message_format,
+                        R.string.download_dialog_failed_add_to_queue_name_message_format,
                         name,
                         reason
                     )
@@ -120,7 +119,7 @@ class DownloadsViewModel @Inject constructor(
                     val url = it.first.url
                     if (url.isNotEmpty()) {
                         TextMessage(
-                            R.string.download_alert_failed_add_to_queue_url_message_format,
+                            R.string.download_dialog_failed_add_to_queue_url_message_format,
                             name,
                             reason
                         )
@@ -138,10 +137,10 @@ class DownloadsViewModel @Inject constructor(
                 showOkDialog(
                     DIALOG_TAG_FAILED_START,
                     TextMessage(
-                        R.string.download_alert_failed_start_message_format,
+                        R.string.download_dialog_failed_start_message_format,
                         it.targetResourceName
                     ),
-                    TextMessage(R.string.download_alert_failed_start_title)
+                    TextMessage(R.string.download_dialog_failed_start_title)
                 )
             }
         }

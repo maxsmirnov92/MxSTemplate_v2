@@ -9,8 +9,8 @@
     <string name="webview_menu_action_stop_loading">Остановить</string>
     <string name="webview_menu_action_clear_cache">Очистить кэш</string>
     <string name="webview_menu_action_clear_history">Очистить историю</string>
-    <string name="webview_alert_open_url_title">URL для перехода</string>
-    <string name="webview_alert_open_url_field_hint">Введите URL</string>
+    <string name="webview_dialog_open_url_title">URL для перехода</string>
+    <string name="webview_dialog_open_url_field_hint">Введите URL или хост</string>
     <string name="webview_error_connect_host">Не удаётся установить соединение с хостом</string>
     <string name="webview_error_connect_resource">Не удаётся загрузить ресурс</string>
     <string name="webview_button_reload">Перезагрузить</string>

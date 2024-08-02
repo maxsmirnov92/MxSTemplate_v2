@@ -18,13 +18,13 @@
     <string name="download_notification_failed_title">Download file failed</string>
     <string name="download_notification_cancelled_title">Download file cancelled</string>
     <string name="download_toast_success_add_to_queue_message_format">Downloading file \"%s\" was added to queue</string>
-    <string name="download_alert_failed_add_to_queue_name_message_format">Downloading file \"%1$s\" was not added to queue, reason: %2$s</string>
-    <string name="download_alert_failed_add_to_queue_url_message_format">Downloading file by URL \"%1$s\" was not added to queue, reason: %2$s</string>
+    <string name="download_dialog_failed_add_to_queue_name_message_format">Downloading file \"%1$s\" was not added to queue, reason: %2$s</string>
+    <string name="download_dialog_failed_add_to_queue_url_message_format">Downloading file by URL \"%1$s\" was not added to queue, reason: %2$s</string>
     <string name="download_failed_add_to_queue_reason_not_valid">incorrect parameters</string>
     <string name="download_failed_add_to_queue_reason_already_added">already in queue</string>
     <string name="download_failed_add_to_queue_reason_already_loading">already downloading</string>
-    <string name="download_alert_failed_start_title">Unable to start service</string>
-    <string name="download_alert_failed_start_message_format">For download file \"%s\".\n(Was app minimized?)</string>
+    <string name="download_dialog_failed_start_title">Unable to start service</string>
+    <string name="download_dialog_failed_start_message_format">For download file \"%s\".\n(Was app minimized?)</string>
     <string name="download_snackbar_no_valid_params">No valid parameters</string>
     <string name="download_error">Error loading file</string>
 </resources>

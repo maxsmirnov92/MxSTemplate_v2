@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_toStartOf="@+id/ibClear"
-        android:hint="@string/webview_alert_open_url_field_hint">
+        android:hint="@string/webview_dialog_open_url_field_hint">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etUrl"
