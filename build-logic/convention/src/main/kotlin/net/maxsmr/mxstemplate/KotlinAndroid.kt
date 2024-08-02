@@ -19,6 +19,7 @@ internal fun Project.configureKotlinAndroid(
 
         buildFeatures {
             viewBinding = true
+            buildConfig = true
         }
 
         flavorDimensions += listOf("default", "provider")

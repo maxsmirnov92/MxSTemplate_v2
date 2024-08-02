@@ -22,7 +22,7 @@ plugins {
     alias(libs.plugins.navigation.safeargs.kotlin)
 }
 
-val gradleTaskNames: List<String>  = gradle.startParameter.taskNames
+val gradleTaskNames: List<String> = gradle.startParameter.taskNames
 val gradleTaskRequests: List<TaskExecutionRequest> = gradle.startParameter.taskRequests
 
 logger.info("=== Running tasks: $gradleTaskNames ===")
@@ -111,13 +111,11 @@ android {
 //                mappingFileUploadEnabled = true
 //            }
 
-            if (gradleTaskNames.any { it.endsWith("Release") }) {
-                applySigningConfig(
-                    signingConfigs,
-                    "release",
-                    File(rootDir, "app/keystore.properties"),
-                )
-            }
+            applySigningConfig(
+                signingConfigs,
+                "release",
+                File(rootDir, "app/keystore.properties"),
+            )
 
 //            val configureSigningTask = tasks.register("configureSigning") {
 //                doFirst {
@@ -187,6 +185,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
 //    sourceSets {
@@ -270,9 +269,10 @@ fun ApplicationVariantDimension.applySigningConfig(
         "Name for signingConfig is not specified"
     }
 
-    fun createSigningConfig() {
-        check(propsFile.isFile && propsFile.exists()) {
-            "No valid properties file ('$propsFile') for \"$signingConfigName\""
+    fun createSigningConfig(): Boolean {
+        if (!propsFile.isFile || !propsFile.exists()) {
+            logger.warn("No valid properties file ('$propsFile') for \"$signingConfigName\"")
+            return false
         }
 
         val properties = Properties()
@@ -288,17 +288,21 @@ fun ApplicationVariantDimension.applySigningConfig(
                 logger.info("Signing config \"$signingConfigName\" created")
             }
         }
+        return true
     }
 
     var config = signingConfigs.findByName(signingConfigName)
     if (config == null) {
         // не найдено - пробуем создать, если есть валидный файл с properties
-        createSigningConfig()
-        config = signingConfigs.findByName(signingConfigName)
-            ?: throw IllegalStateException("Cannot create signingConfig \"$signingConfigName\"")
+        if (createSigningConfig()) {
+            config = signingConfigs.findByName(signingConfigName)
+                ?: throw IllegalStateException("Cannot create signingConfig \"$signingConfigName\"")
+        }
     }
-    logger.info("Applying signingConfig \"$signingConfigName\"")
-    signingConfig = config
+    if (config != null) {
+        logger.info("Applying signingConfig \"$signingConfigName\"")
+        signingConfig = config
+    }
 }
 
 /**
