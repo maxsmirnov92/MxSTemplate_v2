@@ -4,5 +4,20 @@ interface InAppUpdateChecker {
 
     fun doCheck()
 
-    fun dispose()
+    interface Callbacks {
+
+        fun onUpdateDownloadNotStarted(isCancelled: Boolean)
+
+        fun onUpdateDownloadStarted()
+
+        fun onUpdateDownloading(currentBytes: Long, totalBytes: Long) {}
+
+        fun onUpdateDownloaded(completeAction: () -> Unit)
+
+        fun onUpdateFailed()
+
+        fun onUpdateCancelled()
+
+        fun onStartUpdateFlowFailed(throwable: Throwable)
+    }
 }

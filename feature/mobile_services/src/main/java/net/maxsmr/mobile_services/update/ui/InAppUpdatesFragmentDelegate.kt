@@ -1,9 +1,9 @@
 package net.maxsmr.mobile_services.update.ui
 
-import android.content.IntentSender
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.isAtLeastNougat
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.actions.ToastDuration
@@ -19,7 +19,8 @@ import net.maxsmr.mobile_services.IMobileServicesAvailability
 import net.maxsmr.mobile_services.MobileBuildType
 import net.maxsmr.mobile_services.update.CommonInAppUpdateChecker
 import net.maxsmr.mobile_services.update.InAppUpdateChecker
-import java.lang.IllegalArgumentException
+import net.maxsmr.mobile_services.update.RuStoreInAppUpdateChecker
+import net.maxsmr.mobile_services.update.StubInAppUpdateChecker
 
 class InAppUpdatesFragmentDelegate(
     override val fragment: BaseVmFragment<*>,
@@ -29,7 +30,7 @@ class InAppUpdatesFragmentDelegate(
     updateRequestCode: Int,
     availability: IMobileServicesAvailability,
     mobileBuildType: MobileBuildType,
-) : IFragmentDelegate, CommonInAppUpdateChecker.Callbacks {
+) : IFragmentDelegate, InAppUpdateChecker.Callbacks {
 
     init {
         check(interval >= 0) {
@@ -37,10 +38,18 @@ class InAppUpdatesFragmentDelegate(
         }
     }
 
-    private val checker: InAppUpdateChecker = if (mobileBuildType == MobileBuildType.COMMON) {
-        CommonInAppUpdateChecker(availability, fragment, updateRequestCode, this)
-    } else {
-        throw IllegalArgumentException("Unknown MobileBuildType: $mobileBuildType")
+    private val checker: InAppUpdateChecker = when (mobileBuildType) {
+        MobileBuildType.COMMON -> {
+            CommonInAppUpdateChecker(availability, fragment, updateRequestCode, this)
+        }
+
+        MobileBuildType.RUSTORE -> {
+            if (isAtLeastNougat()) {
+                RuStoreInAppUpdateChecker(fragment, this)
+            } else {
+                StubInAppUpdateChecker()
+            }
+        }
     }
 
     override fun onResume() {
@@ -52,10 +61,6 @@ class InAppUpdatesFragmentDelegate(
                 cacheRepo.setCurrentLastCheckInAppUpdate()
             }
         }
-    }
-
-    override fun onViewDestroyed() {
-        checker.dispose()
     }
 
     override fun onUpdateDownloadNotStarted(isCancelled: Boolean) {
@@ -93,8 +98,8 @@ class InAppUpdatesFragmentDelegate(
         viewModel.showToast(TextMessage(R.string.mobile_services_toast_update_cancelled_message))
     }
 
-    override fun onStartUpdateFlowException(exception: IntentSender.SendIntentException) {
-        exception.message?.takeIf { it.isNotEmpty() }?.let {
+    override fun onStartUpdateFlowFailed(throwable: Throwable) {
+        throwable.message?.takeIf { it.isNotEmpty() }?.let {
             viewModel.showToast(TextMessage(it), ToastExtraData(duration = ToastDuration.LONG))
         }
     }

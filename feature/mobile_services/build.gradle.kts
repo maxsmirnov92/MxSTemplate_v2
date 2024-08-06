@@ -12,6 +12,9 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":feature:preferences:data"))
 
+    implementation(platform(libs.rustore.sdk.bom))
+    implementation(libs.rustore.sdk.appupdate)
+
     // ### В обоих реализациях можно обращаться к play-services-location
     implementation(libs.google.location)
 

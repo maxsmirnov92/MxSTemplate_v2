@@ -88,6 +88,7 @@ kittinunfResult = "4.0.0"
 leakCanary = "2.14"
 googlePlayReview = "2.0.1"
 googlePlayAppUpdates = "2.1.0"
+ruStoreSdkBom = "6.0.0"
 
 [libraries]
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
@@ -163,6 +164,8 @@ google-play-review = { group ="com.google.android.play", name = "review", versio
 google-play-review-ktx = { group ="com.google.android.play", name = "review-ktx", version.ref = "googlePlayReview"}
 google-play-app-update = { group ="com.google.android.play", name = "app-update", version.ref = "googlePlayAppUpdates"}
 google-play-app-update-ktx = { group ="com.google.android.play", name = "app-update-ktx", version.ref = "googlePlayAppUpdates"}
+rustore-sdk-bom = { group ="ru.rustore.sdk", name = "bom", version.ref = "ruStoreSdkBom" }
+rustore-sdk-appupdate = { group ="ru.rustore.sdk", name = "appupdate" }
 
 huawei-agconnect-core = { group = "com.huawei.agconnect", name = "agconnect-core", version.ref = "huaweiAgconnectCore" }
 huawei-agconnect-agcp = { group = "com.huawei.agconnect", name = "agcp", version.ref = "huaweiServices" }

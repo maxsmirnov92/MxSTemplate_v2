@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import net.maxsmr.commonutils.getViewUrlIntent
-import net.maxsmr.commonutils.isAtLeastMarshmallow
 import net.maxsmr.commonutils.queryIntentActivitiesCompat
 import net.maxsmr.feature.webview.data.client.interceptor.IWebViewInterceptor
 import net.maxsmr.feature.webview.data.client.interceptor.WebViewInterceptor
@@ -18,15 +17,10 @@ class NonBrowserWebViewClient(
 ) : ExternalViewUrlWebViewClient(context, okHttpClient, webViewInterceptor) {
 
     override fun getViewUrlMode(url: String): ViewUrlMode {
-        val flags = if (isAtLeastMarshmallow()) {
-            PackageManager.MATCH_ALL
-        } else {
-            0
-        }
         val browsableResults = context.queryIntentActivitiesCompat(
             getViewUrlIntent(url, null)
                 .addCategory(Intent.CATEGORY_BROWSABLE),
-            flags
+            PackageManager.MATCH_ALL
         )
 
         var result = ViewUrlMode.INTERNAL
@@ -37,7 +31,7 @@ class NonBrowserWebViewClient(
                             getViewUrlIntent(url, null)
                                 .addCategory("android.intent.category.APP_BROWSER")
                                 .setPackage(it.activityInfo.packageName),
-                            flags
+                            PackageManager.MATCH_ALL
                         )
                         // скорее всего ничего не найдёт, хотя такие activity (как и с CATEGORY_LAUNCHER)
                         // точно есть в системе

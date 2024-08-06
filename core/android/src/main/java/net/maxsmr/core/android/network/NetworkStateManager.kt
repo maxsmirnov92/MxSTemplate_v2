@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import net.maxsmr.commonutils.isAtLeastMarshmallow
 import net.maxsmr.commonutils.live.postValueIfNew
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
@@ -77,17 +76,13 @@ object NetworkStateManager {
     fun hasConnection() = getConnectionInfo().has
 
     fun getConnectionInfo(): ConnectionInfo {
-        return if (isAtLeastMarshmallow()) {
-            val capabilities = connectivityManager
-                .getNetworkCapabilities(connectivityManager.activeNetwork) ?: return ConnectionInfo()
-            val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-            val hasCellular = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-            val hasWifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-            val has = hasInternet && (hasCellular || hasWifi)
-            ConnectionInfo(has, has && hasCellular, has && hasWifi)
-        } else {
-            ConnectionInfo(connectivityManager.activeNetworkInfo?.let { it.isConnected && it.isAvailable } ?: false)
-        }
+        val capabilities = connectivityManager
+            .getNetworkCapabilities(connectivityManager.activeNetwork) ?: return ConnectionInfo()
+        val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        val hasCellular = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+        val hasWifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+        val has = hasInternet && (hasCellular || hasWifi)
+        return ConnectionInfo(has, has && hasCellular, has && hasWifi)
     }
 
     private fun ConnectivityManager.unregisterNetworkCallbackSafe(callback: ConnectivityManager.NetworkCallback) {

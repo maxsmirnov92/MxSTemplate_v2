@@ -17,7 +17,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.REG_EX_ALGORITHM_SHA1
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.isAtLeastMarshmallow
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
@@ -206,9 +205,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     override fun handleEvents(fragment: BaseVmFragment<*>) {
         super.handleEvents(fragment)
         navigateAppDetailsEvent.collectEventsWithOwner(fragment.viewLifecycleOwner) {
-            if (isAtLeastMarshmallow()) {
-                fragment.requireContext().openBatteryOptimizationSettings()
-            }
+            fragment.requireContext().openBatteryOptimizationSettings()
         }
     }
 
@@ -374,8 +371,10 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 }
 
                 snackbarTextMessage?.let {
-                    showSnackbar(it,
-                        SnackbarExtraData(length = SnackbarLength.LONG))
+                    showSnackbar(
+                        it,
+                        SnackbarExtraData(length = SnackbarLength.LONG)
+                    )
                 }
             } else {
                 onPickAction()
@@ -388,7 +387,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
      */
     fun onStartDownloadClick(errorFieldResult: (Field<*>?) -> Unit) {
         viewModelScope.launch {
-            if (isAtLeastMarshmallow() && !cacheRepo.askedAppDetails()) {
+            if (!cacheRepo.askedAppDetails()) {
                 showOkDialog(
                     DIALOG_TAG_NAVIGATE_TO_BATTERY_OPTIMIZATION,
                     net.maxsmr.core.ui.R.string.alert_battery_optimization_message
