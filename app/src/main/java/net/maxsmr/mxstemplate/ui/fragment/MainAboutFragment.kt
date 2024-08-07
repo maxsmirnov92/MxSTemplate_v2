@@ -3,15 +3,13 @@ package net.maxsmr.mxstemplate.ui.fragment
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.navArgs
 import dagger.hilt.android.AndroidEntryPoint
+import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IFragmentDelegate
-import net.maxsmr.feature.about.AboutViewModel
-import net.maxsmr.feature.about.BaseAboutFragment
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
+import net.maxsmr.feature.about.BaseAboutFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.mobile_services.IMobileServicesAvailability
 import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.R
 import net.maxsmr.mxstemplate.mobileBuildType
@@ -29,7 +27,7 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
             R.mipmap.ic_launcher,
             null,
             getString(R.string.app_name),
-            BuildConfig.VERSION_NAME,
+            versionName,
             donateInfo = AboutAppDescription.DonateInfo(
                 addresses = BuildConfig.DEV_PAYMENT_ADDRESSES.map { PaymentAddress(it.key, it.value) }
             ),
@@ -58,10 +56,14 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
     }
 
     @Inject
+    lateinit var cacheRepo: CacheDataStoreRepository
+
+    @Inject
     override lateinit var permissionsHelper: PermissionsHelper
 
     @Inject
-    lateinit var cacheRepo: CacheDataStoreRepository
+    @Named(DI_NAME_VERSION_NAME)
+    lateinit var versionName: String
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: MainAboutViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)

@@ -2,6 +2,8 @@ package net.maxsmr.mxstemplate.ui.fragment
 
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
+import net.maxsmr.core.di.DI_NAME_VERSION_CODE
+import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_IN_APP_UPDATES
 import net.maxsmr.feature.about.ReleaseNotesFragmentDelegate
@@ -17,6 +19,7 @@ import net.maxsmr.mxstemplate.mobileBuildType
 import net.maxsmr.mxstemplate.ui.BrowserWebViewModel
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
+import javax.inject.Named
 
 @AndroidEntryPoint
 class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewModel>() {
@@ -41,8 +44,8 @@ class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewMod
         ReleaseNotesFragmentDelegate(
             this,
             viewModel,
-            BuildConfig.VERSION_CODE,
-            BuildConfig.VERSION_NAME,
+            versionCode,
+            versionName,
             mapOf(
                 "en" to RELEASE_NOTES_ASSETS_FOLDER_NAME_EN,
                 "ru" to RELEASE_NOTES_ASSETS_FOLDER_NAME_RU
@@ -59,4 +62,13 @@ class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewMod
 
     @Inject
     lateinit var cacheRepo: CacheDataStoreRepository
+
+    @Inject
+    @Named(DI_NAME_VERSION_CODE)
+    @JvmField
+    var versionCode: Int = 0
+
+    @Inject
+    @Named(DI_NAME_VERSION_NAME)
+    lateinit var versionName: String
 }

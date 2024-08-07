@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApkSigningConfig
 import com.android.build.api.dsl.ApplicationVariantDimension
+import com.android.build.gradle.internal.api.ApkVariantOutputImpl
 import dagger.hilt.android.plugin.util.capitalize
 //import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.io.FileInputStream
@@ -156,13 +157,15 @@ android {
     applicationVariants.all {
         val variant = this
         variant.outputs
-            .map { it as com.android.build.gradle.internal.api.BaseVariantOutputImpl }
+            .map { it as ApkVariantOutputImpl }
             .forEach { output ->
                 val flavour = variant.flavorName
                 val buildTypeName = variant.buildType.name
                 val versionName = variant.versionName
                 output.outputFileName =
                     "${flavour}${buildTypeName.capitalize()}_${versionName}_${appVersion.type}.apk"
+                output.versionCodeOverride = appVersion.code
+                output.versionNameOverride = appVersion.name
             }
     }
 
