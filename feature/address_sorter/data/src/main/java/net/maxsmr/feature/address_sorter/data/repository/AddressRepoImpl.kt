@@ -4,6 +4,7 @@ import android.graphics.PointF
 import android.location.Location
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,11 +28,12 @@ import java.io.InputStream
 
 class AddressRepoImpl(
     private val dao: AddressDao,
-    private val ioDispatcher: CoroutineDispatcher,
     private val cacheRepo: CacheDataStoreRepository,
     private val json: Json,
     private val dataSource: AddressDataSource,
 ) : AddressRepo {
+
+    private val ioDispatcher = Dispatchers.IO
 
     private val scope = CoroutineScope(ioDispatcher + Job() + NonCancellable)
 

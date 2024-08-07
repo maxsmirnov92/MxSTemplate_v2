@@ -1,6 +1,6 @@
 package net.maxsmr.feature.address_sorter.data
 
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
@@ -10,17 +10,13 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import net.maxsmr.core.android.coroutines.usecase.FlowUseCase
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
-import net.maxsmr.core.di.AppDispatchers
-import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import javax.inject.Inject
 
 class AddressSuggestUseCase @Inject constructor(
     private val repository: AddressRepo,
-    @Dispatcher(AppDispatchers.IO)
-    ioDispatcher: CoroutineDispatcher,
-) : FlowUseCase<Flow<AddressSuggestUseCase.Parameters>, List<AddressSuggest>>(ioDispatcher) {
+) : FlowUseCase<Flow<AddressSuggestUseCase.Parameters>, List<AddressSuggest>>(Dispatchers.IO) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun execute(parameters: Flow<Parameters>): Flow<UseCaseResult<List<AddressSuggest>>> =

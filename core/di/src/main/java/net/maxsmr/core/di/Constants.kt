@@ -22,15 +22,6 @@ enum class DataStoreType(val dataStoreName: String) {
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
-annotation class Dispatcher(val appDispatchers: AppDispatchers)
-
-enum class AppDispatchers {
-    Default,
-    IO,
-}
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
 annotation class BaseJson
 
 @Qualifier

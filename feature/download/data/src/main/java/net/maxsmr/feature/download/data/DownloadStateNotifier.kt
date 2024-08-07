@@ -2,6 +2,7 @@ package net.maxsmr.feature.download.data
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -10,19 +11,14 @@ import net.maxsmr.commonutils.media.length
 import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.database.model.download.DownloadInfo
-import net.maxsmr.core.di.AppDispatchers
-import net.maxsmr.core.di.Dispatcher
 import java.io.Serializable
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class DownloadStateNotifier @Inject constructor(
-    @Dispatcher(AppDispatchers.Default)
-    private val defaultDispatcher: CoroutineDispatcher,
-) {
+class DownloadStateNotifier @Inject constructor() {
 
-    private val scope = CoroutineScope(defaultDispatcher + Job())
+    private val scope = CoroutineScope(Dispatchers.Default + Job())
 
     private val _downloadStartEvents = MutableSharedFlow<DownloadStartInfo>()
 

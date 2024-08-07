@@ -17,6 +17,7 @@ import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -36,9 +37,7 @@ import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.database.model.download.DownloadInfo
-import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.BaseJson
-import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.network.Method
@@ -65,8 +64,6 @@ import javax.inject.Inject
 class DownloadsViewModel @Inject constructor(
     private val downloadRepo: DownloadsRepo,
     private val downloadManager: DownloadManager,
-    @Dispatcher(AppDispatchers.IO)
-    private val ioDispatcher: CoroutineDispatcher,
     @BaseJson
     private val json: Json,
     state: SavedStateHandle,
@@ -160,7 +157,7 @@ class DownloadsViewModel @Inject constructor(
     }
 
     fun downloadFromJson(uri: Uri, contentResolver: ContentResolver) {
-        viewModelScope.launch(ioDispatcher) {
+        viewModelScope.launch(Dispatchers.IO) {
             json.decodeFromStringOrNull<List<DownloadParamsModel>>(uri.readString(contentResolver)).orEmpty()
                 .let { list ->
                     if (list.isNotEmpty()) {

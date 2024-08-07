@@ -1,8 +1,7 @@
 package net.maxsmr.core.network.api.radar_io
 
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.radar_io.internal.RadarIoDataService
 import net.maxsmr.core.network.retrofit.client.RadarIoRetrofitClient
@@ -18,7 +17,6 @@ interface AddressDataSource {
 }
 
 class RadarIoDataSource(
-    private val ioDispatcher: CoroutineDispatcher,
     private val retrofitClient: RadarIoRetrofitClient,
 ) : AddressDataSource {
 
@@ -27,7 +25,7 @@ class RadarIoDataSource(
         latitude: Float?,
         longitude: Float?,
         country: String,
-    ): List<AddressSuggest> = withContext(ioDispatcher) {
+    ): List<AddressSuggest> = withContext(Dispatchers.IO) {
         val near =
             if (latitude != null && longitude != null) {
                 "$latitude,$longitude"

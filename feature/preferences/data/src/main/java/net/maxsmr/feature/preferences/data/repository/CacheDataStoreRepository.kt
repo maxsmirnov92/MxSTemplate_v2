@@ -130,15 +130,18 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun getLastReleaseNotesVersionCode(): Int? {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_LAST_RELEASE_NOTES_VERSION_CODE]
+    suspend fun getSeenReleaseNotesVersionCodes(): List<Int> {
+        val jsonArray = dataStore.data.map { prefs ->
+            prefs[FIELD_SEEN_RELEASE_NOTES_VERSION_CODES]
         }.firstOrNull()
+        return json.decodeFromStringOrNull<List<Int>>(jsonArray).orEmpty()
     }
 
-    suspend fun setLastReleaseNotesVersionCode(id: Int) {
+    suspend fun setSeenReleaseNotesVersionCode(id: Int) {
+        val currentCodes = getSeenReleaseNotesVersionCodes().toMutableSet()
+        currentCodes.add(id)
         dataStore.edit { prefs ->
-            prefs[FIELD_LAST_RELEASE_NOTES_VERSION_CODE] = id
+            prefs[FIELD_SEEN_RELEASE_NOTES_VERSION_CODES] = json.encodeToStringOrNull(currentCodes.toList()).orEmpty()
         }
     }
 
@@ -162,7 +165,7 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
         private val FIELD_ASKED_APP_DETAILS = booleanPreferencesKey("askedAppDetails")
         private val FIELD_RATE_APP_INFO = stringPreferencesKey("rateAppInfo")
-        private val FIELD_LAST_RELEASE_NOTES_VERSION_CODE = intPreferencesKey("lastReleaseNotesVersionCode")
+        private val FIELD_SEEN_RELEASE_NOTES_VERSION_CODES = stringPreferencesKey("seenReleaseNotesVersionCodes")
         private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")
     }
 }

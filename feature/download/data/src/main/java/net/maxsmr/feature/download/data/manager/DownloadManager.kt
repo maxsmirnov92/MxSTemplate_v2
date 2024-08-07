@@ -3,6 +3,7 @@ package net.maxsmr.feature.download.data.manager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,8 +33,6 @@ import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.network.isUrlValid
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
-import net.maxsmr.core.di.AppDispatchers
-import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
@@ -61,15 +60,13 @@ import kotlin.coroutines.resume
 class DownloadManager @Inject constructor(
     private val downloadsRepo: DownloadsRepo,
     private val settingsRepo: SettingsDataStoreRepository,
-    @Dispatcher(AppDispatchers.Default)
-    private val defaultDispatcher: CoroutineDispatcher,
     private val notifier: DownloadStateNotifier,
 ) {
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("DownloadManager")
 
     private val scope =
-        CoroutineScope(defaultDispatcher + Job()) // Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+        CoroutineScope(Dispatchers.Default + Job()) // Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     private val downloadsPendingStorage = QueueFileStorage("download_pending_queue")
 

@@ -10,7 +10,7 @@ import com.github.kittinunf.result.getOrNull
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -34,8 +34,6 @@ import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
-import net.maxsmr.core.di.AppDispatchers
-import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
@@ -54,8 +52,6 @@ import java.io.Serializable
 class DownloadsParamsViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val viewModel: DownloadsViewModel,
-    @Dispatcher(AppDispatchers.IO)
-    private val ioDispatcher: CoroutineDispatcher,
     val cacheRepo: CacheDataStoreRepository,
 ) : BaseHandleableViewModel(state) {
 
@@ -344,7 +340,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                     storage.path
                 )
 
-                withContext(ioDispatcher) {
+                withContext(Dispatchers.IO) {
                     val subDir = baseAppName
                     val resource = storage.getOrCreate(RESOURCE_NAME_DOWNLOAD_PARAMS_MODEL, subDir)
                     resource.getOrNull()?.let {

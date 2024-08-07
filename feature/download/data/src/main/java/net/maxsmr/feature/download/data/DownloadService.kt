@@ -55,10 +55,8 @@ import net.maxsmr.core.android.network.isAnyResourceScheme
 import net.maxsmr.core.android.network.toValidUri
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
-import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.ApplicationScope
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
-import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.network.Method
@@ -176,7 +174,7 @@ class DownloadService : Service() {
     private val contextJob by lazy { Job() }
 
     private val coroutineScope: CoroutineScope by lazy {
-        CoroutineScope(ioDispatcher + contextJob)
+        CoroutineScope(Dispatchers.IO + contextJob)
     }
 
     /**
@@ -206,10 +204,6 @@ class DownloadService : Service() {
 
     @Inject
     lateinit var downloadsRepo: DownloadsRepo
-
-    @Inject
-    @Dispatcher(AppDispatchers.IO)
-    lateinit var ioDispatcher: CoroutineDispatcher
 
     @Inject
     lateinit var permissionsHelper: PermissionsHelper
@@ -355,7 +349,7 @@ class DownloadService : Service() {
 
             fun onException(e: Exception, localUri: Uri? = null) {
                 logger.e("onException: $e, localUri: $localUri")
-                applicationScope.launch(ioDispatcher) {
+                applicationScope.launch(Dispatchers.IO) {
                     // для перестраховки при любых исключениях suspend'ы
                     // запускаем в другом неотменённом скопе
                     val info = downloadInfo.copy(

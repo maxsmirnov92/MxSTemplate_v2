@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -22,8 +22,6 @@ import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.coroutines.usecase.asState
 import net.maxsmr.core.android.coroutines.usecase.mapData
-import net.maxsmr.core.di.AppDispatchers
-import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
@@ -38,8 +36,6 @@ import java.io.Serializable
 class AddressSorterViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val locationViewModel: LocationViewModel,
-    @Dispatcher(AppDispatchers.IO)
-    private val ioDispatcher: CoroutineDispatcher,
     private val repo: AddressRepo,
     private val addressSuggestUseCase: AddressSuggestUseCase,
 ) : BaseHandleableViewModel(state) {
@@ -70,7 +66,7 @@ class AddressSorterViewModel @AssistedInject constructor(
             }
         }
         locationViewModel.currentLocation.observe {
-            viewModelScope.launch(ioDispatcher) {
+            viewModelScope.launch(Dispatchers.IO) {
                 repo.refreshLocation(it)
             }
         }

@@ -6,10 +6,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
+import kotlinx.coroutines.Dispatchers
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
-import net.maxsmr.core.di.AppDispatchers
 import net.maxsmr.core.di.BaseJson
-import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.di.RadarIoRetrofit
 import net.maxsmr.core.network.api.radar_io.RadarIoDataSource
 import net.maxsmr.core.network.retrofit.client.RadarIoRetrofitClient
@@ -25,17 +24,15 @@ object AddressSorterRepositoryModule {
     @[Provides Singleton]
     fun providesAddressRepository(
         dao: AddressDao,
-        @Dispatcher(AppDispatchers.IO) ioDispatcher: CoroutineDispatcher,
         cacheRepo: CacheDataStoreRepository,
         @BaseJson json: Json,
-        @RadarIoRetrofit retrofitClient: RadarIoRetrofitClient
+        @RadarIoRetrofit retrofitClient: RadarIoRetrofitClient,
     ): AddressRepo {
         return AddressRepoImpl(
             dao,
-            ioDispatcher,
             cacheRepo,
             json,
-            RadarIoDataSource(ioDispatcher, retrofitClient)
+            RadarIoDataSource(retrofitClient)
         )
     }
 }

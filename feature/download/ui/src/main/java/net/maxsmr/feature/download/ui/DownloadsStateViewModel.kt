@@ -22,8 +22,6 @@ import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ViewStrategy
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
-import net.maxsmr.core.di.AppDispatchers
-import net.maxsmr.core.di.Dispatcher
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
@@ -39,7 +37,6 @@ import javax.inject.Inject
 class DownloadsStateViewModel @Inject constructor(
     state: SavedStateHandle,
     private val manager: DownloadManager,
-    @Dispatcher(AppDispatchers.Default) private val defaultDispatcher: CoroutineDispatcher,
 ) : BaseHandleableViewModel(state) {
 
     val queueNames = MutableLiveData<List<String>>()
@@ -231,7 +228,7 @@ class DownloadsStateViewModel @Inject constructor(
     }
 
     private fun <T : IntentWithUriProvideStrategy<*>> navigateUriAfterCheck(downloadUri: Uri, strategy: T) {
-        viewModelScope.launch(defaultDispatcher) {
+        viewModelScope.launch(Dispatchers.Default) {
             withContext(Dispatchers.Main.immediate) {
                 AlertDialogBuilder(DIALOG_TAG_PROGRESS).build()
             }
