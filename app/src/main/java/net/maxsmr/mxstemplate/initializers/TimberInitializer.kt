@@ -13,27 +13,25 @@ import java.util.regex.Pattern
 class TimberInitializer : Initializer<Unit> {
 
     override fun create(context: Context) {
-        if (BuildConfig.DEBUG) {
-            Timber.plant(object : Timber.DebugTree() {
-                override fun createStackElementTag(element: StackTraceElement): String {
-                    return String.format(
-                        "%s.%s(%s)",
-                        super.createStackElementTag(element),
-                        element.methodName,
-                        element.lineNumber
-                    )
-                }
-            })
-            if (BuildConfig.LOG_WRITE_FILE) {
-                Timber.plant(
-                    CustomFileLoggerTree.Builder()
-                        .withFileName("app_%g.log")
-                        .withDir(context.externalCacheDir ?: context.cacheDir)
-                        .withMinPriority(Log.DEBUG)
-                        .withFilter(TagFilter(Pattern.compile("(TrackingStationService|TrackingInfo).*")))
-                        .build()
+        Timber.plant(object : Timber.DebugTree() {
+            override fun createStackElementTag(element: StackTraceElement): String {
+                return String.format(
+                    "%s.%s(%s)",
+                    super.createStackElementTag(element),
+                    element.methodName,
+                    element.lineNumber
                 )
             }
+        })
+        if (BuildConfig.LOG_WRITE_FILE) {
+            Timber.plant(
+                CustomFileLoggerTree.Builder()
+                    .withFileName("app_%g.log")
+                    .withDir(context.externalCacheDir ?: context.cacheDir)
+                    .withMinPriority(Log.DEBUG)
+                    .withFilter(TagFilter(Pattern.compile("(TrackingStationService|TrackingInfo).*")))
+                    .build()
+            )
         }
 
 //        Timber.plant(CrashReportingTree())
