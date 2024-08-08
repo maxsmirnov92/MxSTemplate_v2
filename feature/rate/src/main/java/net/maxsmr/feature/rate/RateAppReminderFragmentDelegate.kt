@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.BaseViewModel
+import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.components.IFragmentDelegate
@@ -68,9 +69,17 @@ class RateAppReminderFragmentDelegate(
                     R.string.rate_dialog_app_reminder_positive,
                     R.string.rate_dialog_app_reminder_negative,
                     R.string.rate_dialog_app_reminder_neutral,
+                    {
+                        setUniqueStrategy(AlertQueueItem.UniqueStrategy.Ignore)
+                    }
                 )
             }
         }
+    }
+
+    override fun onViewDestroyed() {
+        super.onViewDestroyed()
+        viewModel.hideDialog(DIALOG_TAG_RATE_APP_REMINDER)
     }
 
     companion object {

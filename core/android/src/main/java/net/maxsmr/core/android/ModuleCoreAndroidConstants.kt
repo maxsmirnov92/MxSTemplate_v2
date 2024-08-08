@@ -16,10 +16,12 @@ lateinit var baseAppName: String
     private set
 
 fun initModuleCoreAndroidContext(context: Context) {
+    if (::baseApplicationContext.isInitialized) return
     baseApplicationContext = context
 }
 
 fun initBaseAppName(appName: String) {
+    if (::baseAppName.isInitialized) return
     baseAppName = appName
 }
 

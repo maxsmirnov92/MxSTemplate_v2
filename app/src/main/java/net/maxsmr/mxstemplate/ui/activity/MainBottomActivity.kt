@@ -2,8 +2,10 @@ package net.maxsmr.mxstemplate.ui.activity
 
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.ui.components.activities.BaseBottomNavigationActivity
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
+import net.maxsmr.mxstemplate.App
 import net.maxsmr.mxstemplate.R
 import javax.inject.Inject
 
@@ -25,6 +27,12 @@ class MainBottomActivity : BaseBottomNavigationActivity() {
             BackPressedMode.PRESS_TWICE_CURRENT
         } else {
             BackPressedMode.NO_CHANGE
+        }
+
+    override val canUseFragmentDelegates: Boolean
+        get() {
+            val app = baseApplicationContext as App
+            return app.isActivityFirstAndSingle(MainBottomActivity::class.java)
         }
 
     @Inject

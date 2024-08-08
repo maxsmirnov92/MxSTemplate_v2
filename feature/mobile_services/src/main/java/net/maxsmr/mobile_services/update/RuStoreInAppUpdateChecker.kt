@@ -68,13 +68,23 @@ class RuStoreInAppUpdateChecker(
         lastAppUpdateStatus = status
     }
 
+    private var isChecking: Boolean = false
+
     private var isRegistered: Boolean = false
 
     private var lastAppUpdateType: Int? = null
 
     private var lastAppUpdateStatus: Int? = null
 
+    @Synchronized
     override fun doCheck() {
+        if (isChecking) {
+            return
+        }
+        isChecking = true
+
+        logger.i("Checking updates by RuStoreInAppUpdateChecker...")
+
         appUpdateManager
             .getAppUpdateInfo()
             .addOnSuccessListener { appUpdateInfo ->
@@ -85,6 +95,8 @@ class RuStoreInAppUpdateChecker(
                     logger.w("Not attached to activity or it is finishing, not updating")
                     return@addOnSuccessListener
                 }
+
+                callbacks.onUpdateCheckSuccess()
 
                 val availability = appUpdateInfo.updateAvailability
 
@@ -127,7 +139,7 @@ class RuStoreInAppUpdateChecker(
                             if (resultCode != Activity.RESULT_OK) {
                                 val isCancelled = resultCode == Activity.RESULT_CANCELED
                                 if (isCancelled) {
-                                    logger.e("startUpdateFlow cancelled")
+                                    logger.w("startUpdateFlow cancelled")
                                 } else if (resultCode == ActivityResult.ACTIVITY_NOT_FOUND) {
                                     logger.e("startUpdateFlow not started: activity not found")
                                 } else {
@@ -136,7 +148,7 @@ class RuStoreInAppUpdateChecker(
                                 // Пользователь отказался от скачивания
                                 callbacks.onUpdateDownloadNotStarted(isCancelled)
                             } else {
-                                logger.e("startUpdateFlow success")
+                                logger.i("startUpdateFlow success")
                             }
                         }
                         .addOnFailureListener {
@@ -147,6 +159,10 @@ class RuStoreInAppUpdateChecker(
             }
             .addOnFailureListener {
                 logger.w("getAppUpdateInfo failed", it)
+            }
+            .addOnCompletionListener {
+                logger.i("getAppUpdateInfo complete", it)
+                isChecking = false
             }
     }
 

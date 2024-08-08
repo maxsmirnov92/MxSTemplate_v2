@@ -26,8 +26,6 @@ class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewMod
 
     override val viewModel: BrowserWebViewModel by viewModels()
 
-    override val delegates: List<IFragmentDelegate> by lazy { listOf(appUpdateDelegate, releaseNotesDelegate) }
-
     private val appUpdateDelegate by lazy {
         InAppUpdatesFragmentDelegate(
             this,
@@ -71,4 +69,8 @@ class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewMod
     @Inject
     @Named(DI_NAME_VERSION_NAME)
     lateinit var versionName: String
+
+    override fun createFragmentDelegates(): List<IFragmentDelegate> {
+        return listOf(appUpdateDelegate, releaseNotesDelegate)
+    }
 }

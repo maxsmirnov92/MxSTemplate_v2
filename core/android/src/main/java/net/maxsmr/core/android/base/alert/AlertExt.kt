@@ -10,9 +10,10 @@ import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 fun AlertQueueItem.Builder.showOkAlert(
     @StringRes messageResId: Int,
     @StringRes title: Int? = null,
+    configBlock: (AlertQueueItem.Builder.() -> Unit)? = null,
     onConfirmClick: (() -> Unit)? = null,
 ) {
-    showOkAlert(TextMessage(messageResId), title?.let { TextMessage(it) }, onConfirmClick)
+    showOkAlert(TextMessage(messageResId), title?.let { TextMessage(it) }, configBlock, onConfirmClick)
 }
 
 /**
@@ -22,6 +23,7 @@ fun AlertQueueItem.Builder.showOkAlert(
 fun AlertQueueItem.Builder.showOkAlert(
     message: TextMessage,
     title: TextMessage? = null,
+    configBlock: (AlertQueueItem.Builder.() -> Unit)? = null,
     onConfirmClick: (() -> Unit)? = null,
 ) {
     setTitle(title)
@@ -29,6 +31,9 @@ fun AlertQueueItem.Builder.showOkAlert(
         .setAnswers(Alert.Answer((android.R.string.ok)).onSelect {
             onConfirmClick?.invoke()
         })
+        .also {
+            configBlock?.invoke(it)
+        }
         .build()
 }
 
@@ -38,6 +43,7 @@ fun AlertQueueItem.Builder.showYesNoAlert(
     @StringRes positiveAnswerResId: Int = R.string.yes,
     @StringRes negativeAnswerResId: Int = R.string.no,
     @StringRes neutralAnswerResId: Int? = null,
+    configBlock: (AlertQueueItem.Builder.() -> Unit)? = null,
     onSelect: ((Int) -> Unit)? = null,
 ) {
     setTitle(title)
@@ -57,5 +63,8 @@ fun AlertQueueItem.Builder.showYesNoAlert(
                 }
             }
         )
+        .also {
+            configBlock?.invoke(it)
+        }
         .build()
 }

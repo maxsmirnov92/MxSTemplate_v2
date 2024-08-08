@@ -38,6 +38,7 @@ class InAppUpdatesFragmentDelegate(
         }
     }
 
+    // by lazy нельзя из-за registerForActivityResult в CommonInAppUpdateChecker
     private val checker: InAppUpdateChecker = when (mobileBuildType) {
         MobileBuildType.COMMON -> {
             CommonInAppUpdateChecker(availability, fragment, updateRequestCode, this)
@@ -56,10 +57,15 @@ class InAppUpdatesFragmentDelegate(
         super.onResume()
         viewModel.viewModelScope.launch {
             if (hasTimePassed(cacheRepo.getLastCheckInAppUpdate(), interval)) {
-                // с целью не одолевать юзера на каждый возврат диалогом доступности обновления
                 checker.doCheck()
-                cacheRepo.setCurrentLastCheckInAppUpdate()
             }
+        }
+    }
+
+    override fun onUpdateCheckSuccess() {
+        viewModel.viewModelScope.launch {
+            // с целью не одолевать юзера на каждый возврат диалогом доступности обновления
+            cacheRepo.setCurrentLastCheckInAppUpdate()
         }
     }
 
@@ -79,8 +85,13 @@ class InAppUpdatesFragmentDelegate(
     }
 
     override fun onUpdateDownloaded(completeAction: () -> Unit) {
+        viewModel.viewModelScope.launch {
+            // если пользовать вдруг откажется завершать -
+            // проверять и показывать снек каждый раз
+            cacheRepo.clearLastCheckInAppUpdate()
+        }
         viewModel.showSnackbar(
-            TextMessage(R.string.mobile_services_snackbar_update_downloaded_action),
+            TextMessage(R.string.mobile_services_snackbar_update_downloaded_message),
             SnackbarExtraData(SnackbarExtraData.SnackbarLength.INDEFINITE),
             Alert.Answer(R.string.mobile_services_snackbar_update_downloaded_action).onSelect {
                 completeAction()

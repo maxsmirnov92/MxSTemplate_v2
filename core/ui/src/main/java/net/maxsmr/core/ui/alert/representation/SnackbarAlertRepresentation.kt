@@ -21,15 +21,8 @@ fun Alert.asSnackbar(view: View): AlertRepresentation {
     check(extraData != null) {
         "Alert must contain extra data for being displayed as snackbar"
     }
-    check(extraData.length != SnackbarExtraData.SnackbarLength.INDEFINITE
-            || answers.size == 1
-    ) {
-        "Alert must contain exactly 1 answer for being displayed as indefinite snackbar"
-    }
-    check(extraData.length == SnackbarExtraData.SnackbarLength.INDEFINITE
-            || (answers.size in 0..1)
-    ) {
-        "Alert may contain 0 or 1 answer for being displayed as short/long snackbar"
+    check(answers.size in 0..1) {
+        "Alert may contain 0 or 1 answer for being displayed as any snackbar"
     }
 
     val context = view.context

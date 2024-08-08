@@ -8,11 +8,12 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.di.RadarIoRetrofit
 import net.maxsmr.core.network.retrofit.client.RadarIoRetrofitClient
+import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.mxstemplate.logger.TimberLogger
 import javax.inject.Inject
 
 @HiltAndroidApp
-class App: Application(), Application.ActivityLifecycleCallbacks {
+class App : Application(), Application.ActivityLifecycleCallbacks {
 
     init {
 //        if (BuildConfig.DEBUG) {
@@ -27,6 +28,10 @@ class App: Application(), Application.ActivityLifecycleCallbacks {
     @Inject
     @RadarIoRetrofit
     lateinit var radarIoRetrofitClient: RadarIoRetrofitClient
+
+    private val _runningActivities = mutableListOf<Activity>()
+
+    val runningActivities get() = _runningActivities.toList()
 
     override fun onCreate() {
         super.onCreate()
@@ -43,6 +48,7 @@ class App: Application(), Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        _runningActivities.add(activity)
     }
 
     override fun onActivityStarted(activity: Activity) {
@@ -61,6 +67,15 @@ class App: Application(), Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityDestroyed(activity: Activity) {
+        _runningActivities.remove(activity)
+    }
+
+    fun isActivityFirstAndSingle(clazz: Class<out BaseActivity>): Boolean {
+        return runningActivities.indexOfFirst {
+            it.componentName.className == clazz.canonicalName
+        } == 0 && runningActivities.count {
+            it.componentName.className == clazz.canonicalName
+        } == 1
     }
 
     private fun initLogging() {

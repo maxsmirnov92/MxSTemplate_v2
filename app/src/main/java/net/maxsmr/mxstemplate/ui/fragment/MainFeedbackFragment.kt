@@ -6,7 +6,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.rate.fragment.BaseFeedbackFragment
-import net.maxsmr.mobile_services.IMobileServicesAvailability
 import net.maxsmr.mxstemplate.mobileBuildType
 import net.maxsmr.mxstemplate.ui.MainFeedbackViewModel
 import net.maxsmr.mxstemplate.ui.delegate.MainRateAppFragmentDelegate
@@ -30,7 +29,6 @@ class MainFeedbackFragment: BaseFeedbackFragment<MainFeedbackViewModel>() {
         )
     }
 
-    override val delegates: List<IFragmentDelegate> by lazy { listOf(rateDelegate) }
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -43,5 +41,9 @@ class MainFeedbackFragment: BaseFeedbackFragment<MainFeedbackViewModel>() {
         if (args.shouldNavigateToMarket) {
             rateDelegate.navigateToMarket()
         }
+    }
+
+    override fun createFragmentDelegates(): List<IFragmentDelegate> {
+        return listOf(rateDelegate)
     }
 }

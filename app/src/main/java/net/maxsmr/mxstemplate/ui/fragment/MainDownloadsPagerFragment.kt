@@ -24,8 +24,6 @@ import javax.inject.Named
 @AndroidEntryPoint
 class MainDownloadsPagerFragment: BaseDownloadsPagerFragment() {
 
-    override val delegates: List<IFragmentDelegate> by lazy { listOf(rateDelegate, appUpdateDelegate, releaseNotesDelegate) }
-
     private val appUpdateDelegate by lazy {
         InAppUpdatesFragmentDelegate(
             this,
@@ -84,4 +82,8 @@ class MainDownloadsPagerFragment: BaseDownloadsPagerFragment() {
     @Inject
     @Named(DI_NAME_VERSION_NAME)
     lateinit var versionName: String
+
+    override fun createFragmentDelegates(): List<IFragmentDelegate> {
+        return listOf(rateDelegate, appUpdateDelegate, releaseNotesDelegate)
+    }
 }

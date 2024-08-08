@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
+import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.toRepresentation
 import net.maxsmr.core.ui.components.IFragmentDelegate
@@ -57,6 +58,7 @@ abstract class BaseRateAppFragmentDelegate(
 
     override fun onViewDestroyed() {
         super.onViewDestroyed()
+        viewModel.hideDialog(DIALOG_TAG_RATE_APP)
         reviewManager = null
     }
 
@@ -97,6 +99,7 @@ abstract class BaseRateAppFragmentDelegate(
                 Alert.Answer(R.string.rate_dialog_app_button_positive),
                 Alert.Answer(R.string.rate_dialog_app_button_negative),
             )
+            setUniqueStrategy(AlertQueueItem.UniqueStrategy.Ignore)
         }
     }
 

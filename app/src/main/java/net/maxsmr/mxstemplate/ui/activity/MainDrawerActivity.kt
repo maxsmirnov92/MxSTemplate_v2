@@ -4,9 +4,11 @@ import android.view.LayoutInflater
 import android.view.View
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.ui.components.activities.BaseDrawerNavigationActivity
 import net.maxsmr.core.ui.databinding.LayoutHeaderNavigationViewBinding
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
+import net.maxsmr.mxstemplate.App
 import net.maxsmr.mxstemplate.R
 import javax.inject.Inject
 
@@ -28,6 +30,12 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
             BackPressedMode.PRESS_TWICE_LAST
         } else {
             BackPressedMode.NO_CHANGE
+        }
+
+    override val canUseFragmentDelegates: Boolean
+        get() {
+            val app = baseApplicationContext as App
+            return app.isActivityFirstAndSingle(MainDrawerActivity::class.java)
         }
 
     @Inject

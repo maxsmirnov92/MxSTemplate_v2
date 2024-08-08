@@ -40,5 +40,7 @@ class MainWebViewFragment: BaseDownloadableWebViewFragment<MainWebViewModel>() {
         }
     }
 
-    override val delegates: List<IFragmentDelegate> by lazy { listOf(rateDelegate) }
+    override fun createFragmentDelegates(): List<IFragmentDelegate> {
+        return listOf(rateDelegate)
+    }
 }

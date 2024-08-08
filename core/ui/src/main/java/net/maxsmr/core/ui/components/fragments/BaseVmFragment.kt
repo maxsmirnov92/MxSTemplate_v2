@@ -58,7 +58,14 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
 
     abstract val permissionsHelper: PermissionsHelper
 
-    protected open val delegates: List<IFragmentDelegate> = listOf()
+    private val delegates: List<IFragmentDelegate> by lazy {
+        val activity = requireActivity() as BaseActivity
+        if (activity.canUseFragmentDelegates) {
+            createFragmentDelegates()
+        } else {
+            listOf()
+        }
+    }
 
     /**
      * Отвечает за реакцию фрагмента на появление/отсутствие сети
@@ -110,16 +117,6 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
     }
 
     @CallSuper
-    protected open fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
-        viewModel.handleAlerts(delegate)
-    }
-
-    @CallSuper
-    protected open fun handleEvents() {
-        viewModel.handleEvents(this@BaseVmFragment)
-    }
-
-    @CallSuper
     override fun onDestroyView() {
         super.onDestroyView()
         delegates.forEach {
@@ -135,6 +132,18 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         savedInstanceState: Bundle?,
         viewModel: VM,
     )
+
+    @CallSuper
+    protected open fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
+        viewModel.handleAlerts(delegate)
+    }
+
+    @CallSuper
+    protected open fun handleEvents() {
+        viewModel.handleEvents(this@BaseVmFragment)
+    }
+
+    protected open fun createFragmentDelegates(): List<IFragmentDelegate> = listOf()
 
     @JvmOverloads
     protected inline fun <T> LiveData<T>.observe(

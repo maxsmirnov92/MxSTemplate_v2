@@ -17,6 +17,8 @@ open class BaseActivity: AppCompatActivity() {
      */
     private val permissionResultListeners = mutableMapOf<Int, PermissionsHelper.ResultListener?>()
 
+    open val canUseFragmentDelegates = true
+
     /**
      * Разрешения запрашивать только с хостовой активити, чтобы результат прилетал сюда
      */

@@ -131,9 +131,10 @@ abstract class BaseViewModel(
         tag: String,
         @StringRes messageResId: Int,
         @StringRes title: Int? = null,
+        configBlock: (AlertQueueItem.Builder.() -> Unit)? = null,
         onConfirmClick: (() -> Unit)? = null,
     ) {
-        AlertDialogBuilder(tag).showOkAlert(messageResId, title, onConfirmClick)
+        AlertDialogBuilder(tag).showOkAlert(messageResId, title, configBlock, onConfirmClick)
     }
 
     /**
@@ -144,9 +145,10 @@ abstract class BaseViewModel(
         tag: String,
         message: TextMessage,
         title: TextMessage? = null,
+        configBlock: (AlertQueueItem.Builder.() -> Unit)? = null,
         onConfirmClick: (() -> Unit)? = null,
     ) {
-        AlertDialogBuilder(tag).showOkAlert(message, title, onConfirmClick)
+        AlertDialogBuilder(tag).showOkAlert(message, title, configBlock, onConfirmClick)
     }
 
     fun showYesNoPermissionDialog(
@@ -167,6 +169,7 @@ abstract class BaseViewModel(
         @StringRes positiveAnswerResId: Int = R.string.yes,
         @StringRes negativeAnswerResId: Int = R.string.no,
         @StringRes neutralAnswerResId: Int? = null,
+        configBlock: (AlertQueueItem.Builder.() -> Unit)? = null,
         onSelect: ((Int) -> Unit)? = null,
     ) {
         AlertDialogBuilder(tag).showYesNoAlert(
@@ -175,6 +178,7 @@ abstract class BaseViewModel(
             positiveAnswerResId,
             negativeAnswerResId,
             neutralAnswerResId,
+            configBlock,
             onSelect
         )
     }
@@ -184,6 +188,10 @@ abstract class BaseViewModel(
             configBlock(it)
             it.build()
         }
+    }
+
+    fun hideDialog(tag: String) {
+        dialogQueue.removeAllWithTag(tag)
     }
 
     /**
@@ -316,7 +324,7 @@ abstract class BaseViewModel(
             if (it?.isLoading == true) {
                 AlertDialogBuilder(tag).setMessage(messageRes).build()
             } else {
-                dialogQueue.removeAllWithTag(tag)
+                hideDialog(tag)
             }
         }
 

@@ -47,13 +47,13 @@ class CommonInAppUpdateChecker(
         if (result.resultCode != Activity.RESULT_OK) {
             val isCancelled = result.resultCode == Activity.RESULT_CANCELED
             if (isCancelled) {
-                logger.e("startUpdateFlowForResult cancelled")
+                logger.w("startUpdateFlowForResult cancelled")
             } else {
                 logger.e("startUpdateFlowForResult not started, unknown reason")
             }
             callbacks.onUpdateDownloadNotStarted(isCancelled)
         } else {
-            logger.e("startUpdateFlowForResult success")
+            logger.i("startUpdateFlowForResult success")
         }
     }
 
@@ -101,63 +101,81 @@ class CommonInAppUpdateChecker(
         lastAppUpdateStatus = status
     }
 
+    private var isChecking: Boolean = false
+
     private var isRegistered: Boolean = false
 
     private var lastAppUpdateType: Int? = null
 
     private var lastAppUpdateStatus: Int? = null
 
+    @Synchronized
     override fun doCheck() {
         if (!availability.isGooglePlayServicesAvailable) return
+        if (isChecking) return
+
+        isChecking = true
 
         lastAppUpdateType = null
         lastAppUpdateStatus = null
 
-        appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-            logger.i("getAppUpdateInfo success, availableVersionCode: ${appUpdateInfo.availableVersionCode()}, updateAvailability: ${appUpdateInfo.updateAvailability()}")
-            val activity = fragment.activity
-            if (activity == null || activity.isFinishing) {
-                logger.w("Not attached to activity or it is finishing, not updating")
-                return@addOnSuccessListener
-            }
-            if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED) {
-                // в таком статусе установки isUpdateTypeAllowed будет только IMMEDIATE
-                // независимо от исходного - нужно завершить вызовом completeUpdate()
-                logger.i("App update already downloaded")
-                onAfterUpdateDownloaded()
-                return@addOnSuccessListener
-            }
-            val availability = appUpdateInfo.updateAvailability()
-            // If an in-app update is already running, resume the update.
-            val inProgress = availability == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS
-            if (inProgress || availability == UpdateAvailability.UPDATE_AVAILABLE) {
-                val type = if (appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
-                        && (inProgress || appUpdateInfo.updatePriority() >= immediateUpdatePriority)
-                ) {
-                    AppUpdateType.IMMEDIATE
-                } else if (appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
-                    AppUpdateType.FLEXIBLE
-                } else {
-                    logger.e("No AppUpdateType allowed")
+        logger.i("Checking updates by CommonInAppUpdateChecker...")
+
+        appUpdateManager.appUpdateInfo
+            .addOnSuccessListener { appUpdateInfo ->
+                logger.i("getAppUpdateInfo success, availableVersionCode: ${appUpdateInfo.availableVersionCode()}, updateAvailability: ${appUpdateInfo.updateAvailability()}")
+
+                val activity = fragment.activity
+                if (activity == null || activity.isFinishing) {
+                    logger.w("Not attached to activity or it is finishing, not updating")
                     return@addOnSuccessListener
                 }
-                lastAppUpdateType = type
-                registerUpdateListener()
-                try {
-                    appUpdateManager.startUpdateFlowForResult(
-                        appUpdateInfo,
-                        updateResultStarter,
-                        AppUpdateOptions.newBuilder(type).build(),
-                        updateRequestCode
-                    )
-                } catch (exception: IntentSender.SendIntentException) {
-                    logger.e("startUpdateFlowForResult failed", exception)
-                    callbacks.onStartUpdateFlowFailed(exception)
+
+                callbacks.onUpdateCheckSuccess()
+
+                if (appUpdateInfo.installStatus() == InstallStatus.DOWNLOADED) {
+                    // в таком статусе установки isUpdateTypeAllowed будет только IMMEDIATE
+                    // независимо от исходного - нужно завершить вызовом completeUpdate()
+                    logger.i("App update already downloaded")
+                    onAfterUpdateDownloaded()
+                    return@addOnSuccessListener
+                }
+                val availability = appUpdateInfo.updateAvailability()
+                // If an in-app update is already running, resume the update.
+                val inProgress = availability == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS
+                if (inProgress || availability == UpdateAvailability.UPDATE_AVAILABLE) {
+                    val type = if (appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+                            && (inProgress || appUpdateInfo.updatePriority() >= immediateUpdatePriority)
+                    ) {
+                        AppUpdateType.IMMEDIATE
+                    } else if (appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)) {
+                        AppUpdateType.FLEXIBLE
+                    } else {
+                        logger.e("No AppUpdateType allowed")
+                        return@addOnSuccessListener
+                    }
+                    lastAppUpdateType = type
+                    registerUpdateListener()
+                    try {
+                        appUpdateManager.startUpdateFlowForResult(
+                            appUpdateInfo,
+                            updateResultStarter,
+                            AppUpdateOptions.newBuilder(type).build(),
+                            updateRequestCode
+                        )
+                    } catch (exception: IntentSender.SendIntentException) {
+                        logger.e("startUpdateFlowForResult failed", exception)
+                        callbacks.onStartUpdateFlowFailed(exception)
+                    }
                 }
             }
-        }.addOnFailureListener {
-            logger.w("getAppUpdateInfo failed", it)
-        }
+            .addOnFailureListener {
+                logger.w("getAppUpdateInfo failed", it)
+            }
+            .addOnCompleteListener {
+                logger.i("getAppUpdateInfo complete")
+                isChecking = false
+            }
     }
 
     private fun registerUpdateListener() {

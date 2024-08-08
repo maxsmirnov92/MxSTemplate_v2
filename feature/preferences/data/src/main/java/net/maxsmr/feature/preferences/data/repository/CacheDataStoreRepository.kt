@@ -152,8 +152,16 @@ class CacheDataStoreRepository @Inject constructor(
     }
 
     suspend fun setCurrentLastCheckInAppUpdate() {
+        setLastCheckInAppUpdate(System.currentTimeMillis())
+    }
+
+    suspend fun clearLastCheckInAppUpdate() {
+        setLastCheckInAppUpdate(0)
+    }
+
+    private suspend fun setLastCheckInAppUpdate(timestamp: Long) {
         dataStore.edit { prefs ->
-            prefs[FIELD_LAST_CHECK_IN_APP_UPDATE] = System.currentTimeMillis()
+            prefs[FIELD_LAST_CHECK_IN_APP_UPDATE] = timestamp
         }
     }
 

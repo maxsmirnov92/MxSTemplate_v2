@@ -41,10 +41,6 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
 
     override val viewModel: MainAboutViewModel by viewModels()
 
-    override val delegates: List<IFragmentDelegate> by lazy {
-        listOf(rateDelegate)
-    }
-
     override val rateDelegate by lazy {
         MainRateAppFragmentDelegate(
             this,
@@ -70,5 +66,9 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
         if (viewModel.isForRate) {
             rateDelegate.onRateAppSelected()
         }
+    }
+
+    override fun createFragmentDelegates(): List<IFragmentDelegate> {
+        return listOf(rateDelegate)
     }
 }

@@ -11,6 +11,7 @@ import net.maxsmr.commonutils.readStringFromAsset
 import net.maxsmr.commonutils.text.removeExtension
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
+import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asCommonWrapBottomSheetDialog
 import net.maxsmr.core.ui.components.IFragmentDelegate
@@ -159,6 +160,7 @@ class ReleaseNotesFragmentDelegate @JvmOverloads constructor(
                                     }
                                     // не добавляем ответ с тэгом ANSWER_TAG_CLOSE
                                 )
+                                setUniqueStrategy(AlertQueueItem.UniqueStrategy.Ignore)
                             }
                         }
                     } else {
@@ -173,6 +175,11 @@ class ReleaseNotesFragmentDelegate @JvmOverloads constructor(
         delegate.bindAlertDialog(DIALOG_TAG_RELEASE_NOTES) {
             it.asCommonWrapBottomSheetDialog(fragment.requireContext(), false)
         }
+    }
+
+    override fun onViewDestroyed() {
+        super.onViewDestroyed()
+        viewModel.hideDialog(DIALOG_TAG_RELEASE_NOTES)
     }
 
     companion object {

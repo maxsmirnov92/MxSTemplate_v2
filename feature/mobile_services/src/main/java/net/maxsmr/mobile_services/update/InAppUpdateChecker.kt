@@ -6,6 +6,8 @@ interface InAppUpdateChecker {
 
     interface Callbacks {
 
+        fun onUpdateCheckSuccess()
+
         fun onUpdateDownloadNotStarted(isCancelled: Boolean)
 
         fun onUpdateDownloadStarted()
