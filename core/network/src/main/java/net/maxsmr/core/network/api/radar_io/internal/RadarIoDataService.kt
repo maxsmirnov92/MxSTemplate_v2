@@ -2,6 +2,7 @@ package net.maxsmr.core.network.api.radar_io.internal
 
 import net.maxsmr.core.network.retrofit.client.RadarIoRetrofitClient
 import net.maxsmr.core.network.retrofit.converters.RadarIoResponseObjectType
+import net.maxsmr.core.network.retrofit.interceptors.Authorization
 import net.maxsmr.core.network.retrofit.interceptors.ServiceFields
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -11,6 +12,7 @@ internal interface RadarIoDataService {
 
     @ServiceFields
     @RadarIoResponseObjectType(AutocompleteResponse::class)
+    @Authorization
     @GET("v1/search/autocomplete")
     suspend fun suggest(
         @Query("query") query: String,

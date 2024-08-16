@@ -1,7 +1,6 @@
 package net.maxsmr.feature.address_sorter.data.repository
 
 import android.location.Location
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import net.maxsmr.commonutils.text.EMPTY_STRING
@@ -25,13 +24,15 @@ interface AddressRepo {
 
     suspend fun specifyItem(id: Long, suggest: AddressSuggest)
 
-    suspend fun refreshSortOrder(ids: List<Long>)
+    suspend fun updateSortOrder(ids: List<Long>)
 
     suspend fun sortItems()
 
     suspend fun suggest(query: String): List<AddressSuggest>
 
-    suspend fun suggestWithRefresh(id: Long, query: String): List<AddressSuggest>
+    suspend fun suggestWithUpdate(id: Long, query: String): List<AddressSuggest>
 
-    suspend fun refreshLocation(location: Location?)
+    suspend fun updateQuery(id: Long?, query: String): Long
+
+    suspend fun setLastLocation(location: Location?)
 }

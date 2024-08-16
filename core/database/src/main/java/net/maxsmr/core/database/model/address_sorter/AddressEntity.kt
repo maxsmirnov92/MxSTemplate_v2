@@ -10,7 +10,8 @@ data class AddressEntity(
     val address: String,
     val latitude: Float? = 0f,
     val longitude: Float? = 0f,
-    val distance: Int? = 0,
+    val distance: Float? = 0f,
+    val isSuggested: Boolean = false,
 ) {
 
     @PrimaryKey(autoGenerate = true)
@@ -35,6 +36,7 @@ data class AddressEntity(
         },
         address,
         distance,
+        isSuggested
     )
 
     override fun equals(other: Any?): Boolean {
@@ -45,17 +47,19 @@ data class AddressEntity(
         if (latitude != other.latitude) return false
         if (longitude != other.longitude) return false
         if (distance != other.distance) return false
+        if (isSuggested != other.isSuggested) return false
         if (id != other.id) return false
-        return sortOrder == other.sortOrder
+
+        return true
     }
 
     override fun hashCode(): Int {
         var result = address.hashCode()
         result = 31 * result + (latitude?.hashCode() ?: 0)
         result = 31 * result + (longitude?.hashCode() ?: 0)
-        result = 31 * result + (distance ?: 0)
+        result = 31 * result + (distance?.hashCode() ?: 0)
+        result = 31 * result + isSuggested.hashCode()
         result = 31 * result + id.hashCode()
-        result = 31 * result + sortOrder.hashCode()
         return result
     }
 
@@ -76,7 +80,8 @@ data class AddressEntity(
             address = address,
             latitude = location?.latitude,
             longitude = location?.longitude,
-            distance = distance
+            distance = distance,
+            isSuggested = true
         ).apply {
             this.id = id
         }

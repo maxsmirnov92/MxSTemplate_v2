@@ -6,6 +6,5 @@ import kotlinx.serialization.Serializable
 data class AddressSuggest(
     val location: Address.Location?,
     val address: String,
-    val distance: Int?,
-) {
-}
+    val distance: Float?,
+)

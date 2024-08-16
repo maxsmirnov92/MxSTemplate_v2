@@ -13,10 +13,12 @@
     <string name="error_unknown">Неизвестная ошибка</string>
     <string name="error_unexpected_try_again">Произошла непредвиденная ошибка, попробуйте повторить операцию позже</string>
     <string name="error_bad_gateway">Время ожидания ответа истекло. Попробуйте повторить запрос позже</string>
+    <string name="error_format">Произошла ошибка: \"%s\"</string>
     <string name="error_unexpected">Произошла неизвестная ошибка</string>
 
     <string name="network_type_cellular">Мобильная</string>
 
+    <string name="loading">Загрузка</string>
     <string name="no_data">Нет данных</string>
     <string name="check_again">Проверить снова</string>
     <string name="try_again">Попробовать снова</string>

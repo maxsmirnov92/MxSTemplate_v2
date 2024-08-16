@@ -15,7 +15,7 @@ abstract class BaseRadarIoResponse {
 
     val errorMessage get() = meta.message
 
-    val isOk = errorCode in listOf(SUCCESS, NO_ERROR)
+    val isOk get() = errorCode in listOf(SUCCESS, NO_ERROR)
 
     @Serializable
     data class Meta(

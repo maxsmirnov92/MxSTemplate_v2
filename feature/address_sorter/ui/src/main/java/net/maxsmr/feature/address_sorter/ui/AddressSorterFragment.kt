@@ -130,6 +130,9 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                     containerEmpty.isVisible = true
                 }
             }
+            viewModel.sortCompletedEvent.observeEvents {
+                swipeLayout.isRefreshing = false
+            }
         }
 
         adapter.registerItemsEventsListener(this)

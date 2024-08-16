@@ -20,15 +20,17 @@ class AutocompleteResponse(
         val country: String,
         val countryCode: String,
         val countryFlag: String,
-        val county: String,
-        val distance: Int,
-        val confidence: Confidence,
-        val city: String,
+        val county: String? = null,
+        val distance: Float,
+        val confidence: Confidence? = null,
+        val city: String? = null,
+        val number: String? = null,
+        val postalCode: String? = null,
         val stateCode: String,
-        val state: String,
-        val street: String,
-        val layer: String,
-        val formattedAddress: String,
+        val state: String? = null,
+        val street: String? = null,
+        val layer: String? = null,
+        val formattedAddress: String? = null,
         val addressLabel: String,
     ) {
 
@@ -54,7 +56,7 @@ class AutocompleteResponse(
 
         fun asDomain() = net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest(
             Location(latitude, longitude),
-            county.takeIf { it.isNotEmpty() }?.let {
+            county.takeIf { !it.isNullOrEmpty() }?.let {
                 "$it, $addressLabel"
             } ?: addressLabel,
             distance

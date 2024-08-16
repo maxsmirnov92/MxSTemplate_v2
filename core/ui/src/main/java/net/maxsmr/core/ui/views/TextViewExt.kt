@@ -1,13 +1,14 @@
 package net.maxsmr.core.ui.views
 
 import android.widget.AutoCompleteTextView
+import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.ui.adapters.SuggestAdapter
 
-fun AutoCompleteTextView.applySuggestions(data: List<String>) {
+fun AutoCompleteTextView.applySuggestions(state: LoadState<List<String>>) {
     (adapter as? SuggestAdapter)?.let { adapter ->
-        adapter.setData(data)
+        adapter.setData(state)
         val isShowing = isPopupShowing
-        if (data.isNotEmpty()) {
+        if (!adapter.isEmpty) {
             if (!isShowing) {
                 showDropDown()
             }

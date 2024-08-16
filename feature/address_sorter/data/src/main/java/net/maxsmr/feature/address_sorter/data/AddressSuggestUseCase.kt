@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import net.maxsmr.core.android.coroutines.usecase.FlowUseCase
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
+import net.maxsmr.core.android.coroutines.usecase.asUseCaseResult
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import javax.inject.Inject
@@ -33,13 +34,15 @@ class AddressSuggestUseCase @Inject constructor(
             .flatMapLatest { p ->
                 flow {
                     if (p.query.length < SUGGEST_THRESHOLD) {
+                        repository.updateQuery(p.id, p.query)
                         emit(UseCaseResult.Success(emptyList()))
                     } else {
                         emit(UseCaseResult.Loading)
+//                        delay(5000)
                         val result = try {
-                            UseCaseResult.Success(repository.suggestWithRefresh(p.id, p.query))
+                            UseCaseResult.Success(repository.suggestWithUpdate(p.id, p.query))
                         } catch (e: Exception) {
-                            UseCaseResult.Error(e)
+                            e.asUseCaseResult()
                         }
                         emit(result)
                     }

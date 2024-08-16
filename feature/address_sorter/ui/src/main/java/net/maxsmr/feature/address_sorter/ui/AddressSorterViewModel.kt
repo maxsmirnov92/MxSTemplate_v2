@@ -2,6 +2,8 @@ package net.maxsmr.feature.address_sorter.ui
 
 import android.content.Context
 import android.net.Uri
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -14,11 +16,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.postRecharge
+import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.recharge
+import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.commonutils.media.openInputStream
 import net.maxsmr.commonutils.states.LoadState
-import net.maxsmr.core.android.base.actions.SnackbarAction
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.coroutines.usecase.asState
 import net.maxsmr.core.android.coroutines.usecase.mapData
@@ -53,6 +55,10 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     val resultItems by persistableLiveDataInitial<List<AddressInputData>>(emptyList())
 
+    private val _sortCompletedEvent = MutableLiveData<VmEvent<Unit>>()
+
+    val sortCompletedEvent = _sortCompletedEvent as LiveData<VmEvent<Unit>>
+
     override fun onInitialized() {
         super.onInitialized()
         viewModelScope.launch {
@@ -62,17 +68,17 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
         viewModelScope.launch {
             repo.sortCompletedEvent.collectLatest {
-                items.postRecharge()
+                _sortCompletedEvent.postValue(VmEvent(Unit))
             }
         }
         locationViewModel.currentLocation.observe {
             viewModelScope.launch(Dispatchers.IO) {
-                repo.refreshLocation(it)
+                repo.setLastLocation(it)
             }
         }
         items.observe {
+            resultItems.setValueIfNew(it.mergeWithSuggests())
             it.refreshFlows()
-            resultItems.value = it.mergeWithSuggests()
         }
     }
 
@@ -149,34 +155,39 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
         currentItems.add(to, item)
         viewModelScope.launch {
-            repo.refreshSortOrder(currentItems.map { it.id })
+            repo.updateSortOrder(currentItems.map { it.id })
         }
     }
 
-    private fun onNewSuggests(id: Long, state: LoadState<List<AddressSuggestItem>>) {
+    private fun onNewSuggests(
+        id: Long,
+        state: LoadState<List<AddressSuggestItem>>,
+        query: String,
+    ) {
         suggestsMap[id] = state
-        if (!state.isLoading) {
-            resultItems.value?.let { current ->
-                current.find { it.id == id }?.let { data ->
-                    val newItems = current.map {
-                        if (it.id == id) {
-                            return@map it.copy(suggests = data.suggests)
-                        } else {
-                            it
-                        }
-                    }
-                    resultItems.value = newItems
+        resultItems.value?.let { current ->
+            val newItems = current.map {
+                if (it.id == id) {
+                    return@map it.copy(item = it.item.copy(address = query), suggestsLoadState = state)
+                } else {
+                    it
                 }
             }
+            resultItems.postValue(newItems)
         }
     }
 
     private fun onRemoveSuggests(id: Long) {
         suggestsMap.remove(id)?.let {
             resultItems.value?.let { current ->
-                val newItems = current.toMutableList()
-                newItems.removeIf { it.id == id }
-                resultItems.value = newItems
+                val newItems = current.map {
+                    if (it.id == id) {
+                        it.copy(suggestsLoadState = LoadState.success(listOf()))
+                    } else {
+                        it
+                    }
+                }
+                resultItems.postValue(newItems)
             }
         }
     }
@@ -193,7 +204,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                             addresses.map { a -> a.toUi() }
                         }
                     }.collect { result ->
-                        onNewSuggests(it.id, result.asState())
+                        onNewSuggests(it.id, result.asState(), flow.value.query)
 //                        suggestsLiveData.value = resultMap
                     }
                 }
@@ -214,9 +225,9 @@ class AddressSorterViewModel @AssistedInject constructor(
     private fun List<AddressItem>.mergeWithSuggests(): List<AddressInputData> {
         val result = mutableListOf<AddressInputData>()
         forEach { item ->
-            suggestsMap[item.id]?.takeIf { it.isSuccess() }?.let {
-                result.add(AddressInputData(item, it.data.orEmpty()))
-            } ?: result.add(AddressInputData(item, emptyList()))
+            suggestsMap[item.id]?.let {
+                result.add(AddressInputData(item, it))
+            } ?: result.add(AddressInputData(item, LoadState.success(listOf())))
         }
         return result
     }
@@ -230,12 +241,13 @@ class AddressSorterViewModel @AssistedInject constructor(
         val id: Long,
         val address: String,
         val location: Address.Location?,
-    ): Serializable {
+        val isSuggested: Boolean,
+    ) : Serializable {
 
         companion object {
 
             fun Address.toUi() = AddressItem(
-                id, address, location
+                id, address, location, isSuggested
             )
         }
     }
@@ -243,8 +255,8 @@ class AddressSorterViewModel @AssistedInject constructor(
     data class AddressSuggestItem(
         val address: String,
         val location: Address.Location?,
-        val distance: Int?,
-    ): Serializable {
+        val distance: Float?,
+    ) : Serializable {
 
         fun toDomain() = AddressSuggest(
             location, address, distance

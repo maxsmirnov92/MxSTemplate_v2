@@ -52,8 +52,8 @@
     <string name="download_status_requesting">Выполнение запроса…</string>
 
     <string name="download_status_success">Успех</string>
-    <string name="download_status_failed_format">Произошла ошибка: \"%s\"</string>
-    <string name="download_status_failed_unknown">Произошла неизвестная ошибка</string>
+    <string name="download_status_failed_format">@string/error_format</string>
+    <string name="download_status_failed_unknown">@string/error_unexpected</string>
     <string name="download_status_cancelled">Отменена</string>
 
     <string name="download_menu_action_filter">Фильтр по названию</string>

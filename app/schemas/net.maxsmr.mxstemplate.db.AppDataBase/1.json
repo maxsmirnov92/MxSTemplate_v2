@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "1fe23e18487fff765d88c8660f6361b3",
+    "identityHash": "d9899bc7486ef298a4118d9cfe597de9",
     "entities": [
       {
         "tableName": "DownloadInfo",
@@ -50,7 +50,7 @@
       },
       {
         "tableName": "Address",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`address` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `distance` INTEGER, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sortOrder` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`address` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `distance` REAL, `isSuggested` INTEGER NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sortOrder` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "address",
@@ -73,8 +73,14 @@
           {
             "fieldPath": "distance",
             "columnName": "distance",
-            "affinity": "INTEGER",
+            "affinity": "REAL",
             "notNull": false
+          },
+          {
+            "fieldPath": "isSuggested",
+            "columnName": "isSuggested",
+            "affinity": "INTEGER",
+            "notNull": true
           },
           {
             "fieldPath": "id",
@@ -102,7 +108,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1fe23e18487fff765d88c8660f6361b3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd9899bc7486ef298a4118d9cfe597de9')"
     ]
   }
 }

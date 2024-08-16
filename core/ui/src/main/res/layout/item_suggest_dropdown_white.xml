@@ -1,21 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/Selectable.Normal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@color/white"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tvItemSuggest"
+    <LinearLayout
+        style="@style/NonSelectable"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/white"
-        android:gravity="center_vertical"
-        android:minHeight="40dp"
+        android:orientation="horizontal"
         android:paddingHorizontal="12dp"
-        android:paddingVertical="16dp"
-        android:textColor="@color/textColorPrimary"
-        android:textSize="16sp" />
+        android:paddingVertical="16dp">
+
+        <ProgressBar
+            android:id="@+id/pbSuggest"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/colorAccent"
+            android:indeterminateTintMode="src_atop" />
+
+        <TextView
+            android:id="@+id/tvItemSuggest"
+            style="@style/NonSelectable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:gravity="center_vertical"
+            android:minHeight="40dp"
+            android:textColor="@color/textColorPrimary"
+            android:textSize="16sp" />
+
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"

@@ -8,9 +8,6 @@ const val UNKNOWN_ERROR = -1
 const val NO_ERROR = 0
 const val SUCCESS = 200
 
-const val UNAUTHORIZED = 401
-const val FORBIDDEN = 403
-
 /**
  * Отсутствие сетевого ответа (оффлайн, от сервера не пришло никакого кода)
  */
@@ -29,4 +26,14 @@ fun Throwable.getErrorCode(): Int {
         }
         else -> UNKNOWN_ERROR
     }
+}
+
+enum class ApiErrorCode(val code: Int) {
+
+    BAD_REQUEST(400),
+    UNAUTHORIZED(401),
+    FORBIDDEN(403),
+    NOT_FOUND(404),
+    BAD_GATEWAY(502),
+    SERVICE_TEMPORARILY_UNAVAILABLE(503),
 }

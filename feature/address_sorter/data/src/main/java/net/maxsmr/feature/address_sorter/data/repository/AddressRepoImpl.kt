@@ -2,11 +2,9 @@ package net.maxsmr.feature.address_sorter.data.repository
 
 import android.graphics.PointF
 import android.location.Location
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -35,7 +33,7 @@ class AddressRepoImpl(
 
     private val ioDispatcher = Dispatchers.IO
 
-    private val scope = CoroutineScope(ioDispatcher + Job() + NonCancellable)
+    private val scope = CoroutineScope(ioDispatcher + Job())
 
     override val resultAddresses: MutableStateFlow<List<Address>> = dao.get().map { list ->
         list.map { it.toDomain() }
@@ -44,7 +42,7 @@ class AddressRepoImpl(
     override val sortCompletedEvent: MutableSharedFlow<Unit> = MutableSharedFlow()
 
     override suspend fun addFromStream(stream: InputStream, rewrite: Boolean): Boolean {
-        return withContext(ioDispatcher + NonCancellable) {
+        return withContext(ioDispatcher) {
             stream.readString()?.let { value ->
                 json.decodeFromStringOrNull<List<Address>>(value)?.let { list ->
                     val entities = list.map { it.toAddressEntity() }
@@ -62,30 +60,30 @@ class AddressRepoImpl(
     }
 
     override suspend fun addNewItem(query: String) {
-        withContext(ioDispatcher + NonCancellable) {
-            refreshQuery(null, query)
+        withContext(ioDispatcher) {
+            updateQuery(null, query)
         }
     }
 
     override suspend fun deleteItem(id: Long) {
-        withContext(ioDispatcher + NonCancellable) {
+        withContext(ioDispatcher) {
             dao.deleteById(id)
         }
     }
 
     override suspend fun clearItems() {
-        withContext(ioDispatcher + NonCancellable) {
+        withContext(ioDispatcher) {
             dao.clear()
         }
     }
 
     override suspend fun specifyItem(id: Long, suggest: AddressSuggest) {
-        withContext(ioDispatcher + NonCancellable) {
-            refreshFromSuggest(id, suggest)
+        withContext(ioDispatcher) {
+            addFromSuggest(id, suggest)
         }
     }
 
-    override suspend fun refreshSortOrder(ids: List<Long>) {
+    override suspend fun updateSortOrder(ids: List<Long>) {
         val result = mutableListOf<AddressEntity>()
         ids.forEachIndexed { index, id ->
             dao.getById(id)?.let {
@@ -95,32 +93,43 @@ class AddressRepoImpl(
         }
         // отсортированные AddressEntity пишем в таблицу и ждём изменения в resultAddresses
         val resultIds = dao.upsert(result)
-        if (resultIds.all { it == NO_ID }) {
+        if (resultIds.isEmpty() || resultIds.all { it == NO_ID }) {
             // ивент нужен для случая, когда изменений в таблице нет - StateFlow не принимает без изменений
             sortCompletedEvent.emit(Unit)
         }
     }
 
-    override suspend fun sortItems() = withContext(ioDispatcher + NonCancellable) {
-        refreshSortOrder(resultAddresses.value.sortByLocation(cacheRepo.getLastLocation()).map { it.id })
+    override suspend fun sortItems() = withContext(ioDispatcher) {
+        updateSortOrder(resultAddresses.value.sortByLocation(cacheRepo.getLastLocation()).map { it.id })
     }
 
     override suspend fun suggest(query: String): List<AddressSuggest> {
-        return withContext(ioDispatcher + NonCancellable) {
+        return withContext(ioDispatcher) {
             val lastLocation = cacheRepo.getLastLocation()
             dataSource.suggest(query, lastLocation?.latitude, lastLocation?.longitude)
         }
     }
 
-    override suspend fun suggestWithRefresh(id: Long, query: String): List<AddressSuggest> {
-        return withContext(ioDispatcher + NonCancellable) {
+    override suspend fun suggestWithUpdate(id: Long, query: String): List<AddressSuggest> {
+        return withContext(ioDispatcher) {
             // апдейт существующей Entity в таблице при вводе
-            refreshQuery(id, query)
+            updateQuery(id, query)
             suggest(query)
         }
     }
 
-    override suspend fun refreshLocation(location: Location?) = withContext(ioDispatcher) {
+    override suspend fun updateQuery(id: Long?, query: String) = withContext(ioDispatcher) {
+        val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: NO_ID
+        val current = if (id != null && id > 0) dao.getById(id) else null
+        dao.upsert(current?.copy(address = query)?.apply {
+            this.id = current.id
+            this.sortOrder = current.sortOrder
+        } ?: AddressEntity(query).apply {
+            sortOrder = maxSortOrder + 1
+        })
+    }
+
+    override suspend fun setLastLocation(location: Location?) = withContext(ioDispatcher) {
         cacheRepo.setLastLocation(location?.let {
             Address.Location(
                 location.latitude.toFloat(),
@@ -129,25 +138,12 @@ class AddressRepoImpl(
         })
     }
 
-    private suspend fun refreshQuery(id: Long?, query: String) = withContext(ioDispatcher + NonCancellable) {
-        val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: NO_ID
-        val current = if (id != null) dao.getById(id) else null
-        dao.upsert(current?.copy(address = query)?.apply {
-            if (current.id != 1L) {
-                this.id = current.id
-            }
-            this.sortOrder = current.sortOrder
-        } ?: AddressEntity(query).apply {
-            sortOrder = maxSortOrder + 1
-        })
-    }
-
-    private suspend fun refreshFromSuggest(id: Long, addressSuggest: AddressSuggest) =
-        withContext(ioDispatcher + NonCancellable) {
+    private suspend fun addFromSuggest(id: Long, addressSuggest: AddressSuggest) =
+        withContext(ioDispatcher) {
             dao.upsert(addressSuggest.toAddressEntity(id))
         }
 
-    private fun List<Address>.refreshWith(item: Address): List<Address> {
+    private fun List<Address>.addIfNew(item: Address): List<Address> {
         val result = mutableListOf<Address>()
         result.addAll(this)
         if (!result.any { it.id == item.id }) {
@@ -164,13 +160,13 @@ class AddressRepoImpl(
         result.addAll(this)
 
         result.sortBy { address ->
-            var distance = address.distance ?: 0
+            var distance = address.distance ?: 0f
             if (distance <= 0) {
                 distance = address.location?.toPointF()?.let {
                     lastLocation?.toPointF()?.let { lastLocation ->
-                        distance(lastLocation, it)
+                        distance(lastLocation, it).toFloat()
                     }
-                } ?: 0
+                } ?: 0f
             }
             distance
         }

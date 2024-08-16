@@ -56,8 +56,8 @@
     <string name="download_status_requesting">Requesting…</string>
 
     <string name="download_status_success">Success</string>
-    <string name="download_status_failed_format">Error occurred: \"%s\"</string>
-    <string name="download_status_failed_unknown">Unknown error occurred</string>
+    <string name="download_status_failed_format">@string/error_format</string>
+    <string name="download_status_failed_unknown">@string/error_unexpected</string>
     <string name="download_status_cancelled">Cancelled</string>
 
     <string name="download_menu_action_filter">Filter by name</string>
