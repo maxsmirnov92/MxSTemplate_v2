@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="4dp">
+    android:paddingVertical="4dp">
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/tilText"
@@ -21,8 +21,7 @@
             android:dropDownAnchor="@id/tilText"
             android:focusableInTouchMode="true"
             android:inputType="textNoSuggestions|textCapWords"
-            android:paddingStart="0dp"
-            android:paddingEnd="0dp"
+            android:paddingHorizontal="4dp"
             android:textSize="@dimen/textSizeMini"
             app:firstBaselineToTopHeight="47dp" />
 
@@ -33,23 +32,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
-        android:layout_margin="4dp"
         android:gravity="center"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="4dp">
 
         <ImageButton
             android:id="@+id/ibClear"
             style="@style/Widget.AppCompat.ActionButton"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:scaleType="centerCrop"
             app:srcCompat="@drawable/ic_close_clear_cancel_black_gray" />
 
         <ImageView
             android:id="@+id/ivMore"
-            android:layout_width="40dp"
+            android:layout_width="26dp"
             android:layout_height="40dp"
-            android:layout_marginStart="10dp"
+            android:layout_marginStart="6dp"
             app:srcCompat="@drawable/ic_more" />
 
     </LinearLayout>

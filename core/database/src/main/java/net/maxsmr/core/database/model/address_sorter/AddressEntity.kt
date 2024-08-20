@@ -8,9 +8,9 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 @Entity(tableName = "Address")
 data class AddressEntity(
     val address: String,
-    val latitude: Float? = 0f,
-    val longitude: Float? = 0f,
-    val distance: Float? = 0f,
+    val latitude: Float? = null,
+    val longitude: Float? = null,
+    val distance: Float? = null,
     val isSuggested: Boolean = false,
 ) {
 

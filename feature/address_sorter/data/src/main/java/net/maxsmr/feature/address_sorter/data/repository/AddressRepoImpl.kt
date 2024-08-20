@@ -53,6 +53,11 @@ class AddressRepoImpl(
                     if (entities.isNotEmpty()) {
                         if (rewrite) {
                             dao.clear()
+                        } else {
+                            val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: NO_ID
+                            entities.forEachIndexed { i, item ->
+                                item.sortOrder = maxSortOrder + i
+                            }
                         }
                         dao.upsert(entities)
                         return@withContext true
@@ -98,10 +103,15 @@ class AddressRepoImpl(
         result.upsert()
     }
 
-    override suspend fun sortItems() = withContext(ioDispatcher) {
-        val entities = dao.getRaw().toMutableList()
-        entities.sortWith(AddressComparator(cacheRepo.getLastLocation()))
-        entities.upsert()
+    override suspend fun sortItems() {
+        withContext(ioDispatcher) {
+            val entities = dao.getRaw().toMutableList()
+            entities.sortWith(AddressComparator(cacheRepo.getLastLocation()))
+            entities.forEachIndexed { index, item ->
+                item.sortOrder = index.toLong()
+            }
+            entities.upsert()
+        }
     }
 
     override suspend fun suggest(query: String): List<AddressSuggest> {
@@ -167,7 +177,9 @@ class AddressRepoImpl(
         }
     }
 
-    private class AddressComparator(private val lastLocation: Address.Location?) : BaseOptionalComparator<AddressComparator.SortOption, AddressEntity>() {
+    private class AddressComparator(private val lastLocation: Address.Location?) : BaseOptionalComparator<AddressComparator.SortOption, AddressEntity>(
+        SortOption.entries.associateWith { true }
+    ) {
 
         override fun compare(lhs: AddressEntity, rhs: AddressEntity, option: SortOption, ascending: Boolean): Int {
             return when (option) {
@@ -183,10 +195,10 @@ class AddressRepoImpl(
             }
         }
 
-        private fun AddressEntity.getDistanceWithLocation(lastLocation: Address.Location?): Float {
+        private fun AddressEntity.getDistanceWithLocation(lastLocation: Address.Location?): Float? {
             fun Address.Location.toPointF() = PointF(latitude, longitude)
-            var distance = distance ?: 0f
-            if (distance <= 0) {
+            var distance = distance
+            if (distance == null || distance < 0) {
                 val latitude = latitude
                 val longitude = longitude
                 val location = if (latitude != null && longitude != null) {
@@ -198,7 +210,7 @@ class AddressRepoImpl(
                     lastLocation?.toPointF()?.let { lastLocation ->
                         distance(lastLocation, it).toFloat()
                     }
-                } ?: 0f
+                }
             }
             return distance
         }
