@@ -7,7 +7,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import net.maxsmr.core.di.DI_NAME_DATABASE_NAME
 import net.maxsmr.mxstemplate.db.AppDataBase
+import javax.inject.Named
 import javax.inject.Singleton
 
 @[Module
@@ -22,4 +24,7 @@ class DatabaseModule {
 //            .addMigrations(*Migrations.get())
 //            .allowMainThreadQueries()
             .build()
+
+    @[Named(DI_NAME_DATABASE_NAME) Provides Singleton]
+    fun dataBaseName(database: AppDataBase): String = database.openHelper.databaseName.orEmpty()
 }

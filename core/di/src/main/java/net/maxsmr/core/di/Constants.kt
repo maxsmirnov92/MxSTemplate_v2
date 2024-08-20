@@ -5,6 +5,7 @@ import javax.inject.Qualifier
 const val DI_NAME_MAIN_ACTIVITY_CLASS = "main_activity_class"
 const val DI_NAME_VERSION_CODE = "version_code"
 const val DI_NAME_VERSION_NAME = "version_name"
+const val DI_NAME_DATABASE_NAME = "database_name"
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)

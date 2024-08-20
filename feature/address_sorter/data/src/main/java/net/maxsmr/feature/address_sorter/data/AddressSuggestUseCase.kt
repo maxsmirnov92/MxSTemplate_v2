@@ -33,7 +33,7 @@ class AddressSuggestUseCase @Inject constructor(
             .distinctUntilChanged()
             .flatMapLatest { p ->
                 flow {
-                    if (p.query.length < SUGGEST_THRESHOLD) {
+                    if (p.query.length <= SUGGEST_THRESHOLD) {
                         repository.updateQuery(p.id, p.query)
                         emit(UseCaseResult.Success(emptyList()))
                     } else {

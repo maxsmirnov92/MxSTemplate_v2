@@ -4,9 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.Json
-import kotlinx.coroutines.Dispatchers
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.RadarIoRetrofit

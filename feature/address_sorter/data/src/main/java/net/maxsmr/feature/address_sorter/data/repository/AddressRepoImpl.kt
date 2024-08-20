@@ -10,6 +10,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import net.maxsmr.commonutils.collection.sort.BaseOptionalComparator
+import net.maxsmr.commonutils.collection.sort.ISortOption
+import net.maxsmr.commonutils.compareFloats
+import net.maxsmr.commonutils.compareLongs
 import net.maxsmr.commonutils.location.distance
 import net.maxsmr.commonutils.readString
 import net.maxsmr.core.android.coroutines.mutableStateIn
@@ -39,7 +43,7 @@ class AddressRepoImpl(
         list.map { it.toDomain() }
     }.mutableStateIn(scope, listOf(), ioDispatcher)
 
-    override val sortCompletedEvent: MutableSharedFlow<Unit> = MutableSharedFlow()
+    override val upsertCompletedEvent: MutableSharedFlow<Unit> = MutableSharedFlow()
 
     override suspend fun addFromStream(stream: InputStream, rewrite: Boolean): Boolean {
         return withContext(ioDispatcher) {
@@ -91,16 +95,13 @@ class AddressRepoImpl(
                 result.add(it)
             }
         }
-        // отсортированные AddressEntity пишем в таблицу и ждём изменения в resultAddresses
-        val resultIds = dao.upsert(result)
-        if (resultIds.isEmpty() || resultIds.all { it == NO_ID }) {
-            // ивент нужен для случая, когда изменений в таблице нет - StateFlow не принимает без изменений
-            sortCompletedEvent.emit(Unit)
-        }
+        result.upsert()
     }
 
     override suspend fun sortItems() = withContext(ioDispatcher) {
-        updateSortOrder(resultAddresses.value.sortByLocation(cacheRepo.getLastLocation()).map { it.id })
+        val entities = dao.getRaw().toMutableList()
+        entities.sortWith(AddressComparator(cacheRepo.getLastLocation()))
+        entities.upsert()
     }
 
     override suspend fun suggest(query: String): List<AddressSuggest> {
@@ -118,15 +119,19 @@ class AddressRepoImpl(
         }
     }
 
-    override suspend fun updateQuery(id: Long?, query: String) = withContext(ioDispatcher) {
-        val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: NO_ID
-        val current = if (id != null && id > 0) dao.getById(id) else null
-        dao.upsert(current?.copy(address = query)?.apply {
-            this.id = current.id
-            this.sortOrder = current.sortOrder
-        } ?: AddressEntity(query).apply {
-            sortOrder = maxSortOrder + 1
-        })
+    override suspend fun updateQuery(id: Long?, query: String) {
+        withContext(ioDispatcher) {
+            val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: NO_ID
+            val current = if (id != null && id > 0) dao.getById(id) else null
+            if (current?.address == query) return@withContext
+            val newEntity = current?.copy(address = query)?.apply {
+                this.id = current.id
+                this.sortOrder = current.sortOrder
+            } ?: AddressEntity(query).apply {
+                sortOrder = maxSortOrder + 1
+            }
+            dao.upsertWithReset(newEntity)
+        }
     }
 
     override suspend fun setLastLocation(location: Location?) = withContext(ioDispatcher) {
@@ -140,7 +145,8 @@ class AddressRepoImpl(
 
     private suspend fun addFromSuggest(id: Long, addressSuggest: AddressSuggest) =
         withContext(ioDispatcher) {
-            dao.upsert(addressSuggest.toAddressEntity(id))
+            val current = dao.getById(id) ?: return@withContext
+            dao.upsert(addressSuggest.toAddressEntity(id, current.sortOrder))
         }
 
     private fun List<Address>.addIfNew(item: Address): List<Address> {
@@ -152,25 +158,58 @@ class AddressRepoImpl(
         return result
     }
 
-    private fun List<Address>.sortByLocation(lastLocation: Address.Location?): List<Address> {
+    private suspend fun List<AddressEntity>.upsert() {
+        // AddressEntity пишем в таблицу и ждём изменения в resultAddresses
+        val resultIds = dao.upsert(this)
+        if (resultIds.isEmpty() || resultIds.all { it == NO_ID }) {
+            // ивент нужен для случая, когда изменений в таблице нет - StateFlow не принимает без изменений
+            upsertCompletedEvent.emit(Unit)
+        }
+    }
 
-        fun Address.Location.toPointF() = PointF(latitude, longitude)
+    private class AddressComparator(private val lastLocation: Address.Location?) : BaseOptionalComparator<AddressComparator.SortOption, AddressEntity>() {
 
-        val result = mutableListOf<Address>()
-        result.addAll(this)
+        override fun compare(lhs: AddressEntity, rhs: AddressEntity, option: SortOption, ascending: Boolean): Int {
+            return when (option) {
+                SortOption.DISTANCE -> {
+                    val first = lhs.getDistanceWithLocation(lastLocation)
+                    val second = rhs.getDistanceWithLocation(lastLocation)
+                    compareFloats(first, second, ascending)
+                }
 
-        result.sortBy { address ->
-            var distance = address.distance ?: 0f
+                SortOption.SORT_ORDER -> {
+                    compareLongs(lhs.sortOrder, rhs.sortOrder, ascending)
+                }
+            }
+        }
+
+        private fun AddressEntity.getDistanceWithLocation(lastLocation: Address.Location?): Float {
+            fun Address.Location.toPointF() = PointF(latitude, longitude)
+            var distance = distance ?: 0f
             if (distance <= 0) {
-                distance = address.location?.toPointF()?.let {
+                val latitude = latitude
+                val longitude = longitude
+                val location = if (latitude != null && longitude != null) {
+                    PointF(latitude, longitude)
+                } else {
+                    null
+                }
+                distance = location?.let {
                     lastLocation?.toPointF()?.let { lastLocation ->
                         distance(lastLocation, it).toFloat()
                     }
                 } ?: 0f
             }
-            distance
+            return distance
         }
-        return result
+
+        enum class SortOption : ISortOption {
+
+            DISTANCE,
+            SORT_ORDER;
+
+            override val optionName: String = name
+        }
     }
 
 }

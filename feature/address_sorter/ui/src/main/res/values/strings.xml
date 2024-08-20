@@ -4,7 +4,9 @@
     <string name="address_sorter_empty_text">No added adresses</string>
     <string name="address_sorter_input_hint">Enter address</string>
     <string name="address_sorter_input_hint_format">Enter address %d</string>
+    <string name="address_sorter_menu_action_refresh">Refresh</string>
     <string name="address_sorter_menu_action_pick_from_json">Select from JSON</string>
     <string name="address_sorter_menu_action_clear">Clear</string>
     <string name="address_sorter_snackbar_address_add_error_message">Cannot add addresses</string>
+    <string name="address_sorter_dialog_clear_items_message">Remove all addresses?</string>
 </resources>

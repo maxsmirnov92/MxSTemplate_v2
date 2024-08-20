@@ -4,4 +4,15 @@ import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDel
 
 class AddressInputAdapter(listener: AddressInputListener): BaseDraggableDelegationAdapter<AddressInputData, InputViewHolder>(
     addressInputAdapterDelegate(listener)
-)
+) {
+
+    var isMovementEnabled: Boolean = true
+
+    override fun canDismissItem(item: AddressInputData, position: Int): Boolean {
+        return isMovementEnabled
+    }
+
+    override fun canDragItem(item: AddressInputData, position: Int): Boolean {
+        return isMovementEnabled
+    }
+}

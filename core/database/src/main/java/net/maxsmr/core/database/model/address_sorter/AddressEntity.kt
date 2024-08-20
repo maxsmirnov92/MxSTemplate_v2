@@ -76,7 +76,7 @@ data class AddressEntity(
         )
 
         @JvmStatic
-        fun AddressSuggest.toAddressEntity(id: Long) = AddressEntity(
+        fun AddressSuggest.toAddressEntity(id: Long, sortOrder: Long) = AddressEntity(
             address = address,
             latitude = location?.latitude,
             longitude = location?.longitude,
@@ -84,6 +84,7 @@ data class AddressEntity(
             isSuggested = true
         ).apply {
             this.id = id
+            this.sortOrder = sortOrder
         }
     }
 }

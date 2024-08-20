@@ -2,6 +2,7 @@ package net.maxsmr.feature.address_sorter.ui.adapter
 
 import android.text.TextWatcher
 import android.view.View
+import android.view.View.OnFocusChangeListener
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate
@@ -13,6 +14,7 @@ import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.ui.adapters.SuggestAdapter
 import net.maxsmr.core.ui.views.applySuggestions
+import net.maxsmr.core.ui.views.toggleDropDown
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel
 import net.maxsmr.feature.address_sorter.ui.R
 import net.maxsmr.feature.address_sorter.ui.databinding.ItemAddressBinding
@@ -44,8 +46,8 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
 
         with(ItemAddressBinding.bind(itemView)) {
 
-            ibRemove.setOnClickListener {
-                listener.onRemove(item.id)
+            ibClear.setOnClickListener {
+                listener.onClear(item.id)
             }
 
             currentTextWatcher?.let {
@@ -61,6 +63,7 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
             etText.addTextChangedListener(watcher)
             currentTextWatcher = watcher
 
+
             etText.init { position ->
                 item.suggestsLoadState.data?.getOrNull(position)?.let { suggest ->
                     listener.onSuggestSelect(item.id, suggest)
@@ -69,6 +72,14 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
 
             bind {
                 item.run {
+                    var wasFocused = false
+                    etText.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
+                        if (hasFocus && wasFocused && !item.isSuggested) {
+                            etText.toggleDropDown()
+                        } else if (hasFocus) {
+                            wasFocused = true
+                        }
+                    }
                     tilText.hint = context.getString(R.string.address_sorter_input_hint_format, item.id)
                     etText.setTextWithSelectionToEnd(item.address)
                     etText.applySuggestions(
@@ -82,7 +93,6 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
     }
 
 
-
 data class AddressInputData(
     val item: AddressSorterViewModel.AddressItem,
     val suggestsLoadState: LoadState<List<AddressSorterViewModel.AddressSuggestItem>>,
@@ -93,7 +103,7 @@ data class AddressInputData(
     override fun isSame(other: BaseAdapterData): Boolean = id == (other as? AddressInputData)?.id
 }
 
-class InputViewHolder(view: View) : BaseDraggableDelegationAdapter.DragAndDropViewHolder<AddressInputData>(view){
+class InputViewHolder(view: View) : BaseDraggableDelegationAdapter.DragAndDropViewHolder<AddressInputData>(view) {
 
     internal var currentTextWatcher: TextWatcher? = null
 
@@ -108,5 +118,5 @@ interface AddressInputListener {
 
     fun onSuggestSelect(id: Long, suggest: AddressSorterViewModel.AddressSuggestItem)
 
-    fun onRemove(id: Long)
+    fun onClear(id: Long)
 }

@@ -11,6 +11,9 @@ import java.util.*
  */
 abstract class UpsertDao<T : Any> {
 
+    @Insert
+    abstract suspend fun insert(obj: T)
+
     @Update
     abstract suspend fun update(obj: T)
 

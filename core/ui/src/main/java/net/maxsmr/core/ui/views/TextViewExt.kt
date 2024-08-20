@@ -7,6 +7,12 @@ import net.maxsmr.core.ui.adapters.SuggestAdapter
 fun AutoCompleteTextView.applySuggestions(state: LoadState<List<String>>) {
     (adapter as? SuggestAdapter)?.let { adapter ->
         adapter.setData(state)
+        toggleDropDown()
+    }
+}
+
+fun AutoCompleteTextView.toggleDropDown() {
+    (adapter as? SuggestAdapter)?.let { adapter ->
         val isShowing = isPopupShowing
         if (!adapter.isEmpty) {
             if (!isShowing) {

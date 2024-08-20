@@ -1,8 +1,8 @@
 package net.maxsmr.feature.address_sorter.ui
 
 import android.content.Context
+import android.content.DialogInterface
 import android.net.Uri
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -16,16 +16,18 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.event.VmEvent
-import net.maxsmr.commonutils.live.recharge
 import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.commonutils.media.openInputStream
+import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.coroutines.usecase.asState
 import net.maxsmr.core.android.coroutines.usecase.mapData
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
+import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.feature.address_sorter.data.AddressSuggestUseCase
@@ -53,11 +55,7 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     private val suggestFlowMap = mutableMapOf<Long, FlowInfo>()
 
-    val resultItems by persistableLiveDataInitial<List<AddressInputData>>(emptyList())
-
-    private val _sortCompletedEvent = MutableLiveData<VmEvent<Unit>>()
-
-    val sortCompletedEvent = _sortCompletedEvent as LiveData<VmEvent<Unit>>
+    val resultItemsState = MutableLiveData<LoadState<List<AddressInputData>>>(LoadState.success(emptyList()))
 
     override fun onInitialized() {
         super.onInitialized()
@@ -67,8 +65,8 @@ class AddressSorterViewModel @AssistedInject constructor(
             }
         }
         viewModelScope.launch {
-            repo.sortCompletedEvent.collectLatest {
-                _sortCompletedEvent.postValue(VmEvent(Unit))
+            repo.upsertCompletedEvent.collectLatest {
+                resultItemsState.value = LoadState.success(resultItemsState.value?.data.orEmpty())
             }
         }
         locationViewModel.currentLocation.observe {
@@ -77,8 +75,15 @@ class AddressSorterViewModel @AssistedInject constructor(
             }
         }
         items.observe {
-            resultItems.setValueIfNew(it.mergeWithSuggests())
+            resultItemsState.setValueIfNew(LoadState.success(it.mergeWithSuggests()))
             it.refreshFlows()
+        }
+    }
+
+    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
+        super.handleAlerts(delegate)
+        delegate.bindAlertDialog(DIALOG_TAG_CLEAR_ITEMS) {
+            it.asYesNoDialog(delegate.context)
         }
     }
 
@@ -88,9 +93,9 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
     }
 
-    fun onRemoveClick(id: Long) {
+    fun onClearQuery(id: Long) {
         viewModelScope.launch {
-            repo.deleteItem(id)
+            repo.updateQuery(id, EMPTY_STRING)
         }
     }
 
@@ -101,9 +106,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun doRefresh() {
-        if (resultItems.value?.isEmpty() == true) {
-            resultItems.recharge()
-        }
+        resultItemsState.value = LoadState.loading(resultItemsState.value?.data.orEmpty())
         // TODO change api
         viewModelScope.launch {
             repo.sortItems()
@@ -122,8 +125,12 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onClearAction() {
-        viewModelScope.launch {
-            repo.clearItems()
+        showYesNoDialog(DIALOG_TAG_CLEAR_ITEMS, TextMessage(R.string.address_sorter_dialog_clear_items_message)) {
+            if (it == DialogInterface.BUTTON_POSITIVE) {
+                viewModelScope.launch {
+                    repo.clearItems()
+                }
+            }
         }
     }
 
@@ -140,13 +147,15 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onItemRemoved(item: AddressInputData) {
+        if (resultItemsState.value?.isLoading == true) return
         viewModelScope.launch {
             repo.deleteItem(item.id)
         }
     }
 
     fun onItemMoved(fromPosition: Int, toPosition: Int) {
-        val currentItems = resultItems.value.orEmpty().toMutableList()
+        if (resultItemsState.value?.isLoading == true) return
+        val currentItems = resultItemsState.value?.data.orEmpty().toMutableList()
         val item = currentItems.removeAt(fromPosition)
         val to: Int = if (fromPosition < toPosition) {
             toPosition - 1
@@ -165,7 +174,8 @@ class AddressSorterViewModel @AssistedInject constructor(
         query: String,
     ) {
         suggestsMap[id] = state
-        resultItems.value?.let { current ->
+        val resultState = resultItemsState.value
+        resultState?.data?.let { current ->
             val newItems = current.map {
                 if (it.id == id) {
                     return@map it.copy(item = it.item.copy(address = query), suggestsLoadState = state)
@@ -173,13 +183,14 @@ class AddressSorterViewModel @AssistedInject constructor(
                     it
                 }
             }
-            resultItems.postValue(newItems)
+            resultItemsState.postValue(resultState.copyOf(newItems))
         }
     }
 
     private fun onRemoveSuggests(id: Long) {
         suggestsMap.remove(id)?.let {
-            resultItems.value?.let { current ->
+            val resultState = resultItemsState.value
+            resultState?.data?.let { current ->
                 val newItems = current.map {
                     if (it.id == id) {
                         it.copy(suggestsLoadState = LoadState.success(listOf()))
@@ -187,7 +198,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                         it
                     }
                 }
-                resultItems.postValue(newItems)
+                resultItemsState.postValue(resultState.copyOf(newItems))
             }
         }
     }
@@ -277,5 +288,10 @@ class AddressSorterViewModel @AssistedInject constructor(
             state: SavedStateHandle,
             locationViewModel: LocationViewModel,
         ): AddressSorterViewModel
+    }
+
+    companion object {
+
+        const val DIALOG_TAG_CLEAR_ITEMS = "clear_items"
     }
 }

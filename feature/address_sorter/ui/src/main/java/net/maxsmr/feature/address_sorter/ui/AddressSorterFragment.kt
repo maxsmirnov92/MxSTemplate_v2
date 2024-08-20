@@ -1,6 +1,8 @@
 package net.maxsmr.feature.address_sorter.ui
 
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import androidx.core.view.isVisible
@@ -68,18 +70,6 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
     private val binding by viewBinding(FragmentAddressSorterBinding::bind)
 
-    @Inject
-    override lateinit var permissionsHelper: PermissionsHelper
-
-    @Inject
-    lateinit var locationFactory: LocationViewModel.Factory
-
-    @Inject
-    lateinit var factory: AddressSorterViewModel.Factory
-
-    @Inject
-    lateinit var cacheRepo: CacheDataStoreRepository
-
     // by lazy не подходит, т.к.
     // "Fragments must call registerForActivityResult() before they are created"
     private val contentPicker: ContentPicker = FragmentContentPickerBuilder()
@@ -97,6 +87,20 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
             ).build()
 
+    @Inject
+    override lateinit var permissionsHelper: PermissionsHelper
+
+    @Inject
+    lateinit var locationFactory: LocationViewModel.Factory
+
+    @Inject
+    lateinit var factory: AddressSorterViewModel.Factory
+
+    @Inject
+    lateinit var cacheRepo: CacheDataStoreRepository
+
+    private var refreshMenuItem: MenuItem? = null
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: AddressSorterViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
 
@@ -109,6 +113,9 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         }
 
         with(binding) {
+            // конфликтует с draggable, рефреш по кнопке меню
+            swipeLayout.isEnabled = false
+
             rvContent.adapter = adapter
             touchHelper.attachToRecyclerView(binding.rvContent)
 
@@ -119,19 +126,21 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                 viewModel.doRefresh()
             }
 
-            viewModel.resultItems.observe { items ->
-                swipeLayout.isRefreshing = false
+            viewModel.resultItemsState.observe { state ->
+                swipeLayout.isEnabled = state.isLoading
+                swipeLayout.isRefreshing = state.isLoading
+                adapter.isMovementEnabled = !state.isLoading
+                val items = state.data.orEmpty()
                 if (items.isNotEmpty()) {
                     adapter.items = items
                     rvContent.isVisible = true
                     containerEmpty.isVisible = false
+                    refreshMenuItem?.isEnabled = !state.isLoading
                 } else {
                     rvContent.isVisible = false
                     containerEmpty.isVisible = true
+                    refreshMenuItem?.isEnabled = false
                 }
-            }
-            viewModel.sortCompletedEvent.observeEvents {
-                swipeLayout.isRefreshing = false
             }
         }
 
@@ -146,8 +155,18 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         adapter.unregisterItemsEventsListener(this)
     }
 
+    override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateMenu(menu, inflater)
+        refreshMenuItem = menu.findItem(R.id.actionRefresh)
+    }
+
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
+            R.id.actionRefresh -> {
+                viewModel.doRefresh()
+                true
+            }
+
             R.id.actionPickFromJson -> {
                 contentPicker.pick(REQUEST_CODE_CHOOSE_JSON, requireContext())
                 true
@@ -172,8 +191,8 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         viewModel.onSuggestSelected(id, suggest)
     }
 
-    override fun onRemove(id: Long) {
-        viewModel.onRemoveClick(id)
+    override fun onClear(id: Long) {
+        viewModel.onClearQuery(id)
     }
 
     override fun onItemRemoved(position: Int, item: AddressInputData) {

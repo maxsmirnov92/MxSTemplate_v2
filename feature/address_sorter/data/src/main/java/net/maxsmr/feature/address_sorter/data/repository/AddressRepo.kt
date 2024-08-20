@@ -12,7 +12,7 @@ interface AddressRepo {
 
     val resultAddresses: StateFlow<List<Address>>
 
-    val sortCompletedEvent: SharedFlow<Unit>
+    val upsertCompletedEvent: SharedFlow<Unit>
 
     suspend fun addFromStream(stream: InputStream, rewrite: Boolean = false): Boolean
 
@@ -32,7 +32,7 @@ interface AddressRepo {
 
     suspend fun suggestWithUpdate(id: Long, query: String): List<AddressSuggest>
 
-    suspend fun updateQuery(id: Long?, query: String): Long
+    suspend fun updateQuery(id: Long?, query: String)
 
     suspend fun setLastLocation(location: Location?)
 }
