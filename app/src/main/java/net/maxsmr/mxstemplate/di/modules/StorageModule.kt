@@ -18,7 +18,6 @@ import net.maxsmr.core.di.DataStores
 import net.maxsmr.core.di.Preferences
 import net.maxsmr.core.di.PreferencesType
 import net.maxsmr.core.network.SessionStorage
-import net.maxsmr.mxstemplate.session.RadarIoSessionStorage
 import net.maxsmr.feature.preferences.data.domain.AppSettings
 import net.maxsmr.feature.preferences.data.domain.UserPreferencesSerializer
 import javax.inject.Singleton
@@ -41,11 +40,6 @@ class StorageModule {
     fun provideRadarIoSessionPrefs(
         @ApplicationContext context: Context,
     ): SharedPreferences = context.getSharedPreferences("prefs_session", Context.MODE_PRIVATE)
-
-    @[Provides Singleton net.maxsmr.core.di.RadarIoSessionStorage]
-    fun provideRadarIoSessionStorage(
-        @Preferences(PreferencesType.SESSION_RADAR_IO) sharedPreferences: SharedPreferences,
-    ): SessionStorage = RadarIoSessionStorage()
 
     @[Provides Singleton DataStores(DataStoreType.CACHE)]
     fun provideCacheDataStore(

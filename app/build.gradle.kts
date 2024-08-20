@@ -66,6 +66,11 @@ android {
             "AUTHORIZATION_RADAR_IO",
             "\"${appProperties.getProperty("authorizationRadarIo")}\""
         )
+        buildConfigField(
+            "String",
+            "API_KEY_YANDEX_SUGGEST",
+            "\"${appProperties.getProperty("apiKeyYandexSuggest")}\""
+        )
         buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getProperty("devEmailAddress")}\"")
 
         val donateProperties = Properties()

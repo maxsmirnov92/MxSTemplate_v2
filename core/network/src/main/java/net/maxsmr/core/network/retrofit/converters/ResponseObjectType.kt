@@ -4,6 +4,6 @@ import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-internal annotation class RadarIoResponseObjectType(
-    val value: KClass<out BaseRadarIoResponse>
+internal annotation class ResponseObjectType(
+    val value: KClass<out BaseResponse>
 )

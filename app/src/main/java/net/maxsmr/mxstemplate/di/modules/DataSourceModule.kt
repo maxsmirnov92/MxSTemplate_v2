@@ -4,10 +4,10 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import net.maxsmr.core.di.RadarIoRetrofit
-import net.maxsmr.core.network.api.radar_io.AddressDataSource
-import net.maxsmr.core.network.api.radar_io.RadarIoDataSource
-import net.maxsmr.core.network.retrofit.client.RadarIoRetrofitClient
+import net.maxsmr.core.di.YandexSuggestRetrofit
+import net.maxsmr.core.network.api.AddressDataSource
+import net.maxsmr.core.network.api.YandexSuggestDataSource
+import net.maxsmr.core.network.retrofit.client.CommonRetrofitClient
 import javax.inject.Singleton
 
 @[Module
@@ -16,7 +16,7 @@ class DataSourceModule {
 
     @Provides
     @Singleton
-    fun provideRadarIoDataSource(
-        @RadarIoRetrofit retrofit: RadarIoRetrofitClient,
-    ): AddressDataSource = RadarIoDataSource(retrofit)
+    fun provideDataSource(
+        @YandexSuggestRetrofit retrofit: CommonRetrofitClient,
+    ): AddressDataSource = YandexSuggestDataSource(retrofit)
 }

@@ -15,11 +15,11 @@ import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
 import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
-import net.maxsmr.core.di.RadarIoSessionStorage
-import net.maxsmr.core.network.SessionStorage
+import net.maxsmr.core.di.YandexOkHttpClient
 import net.maxsmr.core.network.retrofit.client.okhttp.DownloadOkHttpClientManager
 import net.maxsmr.core.network.retrofit.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.retrofit.client.okhttp.RadarIoOkHttpClientManager
+import net.maxsmr.core.network.retrofit.client.okhttp.YandexOkHttpClientManager
 import net.maxsmr.core.network.retrofit.interceptors.NetworkConnectionInterceptor
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.CacheControl
@@ -101,13 +101,19 @@ class OkHttpModule {
     ).build()
 
     @[Provides Singleton RadarIoOkHttpClient]
-    fun provideRadarIoOkHttpClient(
-        @RadarIoSessionStorage
-        sessionStorage: SessionStorage
-    ): OkHttpClient {
+    fun provideRadarIoOkHttpClient(): OkHttpClient {
         return RadarIoOkHttpClientManager(
             NetworkConnectivityChecker,
-            sessionStorage,
+            BuildConfig.AUTHORIZATION_RADAR_IO,
+            NETWORK_TIMEOUT
+        ).build()
+    }
+
+    @[Provides Singleton YandexOkHttpClient]
+    fun provideYandexOkHttpClient(): OkHttpClient {
+        return YandexOkHttpClientManager(
+            NetworkConnectivityChecker,
+            BuildConfig.API_KEY_YANDEX_SUGGEST,
             NETWORK_TIMEOUT
         ).build()
     }

@@ -6,8 +6,8 @@ import android.os.Bundle
 import dagger.hilt.android.HiltAndroidApp
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.core.di.RadarIoRetrofit
-import net.maxsmr.core.network.retrofit.client.RadarIoRetrofitClient
+import net.maxsmr.core.di.YandexSuggestRetrofit
+import net.maxsmr.core.network.retrofit.client.CommonRetrofitClient
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.mxstemplate.logger.TimberLogger
 import javax.inject.Inject
@@ -26,8 +26,8 @@ class App : Application(), Application.ActivityLifecycleCallbacks {
     }
 
     @Inject
-    @RadarIoRetrofit
-    lateinit var radarIoRetrofitClient: RadarIoRetrofitClient
+    @YandexSuggestRetrofit
+    lateinit var retrofitClient: CommonRetrofitClient
 
     private val _runningActivities = mutableListOf<Activity>()
 
@@ -38,7 +38,7 @@ class App : Application(), Application.ActivityLifecycleCallbacks {
 //        FirebaseCrashlytics.getInstance().setUserId(uuidManager.uuid)
 
         registerActivityLifecycleCallbacks(this)
-        radarIoRetrofitClient.init()
+        retrofitClient.init()
 
 //        if (isAtLeastPie()) {
 //            kotlin.runCatching {

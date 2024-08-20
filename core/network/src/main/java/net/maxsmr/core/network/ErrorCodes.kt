@@ -13,6 +13,11 @@ const val SUCCESS = 200
  */
 const val NETWORK_OFFLINE = 600
 
+/**
+ * Ошибка разбора JSON в ответе
+ */
+const val JSON_PARSE_ERROR = 601
+
 fun Throwable.getErrorCode(): Int {
     return when (this) {
         is NetworkException -> {

@@ -33,7 +33,11 @@ annotation class RadarIoHostManager
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
-annotation class RadarIoSessionStorage
+annotation class YandexSuggestHostManager
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class YandexGeocodeHostManager
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
@@ -49,6 +53,10 @@ annotation class RadarIoOkHttpClient
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
+annotation class YandexOkHttpClient
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
 annotation class DownloadHttpLoggingInterceptor
 
 @Qualifier
@@ -58,3 +66,11 @@ annotation class PicassoHttpLoggingInterceptor
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class RadarIoRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class YandexSuggestRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class YandexGeocodeRetrofit

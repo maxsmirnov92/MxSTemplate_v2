@@ -16,7 +16,18 @@ fun AutoCompleteTextView.toggleDropDown() {
         val isShowing = isPopupShowing
         if (!adapter.isEmpty) {
             if (!isShowing) {
-                showDropDown()
+                if (isFocused) {
+                    showDropDown()
+                } else {
+                    setOnFocusChangeListener { _, hasFocus ->
+                        if (hasFocus) {
+                            if (!adapter.isEmpty) {
+                                showDropDown()
+                            }
+                            onFocusChangeListener = null
+                        }
+                    }
+                }
             }
         } else if (isShowing) {
             dismissDropDown()

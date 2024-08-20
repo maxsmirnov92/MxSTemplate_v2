@@ -9,7 +9,10 @@ import retrofit2.Retrofit
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
-internal class RadarIoEnvelopingConverter(
+/**
+ * Применяется для случаев, когда производные респонсы дополняют [BaseResponse]
+ */
+internal class ResponseObjectTypeConverter(
     private val responseListener: OnServerResponseListener? = null,
 ) : Converter.Factory() {
 
@@ -19,16 +22,16 @@ internal class RadarIoEnvelopingConverter(
         retrofit: Retrofit,
     ): Converter<ResponseBody, *> {
         val objectType =
-            (annotations.find { it.annotationClass == RadarIoResponseObjectType::class } as RadarIoResponseObjectType?)?.value
+            (annotations.find { it.annotationClass == ResponseObjectType::class } as ResponseObjectType?)?.value
 
         if (objectType != null) {
-            val envelopedType = objectType.javaObjectType // newParameterizedType(objectType.javaObjectType, type)
+            val envelopedType = objectType.javaObjectType
 
-            val delegate: Converter<ResponseBody, BaseRadarIoResponse> =
+            val delegate: Converter<ResponseBody, BaseResponse> =
                 retrofit.nextResponseBodyConverter(this, envelopedType, annotations)
 
             return Converter<ResponseBody, Any> { body ->
-                val response = delegate.convert(body) as BaseRadarIoResponse
+                val response = delegate.convert(body) as BaseResponse
 
                 responseListener?.onServerResponse(response.errorCode, response.errorMessage, null)
 
@@ -39,15 +42,7 @@ internal class RadarIoEnvelopingConverter(
                 }
             }
         } else {
-            throw IllegalStateException("RadarIoResponseObjectType annotation is not specified")
+            throw IllegalStateException("ResponseObjectType annotation is not specified")
         }
     }
-
-    private fun newParameterizedType(rawType: Type, vararg typeArguments: Type): ParameterizedType {
-        require(typeArguments.isNotEmpty()) {
-            "Missing type arguments for $rawType"
-        }
-        return ParameterizedTypeImpl(null, rawType, *typeArguments)
-    }
-
 }

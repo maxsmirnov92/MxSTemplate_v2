@@ -1,16 +1,17 @@
-package net.maxsmr.core.network.api.radar_io.internal
+package net.maxsmr.core.network.api.radar_io
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address.Location
-import net.maxsmr.core.network.retrofit.converters.BaseRadarIoResponse
+import net.maxsmr.core.network.retrofit.converters.api.BaseRadarIoResponse
 
 @Serializable
-class AutocompleteResponse(
+class SuggestResponse(
     override val meta: Meta,
     private val addresses: List<Address>,
 ) : BaseRadarIoResponse() {
+
+    fun asDomain() = addresses.map { it.asDomain() }
 
     @Serializable
     data class Address(
@@ -34,6 +35,14 @@ class AutocompleteResponse(
         val addressLabel: String,
     ) {
 
+        fun asDomain() = net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest(
+            Location(latitude, longitude),
+            county.takeIf { !it.isNullOrEmpty() }?.let {
+                "$it, $addressLabel"
+            } ?: addressLabel,
+            distance
+        )
+
         @Serializable
         data class Geometry(
             val type: Type,
@@ -53,15 +62,5 @@ class AutocompleteResponse(
             @SerialName("exact")
             EXACT
         }
-
-        fun asDomain() = net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest(
-            Location(latitude, longitude),
-            county.takeIf { !it.isNullOrEmpty() }?.let {
-                "$it, $addressLabel"
-            } ?: addressLabel,
-            distance
-        )
     }
-
-    fun asDomain() = addresses.map { it.asDomain() }
 }

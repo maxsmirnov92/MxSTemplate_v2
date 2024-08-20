@@ -23,7 +23,7 @@ import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.NO_
 import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.toAddressEntity
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
-import net.maxsmr.core.network.api.radar_io.AddressDataSource
+import net.maxsmr.core.network.api.AddressDataSource
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import java.io.InputStream

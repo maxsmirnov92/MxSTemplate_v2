@@ -72,14 +72,15 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
 
             bind {
                 item.run {
-                    var wasFocused = false
-                    etText.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
-                        if (hasFocus && wasFocused && !item.isSuggested) {
-                            etText.toggleDropDown()
-                        } else if (hasFocus) {
-                            wasFocused = true
-                        }
-                    }
+//                    var wasFocused = false
+//                    etText.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
+//                        if (hasFocus && wasFocused && !item.isSuggested) {
+//                            etText.toggleDropDown()
+//                        } else if (hasFocus) {
+//                            wasFocused = true
+//                        }
+//                    }
+                    wasSuggestSkippedOnce = false
                     tilText.hint = context.getString(R.string.address_sorter_input_hint_format, item.id)
                     etText.setTextWithSelectionToEnd(item.address)
                     etText.applySuggestions(
