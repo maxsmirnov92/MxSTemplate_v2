@@ -7,6 +7,12 @@ class AddressInputAdapter(listener: AddressInputListener): BaseDraggableDelegati
 ) {
 
     var isMovementEnabled: Boolean = true
+        set(value) {
+            if (field != value) {
+                field = value
+                notifyDataSetChanged()
+            }
+        }
 
     override fun canDismissItem(item: AddressInputData, position: Int): Boolean {
         return isMovementEnabled

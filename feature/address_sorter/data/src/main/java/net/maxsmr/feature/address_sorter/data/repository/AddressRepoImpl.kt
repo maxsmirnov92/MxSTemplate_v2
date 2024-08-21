@@ -27,6 +27,7 @@ import net.maxsmr.core.network.api.AddressDataSource
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import java.io.InputStream
+import java.util.Locale
 
 class AddressRepoImpl(
     private val dao: AddressDao,
@@ -117,7 +118,8 @@ class AddressRepoImpl(
     override suspend fun suggest(query: String): List<AddressSuggest> {
         return withContext(ioDispatcher) {
             val lastLocation = cacheRepo.getLastLocation()
-            dataSource.suggest(query, lastLocation?.latitude, lastLocation?.longitude)
+            val lang = Locale.getDefault().toString().split("_")[0]
+            dataSource.suggest(query, lastLocation?.latitude, lastLocation?.longitude, lang = lang)
         }
     }
 

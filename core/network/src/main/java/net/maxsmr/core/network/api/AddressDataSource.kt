@@ -14,7 +14,7 @@ interface AddressDataSource {
         latitude: Float? = null,
         longitude: Float? = null,
         country: String = "RU",
-        lang: String = "ru", // TODO вынести в настройки
+        lang: String = "ru",
     ): List<AddressSuggest>
 }
 
