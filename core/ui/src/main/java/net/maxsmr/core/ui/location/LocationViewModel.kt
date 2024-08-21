@@ -64,15 +64,15 @@ class LocationViewModel @AssistedInject constructor(
     }
 
     override fun onGpsNotAvailable() {
-        showOkDialog(DIALOG_TAG_GPS_NOT_AVAILABLE, R.string.alert_gps_not_available_message)
+        showOkDialog(DIALOG_TAG_GPS_NOT_AVAILABLE, R.string.dialog_gps_not_available_message)
     }
 
     override fun onGpsProviderNotEnabled() {
         showYesNoDialog(
             DIALOG_TAG_GPS_NOT_ENABLED,
-            TextMessage(R.string.alert_gps_enable_message),
-            TextMessage(R.string.alert_gps_enable_title),
-            R.string.alert_gps_enable_answer_settings,
+            TextMessage(R.string.dialog_gps_enable_message),
+            TextMessage(R.string.dialog_gps_enable_title),
+            R.string.dialog_gps_enable_answer_settings,
             android.R.string.cancel,
             onSelect = {
                 if (it == DialogInterface.BUTTON_POSITIVE) {

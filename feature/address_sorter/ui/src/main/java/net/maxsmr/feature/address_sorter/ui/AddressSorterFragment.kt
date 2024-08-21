@@ -13,6 +13,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
+import net.maxsmr.commonutils.getViewLocationIntent
+import net.maxsmr.commonutils.gui.runAction
+import net.maxsmr.commonutils.gui.scrollTo
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
@@ -22,6 +25,7 @@ import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_GPS_PERMISSION
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.location.LocationViewModel
+import net.maxsmr.core.ui.openAnyIntentWithToastError
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputAdapter
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputListener
@@ -73,19 +77,19 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
     // by lazy не подходит, т.к.
     // "Fragments must call registerForActivityResult() before they are created"
     private val contentPicker: ContentPicker = FragmentContentPickerBuilder()
-            .addRequest(
-                PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_JSON)
-                    .addSafParams(SafPickerParams.json())
-                    .needPersistableUriAccess(true)
-                    .onSuccess {
-                        viewModel.onJsonResourceSelected(requireContext(), it.uri)
-                    }
-                    .onError {
-                        viewModel.onPickerResultError(it)
-                    }
-                    .build()
+        .addRequest(
+            PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_JSON)
+                .addSafParams(SafPickerParams.json())
+                .needPersistableUriAccess(true)
+                .onSuccess {
+                    viewModel.onJsonResourceSelected(requireContext(), it.uri)
+                }
+                .onError {
+                    viewModel.onPickerResultError(it)
+                }
+                .build()
 
-            ).build()
+        ).build()
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -100,6 +104,8 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
     lateinit var cacheRepo: CacheDataStoreRepository
 
     private var refreshMenuItem: MenuItem? = null
+
+    private var shouldScrollToEnd: Boolean = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: AddressSorterViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
@@ -121,6 +127,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
             fabAdd.setOnClickListener {
                 viewModel.onAddClick()
+                shouldScrollToEnd = true
             }
             swipeLayout.setOnRefreshListener {
                 viewModel.doRefresh()
@@ -136,6 +143,12 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                     rvContent.isVisible = true
                     containerEmpty.isVisible = false
                     refreshMenuItem?.isEnabled = !state.isLoading
+                    if (shouldScrollToEnd) {
+                        rvContent.runAction {
+                            rvContent.scrollTo(items.size - 1, true)
+                        }
+                        shouldScrollToEnd = false
+                    }
                 } else {
                     rvContent.isVisible = false
                     containerEmpty.isVisible = true
@@ -193,6 +206,13 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
     override fun onClear(id: Long) {
         viewModel.onClearQuery(id)
+    }
+
+    override fun onNavigate(item: AddressSorterViewModel.AddressItem) {
+        requireContext().openAnyIntentWithToastError(
+            getViewLocationIntent(item.location?.latitude, item.location?.longitude, item.address),
+            errorResId = net.maxsmr.core.ui.R.string.error_intent_open_geo
+        )
     }
 
     override fun onItemRemoved(position: Int, item: AddressInputData) {

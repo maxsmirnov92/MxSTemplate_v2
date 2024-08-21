@@ -13,12 +13,14 @@
     <string name="error_intent_send">No apps for sending found</string>
     <string name="error_intent_open_url">No apps for viewing links found</string>
     <string name="error_intent_open_document">No apps for opening document found</string>
+    <string name="error_intent_open_geo">No apps for viewing maps found</string>
+    <string name="error_intent_open_market">There are no installed market apps on this device</string>
     <string name="error_intent_any">No apps can perform this action</string>
 
-    <string name="alert_gps_not_available_message">Unfortunately your device does not have geolocation detection function</string>
-    <string name="alert_gps_enable_title">Geolocation is unavailable</string>
-    <string name="alert_gps_enable_message">Getting your current location is not available. To get the location you need to enable this option in the settings</string>
-    <string name="alert_gps_enable_answer_settings">Settings</string>
+    <string name="dialog_gps_not_available_message">Unfortunately your device does not have geolocation detection function</string>
+    <string name="dialog_gps_enable_title">Geolocation is unavailable</string>
+    <string name="dialog_gps_enable_message">Getting your current location is not available. To get the location you need to enable this option in the settings</string>
+    <string name="dialog_gps_enable_answer_settings">Settings</string>
 
     <string name="search_hint">Search</string>
 
@@ -40,7 +42,6 @@
     <string name="toast_link_copied_to_clipboard_message">Link copied to clipboard</string>
     <string name="toast_copied_to_clipboard_message">Copied to clipboard</string>
     <string name="toast_press_twice_to_quit_message">Press twice to quit</string>
-    <string name="toast_market_not_installed">There are not installed market apps on the device</string>
 
-    <string name="alert_battery_optimization_message">To ensure smooth operation of the application, it is recommended to disable power saving features</string>
+    <string name="dialog_battery_optimization_message">To ensure smooth operation of the application, it is recommended to disable power saving features</string>
 </resources>

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
+import androidx.annotation.StringRes
 import net.maxsmr.commonutils.SendAction
 import net.maxsmr.commonutils.openDocument
 import net.maxsmr.commonutils.openEmailIntent
@@ -110,6 +111,7 @@ fun Context.openAnyIntentWithToastError(
     chooserIntentFunc: ((Intent) -> Unit)? = null,
     flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
     options: Bundle? = null,
+    @StringRes errorResId: Int = R.string.error_intent_any
 ): Boolean {
     return startActivitySafe(
         intent.apply {
@@ -120,6 +122,6 @@ fun Context.openAnyIntentWithToastError(
         },
         options = options,
     ) {
-        Toast.makeText(this, R.string.error_intent_any, Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, errorResId, Toast.LENGTH_SHORT).show()
     }
 }

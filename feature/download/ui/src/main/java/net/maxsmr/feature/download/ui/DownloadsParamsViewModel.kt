@@ -386,7 +386,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             if (!cacheRepo.askedAppDetails()) {
                 showOkDialog(
                     DIALOG_TAG_NAVIGATE_TO_BATTERY_OPTIMIZATION,
-                    net.maxsmr.core.ui.R.string.alert_battery_optimization_message
+                    net.maxsmr.core.ui.R.string.dialog_battery_optimization_message
                 ) {
                     viewModelScope.launch {
                         cacheRepo.setAskedAppDetails()

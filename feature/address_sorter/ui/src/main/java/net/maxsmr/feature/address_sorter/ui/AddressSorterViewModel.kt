@@ -107,7 +107,6 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     fun doRefresh() {
         resultItemsState.value = LoadState.loading(resultItemsState.value?.data.orEmpty())
-        // TODO change api
         viewModelScope.launch {
             repo.sortItems()
         }

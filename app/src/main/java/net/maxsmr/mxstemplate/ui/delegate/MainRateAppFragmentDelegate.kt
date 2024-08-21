@@ -29,7 +29,7 @@ class MainRateAppFragmentDelegate(
                     MobileServicesFeatureEntryPoint::class.java
                 ).marketIntentLauncher.startActivityMarketIntent(fragment.requireActivity())
         ) {
-            viewModel.showToast(TextMessage(R.string.toast_market_not_installed))
+            viewModel.showToast(TextMessage(R.string.error_intent_open_market))
         }
     }
 

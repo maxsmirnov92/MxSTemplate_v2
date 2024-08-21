@@ -153,7 +153,12 @@ open class InterceptWebViewClient @JvmOverloads constructor(
 
             // загрузка завершилась для текущей WebViewData;
             // как индикатор завершения текущей цепочки - забываем
-            onPageFinished?.invoke(lastData.copy(url = uri, data = null)) // актуализация урлы, т.к. это может быть редирект
+            onPageFinished?.invoke(
+                lastData.copy(
+                    url = uri,
+                    data = null
+                )
+            ) // актуализация урлы, т.к. это может быть редирект
             currentMainFrameData = null
             isHandled = true
         }
@@ -307,14 +312,16 @@ open class InterceptWebViewClient @JvmOverloads constructor(
             }
 
             URL_SCHEME_GEO, URL_SCHEME_GEO_GOOGLE -> {
-                getViewLocationIntent(uri)?.let {
-                    handled = context.openAnyIntentWithToastError(it)
-                }
+                handled = context.openAnyIntentWithToastError(
+                    getViewUrlIntent(uri, null),
+                    errorResId = net.maxsmr.core.ui.R.string.error_intent_open_geo
+                )
             }
 
             URL_SCHEME_MARKET -> {
                 handled = context.openAnyIntentWithToastError(
-                    getViewUrlIntent(uri, null)
+                    getViewUrlIntent(uri, null),
+                    errorResId = net.maxsmr.core.ui.R.string.error_intent_open_market
                 )
             }
             // перебирать остальные известные не http/https схемы

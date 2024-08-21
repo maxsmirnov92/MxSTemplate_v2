@@ -10,15 +10,17 @@
     <string name="chooser_title_send">Поделиться с помощью приложения</string>
     <string name="chooser_title_view">Открыть с помощью приложения</string>
     <string name="error_intent_email">Для отправки письма установите любое приложение для работы с электронной почтой</string>
-    <string name="error_intent_send">Приложение для отправки не обнаружено</string>
-    <string name="error_intent_open_url">Приложение для просмотра ссылки не обнаружено</string>
-    <string name="error_intent_open_document">Приложение для выбора документа не обнаружено</string>
+    <string name="error_intent_send">Приложений для отправки не обнаружено</string>
+    <string name="error_intent_open_url">Приложений для просмотра ссылки не обнаружено</string>
+    <string name="error_intent_open_document">Приложений для выбора документа не обнаружено</string>
+    <string name="error_intent_open_geo">Приложений для просмотра карт не обнаружено</string>
+    <string name="error_intent_open_market">На устройстве нет установленных магазинов приложений</string>
     <string name="error_intent_any">Отсутствуют приложения для данного действия</string>
 
-    <string name="alert_gps_not_available_message">К сожалению, ваше мобильное устройство не снабжено функцией определения местоположения.</string>
-    <string name="alert_gps_enable_title">Местоположение недоступно</string>
-    <string name="alert_gps_enable_message">Получение текущего местоположения недоступно. Для получения местоположения нужно включить геопозиционирование в настройках.</string>
-    <string name="alert_gps_enable_answer_settings">Настройки</string>
+    <string name="dialog_gps_not_available_message">К сожалению, ваше мобильное устройство не снабжено функцией определения местоположения.</string>
+    <string name="dialog_gps_enable_title">Местоположение недоступно</string>
+    <string name="dialog_gps_enable_message">Получение текущего местоположения недоступно. Для получения местоположения нужно включить геопозиционирование в настройках.</string>
+    <string name="dialog_gps_enable_answer_settings">Настройки</string>
 
     <string name="search_hint">Поиск</string>
 
@@ -40,7 +42,6 @@
     <string name="toast_link_copied_to_clipboard_message">Ссылка скопирована в буфер обмена</string>
     <string name="toast_copied_to_clipboard_message">Скопировано в буфер обмена</string>
     <string name="toast_press_twice_to_quit_message">Нажмите дважды, чтобы выйти</string>
-    <string name="toast_market_not_installed">На устройстве нет установленных магазинов приложений</string>
 
-    <string name="alert_battery_optimization_message">Для обеспечения бесперебойной работы приложения рекомендуется отключить функции энергосбережения</string>
+    <string name="dialog_battery_optimization_message">Для обеспечения бесперебойной работы приложения рекомендуется отключить функции энергосбережения</string>
 </resources>

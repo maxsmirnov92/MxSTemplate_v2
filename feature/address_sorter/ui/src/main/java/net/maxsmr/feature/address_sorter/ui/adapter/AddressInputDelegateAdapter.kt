@@ -2,9 +2,9 @@ package net.maxsmr.feature.address_sorter.ui.adapter
 
 import android.text.TextWatcher
 import android.view.View
-import android.view.View.OnFocusChangeListener
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import androidx.core.view.isVisible
 import com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
@@ -14,7 +14,6 @@ import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.ui.adapters.SuggestAdapter
 import net.maxsmr.core.ui.views.applySuggestions
-import net.maxsmr.core.ui.views.toggleDropDown
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel
 import net.maxsmr.feature.address_sorter.ui.R
 import net.maxsmr.feature.address_sorter.ui.databinding.ItemAddressBinding
@@ -48,6 +47,10 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
 
             ibClear.setOnClickListener {
                 listener.onClear(item.id)
+            }
+
+            ibNavigate.setOnClickListener {
+                listener.onNavigate(item.item)
             }
 
             currentTextWatcher?.let {
@@ -88,6 +91,7 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
                             data = suggestsLoadState.data?.map { it.address }.orEmpty()
                         )
                     )
+                    ibNavigate.isVisible = item.isSuggested && item.address.isNotEmpty()
                 }
             }
         }
@@ -108,7 +112,7 @@ class InputViewHolder(view: View) : BaseDraggableDelegationAdapter.DragAndDropVi
 
     internal var currentTextWatcher: TextWatcher? = null
 
-    override val draggableView: View = itemView.findViewById(R.id.ivMore)
+    override val draggableView: View = itemView.findViewById(R.id.ivDrag)
 
     var wasSuggestSkippedOnce = false
 }
@@ -120,4 +124,6 @@ interface AddressInputListener {
     fun onSuggestSelect(id: Long, suggest: AddressSorterViewModel.AddressSuggestItem)
 
     fun onClear(id: Long)
+
+    fun onNavigate(item: AddressSorterViewModel.AddressItem)
 }
