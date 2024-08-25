@@ -46,11 +46,15 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
         with(ItemAddressBinding.bind(itemView)) {
 
             ibClear.setOnClickListener {
-                listener.onClear(item.id)
+                listener.onClearAction(item.id)
             }
 
             ibNavigate.setOnClickListener {
-                listener.onNavigate(item.item)
+                listener.onNavigateAction(item.item)
+            }
+
+            ibInfo.setOnClickListener {
+                listener.onInfoAction(item.item)
             }
 
             currentTextWatcher?.let {
@@ -92,6 +96,7 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
                         )
                     )
                     ibNavigate.isVisible = item.isSuggested && item.address.isNotEmpty()
+                    ibInfo.isVisible = item.distance?.takeIf { it >= 0 } != null
                 }
             }
         }
@@ -123,7 +128,9 @@ interface AddressInputListener {
 
     fun onSuggestSelect(id: Long, suggest: AddressSorterViewModel.AddressSuggestItem)
 
-    fun onClear(id: Long)
+    fun onClearAction(id: Long)
 
-    fun onNavigate(item: AddressSorterViewModel.AddressItem)
+    fun onNavigateAction(item: AddressSorterViewModel.AddressItem)
+
+    fun onInfoAction(item: AddressSorterViewModel.AddressItem)
 }

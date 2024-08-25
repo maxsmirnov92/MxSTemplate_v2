@@ -254,13 +254,14 @@ class AddressSorterViewModel @AssistedInject constructor(
         val id: Long,
         val address: String,
         val location: Address.Location?,
+        val distance: Float?,
         val isSuggested: Boolean,
     ) : Serializable {
 
         companion object {
 
             fun Address.toUi() = AddressItem(
-                id, address, location, isSuggested
+                id, address, location, distance, isSuggested
             )
         }
     }

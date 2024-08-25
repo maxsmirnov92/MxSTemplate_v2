@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <plurals name="download_files">
+        <item quantity="zero">Выполняется загрузка %1$d файлов</item>
+        <item quantity="one">Выполняется загрузка %1$d файла</item>
+        <item quantity="two">Выполняется загрузка %1$d файлов</item>
+        <item quantity="few">Выполняется загрузка %1$d файлов</item>
+        <item quantity="many">Выполняется загрузка %1$d файлов</item>
+        <item quantity="other">Выполняется загрузка %1$d файлов</item>
+    </plurals>
+</resources>

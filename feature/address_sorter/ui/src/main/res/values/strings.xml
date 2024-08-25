@@ -9,4 +9,5 @@
     <string name="address_sorter_menu_action_clear">Clear</string>
     <string name="address_sorter_snackbar_address_add_error_message">Cannot add addresses</string>
     <string name="address_sorter_dialog_clear_items_message">Remove all addresses?</string>
+    <string name="address_sorter_toast_distance_to_point_format">Distance to point: %s</string>
 </resources>

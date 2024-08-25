@@ -19,7 +19,7 @@ class SuggestResponse(
         val title: Title? = null,
         val subtitle: Subtitle? = null,
         val tags: List<String> = emptyList(),
-        val distance: Distance,
+        val distance: Distance? = null,
         val address: Address? = null,
         val uri: String? = null,
     ) {
@@ -37,7 +37,7 @@ class SuggestResponse(
                                 title
                             }
                         } ?: title),
-                distance.value
+                distance?.value
             )
         }
 

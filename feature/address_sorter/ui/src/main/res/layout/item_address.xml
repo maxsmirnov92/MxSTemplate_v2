@@ -62,6 +62,16 @@
             android:scaleType="centerCrop"
             app:srcCompat="@drawable/ic_navigate" />
 
+        <ImageButton
+            android:id="@+id/ibInfo"
+            style="@style/Widget.AppCompat.ActionButton"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginStart="6dp"
+            android:scaleType="centerCrop"
+            app:srcCompat="@drawable/ic_info" />
+
+
         <ImageView
             android:id="@+id/ivDrag"
             android:layout_width="30dp"

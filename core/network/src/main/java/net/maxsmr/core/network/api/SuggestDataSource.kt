@@ -2,6 +2,7 @@ package net.maxsmr.core.network.api
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.radar_io.RadarIoDataService
 import net.maxsmr.core.network.api.yandex.suggest.YandexSuggestDataService
@@ -11,8 +12,7 @@ interface SuggestDataSource {
 
     suspend fun suggest(
         query: String,
-        latitude: Float? = null,
-        longitude: Float? = null,
+        location: Address.Location? = null,
         country: String = "RU",
         lang: String = "ru",
     ): List<AddressSuggest>
@@ -24,17 +24,14 @@ class RadarIoSuggestDataSource(
 
     override suspend fun suggest(
         query: String,
-        latitude: Float?,
-        longitude: Float?,
+        location: Address.Location?,
         country: String,
         lang: String,
     ): List<AddressSuggest> = withContext(Dispatchers.IO) {
-        val near = if (latitude != null && longitude != null) {
-            "$latitude,$longitude"
-        } else {
-            null
+        val locationText = location?.let {
+            "${it.latitude},${it.longitude}"
         }
-        RadarIoDataService.instance(retrofit).suggest(query, near, country).asDomain()
+        RadarIoDataService.instance(retrofit).suggest(query, locationText, country).asDomain()
     }
 }
 
@@ -44,17 +41,14 @@ class YandexSuggestDataSource(
 
     override suspend fun suggest(
         query: String,
-        latitude: Float?,
-        longitude: Float?,
+        location: Address.Location?,
         country: String,
         lang: String,
     ): List<AddressSuggest> = withContext(Dispatchers.IO) {
-        val location = if (latitude != null && longitude != null) {
-            "$longitude,$latitude"
-        } else {
-            null
+        val locationText = location?.let {
+            "${it.longitude},${it.latitude}"
         }
-        YandexSuggestDataService.instance(retrofit).suggest(query, location, lang).asDomain()
+        YandexSuggestDataService.instance(retrofit).suggest(query, locationText, lang).asDomain()
     }
 }
 

@@ -64,6 +64,6 @@ class AddressSuggestUseCase @Inject constructor(
     companion object {
 
         private const val SUGGEST_THRESHOLD = 2
-        private const val SUGGEST_DELAY = 1000L
+        private const val SUGGEST_DELAY = 1500L
     }
 }

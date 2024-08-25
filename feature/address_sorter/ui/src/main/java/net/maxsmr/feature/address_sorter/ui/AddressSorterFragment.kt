@@ -14,8 +14,12 @@ import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDel
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
 import net.maxsmr.commonutils.getViewLocationIntent
+import net.maxsmr.commonutils.gui.message.PluralTextMessage
+import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.runAction
 import net.maxsmr.commonutils.gui.scrollTo
+import net.maxsmr.core.android.base.actions.SnackbarExtraData
+import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
@@ -31,9 +35,9 @@ import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputListener
 import net.maxsmr.feature.address_sorter.ui.databinding.FragmentAddressSorterBinding
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.feature.preferences.ui.observePostNotificationPermissionAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
+import kotlin.math.roundToInt
 
 @AndroidEntryPoint
 class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
@@ -203,14 +207,31 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         viewModel.onSuggestSelected(id, suggest)
     }
 
-    override fun onClear(id: Long) {
+    override fun onClearAction(id: Long) {
         viewModel.onClearQuery(id)
     }
 
-    override fun onNavigate(item: AddressSorterViewModel.AddressItem) {
+    override fun onNavigateAction(item: AddressSorterViewModel.AddressItem) {
         requireContext().openAnyIntentWithToastError(
             getViewLocationIntent(item.location?.latitude, item.location?.longitude, item.address),
             errorResId = net.maxsmr.core.ui.R.string.error_intent_open_geo
+        )
+    }
+
+    override fun onInfoAction(item: AddressSorterViewModel.AddressItem) {
+        val distance = item.distance?.roundToInt() ?: return
+        viewModel.showSnackbar(
+            TextMessage(
+                getString(R.string.address_sorter_toast_distance_to_point_format),
+                if (distance > 1000) {
+                    val distanceKm = (distance / 1000f).roundToInt()
+                    PluralTextMessage(R.plurals.kilometers, distanceKm, distanceKm)
+                } else {
+                    PluralTextMessage(R.plurals.meters, distance, distance)
+                }
+            ),
+            SnackbarExtraData(length = SnackbarExtraData.SnackbarLength.LONG),
+            uniqueStrategy = AlertQueueItem.UniqueStrategy.Replace
         )
     }
 

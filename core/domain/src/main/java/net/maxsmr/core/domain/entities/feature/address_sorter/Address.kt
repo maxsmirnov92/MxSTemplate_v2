@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Address(
     val id: Long = 0,
-    val location: Location? = null,
     val address: String = "",
+    val location: Location? = null,
     val distance: Float? = null,
     val isSuggested: Boolean = false,
 ): java.io.Serializable {

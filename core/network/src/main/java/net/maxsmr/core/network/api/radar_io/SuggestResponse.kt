@@ -22,7 +22,7 @@ class SuggestResponse(
         val countryCode: String,
         val countryFlag: String,
         val county: String? = null,
-        val distance: Float,
+        val distance: Float? = null,
         val confidence: Confidence? = null,
         val city: String? = null,
         val number: String? = null,

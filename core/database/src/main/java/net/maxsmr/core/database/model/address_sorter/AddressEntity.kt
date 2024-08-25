@@ -11,7 +11,7 @@ data class AddressEntity(
     val address: String,
     @Embedded("location_")
     val location: Address.Location? = null,
-    val distance: Float? = null,
+    var distance: Float? = null,
     val isSuggested: Boolean = false,
 ) {
 
@@ -28,8 +28,8 @@ data class AddressEntity(
 
     fun toDomain() = Address(
         id,
-        location,
         address,
+        location,
         distance,
         isSuggested
     )

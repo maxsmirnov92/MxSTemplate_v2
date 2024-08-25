@@ -16,8 +16,8 @@ class GeocodeResponse(
 
         fun String?.toLocation(): Address.Location? {
             val pos = this?.split(" ").orEmpty()
-            val latitude = pos.getOrNull(0)?.toFloatOrNull()
-            val longitude = pos.getOrNull(1)?.toFloatOrNull()
+            val latitude = pos.getOrNull(1)?.toFloatOrNull()
+            val longitude = pos.getOrNull(0)?.toFloatOrNull()
             return if (latitude != null && longitude != null) {
                 Address.Location(latitude, longitude)
             } else {

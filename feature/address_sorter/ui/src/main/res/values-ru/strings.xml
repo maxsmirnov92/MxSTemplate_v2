@@ -9,4 +9,5 @@
     <string name="address_sorter_menu_action_clear">Очистить</string>
     <string name="address_sorter_snackbar_address_add_error_message">Не удалось добавить адреса</string>
     <string name="address_sorter_dialog_clear_items_message">Убрать все адреса?</string>
+    <string name="address_sorter_toast_distance_to_point_format">Растояние до места: %s</string>
 </resources>

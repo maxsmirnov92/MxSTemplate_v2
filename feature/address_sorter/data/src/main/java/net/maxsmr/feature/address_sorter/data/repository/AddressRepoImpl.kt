@@ -140,7 +140,7 @@ class AddressRepoImpl(
         return withContext(ioDispatcher) {
             val lastLocation = cacheRepo.getLastLocation()
             val lang = Locale.getDefault().toString().split("_")[0]
-            suggestDataSource.suggest(query, lastLocation?.latitude, lastLocation?.longitude, lang = lang)
+            suggestDataSource.suggest(query, lastLocation, lang = lang)
         }
     }
 
@@ -201,26 +201,27 @@ class AddressRepoImpl(
         override fun compare(lhs: AddressEntity, rhs: AddressEntity, option: SortOption, ascending: Boolean): Int {
             return when (option) {
                 SortOption.DISTANCE -> {
-                    val first = lhs.getDistanceWithLocation(lastLocation)
-                    val second = rhs.getDistanceWithLocation(lastLocation)
+                    val first = lhs.updateDistanceByLocation(lastLocation)
+                    val second = rhs.updateDistanceByLocation(lastLocation)
                     compareFloats(first, second, ascending)
                 }
 
+                // при совпадении distance, sort_order - следующий критерий
                 SortOption.SORT_ORDER -> {
                     compareLongs(lhs.sortOrder, rhs.sortOrder, ascending)
                 }
             }
         }
 
-        private fun AddressEntity.getDistanceWithLocation(lastLocation: Address.Location?): Float? {
+        private fun AddressEntity.updateDistanceByLocation(lastLocation: Address.Location?): Float? {
 
             fun Address.Location.toPointF() = PointF(latitude, longitude)
 
             val location = location?.toPointF()
             var distance: Float? = location?.let {
-                // сначала пробуем пересчитать относительно имеющихся координат
+                // сначала пробуем пересчитать относительно имеющихся координат и последней геолокации
                 lastLocation?.toPointF()?.let { lastLocation ->
-                    distance(lastLocation, it).toFloat()
+                    distance(lastLocation, it)
                 }
             }
 
@@ -228,9 +229,12 @@ class AddressRepoImpl(
                 // один из location отсутствует или получилось отрицательное -
                 // берётся distance из ответа suggest, если есть
                 distance = this.distance
+            } else {
+                // актуализация пересчитанным значением
+                this.distance = distance
             }
 
-            return distance
+            return distance?.takeIf { it >= 0 }
         }
 
         enum class SortOption : ISortOption {
