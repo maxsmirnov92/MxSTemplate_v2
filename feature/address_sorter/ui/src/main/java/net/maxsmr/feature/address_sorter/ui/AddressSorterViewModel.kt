@@ -14,12 +14,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.gui.message.PluralTextMessage
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.commonutils.media.openInputStream
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.android.base.actions.SnackbarExtraData
+import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.coroutines.usecase.asState
 import net.maxsmr.core.android.coroutines.usecase.mapData
@@ -35,6 +38,7 @@ import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.C
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import java.io.Serializable
+import kotlin.math.roundToInt
 
 class AddressSorterViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
@@ -131,6 +135,25 @@ class AddressSorterViewModel @AssistedInject constructor(
                     repo.clearItems()
                 }
             }
+        }
+    }
+
+    fun onInfoAction(item: AddressItem) {
+        viewModelScope.launch {
+            val distance = (repo.getDistanceByLocation(item.location) ?: item.distance)?.roundToInt() ?: return@launch
+            showSnackbar(
+                TextMessage(
+                    R.string.address_sorter_toast_distance_to_point_format,
+                    if (distance > 1000) {
+                        val distanceKm = (distance / 1000f).roundToInt()
+                        PluralTextMessage(R.plurals.kilometers, distanceKm, distanceKm)
+                    } else {
+                        PluralTextMessage(R.plurals.meters, distance, distance)
+                    }
+                ),
+                SnackbarExtraData(length = SnackbarExtraData.SnackbarLength.LONG),
+                uniqueStrategy = AlertQueueItem.UniqueStrategy.Replace
+            )
         }
     }
 

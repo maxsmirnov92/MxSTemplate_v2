@@ -8,8 +8,9 @@ import androidx.core.view.isVisible
 import com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
-import net.maxsmr.commonutils.gui.listeners.TextChangeListener
-import net.maxsmr.commonutils.gui.setTextWithSelectionToEnd
+import net.maxsmr.commonutils.gui.listeners.AfterTextChangeListener
+import net.maxsmr.commonutils.gui.setSelectionToEnd
+import net.maxsmr.commonutils.gui.setTextDistinct
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.ui.adapters.SuggestAdapter
@@ -60,7 +61,7 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
             currentTextWatcher?.let {
                 etText.removeTextChangedListener(it)
             }
-            val watcher = TextChangeListener { s, _, _, _ ->
+            val watcher = AfterTextChangeListener { s ->
                 if (!item.item.isSuggested || wasSuggestSkippedOnce) {
                     listener.onTextChanged(item.id, s.toString())
                 } else if (item.item.isSuggested) {
@@ -70,7 +71,6 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
             etText.addTextChangedListener(watcher)
             currentTextWatcher = watcher
 
-
             etText.init { position ->
                 item.suggestsLoadState.data?.getOrNull(position)?.let { suggest ->
                     listener.onSuggestSelect(item.id, suggest)
@@ -79,20 +79,18 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
 
             bind {
                 item.run {
-//                    var wasFocused = false
-//                    etText.onFocusChangeListener = OnFocusChangeListener { _, hasFocus ->
-//                        if (hasFocus && wasFocused && !item.isSuggested) {
-//                            etText.toggleDropDown()
-//                        } else if (hasFocus) {
-//                            wasFocused = true
-//                        }
-//                    }
                     wasSuggestSkippedOnce = false
-                    tilText.hint = context.getString(R.string.address_sorter_input_hint_format, item.id)
-                    etText.setTextWithSelectionToEnd(item.address)
+                    // TODO utils
+                    if (etText.setTextDistinct(item.address)) {
+                        etText.setSelectionToEnd()
+                    }
                     etText.applySuggestions(
                         suggestsLoadState.copyOf(
-                            data = suggestsLoadState.data?.map { it.address }.orEmpty()
+                            data = if (!item.isSuggested) {
+                                suggestsLoadState.data?.map { it.address }.orEmpty()
+                            } else {
+                                listOf()
+                            }
                         )
                     )
                     ibNavigate.isVisible = item.isSuggested && item.address.isNotEmpty()

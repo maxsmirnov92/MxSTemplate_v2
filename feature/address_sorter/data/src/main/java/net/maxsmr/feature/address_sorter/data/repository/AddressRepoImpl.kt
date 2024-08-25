@@ -42,7 +42,7 @@ class AddressRepoImpl(
     private val geocodeDataSource: GeocodeDataSource,
 ) : AddressRepo {
 
-    val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("AddressRepoImpl")
+    private val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("AddressRepoImpl")
 
     private val ioDispatcher = Dispatchers.IO
 
@@ -176,6 +176,12 @@ class AddressRepoImpl(
         })
     }
 
+    override suspend fun getDistanceByLocation(location: Address.Location?): Float? {
+        return withContext(ioDispatcher) {
+            getDistanceByLocation(location, cacheRepo.getLastLocation())
+        }
+    }
+
     private fun List<Address>.addIfNew(item: Address): List<Address> {
         val result = mutableListOf<Address>()
         result.addAll(this)
@@ -213,19 +219,30 @@ class AddressRepoImpl(
             }
         }
 
-        private fun AddressEntity.updateDistanceByLocation(lastLocation: Address.Location?): Float? {
+        enum class SortOption : ISortOption {
 
-            fun Address.Location.toPointF() = PointF(latitude, longitude)
+            DISTANCE,
+            SORT_ORDER;
 
-            val location = location?.toPointF()
-            var distance: Float? = location?.let {
+            override val optionName: String = name
+        }
+    }
+
+    companion object {
+
+        private fun getDistanceByLocation(location: Address.Location?, lastLocation: Address.Location?): Float? {
+            val locationPoint = location?.toPointF()
+            return locationPoint?.let {
                 // сначала пробуем пересчитать относительно имеющихся координат и последней геолокации
                 lastLocation?.toPointF()?.let { lastLocation ->
                     distance(lastLocation, it)
                 }
-            }
+            }?.takeIf { it >= 0 }
+        }
 
-            if (distance == null || distance < 0) {
+        private fun AddressEntity.updateDistanceByLocation(lastLocation: Address.Location?): Float? {
+            var distance = getDistanceByLocation(location, lastLocation)
+            if (distance == null) {
                 // один из location отсутствует или получилось отрицательное -
                 // берётся distance из ответа suggest, если есть
                 distance = this.distance
@@ -237,13 +254,7 @@ class AddressRepoImpl(
             return distance?.takeIf { it >= 0 }
         }
 
-        enum class SortOption : ISortOption {
-
-            DISTANCE,
-            SORT_ORDER;
-
-            override val optionName: String = name
-        }
+        private fun Address.Location.toPointF() = PointF(latitude, longitude)
     }
 
 }

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingVertical="4dp">
+    android:paddingVertical="2dp">
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -24,9 +24,9 @@
                 android:layout_height="wrap_content"
                 android:dropDownAnchor="@id/tilText"
                 android:focusableInTouchMode="true"
-                android:inputType="textNoSuggestions|textCapWords"
-                android:paddingHorizontal="4dp"
-                android:textSize="@dimen/textSizeMini"
+                android:inputType="textNoSuggestions|textCapWords|textMultiLine"
+                android:maxEms="30"
+                android:textSize="@dimen/textSizeExtraMini"
                 app:firstBaselineToTopHeight="47dp" />
 
         </com.google.android.material.textfield.TextInputLayout>

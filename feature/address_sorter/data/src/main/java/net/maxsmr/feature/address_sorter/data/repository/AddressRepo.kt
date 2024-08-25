@@ -35,4 +35,6 @@ interface AddressRepo {
     suspend fun updateQuery(id: Long?, query: String)
 
     suspend fun setLastLocation(location: Location?)
+
+    suspend fun getDistanceByLocation(location: Address.Location?): Float?
 }

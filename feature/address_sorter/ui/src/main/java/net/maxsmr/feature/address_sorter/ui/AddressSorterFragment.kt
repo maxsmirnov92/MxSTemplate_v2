@@ -219,20 +219,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
     }
 
     override fun onInfoAction(item: AddressSorterViewModel.AddressItem) {
-        val distance = item.distance?.roundToInt() ?: return
-        viewModel.showSnackbar(
-            TextMessage(
-                getString(R.string.address_sorter_toast_distance_to_point_format),
-                if (distance > 1000) {
-                    val distanceKm = (distance / 1000f).roundToInt()
-                    PluralTextMessage(R.plurals.kilometers, distanceKm, distanceKm)
-                } else {
-                    PluralTextMessage(R.plurals.meters, distance, distance)
-                }
-            ),
-            SnackbarExtraData(length = SnackbarExtraData.SnackbarLength.LONG),
-            uniqueStrategy = AlertQueueItem.UniqueStrategy.Replace
-        )
+        viewModel.onInfoAction(item)
     }
 
     override fun onItemRemoved(position: Int, item: AddressInputData) {
