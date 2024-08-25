@@ -1,5 +1,6 @@
 package net.maxsmr.core.database.model.address_sorter
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
@@ -8,8 +9,8 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 @Entity(tableName = "Address")
 data class AddressEntity(
     val address: String,
-    val latitude: Float? = null,
-    val longitude: Float? = null,
+    @Embedded("location_")
+    val location: Address.Location? = null,
     val distance: Float? = null,
     val isSuggested: Boolean = false,
 ) {
@@ -25,15 +26,9 @@ data class AddressEntity(
             return field
         }
 
-
-
     fun toDomain() = Address(
         id,
-        if (latitude != null && longitude != null) {
-            Address.Location(latitude, longitude)
-        } else {
-            null
-        },
+        location,
         address,
         distance,
         isSuggested
@@ -44,8 +39,7 @@ data class AddressEntity(
         if (other !is AddressEntity) return false
 
         if (address != other.address) return false
-        if (latitude != other.latitude) return false
-        if (longitude != other.longitude) return false
+        if (location != other.location) return false
         if (distance != other.distance) return false
         if (isSuggested != other.isSuggested) return false
         if (id != other.id) return false
@@ -55,13 +49,13 @@ data class AddressEntity(
 
     override fun hashCode(): Int {
         var result = address.hashCode()
-        result = 31 * result + (latitude?.hashCode() ?: 0)
-        result = 31 * result + (longitude?.hashCode() ?: 0)
+        result = 31 * result + (location?.hashCode() ?: 0)
         result = 31 * result + (distance?.hashCode() ?: 0)
         result = 31 * result + isSuggested.hashCode()
         result = 31 * result + id.hashCode()
         return result
     }
+
 
     companion object {
 
@@ -70,16 +64,18 @@ data class AddressEntity(
         @JvmStatic
         fun Address.toAddressEntity() = AddressEntity(
             address = address,
-            latitude = location?.latitude,
-            longitude = location?.longitude,
+            location = location,
             distance = distance
         )
 
         @JvmStatic
-        fun AddressSuggest.toAddressEntity(id: Long, sortOrder: Long) = AddressEntity(
+        fun AddressSuggest.toAddressEntity(
+            id: Long,
+            sortOrder: Long,
+            location: Address.Location? = null
+        ) = AddressEntity(
             address = address,
-            latitude = location?.latitude,
-            longitude = location?.longitude,
+            location = location ?: this.location,
             distance = distance,
             isSuggested = true
         ).apply {

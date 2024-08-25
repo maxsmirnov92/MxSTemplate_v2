@@ -6,6 +6,7 @@ import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.timber.CustomFileLoggerTree
 import timber.log.Timber
 import android.util.Log
+import dagger.hilt.EntryPoint
 import fr.bipi.tressence.common.filters.TagFilter
 import net.maxsmr.mxstemplate.timber.CrashReportingTree
 import java.util.regex.Pattern

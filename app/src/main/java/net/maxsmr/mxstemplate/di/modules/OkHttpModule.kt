@@ -15,7 +15,8 @@ import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
 import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
-import net.maxsmr.core.di.YandexOkHttpClient
+import net.maxsmr.core.di.YandexGeocodeOkHttpClient
+import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.network.retrofit.client.okhttp.DownloadOkHttpClientManager
 import net.maxsmr.core.network.retrofit.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.retrofit.client.okhttp.RadarIoOkHttpClientManager
@@ -109,11 +110,20 @@ class OkHttpModule {
         ).build()
     }
 
-    @[Provides Singleton YandexOkHttpClient]
-    fun provideYandexOkHttpClient(): OkHttpClient {
+    @[Provides Singleton YandexSuggestOkHttpClient]
+    fun provideYandexSuggestOkHttpClient(): OkHttpClient {
         return YandexOkHttpClientManager(
             NetworkConnectivityChecker,
             BuildConfig.API_KEY_YANDEX_SUGGEST,
+            NETWORK_TIMEOUT
+        ).build()
+    }
+
+    @[Provides Singleton YandexGeocodeOkHttpClient]
+    fun provideYandexGeocodeOkHttpClient(): OkHttpClient {
+        return YandexOkHttpClientManager(
+            NetworkConnectivityChecker,
+            BuildConfig.API_KEY_YANDEX_GEOCODE,
             NETWORK_TIMEOUT
         ).build()
     }

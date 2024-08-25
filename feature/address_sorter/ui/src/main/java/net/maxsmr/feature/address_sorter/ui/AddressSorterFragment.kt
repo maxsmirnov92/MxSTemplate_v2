@@ -159,7 +159,6 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
         adapter.registerItemsEventsListener(this)
 
-        cacheRepo.observePostNotificationPermissionAsked(this)
         doRequestGps()
     }
 

@@ -1,6 +1,8 @@
 package net.maxsmr.core.network.exceptions
 
+import net.maxsmr.commonutils.text.EMPTY_STRING
+
 open class ApiException(
     val code: Int,
-    override val message: String = "",
+    message: String = EMPTY_STRING,
 ) : RuntimeException(message)

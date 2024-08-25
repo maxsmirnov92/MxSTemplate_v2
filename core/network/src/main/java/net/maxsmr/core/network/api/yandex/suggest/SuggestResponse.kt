@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.api.yandex
+package net.maxsmr.core.network.api.yandex.suggest
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -12,7 +12,7 @@ class SuggestResponse(
     val results: List<Result> = emptyList(),
 ) : BaseYandexSuggestResponse() {
 
-    fun asDomain() = results.map { it.asDomain() }.filter { it.address.isNotEmpty() }
+    fun asDomain(): List<AddressSuggest> = results.map { it.asDomain() }.filter { it.address.isNotEmpty() }
 
     @Serializable
     class Result(

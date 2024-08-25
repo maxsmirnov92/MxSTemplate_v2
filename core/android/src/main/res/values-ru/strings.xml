@@ -5,18 +5,8 @@
     <string name="close">Закрыть</string>
     <string name="understand">Понятно</string>
 
-    <string name="error_no_internet">Проверьте настройки интернет-соединения. Если включен VPN - отключите его и повторите попытку</string>
-    <string name="error_server_unavailable">Сервер не отвечает</string>
-    <string name="error_no_connection">Отсутствует соединение</string>
-    <string name="error_no_preferable_connection">Отсутствует предпочтительный тип соединения</string>
-    <string name="error_no_preferable_connection_format">Отсутствует предпочтительный тип соединения (%s)</string>
-    <string name="error_unknown">Неизвестная ошибка</string>
-    <string name="error_unexpected_try_again">Произошла непредвиденная ошибка, попробуйте повторить операцию позже</string>
-    <string name="error_bad_gateway">Время ожидания ответа истекло. Попробуйте повторить запрос позже</string>
     <string name="error_format">Произошла ошибка: \"%s\"</string>
     <string name="error_unexpected">Произошла неизвестная ошибка</string>
-
-    <string name="network_type_cellular">Мобильная</string>
 
     <string name="loading">Загрузка</string>
     <string name="no_data">Нет данных</string>

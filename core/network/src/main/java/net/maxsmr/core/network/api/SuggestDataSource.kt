@@ -4,10 +4,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.radar_io.RadarIoDataService
-import net.maxsmr.core.network.api.yandex.YandexSuggestDataService
+import net.maxsmr.core.network.api.yandex.suggest.YandexSuggestDataService
 import net.maxsmr.core.network.retrofit.client.CommonRetrofitClient
 
-interface AddressDataSource {
+interface SuggestDataSource {
 
     suspend fun suggest(
         query: String,
@@ -18,9 +18,9 @@ interface AddressDataSource {
     ): List<AddressSuggest>
 }
 
-class RadarIoDataSource(
+class RadarIoSuggestDataSource(
     private val retrofit: CommonRetrofitClient,
-) : AddressDataSource {
+) : SuggestDataSource {
 
     override suspend fun suggest(
         query: String,
@@ -40,7 +40,7 @@ class RadarIoDataSource(
 
 class YandexSuggestDataSource(
     private val retrofit: CommonRetrofitClient,
-) : AddressDataSource {
+) : SuggestDataSource {
 
     override suspend fun suggest(
         query: String,

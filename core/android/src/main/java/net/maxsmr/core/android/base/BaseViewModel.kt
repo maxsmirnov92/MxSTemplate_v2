@@ -216,8 +216,8 @@ abstract class BaseViewModel(
 
     private fun showNoInternetDialog() {
         AlertDialogBuilder(DIALOG_TAG_NO_INTERNET)
-            .setTitle(R.string.error_server_unavailable)
-            .setMessage(R.string.error_no_internet)
+            .setTitle(net.maxsmr.core.network.R.string.error_server_unavailable)
+            .setMessage(net.maxsmr.core.network.R.string.error_no_internet)
             .setAnswers(Alert.Answer(R.string.understand))
             .build()
     }

@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -70,8 +69,10 @@ class AddressSorterViewModel @AssistedInject constructor(
             }
         }
         locationViewModel.currentLocation.observe {
-            viewModelScope.launch(Dispatchers.IO) {
-                repo.setLastLocation(it)
+            viewModelScope.launch {
+                it?.let {
+                    repo.setLastLocation(it)
+                }
             }
         }
         items.observe {
@@ -137,11 +138,13 @@ class AddressSorterViewModel @AssistedInject constructor(
      * Для адреса с данным [id] был выбран [AddressSuggestItem] из выпадающего списка
      */
     fun onSuggestSelected(id: Long, suggest: AddressSuggestItem) {
+        dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
-            repo.specifyItem(id, suggest.toDomain())
-//        val current = suggestsLiveData.value?.toMutableMap() ?: mutableMapOf()
+            repo.specifyFromSuggest(id, suggest.toDomain())
+//          val current = suggestsLiveData.value?.toMutableMap() ?: mutableMapOf()
             onRemoveSuggests(id)
-//        suggestsLiveData.value = current
+//          suggestsLiveData.value = current
+            dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
         }
     }
 
@@ -173,17 +176,17 @@ class AddressSorterViewModel @AssistedInject constructor(
         query: String,
     ) {
         suggestsMap[id] = state
-        val resultState = resultItemsState.value
-        resultState?.data?.let { current ->
-            val newItems = current.map {
-                if (it.id == id) {
-                    return@map it.copy(item = it.item.copy(address = query), suggestsLoadState = state)
-                } else {
-                    it
-                }
+
+        val resultState = resultItemsState.value ?: LoadState.success(emptyList())
+        val newItems = resultState.data?.map {
+            if (it.id == id) {
+                return@map it.copy(item = it.item.copy(address = query), suggestsLoadState = state)
+            } else {
+                it
             }
-            resultItemsState.postValue(resultState.copyOf(newItems))
-        }
+        }.orEmpty()
+
+        resultItemsState.postValue(resultState.copyOf(newItems))
     }
 
     private fun onRemoveSuggests(id: Long) {

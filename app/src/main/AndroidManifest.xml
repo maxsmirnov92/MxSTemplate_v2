@@ -121,6 +121,9 @@
                 android:name="net.maxsmr.mxstemplate.initializers.TimberInitializer"
                 android:value="androidx.startup" />
             <meta-data
+                android:name="net.maxsmr.mxstemplate.initializers.RetrofitInitializer"
+                android:value="androidx.startup" />
+            <meta-data
                 android:name="net.maxsmr.mxstemplate.initializers.ModulesInitializer"
                 android:value="androidx.startup" />
         </provider>

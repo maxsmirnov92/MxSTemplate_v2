@@ -15,6 +15,9 @@ import net.maxsmr.commonutils.collection.sort.ISortOption
 import net.maxsmr.commonutils.compareFloats
 import net.maxsmr.commonutils.compareLongs
 import net.maxsmr.commonutils.location.distance
+import net.maxsmr.commonutils.logger.BaseLogger
+import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
 import net.maxsmr.commonutils.readString
 import net.maxsmr.core.android.coroutines.mutableStateIn
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
@@ -23,18 +26,23 @@ import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.NO_
 import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.toAddressEntity
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
-import net.maxsmr.core.network.api.AddressDataSource
+import net.maxsmr.core.network.api.GeocodeDataSource
+import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import java.io.InputStream
+import java.lang.Exception
 import java.util.Locale
 
 class AddressRepoImpl(
     private val dao: AddressDao,
     private val cacheRepo: CacheDataStoreRepository,
     private val json: Json,
-    private val dataSource: AddressDataSource,
+    private val suggestDataSource: SuggestDataSource,
+    private val geocodeDataSource: GeocodeDataSource,
 ) : AddressRepo {
+
+    val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("AddressRepoImpl")
 
     private val ioDispatcher = Dispatchers.IO
 
@@ -87,9 +95,22 @@ class AddressRepoImpl(
         }
     }
 
-    override suspend fun specifyItem(id: Long, suggest: AddressSuggest) {
+    override suspend fun specifyFromSuggest(id: Long, suggest: AddressSuggest) {
         withContext(ioDispatcher) {
-            addFromSuggest(id, suggest)
+            val current = dao.getById(id) ?: return@withContext
+            val geocode = if (suggest.location == null) {
+                // у Яндекса в ответе suggest нет location - отдельный запрос геокодирования
+                try {
+                    geocodeDataSource.geocode(suggest.address, Locale.getDefault().toString())
+                } catch (e: Exception) {
+                    logger.e(formatException(e, "geocode"))
+                    null
+                }
+            } else {
+                null
+            }
+            val result = suggest.toAddressEntity(id, current.sortOrder, geocode?.location)
+            dao.upsert(result)
         }
     }
 
@@ -119,7 +140,7 @@ class AddressRepoImpl(
         return withContext(ioDispatcher) {
             val lastLocation = cacheRepo.getLastLocation()
             val lang = Locale.getDefault().toString().split("_")[0]
-            dataSource.suggest(query, lastLocation?.latitude, lastLocation?.longitude, lang = lang)
+            suggestDataSource.suggest(query, lastLocation?.latitude, lastLocation?.longitude, lang = lang)
         }
     }
 
@@ -154,12 +175,6 @@ class AddressRepoImpl(
             )
         })
     }
-
-    private suspend fun addFromSuggest(id: Long, addressSuggest: AddressSuggest) =
-        withContext(ioDispatcher) {
-            val current = dao.getById(id) ?: return@withContext
-            dao.upsert(addressSuggest.toAddressEntity(id, current.sortOrder))
-        }
 
     private fun List<Address>.addIfNew(item: Address): List<Address> {
         val result = mutableListOf<Address>()
@@ -198,22 +213,23 @@ class AddressRepoImpl(
         }
 
         private fun AddressEntity.getDistanceWithLocation(lastLocation: Address.Location?): Float? {
+
             fun Address.Location.toPointF() = PointF(latitude, longitude)
-            var distance = distance
-            if (distance == null || distance < 0) {
-                val latitude = latitude
-                val longitude = longitude
-                val location = if (latitude != null && longitude != null) {
-                    PointF(latitude, longitude)
-                } else {
-                    null
-                }
-                distance = location?.let {
-                    lastLocation?.toPointF()?.let { lastLocation ->
-                        distance(lastLocation, it).toFloat()
-                    }
+
+            val location = location?.toPointF()
+            var distance: Float? = location?.let {
+                // сначала пробуем пересчитать относительно имеющихся координат
+                lastLocation?.toPointF()?.let { lastLocation ->
+                    distance(lastLocation, it).toFloat()
                 }
             }
+
+            if (distance == null || distance < 0) {
+                // один из location отсутствует или получилось отрицательное -
+                // берётся distance из ответа suggest, если есть
+                distance = this.distance
+            }
+
             return distance
         }
 

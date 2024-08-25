@@ -71,6 +71,11 @@ android {
             "API_KEY_YANDEX_SUGGEST",
             "\"${appProperties.getProperty("apiKeyYandexSuggest")}\""
         )
+        buildConfigField(
+            "String",
+            "API_KEY_YANDEX_GEOCODE",
+            "\"${appProperties.getProperty("apiKeyYandexGeocode")}\""
+        )
         buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getProperty("devEmailAddress")}\"")
 
         val donateProperties = Properties()

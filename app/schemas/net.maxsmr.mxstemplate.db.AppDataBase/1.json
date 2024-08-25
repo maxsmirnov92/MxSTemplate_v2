@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "d9899bc7486ef298a4118d9cfe597de9",
+    "identityHash": "310ec64e3280970e80553728c2b51eda",
     "entities": [
       {
         "tableName": "DownloadInfo",
@@ -50,25 +50,13 @@
       },
       {
         "tableName": "Address",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`address` TEXT NOT NULL, `latitude` REAL, `longitude` REAL, `distance` REAL, `isSuggested` INTEGER NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sortOrder` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`address` TEXT NOT NULL, `distance` REAL, `isSuggested` INTEGER NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sortOrder` INTEGER NOT NULL, `location_latitude` REAL, `location_longitude` REAL)",
         "fields": [
           {
             "fieldPath": "address",
             "columnName": "address",
             "affinity": "TEXT",
             "notNull": true
-          },
-          {
-            "fieldPath": "latitude",
-            "columnName": "latitude",
-            "affinity": "REAL",
-            "notNull": false
-          },
-          {
-            "fieldPath": "longitude",
-            "columnName": "longitude",
-            "affinity": "REAL",
-            "notNull": false
           },
           {
             "fieldPath": "distance",
@@ -93,6 +81,18 @@
             "columnName": "sortOrder",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "location.latitude",
+            "columnName": "location_latitude",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "location.longitude",
+            "columnName": "location_longitude",
+            "affinity": "REAL",
+            "notNull": false
           }
         ],
         "primaryKey": {
@@ -108,7 +108,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd9899bc7486ef298a4118d9cfe597de9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '310ec64e3280970e80553728c2b51eda')"
     ]
   }
 }

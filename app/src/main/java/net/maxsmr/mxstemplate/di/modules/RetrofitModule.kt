@@ -12,9 +12,10 @@ import net.maxsmr.core.di.RadarIoHostManager
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.RadarIoRetrofit
 import net.maxsmr.core.di.YandexGeocodeHostManager
+import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexGeocodeRetrofit
 import net.maxsmr.core.di.YandexSuggestHostManager
-import net.maxsmr.core.di.YandexOkHttpClient
+import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.di.YandexSuggestRetrofit
 import net.maxsmr.core.network.retrofit.client.CommonRetrofitClient
 import net.maxsmr.core.network.retrofit.client.YandexGeocodeRetrofitClient
@@ -51,7 +52,7 @@ class RetrofitModule {
     fun provideYandexSuggestRetrofit(
         @ApplicationContext context: Context,
         @YandexSuggestHostManager hostManager: HostManager,
-        @YandexOkHttpClient okHttpClient: OkHttpClient,
+        @YandexSuggestOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
@@ -69,7 +70,7 @@ class RetrofitModule {
     fun provideYandexGeocodeRetrofit(
         @ApplicationContext context: Context,
         @YandexGeocodeHostManager hostManager: HostManager,
-        @YandexOkHttpClient okHttpClient: OkHttpClient,
+        @YandexGeocodeOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
     ): YandexGeocodeRetrofitClient {
         return YandexGeocodeRetrofitClient(

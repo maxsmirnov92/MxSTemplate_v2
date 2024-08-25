@@ -245,22 +245,22 @@ fun downloadInfoAdapterDelegate(listener: DownloadListener) =
                             val message = if (error is NoPreferableConnectivityException) {
                                 val typeNames = error.types.map {
                                     when (it) {
-                                        CELLULAR -> context.getString(net.maxsmr.core.android.R.string.network_type_cellular)
-                                        WIFI -> context.getString(net.maxsmr.core.android.R.string.network_type_wifi)
+                                        CELLULAR -> context.getString(net.maxsmr.core.network.R.string.network_type_cellular)
+                                        WIFI -> context.getString(net.maxsmr.core.network.R.string.network_type_wifi)
                                     }
                                 }
                                 if (typeNames.isNotEmpty()) {
                                     context.getString(
-                                        net.maxsmr.core.android.R.string.error_no_preferable_connection_format,
+                                        net.maxsmr.core.network.R.string.error_no_preferable_connection_format,
                                         typeNames.joinToString("/")
                                     )
                                 } else {
                                     context.getString(
-                                        net.maxsmr.core.android.R.string.error_no_preferable_connection
+                                        net.maxsmr.core.network.R.string.error_no_preferable_connection
                                     )
                                 }
                             } else if (error is NoConnectivityException) {
-                                context.getString(net.maxsmr.core.android.R.string.error_no_connection)
+                                context.getString(net.maxsmr.core.network.R.string.error_no_connection)
                             } else {
                                 error?.message?.takeIf { it.isNotEmpty() }
                             }

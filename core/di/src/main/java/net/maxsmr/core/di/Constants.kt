@@ -53,7 +53,11 @@ annotation class RadarIoOkHttpClient
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
-annotation class YandexOkHttpClient
+annotation class YandexSuggestOkHttpClient
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class YandexGeocodeOkHttpClient
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)

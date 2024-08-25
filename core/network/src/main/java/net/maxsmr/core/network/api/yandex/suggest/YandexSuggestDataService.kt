@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.api.yandex
+package net.maxsmr.core.network.api.yandex.suggest
 
 import net.maxsmr.core.network.retrofit.client.CommonRetrofitClient
 import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
@@ -7,13 +7,6 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 internal interface YandexSuggestDataService {
-
-//    @Authorization
-//    @GET("1.x")
-//    suspend fun geocode(
-//        @Query("geocode") geocode: String,
-//        @Query("lang") lang: String = "RU"
-//    ): GeocodeResponse
 
     /**
      * @param text Пользовательский ввод (префикс). Непустая строка в кодировке UTF-8.

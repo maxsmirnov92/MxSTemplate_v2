@@ -22,7 +22,7 @@ interface AddressRepo {
 
     suspend fun clearItems()
 
-    suspend fun specifyItem(id: Long, suggest: AddressSuggest)
+    suspend fun specifyFromSuggest(id: Long, suggest: AddressSuggest)
 
     suspend fun updateSortOrder(ids: List<Long>)
 

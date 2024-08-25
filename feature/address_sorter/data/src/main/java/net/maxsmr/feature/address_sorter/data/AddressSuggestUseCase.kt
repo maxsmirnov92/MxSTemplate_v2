@@ -8,10 +8,12 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.FlowUseCase
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.android.coroutines.usecase.asUseCaseResult
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
+import net.maxsmr.core.network.exceptions.EmptyResponseException
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import javax.inject.Inject
 
@@ -40,7 +42,12 @@ class AddressSuggestUseCase @Inject constructor(
                         emit(UseCaseResult.Loading)
 //                        delay(5000)
                         val result = try {
-                            UseCaseResult.Success(repository.suggestWithUpdate(p.id, p.query))
+                            val result = repository.suggestWithUpdate(p.id, p.query)
+                            if (result.isEmpty()) {
+                                UseCaseResult.Error(EmptyResponseException(baseApplicationContext))
+                            } else {
+                                UseCaseResult.Success(result)
+                            }
                         } catch (e: Exception) {
                             e.asUseCaseResult()
                         }

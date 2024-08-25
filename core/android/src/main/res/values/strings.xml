@@ -6,19 +6,9 @@
     <string name="close">Close</string>
     <string name="understand">Understood</string>
 
-    <string name="error_no_internet">There is no internet connection, check the Internet connection settings.</string>
-    <string name="error_server_unavailable">Server not responding</string>
-    <string name="error_no_connection">No connection</string>
-    <string name="error_no_preferable_connection">No preferable connection type</string>
-    <string name="error_no_preferable_connection_format">No preferable connection type (%s)</string>
-    <string name="error_unknown">Unknown error</string>
-    <string name="error_unexpected_try_again">An unexpected error occurred, please try again later</string>
-    <string name="error_bad_gateway">Request timeout is expired. Try again later</string>
     <string name="error_format">Error occurred: \"%s\"</string>
     <string name="error_unexpected">Unexpected error occurred</string>
 
-    <string name="network_type_cellular">Cellular</string>
-    <string name="network_type_wifi" translatable="false">Wi-Fi</string>
 
     <string name="loading">Loading</string>
     <string name="no_data">No data</string>
