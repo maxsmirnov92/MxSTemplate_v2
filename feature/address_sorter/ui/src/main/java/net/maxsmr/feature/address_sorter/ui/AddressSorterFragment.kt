@@ -14,12 +14,9 @@ import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDel
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
 import net.maxsmr.commonutils.getViewLocationIntent
-import net.maxsmr.commonutils.gui.message.PluralTextMessage
-import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.runAction
 import net.maxsmr.commonutils.gui.scrollTo
-import net.maxsmr.core.android.base.actions.SnackbarExtraData
-import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
+import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
@@ -37,7 +34,6 @@ import net.maxsmr.feature.address_sorter.ui.databinding.FragmentAddressSorterBin
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
-import kotlin.math.roundToInt
 
 @AndroidEntryPoint
 class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
@@ -109,6 +105,8 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
     private var refreshMenuItem: MenuItem? = null
 
+    private var clearMenuItem: MenuItem? = null
+
     private var shouldScrollToEnd: Boolean = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: AddressSorterViewModel) {
@@ -146,18 +144,18 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                     adapter.items = items
                     rvContent.isVisible = true
                     containerEmpty.isVisible = false
-                    refreshMenuItem?.isEnabled = !state.isLoading
                     if (shouldScrollToEnd) {
                         rvContent.runAction {
                             rvContent.scrollTo(items.size - 1, true)
                         }
                         shouldScrollToEnd = false
                     }
+
                 } else {
                     rvContent.isVisible = false
                     containerEmpty.isVisible = true
-                    refreshMenuItem?.isEnabled = false
                 }
+                refreshMenuItems(state)
             }
         }
 
@@ -174,6 +172,8 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
         refreshMenuItem = menu.findItem(R.id.actionRefresh)
+        clearMenuItem = menu.findItem(R.id.actionClear)
+        refreshMenuItems(viewModel.resultItemsState.value)
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -246,6 +246,20 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                 }
             }
         )
+    }
+
+    private fun refreshMenuItems(state: LoadState<List<AddressInputData>>?) {
+        val items = listOf(refreshMenuItem, clearMenuItem)
+        val data = state?.data.orEmpty()
+        items.forEach {
+            it?.let {
+                if (data.isNotEmpty()) {
+                    it.isVisible = state?.isLoading == false
+                } else {
+                    it.isVisible = false
+                }
+            }
+        }
     }
 
     companion object {

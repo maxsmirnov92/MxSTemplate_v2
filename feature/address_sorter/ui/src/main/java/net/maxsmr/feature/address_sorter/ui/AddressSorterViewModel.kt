@@ -80,7 +80,7 @@ class AddressSorterViewModel @AssistedInject constructor(
             }
         }
         items.observe {
-            resultItemsState.setValueIfNew(LoadState.success(it.mergeWithSuggests()))
+            resultItemsState.value = LoadState.success(it.mergeWithSuggests())
             it.refreshFlows()
         }
     }
@@ -163,9 +163,11 @@ class AddressSorterViewModel @AssistedInject constructor(
     fun onSuggestSelected(id: Long, suggest: AddressSuggestItem) {
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
+            // убрать только из мапы
+            onRemoveSuggests(id, true)
+            // дальше должен быть mergeWithSuggests в Observer
             repo.specifyFromSuggest(id, suggest.toDomain())
 //          val current = suggestsLiveData.value?.toMutableMap() ?: mutableMapOf()
-            onRemoveSuggests(id)
 //          suggestsLiveData.value = current
             dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
         }
@@ -199,32 +201,34 @@ class AddressSorterViewModel @AssistedInject constructor(
         query: String,
     ) {
         suggestsMap[id] = state
-
         val resultState = resultItemsState.value ?: LoadState.success(emptyList())
         val newItems = resultState.data?.map {
             if (it.id == id) {
-                return@map it.copy(item = it.item.copy(address = query), suggestsLoadState = state)
+                return@map it.copy(
+                    item = it.item.copy(address = query, isSuggested = false),
+                    suggestsLoadState = state
+                )
             } else {
                 it
             }
         }.orEmpty()
-
         resultItemsState.postValue(resultState.copyOf(newItems))
     }
 
-    private fun onRemoveSuggests(id: Long) {
+    private fun onRemoveSuggests(id: Long, isFromMapOnly: Boolean) {
         suggestsMap.remove(id)?.let {
-            val resultState = resultItemsState.value
-            resultState?.data?.let { current ->
-                val newItems = current.map {
-                    if (it.id == id) {
-                        it.copy(suggestsLoadState = LoadState.success(listOf()))
-                    } else {
-                        it
-                    }
+            if (isFromMapOnly) return@let
+            val resultState = resultItemsState.value ?: LoadState.success(emptyList())
+            val data = resultState.data.orEmpty()
+            if (!data.any { it.id == id && it.suggestsLoadState.hasData() }) return
+            val newItems = data.map {
+                if (it.id == id) {
+                    it.copy(suggestsLoadState = LoadState.success(listOf()))
+                } else {
+                    it
                 }
-                resultItemsState.postValue(resultState.copyOf(newItems))
             }
+            resultItemsState.postValue(resultState.copyOf(newItems))
         }
     }
 
@@ -253,7 +257,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                 val info = it.value
                 info.startedJob.cancel()
                 suggestFlowMap.remove(it.key)
-                onRemoveSuggests(it.key)
+                onRemoveSuggests(it.key, false)
             }
         }
     }
