@@ -1,17 +1,29 @@
-package net.maxsmr.core.network.retrofit.client.okhttp
+package net.maxsmr.core.network.client.okhttp
 
+import androidx.annotation.CallSuper
+import net.maxsmr.core.network.client.okhttp.interceptors.ResponseErrorMessageInterceptor
 import okhttp3.OkHttpClient
+import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 
+/**
+ * @param [retrofitProvider] при наличии [Retrofit] будет задейстоваться [ResponseErrorMessageInterceptor]
+ */
 abstract class BaseOkHttpClientManager(
     private val callTimeout: Long,
     private val readTimeout: Long = 0L,
     private val writeTimeout: Long = 0L,
     private val connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
-    private val retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT
+    private val retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
+    private val retrofitProvider: (() -> Retrofit)? = null,
 ) {
 
-    protected abstract fun OkHttpClient.Builder.configureBuild()
+    @CallSuper
+    protected open fun configureBuild(builder: OkHttpClient.Builder) {
+        retrofitProvider?.let {
+            builder.addInterceptor(ResponseErrorMessageInterceptor(it))
+        }
+    }
 
     fun build(): OkHttpClient {
         return OkHttpClient.Builder().apply {
@@ -19,7 +31,7 @@ abstract class BaseOkHttpClientManager(
                 connectTimeout, readTimeout, writeTimeout, callTimeout
             )
             retryOnConnectionFailure(retryOnConnectionFailure)
-            configureBuild()
+            configureBuild(this)
         }.build()
     }
 

@@ -17,9 +17,9 @@ import net.maxsmr.core.di.YandexGeocodeRetrofit
 import net.maxsmr.core.di.YandexSuggestHostManager
 import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.di.YandexSuggestRetrofit
-import net.maxsmr.core.network.retrofit.client.CommonRetrofitClient
-import net.maxsmr.core.network.retrofit.client.YandexGeocodeRetrofitClient
-import net.maxsmr.core.network.retrofit.interceptors.HostManager
+import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
+import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
+import net.maxsmr.core.network.HostManager
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient

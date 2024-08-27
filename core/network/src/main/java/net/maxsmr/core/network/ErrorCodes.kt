@@ -5,8 +5,7 @@ import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 
 const val UNKNOWN_ERROR = -1
-const val NO_ERROR = 0
-const val SUCCESS = 200
+const val NO_ERROR_API = 0
 
 /**
  * Отсутствие сетевого ответа (оффлайн, от сервера не пришло никакого кода)

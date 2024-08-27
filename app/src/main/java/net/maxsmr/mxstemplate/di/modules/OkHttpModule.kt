@@ -4,10 +4,12 @@ import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.network.NetworkConnectivityChecker
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.di.DownloadHttpLoggingInterceptor
@@ -17,12 +19,13 @@ import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexSuggestOkHttpClient
-import net.maxsmr.core.network.retrofit.client.okhttp.DownloadOkHttpClientManager
-import net.maxsmr.core.network.retrofit.client.okhttp.PicassoOkHttpClientManager
-import net.maxsmr.core.network.retrofit.client.okhttp.RadarIoOkHttpClientManager
-import net.maxsmr.core.network.retrofit.client.okhttp.YandexOkHttpClientManager
-import net.maxsmr.core.network.retrofit.interceptors.NetworkConnectionInterceptor
+import net.maxsmr.core.network.client.okhttp.DownloadOkHttpClientManager
+import net.maxsmr.core.network.client.okhttp.PicassoOkHttpClientManager
+import net.maxsmr.core.network.client.okhttp.RadarIoOkHttpClientManager
+import net.maxsmr.core.network.client.okhttp.YandexOkHttpClientManager
+import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
 import net.maxsmr.mxstemplate.BuildConfig
+import net.maxsmr.mxstemplate.di.ModuleAppEntryPoint
 import okhttp3.CacheControl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -107,7 +110,10 @@ class OkHttpModule {
             NetworkConnectivityChecker,
             BuildConfig.AUTHORIZATION_RADAR_IO,
             NETWORK_TIMEOUT
-        ).build()
+        ) {
+            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
+                .radarIoRetrofit().instance
+        }.build()
     }
 
     @[Provides Singleton YandexSuggestOkHttpClient]
@@ -116,7 +122,10 @@ class OkHttpModule {
             NetworkConnectivityChecker,
             BuildConfig.API_KEY_YANDEX_SUGGEST,
             NETWORK_TIMEOUT
-        ).build()
+        ) {
+            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
+                .yandexSuggestRetrofit().instance
+        }.build()
     }
 
     @[Provides Singleton YandexGeocodeOkHttpClient]
@@ -125,6 +134,9 @@ class OkHttpModule {
             NetworkConnectivityChecker,
             BuildConfig.API_KEY_YANDEX_GEOCODE,
             NETWORK_TIMEOUT
-        ).build()
+        ) {
+            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
+                .yandexGeocodeRetrofit().instance
+        }.build()
     }
 }

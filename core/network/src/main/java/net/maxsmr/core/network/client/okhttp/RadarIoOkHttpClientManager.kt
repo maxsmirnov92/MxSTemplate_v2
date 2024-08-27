@@ -1,33 +1,38 @@
-package net.maxsmr.core.network.retrofit.client.okhttp
+package net.maxsmr.core.network.client.okhttp
 
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.core.network.retrofit.interceptors.ApiLoggingInterceptor
-import net.maxsmr.core.network.retrofit.interceptors.Authorization
-import net.maxsmr.core.network.retrofit.interceptors.ConnectivityChecker
-import net.maxsmr.core.network.retrofit.interceptors.NetworkConnectionInterceptor
+import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
+import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
+import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
+import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import retrofit2.Invocation
+import retrofit2.Retrofit
 
 class RadarIoOkHttpClientManager(
     private val connectivityChecker: ConnectivityChecker,
     private val authorization: String,
     callTimeout: Long,
-) : BaseOkHttpClientManager(callTimeout) {
+    retrofitProvider: (() -> Retrofit),
+) : BaseOkHttpClientManager(callTimeout, retrofitProvider = retrofitProvider) {
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("RadarIoOkHttpClientManager")
 
-    override fun OkHttpClient.Builder.configureBuild() {
-        addInterceptor(NetworkConnectionInterceptor(connectivityChecker))
-        addInterceptor(RadarIoInterceptor(authorization))
-        val loggingInterceptor = ApiLoggingInterceptor { message: String ->
-            logger.d(message)
+    override fun configureBuild(builder: OkHttpClient.Builder) {
+        with(builder) {
+            super.configureBuild(this)
+            addInterceptor(NetworkConnectionInterceptor(connectivityChecker))
+            addInterceptor(RadarIoInterceptor(authorization))
+            val loggingInterceptor = ApiLoggingInterceptor { message: String ->
+                logger.d(message)
+            }
+            loggingInterceptor.setLevel(ApiLoggingInterceptor.Level.HEADERS_AND_BODY)
+            addInterceptor(loggingInterceptor)
         }
-        loggingInterceptor.setLevel(ApiLoggingInterceptor.Level.HEADERS_AND_BODY)
-        addInterceptor(loggingInterceptor)
     }
 
     internal class RadarIoInterceptor(private val authorization: String,) : Interceptor {

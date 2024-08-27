@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.retrofit.interceptors
+package net.maxsmr.core.network.client.okhttp.interceptors
 
 /**
  * Данной аннотацией помечаются запросы, в которые будут автоматически добавлены сервисные поля

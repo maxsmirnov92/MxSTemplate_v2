@@ -6,7 +6,7 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.radar_io.RadarIoDataService
 import net.maxsmr.core.network.api.yandex.suggest.YandexSuggestDataService
-import net.maxsmr.core.network.retrofit.client.CommonRetrofitClient
+import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
 
 interface SuggestDataSource {
 

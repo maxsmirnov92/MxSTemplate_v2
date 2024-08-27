@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.retrofit.client
+package net.maxsmr.core.network.client.retrofit
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
@@ -17,11 +17,14 @@ class YandexGeocodeRetrofitClient(
     cachePath: String,
     protocolVersion: Int,
     disableCache: Boolean,
-): BaseRetrofitClient(baseUrl, client, json, cachePath, protocolVersion, disableCache) {
+) : BaseRetrofitClient(baseUrl, client, json, cachePath, protocolVersion, disableCache) {
 
     override fun Retrofit.Builder.configureBuild(json: Json) {
-        addConverterFactory(EnvelopeObjectTypeConverter<YandexGeocodeEnvelope<*>, BaseEnvelopeWithObject<Any>>(
-            YandexGeocodeEnvelope::class.java))
+        addConverterFactory(
+            EnvelopeObjectTypeConverter<YandexGeocodeEnvelope<*>, BaseEnvelopeWithObject<Any>>(
+                YandexGeocodeEnvelope::class.java
+            )
+        )
         addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
     }
 }

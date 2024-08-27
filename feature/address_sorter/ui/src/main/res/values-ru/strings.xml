@@ -9,8 +9,8 @@
     <string name="address_sorter_snackbar_address_add_error_message">Не удалось добавить адреса</string>
     <string name="address_sorter_dialog_clear_items_message">Убрать все адреса?</string>
     <string name="address_sorter_toast_distance_to_point_format">Растояние до места: %s</string>
-    <string name="address_sorter_error_location_format">Произошла ошибка при уточнении координат: %s</string>
+    <string name="address_sorter_error_location_format">Произошла ошибка при уточнении координат: \"%s\"</string>
     <string name="address_sorter_error_location">Произошла неизвестная ошибка при уточнении координат</string>
-    <string name="address_sorter_error_distance_format">Произошла ошибка при подсчёте расстояния/времени до места: %s</string>
+    <string name="address_sorter_error_distance_format">Произошла ошибка при подсчёте расстояния/времени до места: \"%s\"</string>
     <string name="address_sorter_error_distance">Произошла неизвестная ошибка при подсчёте расстояния/времени до места</string>
 </resources>

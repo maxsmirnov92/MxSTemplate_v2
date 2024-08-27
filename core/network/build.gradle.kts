@@ -16,9 +16,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
     // Network
-    implementation(libs.okhttp)
+    api(libs.okhttp)
 //    implementation(libs.volley)
-    implementation(libs.retrofit)
+    api(libs.retrofit)
     implementation(libs.retrofit.kotlinx.serializationConverter)
     implementation(libs.okhttp.loggingInterceptor)
 

@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.retrofit.client.okhttp
+package net.maxsmr.core.network.client.okhttp
 
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -10,8 +10,11 @@ class PicassoOkHttpClientManager(
     timeout: Long,
 ): BaseOkHttpClientManager(0, timeout, timeout, timeout) {
 
-    override fun OkHttpClient.Builder.configureBuild() {
-        addInterceptor(forceCacheInterceptor)
-        addInterceptor(httpLoggingInterceptor)
+    override fun configureBuild(builder: OkHttpClient.Builder) {
+        with(builder) {
+            super.configureBuild(this)
+            addInterceptor(forceCacheInterceptor)
+            addInterceptor(httpLoggingInterceptor)
+        }
     }
 }

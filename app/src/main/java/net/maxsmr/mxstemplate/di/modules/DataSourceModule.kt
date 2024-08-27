@@ -10,8 +10,8 @@ import net.maxsmr.core.network.api.GeocodeDataSource
 import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.api.YandexGeocodeDataSource
 import net.maxsmr.core.network.api.YandexSuggestDataSource
-import net.maxsmr.core.network.retrofit.client.CommonRetrofitClient
-import net.maxsmr.core.network.retrofit.client.YandexGeocodeRetrofitClient
+import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
+import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
 import javax.inject.Singleton
 
 @[Module

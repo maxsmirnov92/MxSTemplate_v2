@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.retrofit.client
+package net.maxsmr.core.network.client.retrofit
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json

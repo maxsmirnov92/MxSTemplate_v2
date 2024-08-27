@@ -12,7 +12,7 @@ import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.BuildConfig
 import net.maxsmr.core.android.R
-import net.maxsmr.core.network.NO_ERROR
+import net.maxsmr.core.network.NO_ERROR_API
 import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.exceptions.NoConnectivityException
@@ -117,7 +117,7 @@ fun <T> UseCaseResult<T>?.isNetworkError(): Boolean {
 
 fun <T> UseCaseResult<T>.getErrorCode(): Int = when (this) {
     is UseCaseResult.Error -> exception.getErrorCode()
-    else -> NO_ERROR
+    else -> NO_ERROR_API
 }
 
 fun <T> Flow<T>.asUseCaseResult(): Flow<UseCaseResult<T>> {

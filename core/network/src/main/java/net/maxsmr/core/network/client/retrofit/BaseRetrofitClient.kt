@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.retrofit.client
+package net.maxsmr.core.network.client.retrofit
 
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.network.retrofit.internal.cache.CacheWrapper
@@ -18,7 +18,8 @@ abstract class BaseRetrofitClient(
 ) {
 
     @Volatile
-    protected lateinit var instance: Retrofit
+    lateinit var instance: Retrofit
+        private set
 
     private var cacheWrapper: CacheWrapper? = null
 
@@ -30,7 +31,7 @@ abstract class BaseRetrofitClient(
                         CacheWrapper(json, cachePath.toPath(), FileSystem.SYSTEM, protocolVersion)
                 }
 
-                instance = build(baseUrl, client, json)
+                instance = build()
             }
         }
     }
@@ -47,11 +48,7 @@ abstract class BaseRetrofitClient(
 
     protected abstract fun Retrofit.Builder.configureBuild(json: Json)
 
-    private fun build(
-        baseUrl: HttpUrl?,
-        client: OkHttpClient,
-        json: Json,
-    ) = Retrofit.Builder().apply {
+    private fun build() = Retrofit.Builder().apply {
         baseUrl?.let { baseUrl(it) }
         client(client)
         configureBuild(json)

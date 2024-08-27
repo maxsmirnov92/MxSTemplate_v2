@@ -1,6 +1,6 @@
 package net.maxsmr.core.android.network
 
-import net.maxsmr.core.network.retrofit.interceptors.ConnectivityChecker
+import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
 
 object NetworkConnectivityChecker: ConnectivityChecker {
 

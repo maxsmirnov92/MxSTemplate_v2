@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.retrofit.interceptors
+package net.maxsmr.core.network.client.okhttp.interceptors
 
 import okhttp3.Interceptor
 import okhttp3.Request

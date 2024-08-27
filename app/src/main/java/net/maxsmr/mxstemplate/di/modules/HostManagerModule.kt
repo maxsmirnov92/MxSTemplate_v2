@@ -4,7 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import net.maxsmr.core.network.retrofit.interceptors.HostManager
+import net.maxsmr.core.network.HostManager
 import net.maxsmr.mxstemplate.manager.host.RadarIoHostManager
 import net.maxsmr.mxstemplate.manager.host.YandexGeocodeHostManager
 import net.maxsmr.mxstemplate.manager.host.YandexSuggestHostManager

@@ -2,7 +2,7 @@ package net.maxsmr.core.network.api
 
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.network.api.yandex.geocode.YandexGeocodeDataService
-import net.maxsmr.core.network.retrofit.client.YandexGeocodeRetrofitClient
+import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
 
 interface GeocodeDataSource {
 

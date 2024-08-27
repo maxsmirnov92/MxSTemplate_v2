@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.retrofit.interceptors
+package net.maxsmr.core.network
 
 interface HostManager {
 

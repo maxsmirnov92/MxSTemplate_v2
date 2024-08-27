@@ -38,7 +38,7 @@ open class HttpProtocolException(
         return "HttpProtocolException(url='$url', " +
                 "method='$method', " +
                 "requestHeaders=${requestHeaders.headersToString()}, " +
-                "requestBodyString='$requestBodyString.toSt', " +
+                "requestBodyString='$requestBodyString', " +
                 "responseCode=$responseCode, " +
                 "responseMessage='$responseMessage', " +
                 "responseBodyString='$responseBodyString', " +

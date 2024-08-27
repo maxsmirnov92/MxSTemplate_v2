@@ -1,6 +1,6 @@
-package net.maxsmr.core.network.retrofit.client.okhttp
+package net.maxsmr.core.network.client.okhttp
 
-import net.maxsmr.core.network.retrofit.interceptors.NetworkConnectionInterceptor
+import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 
@@ -11,8 +11,11 @@ class DownloadOkHttpClientManager(
     retryOnConnectionFailure: Boolean = true
 ): BaseOkHttpClientManager(0, timeout, timeout, timeout, retryOnConnectionFailure) {
 
-    override fun OkHttpClient.Builder.configureBuild() {
-        addInterceptor(networkConnectionInterceptor)
-        addInterceptor(httpLoggingInterceptor)
+    override fun configureBuild(builder: OkHttpClient.Builder) {
+        with(builder) {
+            super.configureBuild(this)
+            addInterceptor(networkConnectionInterceptor)
+            addInterceptor(httpLoggingInterceptor)
+        }
     }
 }

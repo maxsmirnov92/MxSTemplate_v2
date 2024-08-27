@@ -1,9 +1,7 @@
-package net.maxsmr.core.network.retrofit.interceptors
+package net.maxsmr.core.network.client.okhttp.interceptors
 
-import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.network.SessionStorage
 import net.maxsmr.core.network.asString
-import net.maxsmr.core.network.retrofit.interceptors.InterceptorUtils.toJSONObject
+import net.maxsmr.core.network.client.okhttp.interceptors.InterceptorUtils.toJSONObject
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -15,7 +13,7 @@ class AdditionalInfoInterceptor(
     private val deviceGuid: String,
     private val platform: String,
     private val version: String,
-    private val sessionStorage: SessionStorage,
+//    private val sessionStorage: SessionStorage,
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -36,11 +34,11 @@ class AdditionalInfoInterceptor(
 
                         val json = request.asString()?.toJSONObject()
 
-                        val sessionId: String = if (needSession) {
-                            sessionStorage.session.orEmpty()
-                        } else {
-                            EMPTY_STRING
-                        }
+//                        val sessionId: String = if (needSession) {
+//                            sessionStorage.session.orEmpty()
+//                        } else {
+//                            EMPTY_STRING
+//                        }
 
                         request = request.newBuilder().tag(JSONObject::class.java, json)
                             .post(json.toString().toRequestBody(requestBody.contentType())).build()

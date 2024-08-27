@@ -63,6 +63,9 @@ import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.ContentDispositionType
 import net.maxsmr.core.network.ProgressRequestBody
 import net.maxsmr.core.network.ProgressResponseBody
+import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.CONNECT_TIMEOUT_DEFAULT
+import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.RETRY_ON_CONNECTION_FAILURE_DEFAULT
+import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.withTimeouts
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType
@@ -71,9 +74,6 @@ import net.maxsmr.core.network.getFileNameFromAttachmentHeader
 import net.maxsmr.core.network.hasBytesAcceptRanges
 import net.maxsmr.core.network.hasContentDisposition
 import net.maxsmr.core.network.newCallSuspended
-import net.maxsmr.core.network.retrofit.client.okhttp.BaseOkHttpClientManager.Companion.CONNECT_TIMEOUT_DEFAULT
-import net.maxsmr.core.network.retrofit.client.okhttp.BaseOkHttpClientManager.Companion.RETRY_ON_CONNECTION_FAILURE_DEFAULT
-import net.maxsmr.core.network.retrofit.client.okhttp.BaseOkHttpClientManager.Companion.withTimeouts
 import net.maxsmr.core.network.writeBufferedOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
 import net.maxsmr.feature.download.data.DownloadService.NotificationParams

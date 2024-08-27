@@ -9,8 +9,8 @@
     <string name="address_sorter_snackbar_address_add_error_message">Cannot add addresses</string>
     <string name="address_sorter_dialog_clear_items_message">Remove all addresses?</string>
     <string name="address_sorter_toast_distance_to_point_format">Distance to point: %s</string>
-    <string name="address_sorter_error_location_format">Error occurred when specifying location: %s</string>
+    <string name="address_sorter_error_location_format">Error occurred when specifying location: \"%s\"</string>
     <string name="address_sorter_error_location">Unknown error occurred when specifying location</string>
-    <string name="address_sorter_error_distance_format">Error occurred when calculating distance/time: %s</string>
+    <string name="address_sorter_error_distance_format">Error occurred when calculating distance/time: \"%s\"</string>
     <string name="address_sorter_error_distance">Unknown error occurred when calculating distance/time</string>
 </resources>

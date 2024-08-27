@@ -1,7 +1,7 @@
 package net.maxsmr.mxstemplate.manager.host
 
-import net.maxsmr.core.network.retrofit.interceptors.HostChangeListener
-import net.maxsmr.core.network.retrofit.interceptors.HostManager
+import net.maxsmr.core.network.HostChangeListener
+import net.maxsmr.core.network.HostManager
 
 class RadarIoHostManager: HostManager {
 
