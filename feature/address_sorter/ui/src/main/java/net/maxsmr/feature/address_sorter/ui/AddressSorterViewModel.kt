@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.PluralTextMessage
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.commonutils.media.openInputStream
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
@@ -36,6 +35,7 @@ import net.maxsmr.feature.address_sorter.data.AddressSuggestUseCase
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
+import net.maxsmr.feature.address_sorter.ui.adapter.AddressExceptionData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import java.io.Serializable
 import kotlin.math.roundToInt
@@ -157,6 +157,28 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
     }
 
+    fun onExceptionClose(id: Long, type: Address.ExceptionType) {
+        viewModelScope.launch {
+            repo.updateItem(id) {
+                it.copy(
+                    locationException = if (type == Address.ExceptionType.LOCATION) {
+                        null
+                    } else {
+                        it.locationException
+                    },
+                    distanceException = if (type == Address.ExceptionType.DISTANCE) {
+                        null
+                    } else {
+                        it.distanceException
+                    },
+                ).apply {
+                    this.id = id
+                    this.sortOrder = it.sortOrder
+                }
+            }
+        }
+    }
+
     /**
      * Для адреса с данным [id] был выбран [AddressSuggestItem] из выпадающего списка
      */
@@ -266,7 +288,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         val result = mutableListOf<AddressInputData>()
         forEach { item ->
             suggestsMap[item.id]?.let {
-                result.add(AddressInputData(item, it))
+                result.add(AddressInputData(item, it, ))
             } ?: result.add(AddressInputData(item, LoadState.success(listOf())))
         }
         return result
@@ -283,13 +305,16 @@ class AddressSorterViewModel @AssistedInject constructor(
         val location: Address.Location?,
         val distance: Float?,
         val isSuggested: Boolean,
+        val exceptionsData: ArrayList<AddressExceptionData>
     ) : Serializable {
 
         companion object {
 
             fun Address.toUi() = AddressItem(
-                id, address, location, distance, isSuggested
-            )
+                id, address, location, distance, isSuggested, ArrayList(exceptionsMap.entries.map {
+                    AddressExceptionData(it.key, it.value)
+                }
+            ))
         }
     }
 

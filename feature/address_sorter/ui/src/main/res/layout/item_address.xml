@@ -1,84 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:orientation="vertical"
     android:paddingVertical="2dp">
 
-    <FrameLayout
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_toLeftOf="@+id/containerButtons"
-        android:paddingVertical="4dp">
+        android:layout_height="wrap_content">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/tilText"
-            style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-            <!--        android:theme="@style/Theme.MaterialComponents.Light"-->
+            android:layout_height="wrap_content"
+            android:layout_toLeftOf="@+id/containerButtons"
+            android:paddingVertical="4dp">
 
-            <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                android:id="@+id/etText"
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilText"
+                style="@style/Widget.MaterialComponents.TextInputLayout.FilledBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:dropDownAnchor="@id/tilText"
-                android:focusableInTouchMode="true"
-                android:inputType="textNoSuggestions|textCapWords|textMultiLine"
-                android:maxEms="30"
-                android:textSize="@dimen/textSizeExtraMini"
-                app:firstBaselineToTopHeight="47dp" />
+                app:hintEnabled="false">
+                <!--        android:theme="@style/Theme.MaterialComponents.Light"-->
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/etText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:dropDownAnchor="@id/tilText"
+                    android:focusableInTouchMode="true"
+                    android:hint="@string/address_sorter_edit_hint"
+                    android:imeOptions="flagNoExtractUi"
+                    android:inputType="textNoSuggestions|textCapWords|textMultiLine"
+                    android:maxEms="30"
+                    android:textSize="@dimen/textSizeExtraMini"
+                    app:firstBaselineToTopHeight="47dp" />
 
-        <ImageButton
-            android:id="@+id/ibClear"
-            style="@style/Widget.AppCompat.ActionButton"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:layout_gravity="top|end"
-            android:background="@null"
-            android:scaleType="centerCrop"
-            app:srcCompat="@drawable/ic_close_clear_cancel_black_gray"
-            app:tint="@color/black" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-    </FrameLayout>
+            <ImageButton
+                android:id="@+id/ibClear"
+                style="@style/Widget.AppCompat.ActionButton"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="top|end"
+                android:background="@null"
+                android:scaleType="centerCrop"
+                app:srcCompat="@drawable/ic_close_clear_cancel_black_gray"
+                app:tint="@color/black" />
 
-    <LinearLayout
-        android:id="@+id/containerButtons"
-        android:layout_width="wrap_content"
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/containerButtons"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <ImageButton
+                android:id="@+id/ibNavigate"
+                style="@style/Widget.AppCompat.ActionButton"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginStart="6dp"
+                android:scaleType="centerCrop"
+                app:srcCompat="@drawable/ic_navigate" />
+
+            <ImageButton
+                android:id="@+id/ibInfo"
+                style="@style/Widget.AppCompat.ActionButton"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginStart="6dp"
+                android:scaleType="centerCrop"
+                app:srcCompat="@drawable/ic_info" />
+
+
+            <ImageView
+                android:id="@+id/ivDrag"
+                android:layout_width="30dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="6dp"
+                app:srcCompat="@drawable/ic_drag" />
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvExceptions"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:padding="4dp">
+        android:layout_marginTop="4dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-        <ImageButton
-            android:id="@+id/ibNavigate"
-            style="@style/Widget.AppCompat.ActionButton"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_marginStart="6dp"
-            android:scaleType="centerCrop"
-            app:srcCompat="@drawable/ic_navigate" />
-
-        <ImageButton
-            android:id="@+id/ibInfo"
-            style="@style/Widget.AppCompat.ActionButton"
-            android:layout_width="22dp"
-            android:layout_height="22dp"
-            android:layout_marginStart="6dp"
-            android:scaleType="centerCrop"
-            app:srcCompat="@drawable/ic_info" />
-
-
-        <ImageView
-            android:id="@+id/ivDrag"
-            android:layout_width="30dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="6dp"
-            app:srcCompat="@drawable/ic_drag" />
-
-    </LinearLayout>
-
-</RelativeLayout>
+</LinearLayout>

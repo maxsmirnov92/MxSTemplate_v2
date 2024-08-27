@@ -22,6 +22,7 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
+import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_GPS_PERMISSION
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
@@ -220,6 +221,10 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
     override fun onInfoAction(item: AddressSorterViewModel.AddressItem) {
         viewModel.onInfoAction(item)
+    }
+
+    override fun onExceptionClose(id: Long, type: Address.ExceptionType) {
+        viewModel.onExceptionClose(id, type)
     }
 
     override fun onItemRemoved(position: Int, item: AddressInputData) {

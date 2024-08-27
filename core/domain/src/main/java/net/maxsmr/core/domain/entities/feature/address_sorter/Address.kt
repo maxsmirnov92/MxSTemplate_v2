@@ -9,6 +9,7 @@ data class Address(
     val location: Location? = null,
     val distance: Float? = null,
     val isSuggested: Boolean = false,
+    val exceptionsMap: HashMap<ExceptionType, String?> = hashMapOf()
 ): java.io.Serializable {
 
     @Serializable
@@ -16,4 +17,10 @@ data class Address(
         val latitude: Float,
         val longitude: Float,
     ): java.io.Serializable
+
+    enum class ExceptionType {
+
+        LOCATION,
+        DISTANCE
+    }
 }

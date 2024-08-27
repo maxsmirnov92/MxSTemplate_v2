@@ -13,12 +13,12 @@ import net.maxsmr.commonutils.gui.setSelectionToEnd
 import net.maxsmr.commonutils.gui.setTextDistinct
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.ui.adapters.SuggestAdapter
 import net.maxsmr.core.ui.views.applySuggestions
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel
 import net.maxsmr.feature.address_sorter.ui.R
 import net.maxsmr.feature.address_sorter.ui.databinding.ItemAddressBinding
-import java.io.Serializable
 
 fun addressInputAdapterDelegate(listener: AddressInputListener) =
     adapterDelegate<AddressInputData, AddressInputData, InputViewHolder>(
@@ -77,6 +77,14 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
                 }
             }
 
+            val adapter = AddressExceptionAdapter(object : AddressExceptionListener {
+                override fun onClose(type: Address.ExceptionType) {
+                    listener.onExceptionClose(item.id, type)
+                }
+            })
+
+            rvExceptions.adapter = adapter
+
             bind {
                 item.run {
                     wasSuggestSkippedOnce = false
@@ -95,6 +103,9 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
                     )
                     ibNavigate.isVisible = item.isSuggested && item.address.isNotEmpty()
                     ibInfo.isVisible = item.distance?.takeIf { it >= 0 } != null
+
+                    rvExceptions.isVisible = item.exceptionsData.isNotEmpty()
+                    adapter.items = item.exceptionsData
                 }
             }
         }
@@ -104,7 +115,7 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
 data class AddressInputData(
     val item: AddressSorterViewModel.AddressItem,
     val suggestsLoadState: LoadState<List<AddressSorterViewModel.AddressSuggestItem>>,
-) : BaseAdapterData, Serializable {
+) : BaseAdapterData {
 
     val id: Long = item.id
 
@@ -131,4 +142,6 @@ interface AddressInputListener {
     fun onNavigateAction(item: AddressSorterViewModel.AddressItem)
 
     fun onInfoAction(item: AddressSorterViewModel.AddressItem)
+
+    fun onExceptionClose(id: Long, type: Address.ExceptionType)
 }

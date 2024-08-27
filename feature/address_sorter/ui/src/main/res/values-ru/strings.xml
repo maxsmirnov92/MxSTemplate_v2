@@ -2,11 +2,15 @@
 <resources>
     <string name="address_sorter_feature_title">Сортировщик адресов</string>
     <string name="address_sorter_empty_text">Нет добавленных адресов</string>
-    <string name="address_sorter_input_hint">Введите адрес</string>
+    <string name="address_sorter_edit_hint">Введите адрес</string>
     <string name="address_sorter_menu_action_refresh">Обновить</string>
     <string name="address_sorter_menu_action_pick_from_json">Выбрать из JSON</string>
     <string name="address_sorter_menu_action_clear">Очистить</string>
     <string name="address_sorter_snackbar_address_add_error_message">Не удалось добавить адреса</string>
     <string name="address_sorter_dialog_clear_items_message">Убрать все адреса?</string>
     <string name="address_sorter_toast_distance_to_point_format">Растояние до места: %s</string>
+    <string name="address_sorter_error_location_format">Произошла ошибка при уточнении координат: %s</string>
+    <string name="address_sorter_error_location">Произошла неизвестная ошибка при уточнении координат</string>
+    <string name="address_sorter_error_distance_format">Произошла ошибка при подсчёте расстояния/времени до места: %s</string>
+    <string name="address_sorter_error_distance">Произошла неизвестная ошибка при подсчёте расстояния/времени до места</string>
 </resources>

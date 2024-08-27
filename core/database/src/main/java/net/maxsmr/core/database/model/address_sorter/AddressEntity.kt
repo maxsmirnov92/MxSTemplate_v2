@@ -4,15 +4,19 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
+import net.maxsmr.core.domain.entities.feature.address_sorter.Address.ExceptionType
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
+import java.lang.Exception
 
 @Entity(tableName = "Address")
 data class AddressEntity(
     val address: String,
     @Embedded("location_")
     val location: Address.Location? = null,
-    var distance: Float? = null,
+    val distance: Float? = null,
     val isSuggested: Boolean = false,
+    val locationException: String? = null,
+    val distanceException: String? = null,
 ) {
 
     @PrimaryKey(autoGenerate = true)
@@ -26,14 +30,6 @@ data class AddressEntity(
             return field
         }
 
-    fun toDomain() = Address(
-        id,
-        address,
-        location,
-        distance,
-        isSuggested
-    )
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is AddressEntity) return false
@@ -42,6 +38,8 @@ data class AddressEntity(
         if (location != other.location) return false
         if (distance != other.distance) return false
         if (isSuggested != other.isSuggested) return false
+        if (locationException != other.locationException) return false
+        if (distanceException != other.distanceException) return false
         if (id != other.id) return false
 
         return true
@@ -52,32 +50,53 @@ data class AddressEntity(
         result = 31 * result + (location?.hashCode() ?: 0)
         result = 31 * result + (distance?.hashCode() ?: 0)
         result = 31 * result + isSuggested.hashCode()
+        result = 31 * result + (locationException?.hashCode() ?: 0)
+        result = 31 * result + (distanceException?.hashCode() ?: 0)
         result = 31 * result + id.hashCode()
         return result
     }
 
+    fun toDomain(): Address {
+        val exceptionsMap = hashMapOf<ExceptionType, String?>()
+        locationException?.let {
+            exceptionsMap[ExceptionType.LOCATION] = it
+        }
+        distanceException?.let {
+            exceptionsMap[ExceptionType.DISTANCE] = it
+        }
+        return Address(
+            id,
+            address,
+            location,
+            distance,
+            isSuggested,
+            exceptionsMap
+        )
+    }
 
     companion object {
 
         const val NO_ID = -1L
 
         @JvmStatic
-        fun Address.toAddressEntity() = AddressEntity(
+        fun Address.toEntity() = AddressEntity(
             address = address,
             location = location,
             distance = distance
         )
 
         @JvmStatic
-        fun AddressSuggest.toAddressEntity(
+        fun AddressSuggest.toEntity(
             id: Long,
             sortOrder: Long,
-            location: Address.Location? = null
+            location: Address.Location? = null,
+            exception: Exception? = null,
         ) = AddressEntity(
             address = address,
             location = location ?: this.location,
             distance = distance,
-            isSuggested = true
+            isSuggested = true,
+            locationException = exception?.message
         ).apply {
             this.id = id
             this.sortOrder = sortOrder

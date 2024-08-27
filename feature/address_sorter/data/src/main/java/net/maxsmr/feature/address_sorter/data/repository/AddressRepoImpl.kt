@@ -2,6 +2,7 @@ package net.maxsmr.feature.address_sorter.data.repository
 
 import android.graphics.PointF
 import android.location.Location
+import com.github.kittinunf.result.Result
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -23,11 +24,13 @@ import net.maxsmr.core.android.coroutines.mutableStateIn
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
 import net.maxsmr.core.database.model.address_sorter.AddressEntity
 import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.NO_ID
-import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.toAddressEntity
+import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.toEntity
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
+import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.GeocodeDataSource
 import net.maxsmr.core.network.api.SuggestDataSource
+import net.maxsmr.core.network.exceptions.EmptyResponseException
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import java.io.InputStream
@@ -58,7 +61,7 @@ class AddressRepoImpl(
         return withContext(ioDispatcher) {
             stream.readString()?.let { value ->
                 json.decodeFromStringOrNull<List<Address>>(value)?.let { list ->
-                    val entities = list.map { it.toAddressEntity() }
+                    val entities = list.map { it.toEntity() }
                     if (entities.isNotEmpty()) {
                         if (rewrite) {
                             dao.clear()
@@ -89,6 +92,17 @@ class AddressRepoImpl(
         }
     }
 
+    override suspend fun updateItem(id: Long, updateFunc: (AddressEntity) -> AddressEntity) {
+        withContext(ioDispatcher) {
+            val entity = dao.getById(id) ?: return@withContext
+            val newEntity = updateFunc(entity)
+            if (newEntity.id != entity.id) {
+                throw IllegalStateException("AddressEntity id (${newEntity.id}) doesn't match source id (${entity.id})")
+            }
+            dao.upsert(newEntity)
+        }
+    }
+
     override suspend fun clearItems() {
         withContext(ioDispatcher) {
             dao.clear()
@@ -98,18 +112,23 @@ class AddressRepoImpl(
     override suspend fun specifyFromSuggest(id: Long, suggest: AddressSuggest) {
         withContext(ioDispatcher) {
             val current = dao.getById(id) ?: return@withContext
-            val geocode = if (suggest.location == null) {
+            val geocodeResult: Result<AddressGeocode, Exception>? = if (suggest.location == null) {
                 // у Яндекса в ответе suggest нет location - отдельный запрос геокодирования
                 try {
-                    geocodeDataSource.geocode(suggest.address, Locale.getDefault().toString())
+                    val geocode = geocodeDataSource.geocode(suggest.address, Locale.getDefault().toString())
+                    geocode?.let { Result.success(geocode) } ?: throw EmptyResponseException()
                 } catch (e: Exception) {
                     logger.e(formatException(e, "geocode"))
-                    null
+                    Result.error(e)
                 }
             } else {
                 null
             }
-            val result = suggest.toAddressEntity(id, current.sortOrder, geocode?.location)
+            val result = suggest.toEntity(
+                id, current.sortOrder,
+                (geocodeResult as? Result.Success)?.value?.location,
+                (geocodeResult as? Result.Failure)?.getException(),
+            )
             dao.upsert(result)
         }
     }
@@ -127,12 +146,22 @@ class AddressRepoImpl(
 
     override suspend fun sortItems() {
         withContext(ioDispatcher) {
-            val entities = dao.getRaw().toMutableList()
-            entities.sortWith(AddressComparator(cacheRepo.getLastLocation()))
-            entities.forEachIndexed { index, item ->
+            val entities = dao.getRaw()
+            val lastLocation = cacheRepo.getLastLocation()
+            val newEntities = entities.map {
+                val distance = calculateDistanceByLocation(it.location, lastLocation)
+                if (distance != null) {
+                    // актуализация пересчитанным валидным значением
+                    it.copy(distance = distance)
+                } else {
+                    it
+                }
+            }.toMutableList()
+            newEntities.sortWith(AddressComparator())
+            newEntities.forEachIndexed { index, item ->
                 item.sortOrder = index.toLong()
             }
-            entities.upsert()
+            newEntities.upsert()
         }
     }
 
@@ -157,13 +186,19 @@ class AddressRepoImpl(
             val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: NO_ID
             val current = if (id != null && id > 0) dao.getById(id) else null
             if (current?.address == query) return@withContext
-            val newEntity = current?.copy(address = query)?.apply {
+            val newEntity = current?.copy(
+                address = query,
+                locationException = null,
+                distanceException = null
+            )?.apply {
                 this.id = current.id
                 this.sortOrder = current.sortOrder
             } ?: AddressEntity(query).apply {
                 sortOrder = maxSortOrder + 1
             }
-            dao.upsertWithReset(newEntity)
+            dao.upsert(newEntity).also {
+                newEntity.id = it
+            }
         }
     }
 
@@ -178,7 +213,7 @@ class AddressRepoImpl(
 
     override suspend fun getDistanceByLocation(location: Address.Location?): Float? {
         return withContext(ioDispatcher) {
-            getDistanceByLocation(location, cacheRepo.getLastLocation())
+            calculateDistanceByLocation(location, cacheRepo.getLastLocation())
         }
     }
 
@@ -200,16 +235,25 @@ class AddressRepoImpl(
         }
     }
 
-    private class AddressComparator(private val lastLocation: Address.Location?) : BaseOptionalComparator<AddressComparator.SortOption, AddressEntity>(
+    private fun calculateDistanceByLocation(location: Address.Location?, lastLocation: Address.Location?): Float? {
+        fun Address.Location.toPointF() = PointF(latitude, longitude)
+        val locationPoint = location?.toPointF()
+        return locationPoint?.let {
+            // сначала пробуем пересчитать относительно имеющихся координат и последней геолокации
+            lastLocation?.toPointF()?.let { lastLocation ->
+                distance(lastLocation, it)
+            }
+        }?.takeIf { it >= 0 }
+    }
+
+    private class AddressComparator : BaseOptionalComparator<AddressComparator.SortOption, AddressEntity>(
         SortOption.entries.associateWith { true }
     ) {
 
         override fun compare(lhs: AddressEntity, rhs: AddressEntity, option: SortOption, ascending: Boolean): Int {
             return when (option) {
                 SortOption.DISTANCE -> {
-                    val first = lhs.updateDistanceByLocation(lastLocation)
-                    val second = rhs.updateDistanceByLocation(lastLocation)
-                    compareFloats(first, second, ascending)
+                    compareFloats(lhs.distance, rhs.distance, ascending)
                 }
 
                 // при совпадении distance, sort_order - следующий критерий
@@ -226,35 +270,6 @@ class AddressRepoImpl(
 
             override val optionName: String = name
         }
-    }
-
-    companion object {
-
-        private fun getDistanceByLocation(location: Address.Location?, lastLocation: Address.Location?): Float? {
-            val locationPoint = location?.toPointF()
-            return locationPoint?.let {
-                // сначала пробуем пересчитать относительно имеющихся координат и последней геолокации
-                lastLocation?.toPointF()?.let { lastLocation ->
-                    distance(lastLocation, it)
-                }
-            }?.takeIf { it >= 0 }
-        }
-
-        private fun AddressEntity.updateDistanceByLocation(lastLocation: Address.Location?): Float? {
-            var distance = getDistanceByLocation(location, lastLocation)
-            if (distance == null) {
-                // один из location отсутствует или получилось отрицательное -
-                // берётся distance из ответа suggest, если есть
-                distance = this.distance
-            } else {
-                // актуализация пересчитанным значением
-                this.distance = distance
-            }
-
-            return distance?.takeIf { it >= 0 }
-        }
-
-        private fun Address.Location.toPointF() = PointF(latitude, longitude)
     }
 
 }
