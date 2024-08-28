@@ -55,6 +55,7 @@ class Alert private constructor(
         val title: TextMessage,
         val tag: Any? = null,
         val contentDescription: TextMessage? = null,
+        val isChecked: Boolean? = null
     ) {
 
         /**
@@ -86,7 +87,6 @@ class Alert private constructor(
             result = 31 * result + (tag?.hashCode() ?: 0)
             return result
         }
-
 
         companion object {
 

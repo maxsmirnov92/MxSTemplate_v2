@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import net.maxsmr.commonutils.format.TIME_UNITS_TO_EXCLUDE_DEFAULT
 import net.maxsmr.commonutils.format.TimePluralFormat
 import net.maxsmr.commonutils.format.decomposeTimeFormatted
 import net.maxsmr.commonutils.gui.message.JoinTextMessage
@@ -26,16 +25,20 @@ import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
+import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.android.coroutines.usecase.asState
-import net.maxsmr.core.android.coroutines.usecase.data
 import net.maxsmr.core.android.coroutines.usecase.mapData
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
+import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
+import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingMode
+import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingType
 import net.maxsmr.feature.address_sorter.data.usecase.routing.RoutingFailedException
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.alert.representation.asMultiChoiceDialog
 import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
@@ -50,15 +53,16 @@ import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.C
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressExceptionData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
+import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
-import kotlin.math.roundToLong
 
 class AddressSorterViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val locationViewModel: LocationViewModel,
     private val repo: AddressRepo,
+    private val settingsRepo: SettingsDataStoreRepository,
     private val addressSuggestUseCase: AddressSuggestUseCase,
     private val addressSortUseCase: AddressSortUseCase,
     private val addressRoutingUseCase: AddressRoutingUseCase,
@@ -104,6 +108,15 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
         super.handleAlerts(delegate)
+        delegate.bindAlertDialog(DIALOG_TAG_CHANGE_ROUTING_MODE) {
+            it.asMultiChoiceDialog(delegate.context, isRadioButton = true)
+        }
+        delegate.bindAlertDialog(DIALOG_TAG_CHANGE_ROUTING_TYPE) {
+            it.asMultiChoiceDialog(delegate.context, isRadioButton = true)
+        }
+        delegate.bindAlertDialog(DIALOG_TAG_CHANGE_SORT_PRIORITY) {
+            it.asMultiChoiceDialog(delegate.context, isRadioButton = true)
+        }
         delegate.bindAlertDialog(DIALOG_TAG_CLEAR_ITEMS) {
             it.asYesNoDialog(delegate.context)
         }
@@ -131,12 +144,11 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun doRefresh() {
+        removeSnackbarsFromQueue()
         resultItemsState.value = LoadState.loading(resultItemsState.value?.data.orEmpty())
-
         viewModelScope.launch {
             val result = addressSortUseCase.invoke(Unit)
             val currentData = resultItemsState.value?.data.orEmpty()
-
             if (result is UseCaseResult.Error) {
                 val e = result.exception
                 resultItemsState.value = LoadState.error(e, currentData)
@@ -159,6 +171,69 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
     }
 
+    fun onChangeRoutingModeAction(answerTexts: List<String>) {
+        viewModelScope.launch {
+            val settings = settingsRepo.getSettings()
+            val currentIndex = RoutingMode.entries.indexOf(settings.routingMode)
+            val answers = answerTexts.mapIndexed { index, s ->
+                Alert.Answer(TextMessage(s), isChecked = index == currentIndex).onSelect {
+                    if (index != currentIndex) {
+                        val newMode = RoutingMode.entries[index]
+                        viewModelScope.launch {
+                            settingsRepo.updateSettings(settings.copy(routingMode = newMode))
+                        }
+                    }
+                }
+            }
+            AlertDialogBuilder(DIALOG_TAG_CHANGE_ROUTING_MODE)
+                .setTitle(R.string.address_sorter_dialog_change_routing_mode_title)
+                .setAnswers(answers)
+                .build()
+        }
+    }
+
+    fun onChangeRoutingTypeAction(answerTexts: List<String>) {
+        viewModelScope.launch {
+            val settings = settingsRepo.getSettings()
+            val currentIndex = RoutingType.entries.indexOf(settings.routingType)
+            val answers = answerTexts.mapIndexed { index, s ->
+                Alert.Answer(TextMessage(s), isChecked = index == currentIndex).onSelect {
+                    if (index != currentIndex) {
+                        val newType = RoutingType.entries[index]
+                        viewModelScope.launch {
+                            settingsRepo.updateSettings(settings.copy(routingType = newType))
+                        }
+                    }
+                }
+            }
+            AlertDialogBuilder(DIALOG_TAG_CHANGE_ROUTING_TYPE)
+                .setTitle(R.string.address_sorter_dialog_change_routing_type_title)
+                .setAnswers(answers)
+                .build()
+        }
+    }
+
+    fun onChangeSortPriorityAction(answerTexts: List<String>) {
+        viewModelScope.launch {
+            val settings = settingsRepo.getSettings()
+            val currentIndex = SortPriority.entries.indexOf(settings.sortPriority)
+            val answers = answerTexts.mapIndexed { index, s ->
+                Alert.Answer(TextMessage(s), isChecked = index == currentIndex).onSelect {
+                    if (index != currentIndex) {
+                        val newPriority = SortPriority.entries[index]
+                        viewModelScope.launch {
+                            settingsRepo.updateSettings(settings.copy(sortPriority = newPriority))
+                        }
+                    }
+                }
+            }
+            AlertDialogBuilder(DIALOG_TAG_CHANGE_SORT_PRIORITY)
+                .setTitle(R.string.address_sorter_dialog_change_sort_priority_title)
+                .setAnswers(answers)
+                .build()
+        }
+    }
+
     fun onClearAction() {
         showYesNoDialog(DIALOG_TAG_CLEAR_ITEMS, TextMessage(R.string.address_sorter_dialog_clear_items_message)) {
             if (it == DialogInterface.BUTTON_POSITIVE) {
@@ -173,7 +248,6 @@ class AddressSorterViewModel @AssistedInject constructor(
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
 
         viewModelScope.launch {
-            // TODO настройка о пересчёте: если не задана, то выдавать известный distance
             val result = addressRoutingUseCase.invoke(AddressRoutingUseCase.Params(item.id, item.location))
             dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
 
@@ -207,13 +281,12 @@ class AddressSorterViewModel @AssistedInject constructor(
 
             }
             val durationMessage = route?.duration?.let { duration ->
-                TextMessage(
-                    R.string.address_sorter_toast_duration_to_point_format,
-                    JoinTextMessage(
-                        ", ",
-                        decomposeTimeFormatted(duration, TimeUnit.SECONDS, TimePluralFormat.NORMAL_WITH_VALUE)
+                decomposeTimeFormatted(duration, TimeUnit.SECONDS, TimePluralFormat.NORMAL_WITH_VALUE, emptyIfZero = false).takeIf { it.isNotEmpty() }?.let {
+                    TextMessage(
+                        R.string.address_sorter_toast_duration_to_point_format,
+                        JoinTextMessage(", ", it)
                     )
-                )
+                }
             }
             val resultMessage = if (distanceMessage != null && durationMessage != null) {
                 JoinTextMessage(".\n", distanceMessage, durationMessage)
@@ -222,7 +295,8 @@ class AddressSorterViewModel @AssistedInject constructor(
             resultMessage?.let {
                 showSnackbar(
                     it,
-                    SnackbarExtraData(length = SnackbarExtraData.SnackbarLength.LONG),
+                    SnackbarExtraData(length = SnackbarExtraData.SnackbarLength.INDEFINITE),
+                    Alert.Answer(android.R.string.ok),
                     uniqueStrategy = AlertQueueItem.UniqueStrategy.Replace
                 )
             }
@@ -466,6 +540,9 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     companion object {
 
+        const val DIALOG_TAG_CHANGE_ROUTING_MODE = "change_routing_mode"
+        const val DIALOG_TAG_CHANGE_ROUTING_TYPE = "change_routing_type"
+        const val DIALOG_TAG_CHANGE_SORT_PRIORITY = "change_sort_priority"
         const val DIALOG_TAG_CLEAR_ITEMS = "clear_items"
         const val DIALOG_TAG_ROUTING_FAILED = "routing_failed"
     }

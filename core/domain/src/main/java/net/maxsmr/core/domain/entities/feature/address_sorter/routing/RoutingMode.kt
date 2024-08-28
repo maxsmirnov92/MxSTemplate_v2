@@ -1,5 +1,8 @@
 package net.maxsmr.core.domain.entities.feature.address_sorter.routing;
 
+/**
+ * Тип движения
+ */
 enum class RoutingMode {
 
     /**

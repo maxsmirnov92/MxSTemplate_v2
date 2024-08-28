@@ -11,5 +11,5 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 class AddressRoute(
     val id: Long,
     val distance: Long,
-    val duration: Long,
+    val duration: Long?,
 )

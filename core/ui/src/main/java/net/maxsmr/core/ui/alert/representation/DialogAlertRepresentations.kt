@@ -33,6 +33,7 @@ fun Alert.asOkDialog(
 fun Alert.asMultiChoiceDialog(
     context: Context,
     cancelable: Boolean = true,
+    isRadioButton: Boolean = false,
     onCancel: (() -> Unit)? = null,
     onClick: ((index: Int) -> Unit)? = null,
 ): DialogRepresentation {
@@ -48,8 +49,16 @@ fun Alert.asMultiChoiceDialog(
         .setMultiChoiceAnswers(
             DialogRepresentation.Builder.MultiChoiceAnswersData(
                 answers,
-                R.layout.item_dialog_choice,
-                R.id.tvItem,
+                if (isRadioButton) {
+                    R.layout.item_dialog_choice_radio
+                } else {
+                    R.layout.item_dialog_choice
+                },
+                if (isRadioButton) {
+                    R.id.rbItem
+                } else {
+                    R.id.tvItem
+                },
             ), onClick
         )
         .build()

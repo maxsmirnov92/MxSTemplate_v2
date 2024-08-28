@@ -21,12 +21,11 @@ class RoutingResponse(
             val id = convertIdFunc(r.targetId)
             if (id < 0) return@mapNotNull null
             if (r.distance < 0) return@mapNotNull null
-            if (r.duration <= 0) return@mapNotNull null
             Pair(
                 AddressRoute(
                     id,
                     r.distance,
-                    r.duration,
+                    r.duration.takeIf { it >= 0 },
                 ),
                 r.status
             )

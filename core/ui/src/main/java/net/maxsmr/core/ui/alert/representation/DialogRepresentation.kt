@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.view.WindowManager.BadTokenException
 import android.widget.ArrayAdapter
 import android.widget.Button
+import android.widget.CompoundButton
 import android.widget.TextView
 import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
@@ -181,8 +182,14 @@ class DialogRepresentation(
                             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                                 val view = super.getView(position, convertView, parent)
                                 val itemView = view.findViewById<TextView>(multiChoiceAnswers.itemViewResId)
+                                val answer = multiChoiceAnswers.answers[position]
+                                answer.isChecked?.let {
+                                    if (itemView is CompoundButton) {
+                                        itemView.isChecked = it
+                                    }
+                                }
                                 itemView.contentDescription =
-                                    multiChoiceAnswers.answers[position].contentDescription?.get(context)
+                                    answer.contentDescription?.get(context)
                                         ?: itemView.text
                                 return view
                             }
@@ -220,7 +227,7 @@ class DialogRepresentation(
         data class MultiChoiceAnswersData(
             val answers: List<Alert.Answer> = emptyList(),
             @LayoutRes val dialogItemResId: Int,
-            @IdRes val itemViewResId: Int
+            @IdRes val itemViewResId: Int,
         ) {
 
             val isEmpty = answers.isEmpty()

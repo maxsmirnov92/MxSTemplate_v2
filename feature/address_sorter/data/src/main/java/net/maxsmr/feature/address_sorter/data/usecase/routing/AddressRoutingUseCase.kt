@@ -73,7 +73,7 @@ class AddressRoutingUseCase @Inject constructor(
                     it //.copy(routingException = route.second.id)
                 }.apply {
                     this.id = it.id
-                    this.sortOrder = it.id
+                    this.sortOrder = it.sortOrder
                 }
             }
 
@@ -91,14 +91,14 @@ class AddressRoutingUseCase @Inject constructor(
                         distance = distance,
                     ).apply {
                         this.id = it.id
-                        this.sortOrder = it.id
+                        this.sortOrder = it.sortOrder
                     }
                 }
             } else {
                 throw RoutingFailedException(listOf(parameters.id to Route.Status.FAIL))
             }
 
-            AddressRoute(parameters.id, distance.toLong(), 0)
+            AddressRoute(parameters.id, distance.toLong(), null)
         }
     }
 

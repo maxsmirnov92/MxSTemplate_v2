@@ -106,6 +106,12 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
     private var refreshMenuItem: MenuItem? = null
 
+    private var changeRoutingModeMenuItem: MenuItem? = null
+
+    private var changeRoutingTypeMenuItem: MenuItem? = null
+
+    private var changeSortPriorityMenuItem: MenuItem? = null
+
     private var clearMenuItem: MenuItem? = null
 
     private var shouldScrollToEnd: Boolean = false
@@ -173,6 +179,9 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
         refreshMenuItem = menu.findItem(R.id.actionRefresh)
+        changeRoutingModeMenuItem = menu.findItem(R.id.actionChangeRoutingMode)
+        changeRoutingTypeMenuItem = menu.findItem(R.id.actionChangeRoutingType)
+        changeSortPriorityMenuItem = menu.findItem(R.id.actionChangeSortPriority)
         clearMenuItem = menu.findItem(R.id.actionClear)
         refreshMenuItems(viewModel.resultItemsState.value)
     }
@@ -181,6 +190,27 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         return when (menuItem.itemId) {
             R.id.actionRefresh -> {
                 viewModel.doRefresh()
+                true
+            }
+
+            R.id.actionChangeRoutingMode -> {
+                viewModel.onChangeRoutingModeAction(requireContext().resources.getStringArray(
+                    R.array.address_sorter_routing_mode
+                ).toList())
+                true
+            }
+
+            R.id.actionChangeRoutingType -> {
+                viewModel.onChangeRoutingTypeAction(requireContext().resources.getStringArray(
+                    R.array.address_sorter_routing_type
+                ).toList())
+                true
+            }
+
+            R.id.actionChangeSortPriority -> {
+                viewModel.onChangeSortPriorityAction(requireContext().resources.getStringArray(
+                    R.array.address_sorter_sort_priority
+                ).toList())
                 true
             }
 

@@ -5,7 +5,7 @@ import androidx.datastore.core.Serializer
 import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.readStringOrThrow
 import net.maxsmr.commonutils.writeBytesOrThrow
-import net.maxsmr.core.domain.entities.feature.address_sorter.SortMode
+import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingMode
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingType
 import java.io.InputStream
@@ -25,7 +25,7 @@ data class AppSettings(
     val startPageUrl: String = "https://google.com",
     val routingMode: RoutingMode = RoutingMode.DRIVING,
     val routingType: RoutingType = RoutingType.JAM,
-    val sortMode: SortMode = SortMode.DISTANCE
+    val sortPriority: SortPriority = SortPriority.DISTANCE
 ) : Serializable {
 
     companion object {

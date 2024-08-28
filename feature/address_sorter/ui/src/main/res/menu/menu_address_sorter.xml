@@ -8,6 +8,15 @@
         app:iconTint="@color/white"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/actionChangeRoutingMode"
+        android:title="@string/address_sorter_menu_action_change_routing_mode" />
+    <item
+        android:id="@+id/actionChangeRoutingType"
+        android:title="@string/address_sorter_menu_action_change_routing_type" />
+    <item
+        android:id="@+id/actionChangeSortPriority"
+        android:title="@string/address_sorter_menu_action_change_sort_priority" />
+    <item
         android:id="@+id/actionPickFromJson"
         android:title="@string/address_sorter_menu_action_pick_from_json" />
     <item

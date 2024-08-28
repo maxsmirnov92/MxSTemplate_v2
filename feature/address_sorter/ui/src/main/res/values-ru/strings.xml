@@ -15,4 +15,30 @@
     <string name="address_sorter_error_routing_format">Произошла ошибка при подсчёте расстояния/времени до места: \"%s\"</string>
     <string name="address_sorter_error_routing">Произошла неизвестная ошибка при подсчёте расстояния/времени до места</string>
     <string name="address_sorter_error_routing_count_format">Произошла ошибка при расчёте расстояния/времени до точек: %d</string>
+
+    <string name="address_sorter_menu_action_change_routing_mode">Тип движения</string>
+    <string name="address_sorter_menu_action_change_routing_type">Тип маршрута</string>
+    <string name="address_sorter_menu_action_change_sort_priority">Приоритет сортировки</string>
+    <string name="address_sorter_dialog_change_routing_mode_title">@string/address_sorter_menu_action_change_routing_mode</string>
+    <string name="address_sorter_dialog_change_routing_type_title">@string/address_sorter_menu_action_change_routing_type</string>
+    <string name="address_sorter_dialog_change_sort_priority_title">@string/address_sorter_menu_action_change_sort_priority</string>
+
+    <string-array name="address_sorter_routing_mode">
+        <item>Автомобильный</item>
+        <item>Автомобильный маршрут с полосами общественного транспорта</item>
+        <item>Грузовой транспорт</item>
+        <item>Пешеходный маршрут</item>
+        <item>Велосипедный маршрут</item>
+        <item>Прямой (без API)</item>
+    </string-array>
+
+    <string-array name="address_sorter_routing_type">
+        <item>Маршрут по текущим пробкам</item>
+        <item>Маршрут без учёта пробок</item>
+    </string-array>
+
+    <string-array name="address_sorter_sort_priority">
+        <item>Расстояние</item>
+        <item>Время</item>
+    </string-array>
 </resources>

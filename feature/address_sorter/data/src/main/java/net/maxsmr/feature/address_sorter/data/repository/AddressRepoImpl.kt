@@ -26,7 +26,7 @@ import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.toE
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
-import net.maxsmr.core.domain.entities.feature.address_sorter.SortMode
+import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
 import net.maxsmr.core.network.api.GeocodeDataSource
 import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.exceptions.EmptyResponseException
@@ -34,7 +34,6 @@ import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.InputStream
-import javax.inject.Inject
 
 class AddressRepoImpl (
     private val dao: AddressDao,
@@ -154,7 +153,7 @@ class AddressRepoImpl (
         return withContext(ioDispatcher) {
             if (items.isNotEmpty()) {
                 val settings = settingsRepo.getSettings()
-                items.sortWith(AddressComparator(settings.sortMode))
+                items.sortWith(AddressComparator(settings.sortPriority))
                 items.forEachIndexed { index, item ->
                     item.sortOrder = index.toLong()
                 }
@@ -227,8 +226,8 @@ class AddressRepoImpl (
     }
 
 
-    private class AddressComparator(sortMode: SortMode) : BaseOptionalComparator<AddressComparator.SortOption, AddressEntity>(
-        if (sortMode == SortMode.DISTANCE) {
+    private class AddressComparator(sortPriority: SortPriority) : BaseOptionalComparator<AddressComparator.SortOption, AddressEntity>(
+        if (sortPriority == SortPriority.DISTANCE) {
             listOf(SortOption.DISTANCE, SortOption.DURATION, SortOption.SORT_ORDER)
         } else {
             listOf(SortOption.DURATION, SortOption.DISTANCE, SortOption.SORT_ORDER)

@@ -16,4 +16,29 @@
     <string name="address_sorter_error_routing">Unknown error occurred when calculating distance/duration</string>
     <string name="address_sorter_error_routing_count_format">Error occurred when calculating distance/duration for points: %d</string>
 
+    <string name="address_sorter_menu_action_change_routing_mode">Routing mode</string>
+    <string name="address_sorter_menu_action_change_routing_type">Routing type</string>
+    <string name="address_sorter_menu_action_change_sort_priority">Sort priority</string>
+    <string name="address_sorter_dialog_change_routing_mode_title">@string/address_sorter_menu_action_change_routing_mode</string>
+    <string name="address_sorter_dialog_change_routing_type_title">@string/address_sorter_menu_action_change_routing_type</string>
+    <string name="address_sorter_dialog_change_sort_priority_title">@string/address_sorter_menu_action_change_sort_priority</string>
+
+    <string-array name="address_sorter_routing_mode">
+        <item>Driving</item>
+        <item>Car route with public transport lanes</item>
+        <item>Truck</item>
+        <item>Walking</item>
+        <item>Bicycle</item>
+        <item>Direct (no API)</item>
+    </string-array>
+
+    <string-array name="address_sorter_routing_type">
+        <item>Jam</item>
+        <item>Shortest</item>
+    </string-array>
+
+    <string-array name="address_sorter_sort_priority">
+        <item>Distance</item>
+        <item>Duration</item>
+    </string-array>
 </resources>
