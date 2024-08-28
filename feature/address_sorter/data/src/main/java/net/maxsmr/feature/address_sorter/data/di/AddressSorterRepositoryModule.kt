@@ -12,6 +12,7 @@ import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepoImpl
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import javax.inject.Singleton
 
 @[Module
@@ -22,6 +23,7 @@ object AddressSorterRepositoryModule {
     fun providesAddressRepository(
         dao: AddressDao,
         cacheRepo: CacheDataStoreRepository,
+        settingsRepo: SettingsDataStoreRepository,
         @BaseJson json: Json,
         suggestDataSource: SuggestDataSource,
         geocodeDataSource: GeocodeDataSource,
@@ -29,6 +31,7 @@ object AddressSorterRepositoryModule {
         return AddressRepoImpl(
             dao,
             cacheRepo,
+            settingsRepo,
             json,
             suggestDataSource,
             geocodeDataSource

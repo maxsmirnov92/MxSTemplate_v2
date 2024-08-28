@@ -4,6 +4,6 @@ import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-internal annotation class ResponseObjectType(
+annotation class ResponseObjectType(
     val value: KClass<out BaseResponse>
 )

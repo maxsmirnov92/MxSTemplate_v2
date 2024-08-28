@@ -24,3 +24,8 @@ interface IntId {
 
     val id: Int
 }
+
+interface StringId {
+
+    val id: String
+}

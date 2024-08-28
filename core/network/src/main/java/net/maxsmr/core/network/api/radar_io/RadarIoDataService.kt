@@ -14,7 +14,6 @@ internal interface RadarIoDataService {
     suspend fun suggest(
         @Query("query") query: String,
         @Query("near") near: String? = null,
-        @Query("country") country: String
     ): SuggestResponse
 
     companion object {

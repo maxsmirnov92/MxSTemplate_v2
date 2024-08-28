@@ -62,10 +62,10 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
                 etText.removeTextChangedListener(it)
             }
             val watcher = AfterTextChangeListener { s ->
-                if (!item.item.isSuggested || wasSuggestSkippedOnce) {
+                if (wasTextSetFromUser) {
                     listener.onTextChanged(item.id, s.toString())
-                } else if (item.item.isSuggested) {
-                    wasSuggestSkippedOnce = true
+                } else {
+                    wasTextSetFromUser = true
                 }
             }
             etText.addTextChangedListener(watcher)
@@ -87,10 +87,12 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
 
             bind {
                 item.run {
-                    wasSuggestSkippedOnce = false
+                    wasTextSetFromUser = false
                     // TODO utils
                     if (etText.setTextDistinct(item.address)) {
                         etText.setSelectionToEnd()
+                    } else {
+                        wasTextSetFromUser = true
                     }
                     etText.applySuggestions(
                         suggestsLoadState.copyOf(
@@ -128,7 +130,7 @@ class InputViewHolder(view: View) : BaseDraggableDelegationAdapter.DragAndDropVi
 
     override val draggableView: View = itemView.findViewById(R.id.ivDrag)
 
-    var wasSuggestSkippedOnce = false
+    var wasTextSetFromUser = false
 }
 
 interface AddressInputListener {

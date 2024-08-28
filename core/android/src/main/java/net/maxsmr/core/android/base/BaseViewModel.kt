@@ -242,6 +242,10 @@ abstract class BaseViewModel(
         _navigationCommands.tryEmit(VmEvent(NavigationAction(NavigationCommand.Back)))
     }
 
+    /**
+     * @param uniqueStrategy при [AlertQueueItem.UniqueStrategy.None] и [AlertQueueItem.UniqueStrategy.Replace]
+     * поведение снека будет одинаковым
+     */
     fun showSnackbar(
         message: TextMessage,
         data: SnackbarExtraData = SnackbarExtraData(),

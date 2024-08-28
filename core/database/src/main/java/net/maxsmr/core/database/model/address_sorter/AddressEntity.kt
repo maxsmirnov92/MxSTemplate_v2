@@ -14,9 +14,10 @@ data class AddressEntity(
     @Embedded("location_")
     val location: Address.Location? = null,
     val distance: Float? = null,
+    val duration: Long? = null,
     val isSuggested: Boolean = false,
     val locationException: String? = null,
-    val distanceException: String? = null,
+    val routingException: String? = null,
 ) {
 
     @PrimaryKey(autoGenerate = true)
@@ -37,9 +38,10 @@ data class AddressEntity(
         if (address != other.address) return false
         if (location != other.location) return false
         if (distance != other.distance) return false
+        if (duration != other.duration) return false
         if (isSuggested != other.isSuggested) return false
         if (locationException != other.locationException) return false
-        if (distanceException != other.distanceException) return false
+        if (routingException != other.routingException) return false
         if (id != other.id) return false
 
         return true
@@ -49,9 +51,10 @@ data class AddressEntity(
         var result = address.hashCode()
         result = 31 * result + (location?.hashCode() ?: 0)
         result = 31 * result + (distance?.hashCode() ?: 0)
+        result = 31 * result + (duration?.hashCode() ?: 0)
         result = 31 * result + isSuggested.hashCode()
         result = 31 * result + (locationException?.hashCode() ?: 0)
-        result = 31 * result + (distanceException?.hashCode() ?: 0)
+        result = 31 * result + (routingException?.hashCode() ?: 0)
         result = 31 * result + id.hashCode()
         return result
     }
@@ -61,14 +64,15 @@ data class AddressEntity(
         locationException?.let {
             exceptionsMap[ExceptionType.LOCATION] = it
         }
-        distanceException?.let {
-            exceptionsMap[ExceptionType.DISTANCE] = it
+        routingException?.let {
+            exceptionsMap[ExceptionType.ROUTING] = it
         }
         return Address(
             id,
             address,
             location,
             distance,
+            duration,
             isSuggested,
             exceptionsMap
         )
@@ -82,7 +86,8 @@ data class AddressEntity(
         fun Address.toEntity() = AddressEntity(
             address = address,
             location = location,
-            distance = distance
+            distance = distance,
+            duration = duration
         )
 
         @JvmStatic

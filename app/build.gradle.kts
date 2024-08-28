@@ -76,6 +76,11 @@ android {
             "API_KEY_YANDEX_GEOCODE",
             "\"${appProperties.getProperty("apiKeyYandexGeocode")}\""
         )
+        buildConfigField(
+            "String",
+            "DEMO_KEY_DOUBLE_GIS_ROUTING",
+            "\"${appProperties.getProperty("demoKeyDoubleGisRouting")}\""
+        )
         buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getProperty("devEmailAddress")}\"")
 
         val donateProperties = Properties()

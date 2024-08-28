@@ -9,7 +9,6 @@
     <string name="error_format">Error occurred: \"%s\"</string>
     <string name="error_unexpected">Unexpected error occurred</string>
 
-
     <string name="loading">Loading</string>
     <string name="no_data">No data</string>
     <string name="check_again">Check again</string>

@@ -1,67 +1,62 @@
 package net.maxsmr.core.network.client.okhttp
 
-import net.maxsmr.commonutils.logger.BaseLogger
-import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
-import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
+import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
+import net.maxsmr.core.network.retrofit.converters.api.BaseRadarIoResponse
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.Response
 import retrofit2.Invocation
 import retrofit2.Retrofit
+import java.util.Locale
 
 class RadarIoOkHttpClientManager(
-    private val connectivityChecker: ConnectivityChecker,
     private val authorization: String,
+    private val defaultCountry: String = "RU",
+    connectivityChecker: ConnectivityChecker,
     callTimeout: Long,
     retrofitProvider: (() -> Retrofit),
-) : BaseOkHttpClientManager(callTimeout, retrofitProvider = retrofitProvider) {
-
-    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("RadarIoOkHttpClientManager")
+) : BaseRestOkHttpClientManager(
+    callTimeout,
+    connectivityChecker = connectivityChecker,
+    responseAnnotation = ResponseObjectType(BaseRadarIoResponse::class),
+    retrofitProvider = retrofitProvider
+) {
 
     override fun configureBuild(builder: OkHttpClient.Builder) {
         with(builder) {
             super.configureBuild(this)
-            addInterceptor(NetworkConnectionInterceptor(connectivityChecker))
-            addInterceptor(RadarIoInterceptor(authorization))
-            val loggingInterceptor = ApiLoggingInterceptor { message: String ->
-                logger.d(message)
-            }
-            loggingInterceptor.setLevel(ApiLoggingInterceptor.Level.HEADERS_AND_BODY)
-            addInterceptor(loggingInterceptor)
+            addInterceptor(RadarIoInterceptor())
         }
     }
 
-    internal class RadarIoInterceptor(private val authorization: String,) : Interceptor {
+    internal inner class RadarIoInterceptor : Interceptor {
 
         override fun intercept(chain: Interceptor.Chain): Response {
-            var request = chain.request()
+            val request = chain.request()
+            val newRequest = request.newBuilder()
+
             val invocation = request.tag(Invocation::class.java)
             if (invocation != null) {
                 val needAuthorization = invocation.method().getAnnotation(Authorization::class.java) != null
                 if (needAuthorization) {
 //                    val subtype = request.body?.contentType()?.subtype
 //                    if (subtype == null || subtype.contains("json", true)) {
-                    request = request.addHeaderFields(authorization)
+                    authorization.takeIf { it.isNotEmpty() }?.let {
+                        newRequest.addHeader("Authorization", it)
+                    }
 //                    }
                 }
             }
 
-            return chain.proceed(request)
-        }
+            val country = Locale.getDefault().toString().split("_")
+                .getOrNull(1)?.takeIf { it.isNotEmpty() } ?: defaultCountry
 
+            val url = request.url.newBuilder()
+            url.addQueryParameter("country", country)
 
-        private fun Request.addHeaderFields(authorization: String?): Request {
-            with(newBuilder()) {
-//                addHeader("Content-Type", "application/json")
-                authorization?.takeIf { it.isNotEmpty() }?.let {
-                    addHeader("Authorization", it)
-                }
-                return build()
-            }
+            return chain.proceed(newRequest.url(url.build()).build())
         }
     }
 }

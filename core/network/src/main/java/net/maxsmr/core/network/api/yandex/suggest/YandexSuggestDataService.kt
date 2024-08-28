@@ -19,7 +19,6 @@ internal interface YandexSuggestDataService {
     suspend fun suggest(
         @Query("text") text: String,
         @Query("ll") location: String? = null,
-        @Query("lang") lang: String,
     ): SuggestResponse
 
     companion object {

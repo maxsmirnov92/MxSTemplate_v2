@@ -29,7 +29,9 @@ fun Alert.asSnackbar(view: View): AlertRepresentation {
     val snackbar = view.createSnackbar(message, extraData, object : Snackbar.Callback() {
         override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
             super.onDismissed(transientBottomBar, event)
-            close()
+            if (event != DISMISS_EVENT_MANUAL) {
+                close()
+            }
         }
     })
 

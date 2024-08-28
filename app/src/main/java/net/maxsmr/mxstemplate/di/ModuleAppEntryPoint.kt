@@ -6,6 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.di.BaseJson
+import net.maxsmr.core.di.DoubleGisRoutingRetrofit
 import net.maxsmr.core.di.RadarIoRetrofit
 import net.maxsmr.core.di.YandexGeocodeRetrofit
 import net.maxsmr.core.di.YandexSuggestRetrofit
@@ -35,4 +36,7 @@ internal interface ModuleAppEntryPoint {
 
     @YandexGeocodeRetrofit
     fun yandexGeocodeRetrofit(): YandexGeocodeRetrofitClient
+
+    @DoubleGisRoutingRetrofit
+    fun doubleGisRoutingRetrofit(): CommonRetrofitClient
 }

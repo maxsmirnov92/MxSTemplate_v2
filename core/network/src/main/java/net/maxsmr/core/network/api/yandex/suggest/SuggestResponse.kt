@@ -7,8 +7,6 @@ import net.maxsmr.core.network.retrofit.converters.api.BaseYandexSuggestResponse
 
 @Serializable
 class SuggestResponse(
-    @SerialName("suggest_reqid")
-    override val suggestReqId: String,
     val results: List<Result> = emptyList(),
 ) : BaseYandexSuggestResponse() {
 
@@ -27,7 +25,6 @@ class SuggestResponse(
         fun asDomain(): AddressSuggest {
             val title = title?.text.orEmpty()
             return AddressSuggest(
-                null,
                 address?.formattedAddress?.takeIf { it.isNotEmpty() }
                     ?: (subtitle?.text?.takeIf { it.isNotEmpty() }
                         ?.let {
@@ -37,6 +34,7 @@ class SuggestResponse(
                                 title
                             }
                         } ?: title),
+                null,
                 distance?.value
             )
         }

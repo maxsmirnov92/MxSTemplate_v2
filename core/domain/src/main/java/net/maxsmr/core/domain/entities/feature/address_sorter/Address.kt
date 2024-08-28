@@ -4,10 +4,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Address(
-    val id: Long = 0,
-    val address: String = "",
+    val id: Long,
+    val address: String,
     val location: Location? = null,
     val distance: Float? = null,
+    val duration: Long? = null,
     val isSuggested: Boolean = false,
     val exceptionsMap: HashMap<ExceptionType, String?> = hashMapOf()
 ): java.io.Serializable {
@@ -21,6 +22,6 @@ data class Address(
     enum class ExceptionType {
 
         LOCATION,
-        DISTANCE
+        ROUTING
     }
 }

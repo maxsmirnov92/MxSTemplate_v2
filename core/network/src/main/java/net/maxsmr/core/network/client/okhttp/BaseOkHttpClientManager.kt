@@ -1,6 +1,8 @@
 package net.maxsmr.core.network.client.okhttp
 
 import androidx.annotation.CallSuper
+import net.maxsmr.commonutils.logger.BaseLogger
+import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.network.client.okhttp.interceptors.ResponseErrorMessageInterceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -15,15 +17,11 @@ abstract class BaseOkHttpClientManager(
     private val writeTimeout: Long = 0L,
     private val connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
     private val retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
-    private val retrofitProvider: (() -> Retrofit)? = null,
 ) {
 
-    @CallSuper
-    protected open fun configureBuild(builder: OkHttpClient.Builder) {
-        retrofitProvider?.let {
-            builder.addInterceptor(ResponseErrorMessageInterceptor(it))
-        }
-    }
+    protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
+
+    protected abstract fun configureBuild(builder: OkHttpClient.Builder)
 
     fun build(): OkHttpClient {
         return OkHttpClient.Builder().apply {

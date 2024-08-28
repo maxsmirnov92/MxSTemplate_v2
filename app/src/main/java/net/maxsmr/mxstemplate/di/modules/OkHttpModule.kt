@@ -12,6 +12,7 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.network.NetworkConnectivityChecker
 import net.maxsmr.core.android.network.NetworkStateManager
+import net.maxsmr.core.di.DoubleGisRoutingOkHttpClient
 import net.maxsmr.core.di.DownloadHttpLoggingInterceptor
 import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
@@ -19,11 +20,14 @@ import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexSuggestOkHttpClient
+import net.maxsmr.core.network.client.okhttp.DoubleGisOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.DownloadOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.RadarIoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.YandexOkHttpClientManager
-import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
+import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
+import net.maxsmr.core.network.retrofit.converters.api.BaseDoubleGisRoutingResponse
+import net.maxsmr.core.network.retrofit.converters.api.BaseYandexSuggestResponse
 import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.di.ModuleAppEntryPoint
 import okhttp3.CacheControl
@@ -99,7 +103,7 @@ class OkHttpModule {
         @DownloadHttpLoggingInterceptor
         httpLoggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient = DownloadOkHttpClientManager(
-        NetworkConnectionInterceptor(NetworkConnectivityChecker),
+        NetworkConnectivityChecker,
         httpLoggingInterceptor,
         NETWORK_TIMEOUT
     ).build()
@@ -107,9 +111,9 @@ class OkHttpModule {
     @[Provides Singleton RadarIoOkHttpClient]
     fun provideRadarIoOkHttpClient(): OkHttpClient {
         return RadarIoOkHttpClientManager(
-            NetworkConnectivityChecker,
             BuildConfig.AUTHORIZATION_RADAR_IO,
-            NETWORK_TIMEOUT
+            connectivityChecker = NetworkConnectivityChecker,
+            callTimeout = NETWORK_TIMEOUT
         ) {
             EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
                 .radarIoRetrofit().instance
@@ -119,9 +123,12 @@ class OkHttpModule {
     @[Provides Singleton YandexSuggestOkHttpClient]
     fun provideYandexSuggestOkHttpClient(): OkHttpClient {
         return YandexOkHttpClientManager(
-            NetworkConnectivityChecker,
             BuildConfig.API_KEY_YANDEX_SUGGEST,
-            NETWORK_TIMEOUT
+            YandexOkHttpClientManager.LocalizationField.LANG,
+            "ru",
+            NetworkConnectivityChecker,
+            NETWORK_TIMEOUT,
+            responseAnnotation = ResponseObjectType(BaseYandexSuggestResponse::class),
         ) {
             EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
                 .yandexSuggestRetrofit().instance
@@ -131,12 +138,27 @@ class OkHttpModule {
     @[Provides Singleton YandexGeocodeOkHttpClient]
     fun provideYandexGeocodeOkHttpClient(): OkHttpClient {
         return YandexOkHttpClientManager(
-            NetworkConnectivityChecker,
             BuildConfig.API_KEY_YANDEX_GEOCODE,
-            NETWORK_TIMEOUT
+            YandexOkHttpClientManager.LocalizationField.LOCALE,
+            "ru_RU",
+            NetworkConnectivityChecker,
+            NETWORK_TIMEOUT,
+            responseAnnotation = null // ситуативный BaseEnvelopeWithObject подставить нельзя, а BaseEnvelope не требуется
         ) {
             EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
                 .yandexGeocodeRetrofit().instance
+        }.build()
+    }
+
+    @[Provides Singleton DoubleGisRoutingOkHttpClient]
+    fun provideDoubleGisRoutingOkHttpClient(): OkHttpClient {
+        return DoubleGisOkHttpClientManager(
+            BuildConfig.DEMO_KEY_DOUBLE_GIS_ROUTING,
+            connectivityChecker = NetworkConnectivityChecker,
+            callTimeout = NETWORK_TIMEOUT
+        ) {
+            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
+                .doubleGisRoutingRetrofit().instance
         }.build()
     }
 }

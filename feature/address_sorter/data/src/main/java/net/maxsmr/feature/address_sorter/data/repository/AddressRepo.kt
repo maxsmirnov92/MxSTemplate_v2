@@ -19,6 +19,8 @@ interface AddressRepo {
 
     suspend fun addNewItem(query: String = EMPTY_STRING)
 
+    suspend fun getItems(): List<AddressEntity>
+
     suspend fun deleteItem(id: Long)
 
     suspend fun updateItem(id: Long, updateFunc: (AddressEntity) -> AddressEntity)
@@ -29,7 +31,7 @@ interface AddressRepo {
 
     suspend fun updateSortOrder(ids: List<Long>)
 
-    suspend fun sortItems()
+    suspend fun upsertItemsWithSort(items: MutableList<AddressEntity>)
 
     suspend fun suggest(query: String): List<AddressSuggest>
 
@@ -38,6 +40,4 @@ interface AddressRepo {
     suspend fun updateQuery(id: Long?, query: String)
 
     suspend fun setLastLocation(location: Location?)
-
-    suspend fun getDistanceByLocation(location: Address.Location?): Float?
 }

@@ -1,4 +1,4 @@
-package net.maxsmr.feature.address_sorter.data
+package net.maxsmr.feature.address_sorter.data.usecase
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.FlowUseCase
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
@@ -19,12 +19,12 @@ import javax.inject.Inject
 
 class AddressSuggestUseCase @Inject constructor(
     private val repository: AddressRepo,
-) : FlowUseCase<Flow<AddressSuggestUseCase.Parameters>, List<AddressSuggest>>(Dispatchers.IO) {
+) : FlowUseCase<Flow<AddressSuggestUseCase.Parameters?>, List<AddressSuggest>>(Dispatchers.IO) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun execute(parameters: Flow<Parameters>): Flow<UseCaseResult<List<AddressSuggest>>> =
+    override fun execute(parameters: Flow<Parameters?>): Flow<UseCaseResult<List<AddressSuggest>>> =
         parameters
-            .map { it.copy(query = it.query.trim()) }
+            .mapNotNull { it?.let { it.copy(query = it.query.trim()) } }
             .debounce {
                 if (it.query.length < SUGGEST_THRESHOLD) {
                     0

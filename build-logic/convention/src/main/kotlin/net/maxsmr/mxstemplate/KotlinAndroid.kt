@@ -27,12 +27,12 @@ internal fun Project.configureKotlinAndroid(
         productFlavors {
             register("appDev") {
                 dimension = "default"
-                buildConfigField("boolean", "CRASH_ON_UNEXPECTED_ERROR", "true")
+//                buildConfigField("boolean", "CRASH_ON_UNEXPECTED_ERROR", "true")
                 buildConfigField("boolean", "LOG_WRITE_FILE", "true")
             }
             register("appProd") {
                 dimension = "default"
-                buildConfigField("boolean", "CRASH_ON_UNEXPECTED_ERROR", "false")
+//                buildConfigField("boolean", "CRASH_ON_UNEXPECTED_ERROR", "false")
                 buildConfigField("boolean", "LOG_WRITE_FILE", "false")
             }
             register("google") { dimension = "provider" }

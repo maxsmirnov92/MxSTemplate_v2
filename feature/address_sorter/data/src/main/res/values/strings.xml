@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="address_sorter_error_missing_last_location">Missing last location</string>
+    <string name="address_sorter_error_missing_location">Missing place location</string>
+    <string name="address_sorter_error_missing_locations_count_format">Missing places locations: %d</string>
+</resources>

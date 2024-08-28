@@ -28,7 +28,6 @@ interface YandexGeocodeDataService {
     @GET("1.x")
     suspend fun geocode(
         @Query("geocode") geocode: String,
-        @Query("lang") lang: String,
     ): GeocodeResponse
 
     companion object {

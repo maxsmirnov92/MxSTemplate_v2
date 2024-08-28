@@ -8,6 +8,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.di.BaseJson
+import net.maxsmr.core.di.DoubleGisRoutingHostManager
+import net.maxsmr.core.di.DoubleGisRoutingOkHttpClient
+import net.maxsmr.core.di.DoubleGisRoutingRetrofit
 import net.maxsmr.core.di.RadarIoHostManager
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.RadarIoRetrofit
@@ -74,6 +77,24 @@ class RetrofitModule {
         @BaseJson json: Json,
     ): YandexGeocodeRetrofitClient {
         return YandexGeocodeRetrofitClient(
+            hostManager.getBaseUrl().toHttpUrl(),
+            okHttpClient,
+            json,
+            File(context.cacheDir, "OkHttpCache").path,
+            BuildConfig.PROTOCOL_VERSION,
+            false
+            // cacheManager.getDisableCache()
+        )
+    }
+
+    @[Provides Singleton DoubleGisRoutingRetrofit]
+    fun provideDoubleGisRoutingRetrofit(
+        @ApplicationContext context: Context,
+        @DoubleGisRoutingHostManager hostManager: HostManager,
+        @DoubleGisRoutingOkHttpClient okHttpClient: OkHttpClient,
+        @BaseJson json: Json,
+    ): CommonRetrofitClient {
+        return CommonRetrofitClient(
             hostManager.getBaseUrl().toHttpUrl(),
             okHttpClient,
             json,

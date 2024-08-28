@@ -1,6 +1,5 @@
 package net.maxsmr.feature.address_sorter.data.repository
 
-import android.graphics.PointF
 import android.location.Location
 import com.github.kittinunf.result.Result
 import kotlinx.coroutines.CoroutineScope
@@ -15,7 +14,6 @@ import net.maxsmr.commonutils.collection.sort.BaseOptionalComparator
 import net.maxsmr.commonutils.collection.sort.ISortOption
 import net.maxsmr.commonutils.compareFloats
 import net.maxsmr.commonutils.compareLongs
-import net.maxsmr.commonutils.location.distance
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
@@ -28,18 +26,20 @@ import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.toE
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
+import net.maxsmr.core.domain.entities.feature.address_sorter.SortMode
 import net.maxsmr.core.network.api.GeocodeDataSource
 import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.exceptions.EmptyResponseException
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.InputStream
-import java.lang.Exception
-import java.util.Locale
+import javax.inject.Inject
 
-class AddressRepoImpl(
+class AddressRepoImpl (
     private val dao: AddressDao,
     private val cacheRepo: CacheDataStoreRepository,
+    private val settingsRepo: SettingsDataStoreRepository,
     private val json: Json,
     private val suggestDataSource: SuggestDataSource,
     private val geocodeDataSource: GeocodeDataSource,
@@ -86,6 +86,12 @@ class AddressRepoImpl(
         }
     }
 
+    override suspend fun getItems(): List<AddressEntity> {
+        return withContext(ioDispatcher) {
+            dao.getRaw()
+        }
+    }
+
     override suspend fun deleteItem(id: Long) {
         withContext(ioDispatcher) {
             dao.deleteById(id)
@@ -115,7 +121,7 @@ class AddressRepoImpl(
             val geocodeResult: Result<AddressGeocode, Exception>? = if (suggest.location == null) {
                 // у Яндекса в ответе suggest нет location - отдельный запрос геокодирования
                 try {
-                    val geocode = geocodeDataSource.geocode(suggest.address, Locale.getDefault().toString())
+                    val geocode = geocodeDataSource.geocode(suggest.address)
                     geocode?.let { Result.success(geocode) } ?: throw EmptyResponseException()
                 } catch (e: Exception) {
                     logger.e(formatException(e, "geocode"))
@@ -144,32 +150,23 @@ class AddressRepoImpl(
         result.upsert()
     }
 
-    override suspend fun sortItems() {
-        withContext(ioDispatcher) {
-            val entities = dao.getRaw()
-            val lastLocation = cacheRepo.getLastLocation()
-            val newEntities = entities.map {
-                val distance = calculateDistanceByLocation(it.location, lastLocation)
-                if (distance != null) {
-                    // актуализация пересчитанным валидным значением
-                    it.copy(distance = distance)
-                } else {
-                    it
+    override suspend fun upsertItemsWithSort(items: MutableList<AddressEntity>) {
+        return withContext(ioDispatcher) {
+            if (items.isNotEmpty()) {
+                val settings = settingsRepo.getSettings()
+                items.sortWith(AddressComparator(settings.sortMode))
+                items.forEachIndexed { index, item ->
+                    item.sortOrder = index.toLong()
                 }
-            }.toMutableList()
-            newEntities.sortWith(AddressComparator())
-            newEntities.forEachIndexed { index, item ->
-                item.sortOrder = index.toLong()
+                items.upsert()
             }
-            newEntities.upsert()
         }
     }
 
     override suspend fun suggest(query: String): List<AddressSuggest> {
         return withContext(ioDispatcher) {
             val lastLocation = cacheRepo.getLastLocation()
-            val lang = Locale.getDefault().toString().split("_")[0]
-            suggestDataSource.suggest(query, lastLocation, lang = lang)
+            suggestDataSource.suggest(query, lastLocation)
         }
     }
 
@@ -189,7 +186,7 @@ class AddressRepoImpl(
             val newEntity = current?.copy(
                 address = query,
                 locationException = null,
-                distanceException = null
+                routingException = null
             )?.apply {
                 this.id = current.id
                 this.sortOrder = current.sortOrder
@@ -211,12 +208,6 @@ class AddressRepoImpl(
         })
     }
 
-    override suspend fun getDistanceByLocation(location: Address.Location?): Float? {
-        return withContext(ioDispatcher) {
-            calculateDistanceByLocation(location, cacheRepo.getLastLocation())
-        }
-    }
-
     private fun List<Address>.addIfNew(item: Address): List<Address> {
         val result = mutableListOf<Address>()
         result.addAll(this)
@@ -235,25 +226,23 @@ class AddressRepoImpl(
         }
     }
 
-    private fun calculateDistanceByLocation(location: Address.Location?, lastLocation: Address.Location?): Float? {
-        fun Address.Location.toPointF() = PointF(latitude, longitude)
-        val locationPoint = location?.toPointF()
-        return locationPoint?.let {
-            // сначала пробуем пересчитать относительно имеющихся координат и последней геолокации
-            lastLocation?.toPointF()?.let { lastLocation ->
-                distance(lastLocation, it)
-            }
-        }?.takeIf { it >= 0 }
-    }
 
-    private class AddressComparator : BaseOptionalComparator<AddressComparator.SortOption, AddressEntity>(
-        SortOption.entries.associateWith { true }
+    private class AddressComparator(sortMode: SortMode) : BaseOptionalComparator<AddressComparator.SortOption, AddressEntity>(
+        if (sortMode == SortMode.DISTANCE) {
+            listOf(SortOption.DISTANCE, SortOption.DURATION, SortOption.SORT_ORDER)
+        } else {
+            listOf(SortOption.DURATION, SortOption.DISTANCE, SortOption.SORT_ORDER)
+        }.associateWith { true }
     ) {
 
         override fun compare(lhs: AddressEntity, rhs: AddressEntity, option: SortOption, ascending: Boolean): Int {
             return when (option) {
                 SortOption.DISTANCE -> {
                     compareFloats(lhs.distance, rhs.distance, ascending)
+                }
+
+                SortOption.DURATION -> {
+                    compareLongs(lhs.duration, rhs.duration, ascending)
                 }
 
                 // при совпадении distance, sort_order - следующий критерий
@@ -266,6 +255,7 @@ class AddressRepoImpl(
         enum class SortOption : ISortOption {
 
             DISTANCE,
+            DURATION,
             SORT_ORDER;
 
             override val optionName: String = name

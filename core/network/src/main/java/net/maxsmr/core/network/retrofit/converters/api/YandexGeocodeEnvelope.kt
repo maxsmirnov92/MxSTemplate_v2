@@ -9,18 +9,11 @@ import net.maxsmr.core.network.retrofit.converters.BaseEnvelope
 @Serializable
 internal class YandexGeocodeEnvelope<T>(
     @SerialName("statusCode")
-    val statusCode: Int = NO_ERROR_API,
+    override val errorCode: Int = NO_ERROR_API,
     @SerialName("error")
     val error: String = EMPTY_STRING,
     @SerialName("message")
-    val message: String= EMPTY_STRING,
+    override val errorMessage: String = EMPTY_STRING,
     @SerialName("response")
-    val response: T? = null,
-): BaseEnvelope<T> {
-
-    override val errorCode: Int = statusCode
-
-    override val errorMessage: String = message
-
-    override val result: T? = response
-}
+    override val result: T? = null,
+) : BaseEnvelope<T>

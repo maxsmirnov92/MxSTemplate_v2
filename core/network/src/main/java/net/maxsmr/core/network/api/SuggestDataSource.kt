@@ -13,8 +13,6 @@ interface SuggestDataSource {
     suspend fun suggest(
         query: String,
         location: Address.Location? = null,
-        country: String = "RU",
-        lang: String = "ru",
     ): List<AddressSuggest>
 }
 
@@ -25,13 +23,11 @@ class RadarIoSuggestDataSource(
     override suspend fun suggest(
         query: String,
         location: Address.Location?,
-        country: String,
-        lang: String,
     ): List<AddressSuggest> = withContext(Dispatchers.IO) {
         val locationText = location?.let {
             "${it.latitude},${it.longitude}"
         }
-        RadarIoDataService.instance(retrofit).suggest(query, locationText, country).asDomain()
+        RadarIoDataService.instance(retrofit).suggest(query, locationText).asDomain()
     }
 }
 
@@ -42,13 +38,11 @@ class YandexSuggestDataSource(
     override suspend fun suggest(
         query: String,
         location: Address.Location?,
-        country: String,
-        lang: String,
     ): List<AddressSuggest> = withContext(Dispatchers.IO) {
         val locationText = location?.let {
             "${it.longitude},${it.latitude}"
         }
-        YandexSuggestDataService.instance(retrofit).suggest(query, locationText, lang).asDomain()
+        YandexSuggestDataService.instance(retrofit).suggest(query, locationText).asDomain()
     }
 }
 

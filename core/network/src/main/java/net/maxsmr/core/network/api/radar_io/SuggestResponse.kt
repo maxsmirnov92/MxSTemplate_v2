@@ -7,7 +7,6 @@ import net.maxsmr.core.network.retrofit.converters.api.BaseRadarIoResponse
 
 @Serializable
 class SuggestResponse(
-    override val meta: Meta,
     private val addresses: List<Address>,
 ) : BaseRadarIoResponse() {
 
@@ -23,7 +22,7 @@ class SuggestResponse(
         val countryFlag: String,
         val county: String? = null,
         val distance: Float? = null,
-        val confidence: Confidence? = null,
+        val confidence: String? = null,
         val city: String? = null,
         val number: String? = null,
         val postalCode: String? = null,
@@ -36,31 +35,17 @@ class SuggestResponse(
     ) {
 
         fun asDomain() = net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest(
-            Location(latitude, longitude),
             county.takeIf { !it.isNullOrEmpty() }?.let {
                 "$it, $addressLabel"
             } ?: addressLabel,
+            Location(latitude, longitude),
             distance
         )
 
         @Serializable
         data class Geometry(
-            val type: Type,
+            val type: String,
             val coordinates: List<Float>,
-
-            ) {
-
-            enum class Type {
-
-                @SerialName("Point")
-                POINT
-            }
-        }
-
-        enum class Confidence {
-
-            @SerialName("exact")
-            EXACT
-        }
+        )
     }
 }

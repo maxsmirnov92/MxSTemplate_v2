@@ -10,8 +10,6 @@ import kotlinx.coroutines.flow.onStart
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
-import net.maxsmr.core.android.BuildConfig
-import net.maxsmr.core.android.R
 import net.maxsmr.core.network.NO_ERROR_API
 import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.NetworkException
@@ -42,6 +40,7 @@ sealed class UseCaseResult<out R> {
             }
         }
     }
+
     object Loading : UseCaseResult<Nothing>()
 
     override fun toString(): String {
@@ -71,6 +70,7 @@ inline fun <reified T> UseCaseResult<T>.updateOnSuccess(liveData: MutableLiveDat
         liveData.value = data
     }
 }
+
 /**
  * Обновление значения [MutableStateFlow] если [UseCaseResult] типа [Success]
  */
@@ -96,16 +96,17 @@ fun <T, U> ILoadState<T>.asUseCaseResult(mapOnSuccess: (data: T) -> U) = when {
             UseCaseResult.Error(IllegalStateException())
         }
     }
+
     else -> UseCaseResult.Error(error ?: Exception())
 }
 
-fun <T> UseCaseResult<T>.asState() = when(this) {
+fun <T> UseCaseResult<T>.asState() = when (this) {
     is UseCaseResult.Loading -> LoadState.loading()
     is UseCaseResult.Success -> LoadState.success(this.data)
     is UseCaseResult.Error -> LoadState.error(this.exception)
 }
 
-fun <T, U> UseCaseResult<T>.mapData(mapData: (data: T) -> U) : UseCaseResult<U> = when(this) {
+fun <T, U> UseCaseResult<T>.mapData(mapData: (data: T) -> U): UseCaseResult<U> = when (this) {
     is UseCaseResult.Loading -> UseCaseResult.Loading
     is UseCaseResult.Success -> UseCaseResult.Success(mapData(this.data))
     is UseCaseResult.Error -> UseCaseResult.Error(this.exception, this.messageResId)
@@ -133,6 +134,7 @@ fun Throwable.asUseCaseResult() = when (this) {
     is ApiException -> {
         UseCaseResult.Error(this)
     }
+
     is NetworkException,
     is NoConnectivityException,
     is SocketException,
@@ -140,15 +142,12 @@ fun Throwable.asUseCaseResult() = when (this) {
     is SSLException,
     is SocketTimeoutException,
     is IOException,
-    is retrofit2.HttpException
+    is retrofit2.HttpException,
     -> {
         UseCaseResult.Error(this, net.maxsmr.core.network.R.string.error_no_internet)
     }
+
     else -> {
-        if (BuildConfig.CRASH_ON_UNEXPECTED_ERROR) {
-            throw this
-        } else {
-            UseCaseResult.Error(Exception(this), R.string.error_unexpected)
-        }
+        UseCaseResult.Error(this)
     }
 }

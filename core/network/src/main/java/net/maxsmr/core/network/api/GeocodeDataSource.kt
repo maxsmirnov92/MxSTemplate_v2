@@ -8,7 +8,6 @@ interface GeocodeDataSource {
 
     suspend fun geocode(
         geocode: String,
-        lang: String = "ru_RU",
     ): AddressGeocode?
 }
 
@@ -16,7 +15,7 @@ class YandexGeocodeDataSource(
     private val retrofit: YandexGeocodeRetrofitClient,
 ) : GeocodeDataSource {
 
-    override suspend fun geocode(geocode: String, lang: String): AddressGeocode? {
-        return YandexGeocodeDataService.instance(retrofit).geocode(geocode, lang).asDomain()
+    override suspend fun geocode(geocode: String): AddressGeocode? {
+        return YandexGeocodeDataService.instance(retrofit).geocode(geocode).asDomain()
     }
 }

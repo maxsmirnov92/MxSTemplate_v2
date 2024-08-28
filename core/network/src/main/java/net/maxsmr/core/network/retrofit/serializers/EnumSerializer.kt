@@ -7,29 +7,8 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import net.maxsmr.core.domain.IntId
+import net.maxsmr.core.domain.StringId
 import kotlin.reflect.KClass
-
-
-open class IntEnumSerializer<T>(
-    kClass: KClass<T>,
-    private val values: Array<T>,
-    private val defaultValue: T
-) : KSerializer<T> where T : Enum<T>, T : IntEnum {
-
-
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
-        kClass.simpleName ?: "IntEnum", PrimitiveKind.STRING)
-
-    override fun serialize(encoder: Encoder, value: T) {
-        encoder.encodeInt(value.value)
-    }
-
-    override fun deserialize(decoder: Decoder): T {
-        val value = decoder.decodeInt()
-
-        return values.firstOrNull { it.value == value } ?: defaultValue
-    }
-}
 
 open class IntIdEnumSerializer<T>(
     kClass: KClass<T>,
@@ -52,8 +31,24 @@ open class IntIdEnumSerializer<T>(
     }
 }
 
+open class StringIdEnumSerializer<T>(
+    kClass: KClass<T>,
+    private val values: Array<T>,
+    private val defaultValue: T,
+    private val ignoreCase: Boolean = true
+) : KSerializer<T> where T : Enum<T>, T : StringId {
 
-interface IntEnum {
 
-    val value: Int
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
+        kClass.simpleName ?: "IntEnum", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: T) {
+        encoder.encodeString(value.id)
+    }
+
+    override fun deserialize(decoder: Decoder): T {
+        val value = decoder.decodeString()
+
+        return values.firstOrNull { it.id.equals(value, ignoreCase) } ?: defaultValue
+    }
 }

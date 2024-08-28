@@ -22,8 +22,8 @@ fun addressExceptionAdapterDelegate(listener: AddressExceptionListener) =
                             context.getString(R.string.address_sorter_error_location_format, it)
                         }
 
-                        ExceptionType.DISTANCE -> {
-                            context.getString(R.string.address_sorter_error_distance_format, it)
+                        ExceptionType.ROUTING -> {
+                            context.getString(R.string.address_sorter_error_routing_format, it)
                         }
                     }
                 } ?: run {
@@ -32,8 +32,8 @@ fun addressExceptionAdapterDelegate(listener: AddressExceptionListener) =
                             context.getString(R.string.address_sorter_error_location)
                         }
 
-                        ExceptionType.DISTANCE -> {
-                            context.getString(R.string.address_sorter_error_distance)
+                        ExceptionType.ROUTING -> {
+                            context.getString(R.string.address_sorter_error_routing)
                         }
                     }
                 }

@@ -14,8 +14,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.format.TIME_UNITS_TO_EXCLUDE_DEFAULT
+import net.maxsmr.commonutils.format.TimePluralFormat
+import net.maxsmr.commonutils.format.decomposeTimeFormatted
+import net.maxsmr.commonutils.gui.message.JoinTextMessage
 import net.maxsmr.commonutils.gui.message.PluralTextMessage
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.live.recharge
 import net.maxsmr.commonutils.media.openInputStream
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
@@ -23,28 +28,40 @@ import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
+import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.android.coroutines.usecase.asState
+import net.maxsmr.core.android.coroutines.usecase.data
 import net.maxsmr.core.android.coroutines.usecase.mapData
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
+import net.maxsmr.feature.address_sorter.data.usecase.routing.RoutingFailedException
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.location.LocationViewModel
-import net.maxsmr.feature.address_sorter.data.AddressSuggestUseCase
+import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestUseCase
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
+import net.maxsmr.feature.address_sorter.data.usecase.AddressSortUseCase
+import net.maxsmr.feature.address_sorter.data.usecase.routing.AddressRoutingUseCase
+import net.maxsmr.feature.address_sorter.data.usecase.routing.MissingLastLocationException
+import net.maxsmr.feature.address_sorter.data.usecase.routing.MissingLocationException
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressExceptionData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import java.io.Serializable
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 class AddressSorterViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val locationViewModel: LocationViewModel,
     private val repo: AddressRepo,
     private val addressSuggestUseCase: AddressSuggestUseCase,
+    private val addressSortUseCase: AddressSortUseCase,
+    private val addressRoutingUseCase: AddressRoutingUseCase,
 ) : BaseHandleableViewModel(state) {
 
     // сразу нельзя получить из
@@ -69,7 +86,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
         viewModelScope.launch {
             repo.upsertCompletedEvent.collectLatest {
-                resultItemsState.value = LoadState.success(resultItemsState.value?.data.orEmpty())
+                resultItemsState.recharge()
             }
         }
         locationViewModel.currentLocation.observe {
@@ -89,6 +106,9 @@ class AddressSorterViewModel @AssistedInject constructor(
         super.handleAlerts(delegate)
         delegate.bindAlertDialog(DIALOG_TAG_CLEAR_ITEMS) {
             it.asYesNoDialog(delegate.context)
+        }
+        delegate.bindAlertDialog(DIALOG_TAG_ROUTING_FAILED) {
+            it.asOkDialog(delegate.context)
         }
     }
 
@@ -112,8 +132,19 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     fun doRefresh() {
         resultItemsState.value = LoadState.loading(resultItemsState.value?.data.orEmpty())
+
         viewModelScope.launch {
-            repo.sortItems()
+            val result = addressSortUseCase.invoke(Unit)
+            val currentData = resultItemsState.value?.data.orEmpty()
+
+            if (result is UseCaseResult.Error) {
+                val e = result.exception
+                resultItemsState.value = LoadState.error(e, currentData)
+                showRoutingFailedMessage(e)
+            } else if (result is UseCaseResult.Success && result.data.isEmpty()) {
+                // поскольку не будет выставления в items.observe {}
+                resultItemsState.value = LoadState.success(currentData)
+            }
         }
     }
 
@@ -139,9 +170,31 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onInfoAction(item: AddressItem) {
+        dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
+
         viewModelScope.launch {
-            val distance = (repo.getDistanceByLocation(item.location) ?: item.distance)?.roundToInt() ?: return@launch
-            showSnackbar(
+            // TODO настройка о пересчёте: если не задана, то выдавать известный distance
+            val result = addressRoutingUseCase.invoke(AddressRoutingUseCase.Params(item.id, item.location))
+            dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
+
+            val route = when (result) {
+                is UseCaseResult.Error -> {
+                    showRoutingFailedMessage(result.exception)
+                    null
+                }
+
+                is UseCaseResult.Success -> {
+                    result.data
+                }
+
+                else -> {
+                    null
+                }
+            }
+
+            val distanceMessage = (route?.distance?.toInt()
+            // distance ранее пересчитанный в итеме или возвращшённый suggest'ом
+                ?: item.distance?.roundToInt())?.let { distance ->
                 TextMessage(
                     R.string.address_sorter_toast_distance_to_point_format,
                     if (distance > 1000) {
@@ -150,10 +203,29 @@ class AddressSorterViewModel @AssistedInject constructor(
                     } else {
                         PluralTextMessage(R.plurals.meters, distance, distance)
                     }
-                ),
-                SnackbarExtraData(length = SnackbarExtraData.SnackbarLength.LONG),
-                uniqueStrategy = AlertQueueItem.UniqueStrategy.Replace
-            )
+                )
+
+            }
+            val durationMessage = route?.duration?.let { duration ->
+                TextMessage(
+                    R.string.address_sorter_toast_duration_to_point_format,
+                    JoinTextMessage(
+                        ", ",
+                        decomposeTimeFormatted(duration, TimeUnit.SECONDS, TimePluralFormat.NORMAL_WITH_VALUE)
+                    )
+                )
+            }
+            val resultMessage = if (distanceMessage != null && durationMessage != null) {
+                JoinTextMessage(".\n", distanceMessage, durationMessage)
+            } else distanceMessage ?: durationMessage
+
+            resultMessage?.let {
+                showSnackbar(
+                    it,
+                    SnackbarExtraData(length = SnackbarExtraData.SnackbarLength.LONG),
+                    uniqueStrategy = AlertQueueItem.UniqueStrategy.Replace
+                )
+            }
         }
     }
 
@@ -166,10 +238,10 @@ class AddressSorterViewModel @AssistedInject constructor(
                     } else {
                         it.locationException
                     },
-                    distanceException = if (type == Address.ExceptionType.DISTANCE) {
+                    routingException = if (type == Address.ExceptionType.ROUTING) {
                         null
                     } else {
-                        it.distanceException
+                        it.routingException
                     },
                 ).apply {
                     this.id = id
@@ -254,11 +326,57 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
     }
 
+    private fun showRoutingFailedMessage(e: Throwable) {
+        val message = when (e) {
+            is MissingLastLocationException -> {
+                TextMessage(
+                    R.string.address_sorter_error_routing_format,
+                    TextMessage(net.maxsmr.feature.address_sorter.data.R.string.address_sorter_error_missing_last_location)
+                )
+            }
+
+            is MissingLocationException -> {
+                val count = e.ids.size
+                TextMessage(
+                    R.string.address_sorter_error_routing_format,
+                    if (count == 1) {
+                        TextMessage(net.maxsmr.feature.address_sorter.data.R.string.address_sorter_error_missing_location)
+                    } else {
+                        TextMessage(net.maxsmr.feature.address_sorter.data.R.string.address_sorter_error_missing_locations_count_format, count)
+                    }
+                )
+            }
+
+            is RoutingFailedException -> {
+                val count = e.routes.size
+                if (count == 1) {
+                    TextMessage(R.string.address_sorter_error_routing_count_format, 1)
+                } else {
+                    TextMessage(R.string.address_sorter_error_routing_format, e.routes[0].second)
+
+                }
+            }
+
+            else -> {
+                e.message?.takeIf { it.isNotEmpty() }?.let {
+                    TextMessage(R.string.address_sorter_error_routing_format, it)
+                } ?: TextMessage(R.string.address_sorter_error_routing)
+            }
+        }
+        showOkDialog(DIALOG_TAG_ROUTING_FAILED, message)
+    }
+
     private fun List<AddressItem>.refreshFlows() {
         this.forEach {
             // актуализация flow'ов по текущему списку итемов
             if (!suggestFlowMap.containsKey(it.id)) {
-                val flow = MutableStateFlow(AddressSuggestUseCase.Parameters(it.id, it.address))
+                val flow = MutableStateFlow(
+                    if (!it.isSuggested) {
+                        AddressSuggestUseCase.Parameters(it.id, it.address)
+                    } else {
+                        null
+                    }
+                )
 //                val resultMap = suggestsLiveData.value?.toMutableMap() ?: mutableMapOf()
                 val startedJob = viewModelScope.launch {
                     addressSuggestUseCase(flow).map { result ->
@@ -266,7 +384,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                             addresses.map { a -> a.toUi() }
                         }
                     }.collect { result ->
-                        onNewSuggests(it.id, result.asState(), flow.value.query)
+                        onNewSuggests(it.id, result.asState(), flow.value?.query.orEmpty())
 //                        suggestsLiveData.value = resultMap
                     }
                 }
@@ -288,14 +406,14 @@ class AddressSorterViewModel @AssistedInject constructor(
         val result = mutableListOf<AddressInputData>()
         forEach { item ->
             suggestsMap[item.id]?.let {
-                result.add(AddressInputData(item, it, ))
+                result.add(AddressInputData(item, it))
             } ?: result.add(AddressInputData(item, LoadState.success(listOf())))
         }
         return result
     }
 
     class FlowInfo(
-        val flow: MutableStateFlow<AddressSuggestUseCase.Parameters>,
+        val flow: MutableStateFlow<AddressSuggestUseCase.Parameters?>,
         val startedJob: Job,
     )
 
@@ -305,16 +423,17 @@ class AddressSorterViewModel @AssistedInject constructor(
         val location: Address.Location?,
         val distance: Float?,
         val isSuggested: Boolean,
-        val exceptionsData: ArrayList<AddressExceptionData>
+        val exceptionsData: ArrayList<AddressExceptionData>,
     ) : Serializable {
 
         companion object {
 
             fun Address.toUi() = AddressItem(
-                id, address, location, distance, isSuggested, ArrayList(exceptionsMap.entries.map {
+                id, address, location, distance, isSuggested,
+                ArrayList(exceptionsMap.entries.map {
                     AddressExceptionData(it.key, it.value)
-                }
-            ))
+                })
+            )
         }
     }
 
@@ -325,7 +444,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     ) : Serializable {
 
         fun toDomain() = AddressSuggest(
-            location, address, distance
+            address, location, distance
         )
 
         companion object {
@@ -348,5 +467,6 @@ class AddressSorterViewModel @AssistedInject constructor(
     companion object {
 
         const val DIALOG_TAG_CLEAR_ITEMS = "clear_items"
+        const val DIALOG_TAG_ROUTING_FAILED = "routing_failed"
     }
 }
