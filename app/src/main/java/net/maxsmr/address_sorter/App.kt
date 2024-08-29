@@ -1,5 +1,6 @@
 package net.maxsmr.address_sorter
 
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import net.maxsmr.address_sorter.logger.TimberLogger
 import net.maxsmr.commonutils.logger.BaseLogger
@@ -19,10 +20,9 @@ class App : BaseApplication() {
         initLogging()
     }
 
-
     override fun onCreate() {
         super.onCreate()
-//        FirebaseCrashlytics.getInstance().setUserId(uuidManager.uuid)
+        FirebaseCrashlytics.getInstance().setUserId(uuidManager.uuid)
 
 //        if (isAtLeastPie()) {
 //            kotlin.runCatching {

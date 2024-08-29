@@ -1,13 +1,13 @@
 package net.maxsmr.address_sorter.initializers
 
 import android.content.Context
-import androidx.startup.Initializer
-import timber.log.Timber
 import android.util.Log
-import dagger.hilt.EntryPoint
+import androidx.startup.Initializer
 import fr.bipi.tressence.common.filters.TagFilter
 import net.maxsmr.address_sorter.BuildConfig
+import net.maxsmr.address_sorter.timber.CrashReportingTree
 import net.maxsmr.address_sorter.timber.CustomFileLoggerTree
+import timber.log.Timber
 import java.util.regex.Pattern
 
 class TimberInitializer : Initializer<Unit> {
@@ -34,7 +34,7 @@ class TimberInitializer : Initializer<Unit> {
             )
         }
 
-//        Timber.plant(CrashReportingTree())
+        Timber.plant(CrashReportingTree())
     }
 
     override fun dependencies(): List<Class<out Initializer<*>>> = listOf()
