@@ -16,9 +16,9 @@ class RoutingResponse(
     val routes: List<Route>,
 ) : BaseDoubleGisRoutingResponse() {
 
-    fun asDomain(convertIdFunc: (Long) -> Long): List<Pair<AddressRoute, Route.Status>> =
+    fun asDomain(toAddressIdFunc: (Long) -> Long): List<Pair<AddressRoute, Route.Status>> =
         routes.mapNotNull { r ->
-            val id = convertIdFunc(r.targetId)
+            val id = toAddressIdFunc(r.targetId)
             if (id < 0) return@mapNotNull null
             if (r.distance < 0) return@mapNotNull null
             Pair(

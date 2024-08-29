@@ -21,14 +21,14 @@ import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepositor
 import javax.inject.Inject
 
 class AddressSortUseCase @Inject constructor(
-    private val repository: AddressRepo,
+    private val addressRepo: AddressRepo,
     private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
     private val routingDataSource: RoutingDataSource,
 ) : UseCase<Unit, List<AddressEntity>>(Dispatchers.IO) {
 
     override suspend fun execute(parameters: Unit): List<AddressEntity> {
-        val entities = repository.getItems()
+        val entities = addressRepo.getItems()
         val lastLocation = cacheRepo.getLastLocation()
 
         val settings = settingsRepo.getSettings()
@@ -129,7 +129,7 @@ class AddressSortUseCase @Inject constructor(
                     }.toMutableList()
 
                 } else {
-                    mutableListOf()
+                    entities.toMutableList()
                 }
             } else {
                 entities.map {
@@ -146,7 +146,10 @@ class AddressSortUseCase @Inject constructor(
                     }
                     if (distance != null) {
                         // актуализация пересчитанным валидным значением
-                        it.copy(distance = distance).apply {
+                        it.copy(
+                            distance = distance,
+                            duration = null
+                        ).apply {
                             this.id = it.id
                         }
                     } else {
@@ -173,7 +176,7 @@ class AddressSortUseCase @Inject constructor(
             entities.toMutableList()
         }
 
-        repository.upsertItemsWithSort(newEntities)
+        addressRepo.upsertItemsWithSort(newEntities)
 
         if (missingLocationIds.isNotEmpty()) {
             throw MissingLocationException(missingLocationIds)

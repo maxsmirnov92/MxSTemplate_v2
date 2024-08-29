@@ -1,7 +1,6 @@
 package net.maxsmr.feature.address_sorter.data.repository
 
 import android.location.Location
-import com.github.kittinunf.result.Result
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -16,9 +15,10 @@ import net.maxsmr.commonutils.compareFloats
 import net.maxsmr.commonutils.compareLongs
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
 import net.maxsmr.commonutils.readString
+import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.mutableStateIn
+import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
 import net.maxsmr.core.database.model.address_sorter.AddressEntity
 import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.NO_ID
@@ -27,21 +27,17 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
-import net.maxsmr.core.network.api.GeocodeDataSource
-import net.maxsmr.core.network.api.SuggestDataSource
-import net.maxsmr.core.network.exceptions.EmptyResponseException
+
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.InputStream
 
-class AddressRepoImpl (
+class AddressRepoImpl(
     private val dao: AddressDao,
     private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
     private val json: Json,
-    private val suggestDataSource: SuggestDataSource,
-    private val geocodeDataSource: GeocodeDataSource,
 ) : AddressRepo {
 
     private val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("AddressRepoImpl")
@@ -114,25 +110,18 @@ class AddressRepoImpl (
         }
     }
 
-    override suspend fun specifyFromSuggest(id: Long, suggest: AddressSuggest) {
+    override suspend fun specifyFromSuggest(
+        id: Long,
+        suggest: AddressSuggest,
+        geocodeResult: UseCaseResult<AddressGeocode>,
+    ) {
         withContext(ioDispatcher) {
-            val current = dao.getById(id) ?: return@withContext
-            val geocodeResult: Result<AddressGeocode, Exception>? = if (suggest.location == null) {
-                // у Яндекса в ответе suggest нет location - отдельный запрос геокодирования
-                try {
-                    val geocode = geocodeDataSource.geocode(suggest.address)
-                    geocode?.let { Result.success(geocode) } ?: throw EmptyResponseException()
-                } catch (e: Exception) {
-                    logger.e(formatException(e, "geocode"))
-                    Result.error(e)
-                }
-            } else {
-                null
-            }
+            val entity = dao.getById(id) ?: return@withContext
             val result = suggest.toEntity(
-                id, current.sortOrder,
-                (geocodeResult as? Result.Success)?.value?.location,
-                (geocodeResult as? Result.Failure)?.getException(),
+                id, entity.sortOrder,
+                (geocodeResult as? UseCaseResult.Success)?.data?.location,
+                (geocodeResult as? UseCaseResult.Error)?.errorMessage()
+                    ?.get(baseApplicationContext)?.toString(),
             )
             dao.upsert(result)
         }
@@ -162,21 +151,6 @@ class AddressRepoImpl (
         }
     }
 
-    override suspend fun suggest(query: String): List<AddressSuggest> {
-        return withContext(ioDispatcher) {
-            val lastLocation = cacheRepo.getLastLocation()
-            suggestDataSource.suggest(query, lastLocation)
-        }
-    }
-
-    override suspend fun suggestWithUpdate(id: Long, query: String): List<AddressSuggest> {
-        return withContext(ioDispatcher) {
-            // апдейт существующей Entity в таблице при вводе
-            updateQuery(id, query)
-            suggest(query)
-        }
-    }
-
     override suspend fun updateQuery(id: Long?, query: String) {
         withContext(ioDispatcher) {
             val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: NO_ID
@@ -184,6 +158,7 @@ class AddressRepoImpl (
             if (current?.address == query) return@withContext
             val newEntity = current?.copy(
                 address = query,
+                isSuggested = false,
                 locationException = null,
                 routingException = null
             )?.apply {

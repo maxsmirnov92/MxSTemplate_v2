@@ -4,8 +4,10 @@ import android.location.Location
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.database.model.address_sorter.AddressEntity
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
+import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import java.io.InputStream
 
@@ -27,16 +29,19 @@ interface AddressRepo {
 
     suspend fun clearItems()
 
-    suspend fun specifyFromSuggest(id: Long, suggest: AddressSuggest)
+    suspend fun specifyFromSuggest(
+        id: Long,
+        suggest: AddressSuggest,
+        geocodeResult: UseCaseResult<AddressGeocode>
+    )
 
     suspend fun updateSortOrder(ids: List<Long>)
 
     suspend fun upsertItemsWithSort(items: MutableList<AddressEntity>)
 
-    suspend fun suggest(query: String): List<AddressSuggest>
-
-    suspend fun suggestWithUpdate(id: Long, query: String): List<AddressSuggest>
-
+    /**
+     * Апдейт существующей Entity в таблице при вводе или создание новой при [id] null
+     */
     suspend fun updateQuery(id: Long?, query: String)
 
     suspend fun setLastLocation(location: Location?)

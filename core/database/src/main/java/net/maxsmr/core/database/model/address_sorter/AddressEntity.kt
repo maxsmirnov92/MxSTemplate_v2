@@ -6,7 +6,6 @@ import androidx.room.PrimaryKey
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address.ExceptionType
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
-import java.lang.Exception
 
 @Entity(tableName = "Address")
 data class AddressEntity(
@@ -95,13 +94,13 @@ data class AddressEntity(
             id: Long,
             sortOrder: Long,
             location: Address.Location? = null,
-            exception: Exception? = null,
+            locationErrorMessage: String? = null,
         ) = AddressEntity(
             address = address,
             location = location ?: this.location,
             distance = distance,
             isSuggested = true,
-            locationException = exception?.message
+            locationException = locationErrorMessage
         ).apply {
             this.id = id
             this.sortOrder = sortOrder

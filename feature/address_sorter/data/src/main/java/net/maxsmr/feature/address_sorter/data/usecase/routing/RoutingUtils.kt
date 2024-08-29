@@ -10,5 +10,6 @@ fun getDirectDistanceByLocation(
 ): Float? {
     fun Address.Location.toPointF() = PointF(latitude, longitude)
     val locationPoint = first.toPointF()
-    return distance(second.toPointF(), locationPoint).takeIf { it >= 0 }
+    // distance2 выдаёт тот же результат, но считает по-другому и учитывает высоту
+    return distance(second.toPointF(), locationPoint).takeIf { it > 0 }
 }

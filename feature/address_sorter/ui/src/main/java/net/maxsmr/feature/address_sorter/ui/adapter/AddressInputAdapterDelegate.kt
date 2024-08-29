@@ -9,8 +9,7 @@ import com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.commonutils.gui.listeners.AfterTextChangeListener
-import net.maxsmr.commonutils.gui.setSelectionToEnd
-import net.maxsmr.commonutils.gui.setTextDistinct
+import net.maxsmr.commonutils.gui.setTextWithSelectionToEnd
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
@@ -88,10 +87,8 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
             bind {
                 item.run {
                     wasTextSetFromUser = false
-                    // TODO utils
-                    if (etText.setTextDistinct(item.address)) {
-                        etText.setSelectionToEnd()
-                    } else {
+                    if (!etText.setTextWithSelectionToEnd(item.address)) {
+                        // изменений нет - следующий onTextChanged будет от юзера
                         wasTextSetFromUser = true
                     }
                     etText.applySuggestions(

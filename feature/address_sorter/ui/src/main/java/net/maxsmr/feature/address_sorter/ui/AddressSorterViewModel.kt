@@ -45,6 +45,7 @@ import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestUseCase
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
+import net.maxsmr.feature.address_sorter.data.usecase.AddressGeocodeUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.AddressSortUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.routing.AddressRoutingUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.routing.MissingLastLocationException
@@ -64,6 +65,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     private val repo: AddressRepo,
     private val settingsRepo: SettingsDataStoreRepository,
     private val addressSuggestUseCase: AddressSuggestUseCase,
+    private val addressGeocodeUseCase: AddressGeocodeUseCase,
     private val addressSortUseCase: AddressSortUseCase,
     private val addressRoutingUseCase: AddressRoutingUseCase,
 ) : BaseHandleableViewModel(state) {
@@ -152,7 +154,7 @@ class AddressSorterViewModel @AssistedInject constructor(
             if (result is UseCaseResult.Error) {
                 val e = result.exception
                 resultItemsState.value = LoadState.error(e, currentData)
-                showRoutingFailedMessage(e)
+                showRoutingFailedMessage(e, result.errorMessage())
             } else if (result is UseCaseResult.Success && result.data.isEmpty()) {
                 // поскольку не будет выставления в items.observe {}
                 resultItemsState.value = LoadState.success(currentData)
@@ -253,7 +255,7 @@ class AddressSorterViewModel @AssistedInject constructor(
 
             val route = when (result) {
                 is UseCaseResult.Error -> {
-                    showRoutingFailedMessage(result.exception)
+                    showRoutingFailedMessage(result.exception, result.errorMessage())
                     null
                 }
 
@@ -281,7 +283,12 @@ class AddressSorterViewModel @AssistedInject constructor(
 
             }
             val durationMessage = route?.duration?.let { duration ->
-                decomposeTimeFormatted(duration, TimeUnit.SECONDS, TimePluralFormat.NORMAL_WITH_VALUE, emptyIfZero = false).takeIf { it.isNotEmpty() }?.let {
+                decomposeTimeFormatted(duration,
+                    TimeUnit.SECONDS,
+                    TimePluralFormat.NORMAL_WITH_VALUE,
+                    emptyIfZero = false,
+                    timeUnitsToExclude = setOf(TimeUnit.MILLISECONDS, TimeUnit.MICROSECONDS, TimeUnit.NANOSECONDS)
+                ).takeIf { it.isNotEmpty() }?.let {
                     TextMessage(
                         R.string.address_sorter_toast_duration_to_point_format,
                         JoinTextMessage(", ", it)
@@ -328,13 +335,15 @@ class AddressSorterViewModel @AssistedInject constructor(
     /**
      * Для адреса с данным [id] был выбран [AddressSuggestItem] из выпадающего списка
      */
-    fun onSuggestSelected(id: Long, suggest: AddressSuggestItem) {
+    fun onSuggestSelected(id: Long, suggestItem: AddressSuggestItem) {
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
             // убрать только из мапы
             onRemoveSuggests(id, true)
+            val suggest = suggestItem.toDomain()
+            val geocodeResult = addressGeocodeUseCase.invoke(suggest)
             // дальше должен быть mergeWithSuggests в Observer
-            repo.specifyFromSuggest(id, suggest.toDomain())
+            repo.specifyFromSuggest(id, suggest, geocodeResult)
 //          val current = suggestsLiveData.value?.toMutableMap() ?: mutableMapOf()
 //          suggestsLiveData.value = current
             dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
@@ -400,7 +409,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
     }
 
-    private fun showRoutingFailedMessage(e: Throwable) {
+    private fun showRoutingFailedMessage(e: Throwable, useCaseMessage: TextMessage?) {
         val message = when (e) {
             is MissingLastLocationException -> {
                 TextMessage(
@@ -432,7 +441,7 @@ class AddressSorterViewModel @AssistedInject constructor(
             }
 
             else -> {
-                e.message?.takeIf { it.isNotEmpty() }?.let {
+                useCaseMessage?.let {
                     TextMessage(R.string.address_sorter_error_routing_format, it)
                 } ?: TextMessage(R.string.address_sorter_error_routing)
             }

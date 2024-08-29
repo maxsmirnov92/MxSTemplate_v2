@@ -15,7 +15,7 @@ import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepositor
 import javax.inject.Inject
 
 class AddressRoutingUseCase @Inject constructor(
-    private val repository: AddressRepo,
+    private val addressRepo: AddressRepo,
     private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
     private val routingDataSource: RoutingDataSource,
@@ -63,7 +63,7 @@ class AddressRoutingUseCase @Inject constructor(
                 throw e
             }
 
-            repository.updateItem(parameters.id) {
+            addressRepo.updateItem(parameters.id) {
                 if (route.second == Route.Status.OK) {
                     it.copy(
                         distance = route.first.distance.toFloat(),
@@ -86,9 +86,10 @@ class AddressRoutingUseCase @Inject constructor(
             val distance = getDirectDistanceByLocation(location, lastLocation)
 
             if (distance != null) {
-                repository.updateItem(parameters.id) {
+                addressRepo.updateItem(parameters.id) {
                     it.copy(
                         distance = distance,
+                        duration = null
                     ).apply {
                         this.id = it.id
                         this.sortOrder = it.sortOrder

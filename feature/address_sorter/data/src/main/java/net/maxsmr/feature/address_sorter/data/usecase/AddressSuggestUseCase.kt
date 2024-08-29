@@ -13,12 +13,16 @@ import net.maxsmr.core.android.coroutines.usecase.FlowUseCase
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.android.coroutines.usecase.asUseCaseResult
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
+import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.exceptions.EmptyResponseException
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import javax.inject.Inject
 
 class AddressSuggestUseCase @Inject constructor(
-    private val repository: AddressRepo,
+    private val addressRepo: AddressRepo,
+    private val cacheRepo: CacheDataStoreRepository,
+    private val suggestDataSource: SuggestDataSource,
 ) : FlowUseCase<Flow<AddressSuggestUseCase.Parameters?>, List<AddressSuggest>>(Dispatchers.IO) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -36,15 +40,17 @@ class AddressSuggestUseCase @Inject constructor(
             .flatMapLatest { p ->
                 flow {
                     if (p.query.length <= SUGGEST_THRESHOLD) {
-                        repository.updateQuery(p.id, p.query)
+                        addressRepo.updateQuery(p.id, p.query)
                         emit(UseCaseResult.Success(emptyList()))
                     } else {
                         emit(UseCaseResult.Loading)
+                        addressRepo.updateQuery(p.id, p.query)
+                        val lastLocation = cacheRepo.getLastLocation()
 //                        delay(5000)
                         val result = try {
-                            val result = repository.suggestWithUpdate(p.id, p.query)
+                            val result = suggestDataSource.suggest(p.query, lastLocation)
                             if (result.isEmpty()) {
-                                UseCaseResult.Error(EmptyResponseException(baseApplicationContext))
+                                throw EmptyResponseException(baseApplicationContext)
                             } else {
                                 UseCaseResult.Success(result)
                             }

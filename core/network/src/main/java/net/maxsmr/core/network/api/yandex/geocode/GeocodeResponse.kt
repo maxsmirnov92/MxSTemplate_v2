@@ -2,7 +2,6 @@ package net.maxsmr.core.network.api.yandex.geocode
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 
@@ -12,7 +11,7 @@ class GeocodeResponse(
     val collection: GeoObjectCollection,
 ) {
 
-    fun asDomain(): AddressGeocode? {
+    fun asDomain(getDistanceForLocationFunc: ((Address.Location) -> Float?)?): AddressGeocode? {
 
         fun String?.toLocation(): Address.Location? {
             val pos = this?.split(" ").orEmpty()
@@ -25,8 +24,29 @@ class GeocodeResponse(
             }
         }
 
-        val location = collection.featureMembers.getOrNull(0)
-            ?.geoObject?.point?.pos?.toLocation()
+        val firstLocation = collection.featureMembers.getOrNull(0)?.geoObject?.point?.pos?.toLocation()
+
+        val location = if (getDistanceForLocationFunc != null && collection.featureMembers.size > 1) {
+            // самый близкий из нескольких к последней известной геопозиции считаем наиболее релевантным
+            collection.featureMembers
+                .mapNotNull {
+                    val location = it.geoObject.point.pos.toLocation()
+                    if (location != null) {
+                        val distance = getDistanceForLocationFunc(location)
+                        if (distance != null) {
+                            Pair(location, distance)
+                        } else {
+                            null
+                        }
+                    } else {
+                        null
+                    }
+                }
+                .minByOrNull { it.second }?.first ?: firstLocation
+        } else {
+            firstLocation
+        }
+
         return if (location != null) {
             AddressGeocode(
                 collection.property.metaData.request,
@@ -82,7 +102,7 @@ class GeocodeResponse(
             @Serializable
             class BoundedBy(
                 @SerialName("Envelope")
-                val envelope: Envelope
+                val envelope: Envelope,
             ) {
 
                 @Serializable

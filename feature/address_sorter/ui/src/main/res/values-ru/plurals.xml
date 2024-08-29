@@ -4,7 +4,7 @@
         <item quantity="zero">%1$d метров</item>
         <item quantity="one">%1$d метр</item>
         <item quantity="two">%1$d метра</item>
-        <item quantity="few">%1$d метров</item>
+        <item quantity="few">%1$d метра</item>
         <item quantity="many">%1$d метров</item>
         <item quantity="other">%1$d метров</item>
     </plurals>
@@ -12,7 +12,7 @@
         <item quantity="zero">%1$d километров</item>
         <item quantity="one">%1$d километр</item>
         <item quantity="two">%1$d километра</item>
-        <item quantity="few">%1$d километров</item>
+        <item quantity="few">%1$d километра</item>
         <item quantity="many">%1$d километров</item>
         <item quantity="other">%1$d километров</item>
     </plurals>

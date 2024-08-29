@@ -10,7 +10,7 @@ interface RoutingDataSource {
 
     suspend fun getDistanceMatrix(
         request: RoutingRequest,
-        convertIdFunc: (Long) -> Long,
+        toAddressIdFunc: (Long) -> Long,
     ): List<Pair<AddressRoute, Route.Status>>
 }
 
@@ -20,8 +20,8 @@ class DoubleGisRoutingDataSource(
 
     override suspend fun getDistanceMatrix(
         request: RoutingRequest,
-        convertIdFunc: (Long) -> Long,
+        toAddressIdFunc: (Long) -> Long,
     ): List<Pair<AddressRoute, Route.Status>> {
-        return DoubleGisRoutingDataService.instance(retrofit).getDistanceMatrix(request).asDomain(convertIdFunc)
+        return DoubleGisRoutingDataService.instance(retrofit).getDistanceMatrix(request).asDomain(toAddressIdFunc)
     }
 }

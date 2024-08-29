@@ -25,19 +25,18 @@ import javax.net.ssl.SSLException
 sealed class UseCaseResult<out R> {
 
     data class Success<out T>(val data: T) : UseCaseResult<T>()
-    data class Error(val exception: Throwable, @StringRes val messageResId: Int = 0) : UseCaseResult<Nothing>() {
+
+    data class Error(val exception: Throwable, val message: TextMessage? = null) : UseCaseResult<Nothing>() {
 
         /**
          * @return [TextMessage] ошибки, либо null
          */
         fun errorMessage(): TextMessage? {
-            return if (messageResId > 0) {
-                TextMessage(messageResId)
-            } else if (!exception.message.isNullOrBlank()) {
-                TextMessage(exception.message.orEmpty())
-            } else {
-                null
-            }
+            return message
+                ?: exception.message?.takeIf { it.isNotEmpty() }?.let {
+                    TextMessage(it)
+                }
+
         }
     }
 
@@ -109,7 +108,7 @@ fun <T> UseCaseResult<T>.asState() = when (this) {
 fun <T, U> UseCaseResult<T>.mapData(mapData: (data: T) -> U): UseCaseResult<U> = when (this) {
     is UseCaseResult.Loading -> UseCaseResult.Loading
     is UseCaseResult.Success -> UseCaseResult.Success(mapData(this.data))
-    is UseCaseResult.Error -> UseCaseResult.Error(this.exception, this.messageResId)
+    is UseCaseResult.Error -> UseCaseResult.Error(this.exception, this.message)
 }
 
 fun <T> UseCaseResult<T>?.isNetworkError(): Boolean {
@@ -142,9 +141,11 @@ fun Throwable.asUseCaseResult() = when (this) {
     is SSLException,
     is SocketTimeoutException,
     is IOException,
-    is retrofit2.HttpException,
     -> {
-        UseCaseResult.Error(this, net.maxsmr.core.network.R.string.error_no_internet)
+        UseCaseResult.Error(this,
+            this.message?.takeIf { it.isNotEmpty() }?.let { TextMessage(it) }
+                ?: TextMessage(net.maxsmr.core.network.R.string.error_no_internet)
+        )
     }
 
     else -> {

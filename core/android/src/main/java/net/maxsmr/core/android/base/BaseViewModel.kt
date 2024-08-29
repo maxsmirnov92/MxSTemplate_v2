@@ -244,7 +244,7 @@ abstract class BaseViewModel(
 
     /**
      * @param uniqueStrategy при [AlertQueueItem.UniqueStrategy.None] и [AlertQueueItem.UniqueStrategy.Replace]
-     * поведение снека будет одинаковым
+     * поведение НЕ INDEFINITE снека будет одинаковым
      */
     fun showSnackbar(
         message: TextMessage,
