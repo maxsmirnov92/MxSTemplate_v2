@@ -10,7 +10,7 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.routing.AddressRou
 import net.maxsmr.core.network.api.RoutingDataSource
 import net.maxsmr.core.network.api.doublegis.RoutingRequest
 import net.maxsmr.core.network.api.doublegis.RoutingResponse.Route
-import net.maxsmr.core.network.exceptions.EmptyResponseException
+import net.maxsmr.core.network.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.R
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import net.maxsmr.feature.address_sorter.data.usecase.routing.MissingLocationException
@@ -77,7 +77,7 @@ class AddressSortUseCase @Inject constructor(
                 val routes: List<Pair<AddressRoute, Route.Status>> = try {
                     routingDataSource.getDistanceMatrix(request) {
                         points.getOrNull(it.toInt())?.key ?: -1
-                    }.takeIf { it.isNotEmpty() } ?: throw EmptyResponseException()
+                    }.takeIf { it.isNotEmpty() } ?: throw EmptyResultException(baseApplicationContext)
                 } catch (e: Exception) {
                     logger.e(formatException(e, "getDistanceMatrix"))
                     throw e
@@ -109,7 +109,7 @@ class AddressSortUseCase @Inject constructor(
                                 )
                             } else {
                                 entity.copy(
-                                    routingException = route.second.id
+                                    routingErrorMessage = route.second.id
                                 )
                             }.apply {
                                 this.id = entity.id
@@ -120,7 +120,7 @@ class AddressSortUseCase @Inject constructor(
                                 // предполагается быть с location
                                 missingLocationIds.add(entity.id)
                                 entity.copy(
-                                    routingException = baseApplicationContext.getString(R.string.address_sorter_error_missing_location)
+                                    routingErrorMessage = baseApplicationContext.getString(R.string.address_sorter_error_missing_location)
                                 )
                             } else {
                                 entity
@@ -157,12 +157,12 @@ class AddressSortUseCase @Inject constructor(
                             failRouteIds.add(it.id to Route.Status.FAIL)
                             it.copy(
                                 // "неизвестная ошибка"
-                                routingException = EMPTY_STRING
+                                routingErrorMessage = EMPTY_STRING
                             )
                         } else {
                             if (it.isSuggested) {
                                 it.copy(
-                                    routingException = baseApplicationContext.getString(R.string.address_sorter_error_missing_location)
+                                    routingErrorMessage = baseApplicationContext.getString(R.string.address_sorter_error_missing_location)
                                 )
                             } else {
                                 it

@@ -23,8 +23,11 @@
         android:id="@+id/actionChangeSortPriority"
         android:title="@string/address_sorter_menu_action_change_sort_priority" />
     <item
-        android:id="@+id/actionPickFromJson"
-        android:title="@string/address_sorter_menu_action_pick_from_json" />
+        android:id="@+id/actionImportFromJson"
+        android:title="@string/address_sorter_menu_action_import_from_json" />
+    <item
+        android:id="@+id/actionExportToJson"
+        android:title="@string/address_sorter_menu_action_export_to_json" />
     <item
         android:id="@+id/actionClear"
         android:title="@string/address_sorter_menu_action_clear" />

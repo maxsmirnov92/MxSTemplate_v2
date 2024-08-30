@@ -1,11 +1,13 @@
 package net.maxsmr.core.android.content.storage.shared
 
 import android.Manifest
+import android.annotation.TargetApi
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
 import androidx.annotation.RequiresApi
 import com.github.kittinunf.result.Result
@@ -32,11 +34,17 @@ import java.io.IOException
  * 1. Приватность данных - данные доступны другим приложениям с запросом READ_EXTERNAL_STORAGE разрешения.
  * 1. Доступность хранилища - всегда доступно.
  */
-@RequiresApi(Build.VERSION_CODES.Q)
+@TargetApi(Build.VERSION_CODES.Q)
 class SharedStorage private constructor(
     contentType: ContentType,
     context: Context,
 ) : AbsSharedStorage(contentType, context) {
+
+    /**
+     * Необходимость удаления имеющегося ресурса с данным именем перед insert;
+     * если false resolver'ом будет создан ресурс с постфиксом (n) в имени
+     */
+    var shouldDeleteBeforeCreate: Boolean = true
 
     override val path: String = "${contentType.rootDir}${File.separator}$appDir${File.separator}"
 
@@ -72,15 +80,27 @@ class SharedStorage private constructor(
             put(MediaStore.MediaColumns.RELATIVE_PATH, pathHardcoded)
         }
         val contentUri = contentType.contentUri(true)
-        //Удаляем существующий, если есть, т.к. во-первых это соответствует контракту метода (см. доку родителя),
-        //во-вторых если удалить файл и не оповестить MediaStore об этом, повторный insert не сработает
-        resolver.delete(
-            contentUri,
-            "${MediaStore.MediaColumns.RELATIVE_PATH} = ? AND ${contentType.mediaStoreDisplayName} = ?",
-            arrayOf(pathHardcoded, name)
-        )
-        resolver.insert(contentUri, values)
-            ?: throw IOException("Cannot create content with `$name`")
+
+        fun delete() {
+            resolver.delete(
+                contentUri,
+                "${MediaStore.MediaColumns.RELATIVE_PATH} = ? AND ${contentType.mediaStoreDisplayName} = ?",
+                arrayOf(pathHardcoded, name)
+            )
+        }
+
+        if (shouldDeleteBeforeCreate) {
+            delete()
+        }
+
+        var uri = resolver.insert(contentUri, values)
+        if (uri == null && !shouldDeleteBeforeCreate) {
+            // если удалить файл и не оповестить MediaStore об этом, повторный insert не сработает
+            // пробуем сначала удалить
+            delete()
+            uri = resolver.insert(contentUri, values)
+        }
+        uri ?: throw RuntimeException("Cannot insert uri ($contentUri) to SharedStorage")
     }
 
     override fun requiredPermissions(read: Boolean, write: Boolean): Array<String> {
@@ -94,7 +114,9 @@ class SharedStorage private constructor(
 
         @JvmStatic
         fun create(type: ContentType, context: Context): AbsSharedStorage {
-            return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                    || Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && Environment.isExternalStorageLegacy()
+            ) {
                 SharedStorageLegacy(type, context)
             } else {
                 SharedStorage(type, context)

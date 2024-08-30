@@ -8,36 +8,31 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.collection.sort.BaseOptionalComparator
 import net.maxsmr.commonutils.collection.sort.ISortOption
 import net.maxsmr.commonutils.compareFloats
 import net.maxsmr.commonutils.compareLongs
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.commonutils.readString
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.mutableStateIn
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
+import net.maxsmr.core.database.dao.UpsertDao.Companion.NO_ID
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
 import net.maxsmr.core.database.model.address_sorter.AddressEntity
-import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.NO_ID
 import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.toEntity
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
 
-import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import java.io.InputStream
 
 class AddressRepoImpl(
     private val dao: AddressDao,
     private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
-    private val json: Json,
 ) : AddressRepo {
 
     private val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("AddressRepoImpl")
@@ -52,26 +47,19 @@ class AddressRepoImpl(
 
     override val upsertCompletedEvent: MutableSharedFlow<Unit> = MutableSharedFlow()
 
-    override suspend fun addFromStream(stream: InputStream, rewrite: Boolean): Boolean {
-        return withContext(ioDispatcher) {
-            stream.readString()?.let { value ->
-                json.decodeFromStringOrNull<List<Address>>(value)?.let { list ->
-                    val entities = list.map { it.toEntity() }
-                    if (entities.isNotEmpty()) {
-                        if (rewrite) {
-                            dao.clear()
-                        } else {
-                            val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: NO_ID
-                            entities.forEachIndexed { i, item ->
-                                item.sortOrder = maxSortOrder + i
-                            }
-                        }
-                        dao.upsert(entities)
-                        return@withContext true
+    override suspend fun addItems(items: List<AddressEntity>, rewrite: Boolean) {
+        withContext(ioDispatcher) {
+            if (items.isNotEmpty()) {
+                if (rewrite) {
+                    dao.clear()
+                } else {
+                    val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: -1
+                    items.forEachIndexed { i, item ->
+                        item.sortOrder = maxSortOrder + i
                     }
                 }
+                dao.upsert(items)
             }
-            return@withContext false
         }
     }
 
@@ -118,7 +106,8 @@ class AddressRepoImpl(
         withContext(ioDispatcher) {
             val entity = dao.getById(id) ?: return@withContext
             val result = suggest.toEntity(
-                id, entity.sortOrder,
+                id,
+                entity.sortOrder,
                 (geocodeResult as? UseCaseResult.Success)?.data?.location,
                 (geocodeResult as? UseCaseResult.Error)?.errorMessage()
                     ?.get(baseApplicationContext)?.toString(),
@@ -153,14 +142,14 @@ class AddressRepoImpl(
 
     override suspend fun updateQuery(id: Long?, query: String) {
         withContext(ioDispatcher) {
-            val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: NO_ID
+            val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: -1
             val current = if (id != null && id > 0) dao.getById(id) else null
             if (current?.address == query) return@withContext
             val newEntity = current?.copy(
                 address = query,
                 isSuggested = false,
-                locationException = null,
-                routingException = null
+                locationErrorMessage = null,
+                routingErrorMessage = null
             )?.apply {
                 this.id = current.id
                 this.sortOrder = current.sortOrder
@@ -199,7 +188,6 @@ class AddressRepoImpl(
             upsertCompletedEvent.emit(Unit)
         }
     }
-
 
     private class AddressComparator(sortPriority: SortPriority) : BaseOptionalComparator<AddressComparator.SortOption, AddressEntity>(
         if (sortPriority == SortPriority.DISTANCE) {

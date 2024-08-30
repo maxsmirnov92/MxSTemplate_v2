@@ -84,7 +84,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                 .addSafParams(SafPickerParams.json())
                 .needPersistableUriAccess(true)
                 .onSuccess {
-                    viewModel.onJsonResourceSelected(requireContext(), it.uri)
+                    viewModel.onPickAddressesJson(it.uri)
                 }
                 .onError {
                     viewModel.onPickerResultError(it)
@@ -114,6 +114,10 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
     private var changeRoutingTypeMenuItem: MenuItem? = null
 
     private var changeSortPriorityMenuItem: MenuItem? = null
+
+    private var importMenuItem: MenuItem? = null
+
+    private var exportMenuItem: MenuItem? = null
 
     private var clearMenuItem: MenuItem? = null
 
@@ -192,6 +196,8 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         changeRoutingModeMenuItem = menu.findItem(R.id.actionChangeRoutingMode)
         changeRoutingTypeMenuItem = menu.findItem(R.id.actionChangeRoutingType)
         changeSortPriorityMenuItem = menu.findItem(R.id.actionChangeSortPriority)
+        importMenuItem = menu.findItem(R.id.actionImportFromJson)
+        exportMenuItem = menu.findItem(R.id.actionExportToJson)
         clearMenuItem = menu.findItem(R.id.actionClear)
         refreshStateMenuItems(viewModel.resultItemsState.value)
         refreshLastLocationInfoMenuItem(locationViewModel.getLastKnownLocation())
@@ -230,8 +236,13 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                 true
             }
 
-            R.id.actionPickFromJson -> {
+            R.id.actionImportFromJson -> {
                 contentPicker.pick(REQUEST_CODE_CHOOSE_JSON, requireContext())
+                true
+            }
+
+            R.id.actionExportToJson -> {
+                viewModel.onExportAddressesAction()
                 true
             }
 
@@ -315,18 +326,14 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
             clearMenuItem,
             changeRoutingModeMenuItem,
             changeRoutingTypeMenuItem,
-            changeSortPriorityMenuItem
+            changeSortPriorityMenuItem,
+            importMenuItem
         )
-        val data = state?.data.orEmpty()
+        val isSuccessWithData = state?.isSuccessWithData() == true
         items.forEach {
-            it?.let {
-                if (data.isNotEmpty()) {
-                    it.isVisible = state?.isLoading == false
-                } else {
-                    it.isVisible = false
-                }
-            }
+            it?.isVisible = isSuccessWithData
         }
+        exportMenuItem?.isVisible = state?.isLoading != true
     }
 
     private fun refreshLastLocationInfoMenuItem(lastLocation: Location?) {

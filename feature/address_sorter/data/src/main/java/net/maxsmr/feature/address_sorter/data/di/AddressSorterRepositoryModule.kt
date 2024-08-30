@@ -24,13 +24,11 @@ object AddressSorterRepositoryModule {
         dao: AddressDao,
         cacheRepo: CacheDataStoreRepository,
         settingsRepo: SettingsDataStoreRepository,
-        @BaseJson json: Json,
     ): AddressRepo {
         return AddressRepoImpl(
             dao,
             cacheRepo,
-            settingsRepo,
-            json
+            settingsRepo
         )
     }
 }

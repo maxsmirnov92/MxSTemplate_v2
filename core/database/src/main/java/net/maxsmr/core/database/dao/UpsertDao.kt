@@ -34,4 +34,9 @@ abstract class UpsertDao<T : Any> {
      */
     @Upsert
     abstract suspend fun upsert(objList: List<T>): List<Long>
+
+    companion object {
+
+        const val NO_ID = -1L
+    }
 }

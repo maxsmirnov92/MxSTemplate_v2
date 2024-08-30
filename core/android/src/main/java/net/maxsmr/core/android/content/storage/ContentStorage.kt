@@ -309,7 +309,7 @@ interface ContentStorage<T> {
         fun createUriStorage(
             storageType: StorageType,
             contentType: ContentType,
-            context: Context
+            context: Context,
         ): UriContentStorage = when (storageType) {
                 StorageType.INTERNAL ->
                     UriStorageAdapter(InternalFileStorage(FileContentStorage.Type.PERSISTENT, context), context = context)

@@ -1,6 +1,5 @@
 package net.maxsmr.feature.address_sorter.ui
 
-import android.content.Context
 import android.content.DialogInterface
 import android.net.Uri
 import androidx.lifecycle.MutableLiveData
@@ -20,7 +19,6 @@ import net.maxsmr.commonutils.gui.message.JoinTextMessage
 import net.maxsmr.commonutils.gui.message.PluralTextMessage
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.recharge
-import net.maxsmr.commonutils.media.openInputStream
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
@@ -31,7 +29,9 @@ import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.android.coroutines.usecase.asState
+import net.maxsmr.core.android.coroutines.usecase.data
 import net.maxsmr.core.android.coroutines.usecase.mapData
+import net.maxsmr.core.android.coroutines.usecase.succeeded
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
@@ -46,6 +46,8 @@ import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestUseCase
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
+import net.maxsmr.feature.address_sorter.data.usecase.AddressExportUseCase
+import net.maxsmr.feature.address_sorter.data.usecase.AddressImportUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestGeocodeUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.AddressSortUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.ReverseGeocodeUseCase
@@ -66,6 +68,8 @@ class AddressSorterViewModel @AssistedInject constructor(
     @Assisted private val locationViewModel: LocationViewModel,
     private val repo: AddressRepo,
     private val settingsRepo: SettingsDataStoreRepository,
+    private val addressImportUseCase: AddressImportUseCase,
+    private val addressExportUseCase: AddressExportUseCase,
     private val addressSuggestUseCase: AddressSuggestUseCase,
     private val addressSuggestGeocodeUseCase: AddressSuggestGeocodeUseCase,
     private val reverseGeocodeUseCase: ReverseGeocodeUseCase,
@@ -113,6 +117,15 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
         super.handleAlerts(delegate)
+        delegate.bindAlertDialog(DIALOG_TAG_IMPORT_FAILED) {
+            it.asOkDialog(delegate.context)
+        }
+        delegate.bindAlertDialog(DIALOG_TAG_EXPORT_SUCCESS) {
+            it.asOkDialog(delegate.context)
+        }
+        delegate.bindAlertDialog(DIALOG_TAG_EXPORT_FAILED) {
+            it.asOkDialog(delegate.context)
+        }
         delegate.bindAlertDialog(DIALOG_TAG_CHANGE_ROUTING_MODE) {
             it.asMultiChoiceDialog(delegate.context, isRadioButton = true)
         }
@@ -174,13 +187,39 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
     }
 
-    fun onJsonResourceSelected(context: Context, uri: Uri) {
+    fun onPickAddressesJson(uri: Uri) {
+        dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
-            uri.openInputStream(context.contentResolver)?.let {
-                if (!repo.addFromStream(it)) {
-                    showSnackbar(TextMessage(R.string.address_sorter_snackbar_address_add_error_message))
-                }
-                it.close()
+            val result = addressImportUseCase.invoke(uri)
+            dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
+            if (result is UseCaseResult.Error) {
+                showOkDialog(
+                    DIALOG_TAG_IMPORT_FAILED,
+                    result.errorMessage()?.let {
+                        TextMessage(R.string.address_sorter_dialog_address_import_error_message_format, it)
+                    } ?: TextMessage(R.string.address_sorter_dialog_address_import_error_message)
+                )
+            }
+        }
+    }
+
+    fun onExportAddressesAction() {
+        dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
+        viewModelScope.launch {
+            val result = addressExportUseCase.invoke(Unit)
+            dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
+            if (result.succeeded) {
+                showOkDialog(
+                    DIALOG_TAG_EXPORT_SUCCESS,
+                    TextMessage(R.string.address_sorter_dialog_address_export_success_message_format, result.data)
+                )
+            } else if (result is UseCaseResult.Error) {
+                showOkDialog(
+                    DIALOG_TAG_EXPORT_FAILED,
+                    result.errorMessage()?.let {
+                        TextMessage(R.string.address_sorter_dialog_address_export_error_message_format, it)
+                    } ?: TextMessage(R.string.address_sorter_dialog_address_export_error_message)
+                )
             }
         }
     }
@@ -367,15 +406,15 @@ class AddressSorterViewModel @AssistedInject constructor(
         viewModelScope.launch {
             repo.updateItem(id) {
                 it.copy(
-                    locationException = if (type == Address.ErrorType.LOCATION) {
+                    locationErrorMessage = if (type == Address.ErrorType.LOCATION) {
                         null
                     } else {
-                        it.locationException
+                        it.locationErrorMessage
                     },
-                    routingException = if (type == Address.ErrorType.ROUTING) {
+                    routingErrorMessage = if (type == Address.ErrorType.ROUTING) {
                         null
                     } else {
-                        it.routingException
+                        it.routingErrorMessage
                     },
                 ).apply {
                     this.id = id
@@ -613,6 +652,9 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     companion object {
 
+        const val DIALOG_TAG_IMPORT_FAILED = "import_failed"
+        const val DIALOG_TAG_EXPORT_SUCCESS = "export_success"
+        const val DIALOG_TAG_EXPORT_FAILED = "export_failed"
         const val DIALOG_TAG_CHANGE_ROUTING_MODE = "change_routing_mode"
         const val DIALOG_TAG_CHANGE_ROUTING_TYPE = "change_routing_type"
         const val DIALOG_TAG_CHANGE_SORT_PRIORITY = "change_sort_priority"

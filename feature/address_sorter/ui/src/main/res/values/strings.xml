@@ -5,9 +5,16 @@
     <string name="address_sorter_edit_hint">Input address</string>
     <string name="address_sorter_menu_action_refresh">Refresh</string>
     <string name="address_sorter_menu_action_last_location_info">Last location info</string>
-    <string name="address_sorter_menu_action_pick_from_json">Select from JSON</string>
+    <string name="address_sorter_menu_action_import_from_json">Import from JSON</string>
+    <string name="address_sorter_menu_action_export_to_json">Export to JSON</string>
     <string name="address_sorter_menu_action_clear">Clear</string>
-    <string name="address_sorter_snackbar_address_add_error_message">Cannot add addresses</string>
+
+    <string name="address_sorter_dialog_address_import_error_message_format">Cannot import addresses: \"%s\"</string>
+    <string name="address_sorter_dialog_address_import_error_message">Cannot import addresses</string>
+    <string name="address_sorter_dialog_address_export_success_message_format">Addresses exported to %s</string>
+    <string name="address_sorter_dialog_address_export_error_message_format">Cannot export addresses: \"%s\"</string>
+    <string name="address_sorter_dialog_address_export_error_message">Cannot export addresses</string>
+
     <string name="address_sorter_dialog_clear_items_message">Remove all addresses?</string>
     <string name="address_sorter_toast_distance_to_point_format">Distance to point: %s</string>
     <string name="address_sorter_toast_duration_to_point_format">Duration to point: %s</string>

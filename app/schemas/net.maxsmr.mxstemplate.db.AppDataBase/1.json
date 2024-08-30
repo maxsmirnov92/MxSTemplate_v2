@@ -50,7 +50,7 @@
       },
       {
         "tableName": "Address",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`address` TEXT NOT NULL, `distance` REAL, `duration` INTEGER, `isSuggested` INTEGER NOT NULL, `locationException` TEXT, `routingException` TEXT, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sortOrder` INTEGER NOT NULL, `location_latitude` REAL, `location_longitude` REAL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`address` TEXT NOT NULL, `distance` REAL, `duration` INTEGER, `isSuggested` INTEGER NOT NULL, `locationErrorMessage` TEXT, `routingErrorMessage` TEXT, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sortOrder` INTEGER NOT NULL, `location_latitude` REAL, `location_longitude` REAL)",
         "fields": [
           {
             "fieldPath": "address",
@@ -77,14 +77,14 @@
             "notNull": true
           },
           {
-            "fieldPath": "locationException",
-            "columnName": "locationException",
+            "fieldPath": "locationErrorMessage",
+            "columnName": "locationErrorMessage",
             "affinity": "TEXT",
             "notNull": false
           },
           {
-            "fieldPath": "routingException",
-            "columnName": "routingException",
+            "fieldPath": "routingErrorMessage",
+            "columnName": "routingErrorMessage",
             "affinity": "TEXT",
             "notNull": false
           },

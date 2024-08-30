@@ -17,7 +17,7 @@ interface AddressRepo {
 
     val upsertCompletedEvent: SharedFlow<Unit>
 
-    suspend fun addFromStream(stream: InputStream, rewrite: Boolean = false): Boolean
+    suspend fun addItems(items: List<AddressEntity>, rewrite: Boolean = false)
 
     suspend fun addNewItem(query: String = EMPTY_STRING)
 

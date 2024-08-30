@@ -80,7 +80,7 @@ class MediaStoreStorage(
                 delete(targetName)
                 uri = resolver.insert(uriWritable, values)
             }
-            uri ?: throw RuntimeException("Cannot insert uri to MediaStore")
+            uri ?: throw RuntimeException("Cannot insert uri ($uriWritable) to MediaStore")
             writeStreamFunc(uri, uri.openOutputStreamOrThrow(contentResolver), uri.lengthOrThrow(resolver))
             val pendingValues = ContentValues().apply {
                 put(MediaStore.Downloads.IS_PENDING, 0)

@@ -3,12 +3,11 @@ package net.maxsmr.core.android.base.connection
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import net.maxsmr.commonutils.live.zipNotNull
-import net.maxsmr.core.android.R
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
-import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
+import net.maxsmr.core.android.network.NetworkStateManager
 
 /**
  * Класс определяет логику обработки состояния сети. Хранится во ViewModel
@@ -55,7 +54,9 @@ class ConnectionManager() {
                 builder?.build()
                     ?: AlertQueueItem.Builder(SNACKBAR_TAG_CONNECTIVITY, queue)
                         .setTitle(net.maxsmr.core.network.R.string.error_no_connection)
-                        .setAnswers(Alert.Answer(R.string.check_again).also { alert -> alert.onSelect { check() } })
+                        .setAnswers(
+                            Alert.Answer(net.maxsmr.core.android.R.string.check_again)
+                                .also { alert -> alert.onSelect { check() } })
                         .setUniqueStrategy(AlertQueueItem.UniqueStrategy.Ignore)
                         .setExtraData(SnackbarExtraData(SnackbarExtraData.SnackbarLength.INDEFINITE))
                         .build()

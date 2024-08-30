@@ -2,13 +2,14 @@ package net.maxsmr.feature.address_sorter.data.usecase.routing
 
 import kotlinx.coroutines.Dispatchers
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
+import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.UseCase
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.AddressRoute
 import net.maxsmr.core.network.api.RoutingDataSource
 import net.maxsmr.core.network.api.doublegis.RoutingRequest
 import net.maxsmr.core.network.api.doublegis.RoutingResponse.Route
-import net.maxsmr.core.network.exceptions.EmptyResponseException
+import net.maxsmr.core.network.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
@@ -57,7 +58,7 @@ class AddressRoutingUseCase @Inject constructor(
                     } else {
                         -1
                     }
-                }.getOrNull(0) ?: throw EmptyResponseException()
+                }.getOrNull(0) ?: throw EmptyResultException(baseApplicationContext)
             } catch (e: Exception) {
                 logger.e(formatException(e, "getDistanceMatrix"))
                 throw e

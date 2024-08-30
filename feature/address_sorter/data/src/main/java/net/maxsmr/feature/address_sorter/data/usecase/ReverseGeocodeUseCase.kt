@@ -1,12 +1,13 @@
 package net.maxsmr.feature.address_sorter.data.usecase
 
 import kotlinx.coroutines.Dispatchers
+import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.UseCase
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.GeocodeDataSource
-import net.maxsmr.core.network.exceptions.EmptyResponseException
+import net.maxsmr.core.network.exceptions.EmptyResultException
 import javax.inject.Inject
 
 /**
@@ -17,6 +18,6 @@ class ReverseGeocodeUseCase @Inject constructor(
 ) : UseCase<Address.Location, AddressGeocode>(Dispatchers.IO) {
 
     override suspend fun execute(parameters: Address.Location): AddressGeocode {
-        return geocodeDataSource.reverseGeocode(parameters) ?: throw EmptyResponseException()
+        return geocodeDataSource.reverseGeocode(parameters) ?: throw EmptyResultException(baseApplicationContext)
     }
 }

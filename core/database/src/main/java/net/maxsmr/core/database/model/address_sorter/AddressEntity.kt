@@ -3,6 +3,7 @@ package net.maxsmr.core.database.model.address_sorter
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import net.maxsmr.core.database.dao.UpsertDao.Companion.NO_ID
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address.ErrorType
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
@@ -15,16 +16,16 @@ data class AddressEntity(
     val distance: Float? = null,
     val duration: Long? = null,
     val isSuggested: Boolean = false,
-    val locationException: String? = null,
-    val routingException: String? = null,
+    val locationErrorMessage: String? = null,
+    val routingErrorMessage: String? = null,
 ) {
 
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
 
-    var sortOrder = NO_ID
+    var sortOrder: Long = NO_ID
         get() {
-            if (field == NO_ID) {
+            if (field < 0) {
                 field = id
             }
             return field
@@ -39,8 +40,8 @@ data class AddressEntity(
         if (distance != other.distance) return false
         if (duration != other.duration) return false
         if (isSuggested != other.isSuggested) return false
-        if (locationException != other.locationException) return false
-        if (routingException != other.routingException) return false
+        if (locationErrorMessage != other.locationErrorMessage) return false
+        if (routingErrorMessage != other.routingErrorMessage) return false
         if (id != other.id) return false
 
         return true
@@ -52,18 +53,18 @@ data class AddressEntity(
         result = 31 * result + (distance?.hashCode() ?: 0)
         result = 31 * result + (duration?.hashCode() ?: 0)
         result = 31 * result + isSuggested.hashCode()
-        result = 31 * result + (locationException?.hashCode() ?: 0)
-        result = 31 * result + (routingException?.hashCode() ?: 0)
+        result = 31 * result + (locationErrorMessage?.hashCode() ?: 0)
+        result = 31 * result + (routingErrorMessage?.hashCode() ?: 0)
         result = 31 * result + id.hashCode()
         return result
     }
 
     fun toDomain(): Address {
         val exceptionsMap = hashMapOf<ErrorType, String?>()
-        locationException?.let {
+        locationErrorMessage?.let {
             exceptionsMap[ErrorType.LOCATION] = it
         }
-        routingException?.let {
+        routingErrorMessage?.let {
             exceptionsMap[ErrorType.ROUTING] = it
         }
         return Address(
@@ -79,15 +80,19 @@ data class AddressEntity(
 
     companion object {
 
-        const val NO_ID = -1L
-
         @JvmStatic
-        fun Address.toEntity() = AddressEntity(
+        fun Address.toEntity(index: Int) = AddressEntity(
             address = address,
             location = location,
             distance = distance,
-            duration = duration
-        )
+            duration = duration,
+            isSuggested = isSuggested,
+            locationErrorMessage = errorMessagesMap[ErrorType.LOCATION],
+            routingErrorMessage = errorMessagesMap[ErrorType.ROUTING],
+        ).apply {
+            this.id = this@toEntity.id.takeIf { it >= 0 } ?: 0
+            this.sortOrder = index.toLong().takeIf { it >= 0 } ?: id
+        }
 
         @JvmStatic
         fun AddressSuggest.toEntity(
@@ -100,7 +105,7 @@ data class AddressEntity(
             location = location ?: this.location,
             distance = distance,
             isSuggested = true,
-            locationException = locationErrorMessage
+            locationErrorMessage = locationErrorMessage
         ).apply {
             this.id = id
             this.sortOrder = sortOrder
