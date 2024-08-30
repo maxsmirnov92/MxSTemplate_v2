@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.getLocationSettingsIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
+import net.maxsmr.commonutils.live.postValueIfNew
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.asDispatcher
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
@@ -59,15 +60,17 @@ class LocationViewModel @AssistedInject constructor(
 
     override fun onLocationAvailabilityChanged(isAvailable: Boolean) {
         if (!isAvailable) {
-            _currentLocation.postValue(null)
+            _currentLocation.postValueIfNew(null)
         }
     }
 
     override fun onGpsNotAvailable() {
+        _currentLocation.postValueIfNew(null)
         showOkDialog(DIALOG_TAG_GPS_NOT_AVAILABLE, R.string.dialog_gps_not_available_message)
     }
 
     override fun onGpsProviderNotEnabled() {
+        _currentLocation.postValueIfNew(null)
         showYesNoDialog(
             DIALOG_TAG_GPS_NOT_ENABLED,
             TextMessage(R.string.dialog_gps_enable_message),
@@ -110,7 +113,7 @@ class LocationViewModel @AssistedInject constructor(
         }
     }
 
-    fun getLastKnownLocation(isGpsOnly: Boolean): Location? {
+    fun getLastKnownLocation(isGpsOnly: Boolean = false): Location? {
         val location = (mockLocationReceiver ?: locationReceiver).lastKnownPosition
         if (location == null) {
             checkLocationEnabled(baseApplicationContext, isGpsOnly)

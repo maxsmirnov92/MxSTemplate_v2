@@ -102,7 +102,7 @@ fun <T, U> ILoadState<T>.asUseCaseResult(mapOnSuccess: (data: T) -> U) = when {
 fun <T> UseCaseResult<T>.asState() = when (this) {
     is UseCaseResult.Loading -> LoadState.loading()
     is UseCaseResult.Success -> LoadState.success(this.data)
-    is UseCaseResult.Error -> LoadState.error(this.exception)
+    is UseCaseResult.Error -> LoadState.error(this.exception) // TODO errorMessage не учитывается
 }
 
 fun <T, U> UseCaseResult<T>.mapData(mapData: (data: T) -> U): UseCaseResult<U> = when (this) {

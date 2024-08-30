@@ -6,4 +6,5 @@ import kotlinx.serialization.Serializable
 data class AddressGeocode(
     val name: String,
     val location: Address.Location,
+    val description: String? = null,
 )

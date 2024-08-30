@@ -4,7 +4,7 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
-import net.maxsmr.core.domain.entities.feature.address_sorter.Address.ExceptionType
+import net.maxsmr.core.domain.entities.feature.address_sorter.Address.ErrorType
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 
 @Entity(tableName = "Address")
@@ -59,12 +59,12 @@ data class AddressEntity(
     }
 
     fun toDomain(): Address {
-        val exceptionsMap = hashMapOf<ExceptionType, String?>()
+        val exceptionsMap = hashMapOf<ErrorType, String?>()
         locationException?.let {
-            exceptionsMap[ExceptionType.LOCATION] = it
+            exceptionsMap[ErrorType.LOCATION] = it
         }
         routingException?.let {
-            exceptionsMap[ExceptionType.ROUTING] = it
+            exceptionsMap[ErrorType.ROUTING] = it
         }
         return Address(
             id,

@@ -2,37 +2,37 @@ package net.maxsmr.feature.address_sorter.ui.adapter
 
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegate
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
-import net.maxsmr.core.domain.entities.feature.address_sorter.Address.ExceptionType
+import net.maxsmr.core.domain.entities.feature.address_sorter.Address.ErrorType
 import net.maxsmr.feature.address_sorter.ui.R
-import net.maxsmr.feature.address_sorter.ui.databinding.ItemAddressExceptionBinding
+import net.maxsmr.feature.address_sorter.ui.databinding.ItemAddressErrorMessageBinding
 
-fun addressExceptionAdapterDelegate(listener: AddressExceptionListener) =
-    adapterDelegate<AddressExceptionData, AddressExceptionData>(
-        R.layout.item_address_exception
+fun addressErrorMessageAdapterDelegate(listener: AddressErrorMessageListener) =
+    adapterDelegate<AddressErrorMessageData, AddressErrorMessageData>(
+        R.layout.item_address_error_message
     ) {
-        with(ItemAddressExceptionBinding.bind(itemView)) {
+        with(ItemAddressErrorMessageBinding.bind(itemView)) {
             ibClose.setOnClickListener {
                 listener.onClose(item.type)
             }
 
             bind {
-                tvExceptionMessage.text = item.message?.takeIf { it.isNotEmpty() }?.let {
+                tvErrorMessage.text = item.message?.takeIf { it.isNotEmpty() }?.let {
                     when (item.type) {
-                        ExceptionType.LOCATION -> {
+                        ErrorType.LOCATION -> {
                             context.getString(R.string.address_sorter_error_location_format, it)
                         }
 
-                        ExceptionType.ROUTING -> {
+                        ErrorType.ROUTING -> {
                             context.getString(R.string.address_sorter_error_routing_format, it)
                         }
                     }
                 } ?: run {
                     when (item.type) {
-                        ExceptionType.LOCATION -> {
+                        ErrorType.LOCATION -> {
                             context.getString(R.string.address_sorter_error_location)
                         }
 
-                        ExceptionType.ROUTING -> {
+                        ErrorType.ROUTING -> {
                             context.getString(R.string.address_sorter_error_routing)
                         }
                     }
@@ -41,15 +41,15 @@ fun addressExceptionAdapterDelegate(listener: AddressExceptionListener) =
         }
     }
 
-data class AddressExceptionData(
-    val type: ExceptionType,
+data class AddressErrorMessageData(
+    val type: ErrorType,
     val message: String?,
 ) : BaseAdapterData {
 
-    override fun isSame(other: BaseAdapterData): Boolean = type == (other as? AddressExceptionData)?.type
+    override fun isSame(other: BaseAdapterData): Boolean = type == (other as? AddressErrorMessageData)?.type
 }
 
-interface AddressExceptionListener {
+interface AddressErrorMessageListener {
 
-    fun onClose(type: ExceptionType)
+    fun onClose(type: ErrorType)
 }

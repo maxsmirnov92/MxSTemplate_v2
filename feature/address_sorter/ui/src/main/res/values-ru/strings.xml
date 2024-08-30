@@ -4,17 +4,21 @@
     <string name="address_sorter_empty_text">Нет добавленных адресов</string>
     <string name="address_sorter_edit_hint">Введите адрес</string>
     <string name="address_sorter_menu_action_refresh">Обновить</string>
+    <string name="address_sorter_menu_action_last_location_info">Информация о последнем местоположении</string>
     <string name="address_sorter_menu_action_pick_from_json">Выбрать из JSON</string>
     <string name="address_sorter_menu_action_clear">Очистить</string>
     <string name="address_sorter_snackbar_address_add_error_message">Не удалось добавить адреса</string>
     <string name="address_sorter_dialog_clear_items_message">Убрать все адреса?</string>
     <string name="address_sorter_toast_distance_to_point_format">Растояние до места: %s</string>
     <string name="address_sorter_toast_duration_to_point_format">Время до места: %s</string>
+    <string name="address_sorter_toast_your_last_location_format">Ваша последняя геопозиция: %s</string>
     <string name="address_sorter_error_location_format">Произошла ошибка при уточнении координат: \"%s\"</string>
     <string name="address_sorter_error_location">Произошла неизвестная ошибка при уточнении координат</string>
     <string name="address_sorter_error_routing_format">Произошла ошибка при подсчёте расстояния/времени до места: \"%s\"</string>
     <string name="address_sorter_error_routing">Произошла неизвестная ошибка при подсчёте расстояния/времени до места</string>
     <string name="address_sorter_error_routing_count_format">Произошла ошибка при расчёте расстояния/времени до точек: %d</string>
+    <string name="address_sorter_error_reverse_geocode_format">Произошла ошибка при обратном геокодировании: \"%s\"</string>
+    <string name="address_sorter_error_reverse_geocode">Произошла неизвестная ошибка при обратном геокодировании</string>
 
     <string name="address_sorter_menu_action_change_routing_mode">Тип движения</string>
     <string name="address_sorter_menu_action_change_routing_type">Тип маршрута</string>

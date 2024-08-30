@@ -1,5 +1,6 @@
 package net.maxsmr.feature.address_sorter.ui
 
+import android.location.Location
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
@@ -106,6 +107,8 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
     private var refreshMenuItem: MenuItem? = null
 
+    private var lastLocationInfoMenuItem: MenuItem? = null
+
     private var changeRoutingModeMenuItem: MenuItem? = null
 
     private var changeRoutingTypeMenuItem: MenuItem? = null
@@ -125,6 +128,9 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                 AlertFragmentDelegate(this@AddressSorterFragment, this)
             )
             handleEvents(this@AddressSorterFragment)
+            currentLocation.observe {
+                refreshLastLocationInfoMenuItem(it)
+            }
         }
 
         with(binding) {
@@ -162,12 +168,15 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                     rvContent.isVisible = false
                     containerEmpty.isVisible = true
                 }
-                refreshMenuItems(state)
+                refreshStateMenuItems(state)
             }
         }
 
         adapter.registerItemsEventsListener(this)
+    }
 
+    override fun onResume() {
+        super.onResume()
         doRequestGps()
     }
 
@@ -179,17 +188,24 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
         refreshMenuItem = menu.findItem(R.id.actionRefresh)
+        lastLocationInfoMenuItem = menu.findItem(R.id.actionLastLocationInfo)
         changeRoutingModeMenuItem = menu.findItem(R.id.actionChangeRoutingMode)
         changeRoutingTypeMenuItem = menu.findItem(R.id.actionChangeRoutingType)
         changeSortPriorityMenuItem = menu.findItem(R.id.actionChangeSortPriority)
         clearMenuItem = menu.findItem(R.id.actionClear)
-        refreshMenuItems(viewModel.resultItemsState.value)
+        refreshStateMenuItems(viewModel.resultItemsState.value)
+        refreshLastLocationInfoMenuItem(locationViewModel.getLastKnownLocation())
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.actionRefresh -> {
                 viewModel.doRefresh()
+                true
+            }
+
+            R.id.actionLastLocationInfo -> {
+                viewModel.onLastLocationInfoAction()
                 true
             }
 
@@ -253,8 +269,8 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         viewModel.onInfoAction(item)
     }
 
-    override fun onExceptionClose(id: Long, type: Address.ExceptionType) {
-        viewModel.onExceptionClose(id, type)
+    override fun onErrorMessageClose(id: Long, type: Address.ErrorType) {
+        viewModel.onItemErrorMessageClose(id, type)
     }
 
     override fun onItemRemoved(position: Int, item: AddressInputData) {
@@ -279,12 +295,28 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                 override fun onPermissionsGranted() {
                     targetAction?.invoke()
                 }
+
+                override fun onGpsDisabledOrNotAvailable() {
+                    super.onGpsDisabledOrNotAvailable()
+                    viewModel.clearLastLocation()
+                }
+
+                override fun onPermissionsDenied() {
+                    super.onPermissionsDenied()
+                    viewModel.clearLastLocation()
+                }
             }
         )
     }
 
-    private fun refreshMenuItems(state: LoadState<List<AddressInputData>>?) {
-        val items = listOf(refreshMenuItem, clearMenuItem)
+    private fun refreshStateMenuItems(state: LoadState<List<AddressInputData>>?) {
+        val items = listOf(
+            refreshMenuItem,
+            clearMenuItem,
+            changeRoutingModeMenuItem,
+            changeRoutingTypeMenuItem,
+            changeSortPriorityMenuItem
+        )
         val data = state?.data.orEmpty()
         items.forEach {
             it?.let {
@@ -295,6 +327,10 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                 }
             }
         }
+    }
+
+    private fun refreshLastLocationInfoMenuItem(lastLocation: Location?) {
+        lastLocationInfoMenuItem?.isVisible = lastLocation  != null
     }
 
     companion object {

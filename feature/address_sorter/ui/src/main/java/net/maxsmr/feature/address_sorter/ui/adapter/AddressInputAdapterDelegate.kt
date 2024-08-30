@@ -76,13 +76,13 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
                 }
             }
 
-            val adapter = AddressExceptionAdapter(object : AddressExceptionListener {
-                override fun onClose(type: Address.ExceptionType) {
-                    listener.onExceptionClose(item.id, type)
+            val adapter = AddressErrorMessageAdapter(object : AddressErrorMessageListener {
+                override fun onClose(type: Address.ErrorType) {
+                    listener.onErrorMessageClose(item.id, type)
                 }
             })
 
-            rvExceptions.adapter = adapter
+            rvErrorMessages.adapter = adapter
 
             bind {
                 item.run {
@@ -103,7 +103,7 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
                     ibNavigate.isVisible = item.isSuggested && item.address.isNotEmpty()
                     ibInfo.isVisible = item.distance?.takeIf { it >= 0 } != null
 
-                    rvExceptions.isVisible = item.exceptionsData.isNotEmpty()
+                    rvErrorMessages.isVisible = item.exceptionsData.isNotEmpty()
                     adapter.items = item.exceptionsData
                 }
             }
@@ -142,5 +142,5 @@ interface AddressInputListener {
 
     fun onInfoAction(item: AddressSorterViewModel.AddressItem)
 
-    fun onExceptionClose(id: Long, type: Address.ExceptionType)
+    fun onErrorMessageClose(id: Long, type: Address.ErrorType)
 }

@@ -7,7 +7,7 @@
     android:padding="@dimen/halfOfDefaultPadding">
 
     <TextView
-        android:id="@+id/tvExceptionMessage"
+        android:id="@+id/tvErrorMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
