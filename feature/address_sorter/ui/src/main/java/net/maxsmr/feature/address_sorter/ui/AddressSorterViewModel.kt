@@ -99,7 +99,8 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
         viewModelScope.launch {
             repo.upsertCompletedEvent.collectLatest {
-                resultItemsState.recharge()
+                resultItemsState.value = resultItemsState.value?.takeIf { !it.isLoading }
+                    ?: LoadState.success(resultItemsState.value?.data.orEmpty())
             }
         }
         locationViewModel.currentLocation.observe {
@@ -112,6 +113,9 @@ class AddressSorterViewModel @AssistedInject constructor(
         items.observe {
             resultItemsState.value = LoadState.success(it.mergeWithSuggests())
             it.refreshFlows()
+        }
+        resultItemsState.observe {
+            removeSnackbarsFromQueue()
         }
     }
 
@@ -171,7 +175,6 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun doRefresh() {
-        removeSnackbarsFromQueue()
         resultItemsState.value = LoadState.loading(resultItemsState.value?.data.orEmpty())
         viewModelScope.launch {
             val result = addressSortUseCase.invoke(Unit)
@@ -474,7 +477,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         val newItems = resultState.data?.map {
             if (it.id == id) {
                 return@map it.copy(
-                    item = it.item.copy(address = query, isSuggested = false),
+                    item = AddressItem(it.id, address = query),
                     suggestsLoadState = state
                 )
             } else {
@@ -606,11 +609,13 @@ class AddressSorterViewModel @AssistedInject constructor(
     data class AddressItem(
         val id: Long,
         val address: String,
-        val location: Address.Location?,
-        val distance: Float?,
-        val isSuggested: Boolean,
-        val exceptionsData: ArrayList<AddressErrorMessageData>,
+        val location: Address.Location? = null,
+        val distance: Float? = null,
+        val isSuggested: Boolean = false,
+        val exceptionsData: ArrayList<AddressErrorMessageData> = arrayListOf(),
     ) : Serializable {
+
+        val isEmpty = address.isEmpty() && location == null
 
         companion object {
 

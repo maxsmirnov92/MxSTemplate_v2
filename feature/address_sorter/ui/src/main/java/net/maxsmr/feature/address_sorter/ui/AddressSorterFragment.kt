@@ -216,23 +216,29 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
             }
 
             R.id.actionChangeRoutingMode -> {
-                viewModel.onChangeRoutingModeAction(requireContext().resources.getStringArray(
-                    R.array.address_sorter_routing_mode
-                ).toList())
+                viewModel.onChangeRoutingModeAction(
+                    requireContext().resources.getStringArray(
+                        R.array.address_sorter_routing_mode
+                    ).toList()
+                )
                 true
             }
 
             R.id.actionChangeRoutingType -> {
-                viewModel.onChangeRoutingTypeAction(requireContext().resources.getStringArray(
-                    R.array.address_sorter_routing_type
-                ).toList())
+                viewModel.onChangeRoutingTypeAction(
+                    requireContext().resources.getStringArray(
+                        R.array.address_sorter_routing_type
+                    ).toList()
+                )
                 true
             }
 
             R.id.actionChangeSortPriority -> {
-                viewModel.onChangeSortPriorityAction(requireContext().resources.getStringArray(
-                    R.array.address_sorter_sort_priority
-                ).toList())
+                viewModel.onChangeSortPriorityAction(
+                    requireContext().resources.getStringArray(
+                        R.array.address_sorter_sort_priority
+                    ).toList()
+                )
                 true
             }
 
@@ -270,8 +276,13 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
     }
 
     override fun onNavigateAction(item: AddressSorterViewModel.AddressItem) {
+        if (item.isEmpty) return
         requireContext().openAnyIntentWithToastError(
-            getViewLocationIntent(item.location?.latitude, item.location?.longitude, item.address),
+            getViewLocationIntent(
+                item.location?.latitude,
+                item.location?.longitude,
+                item.address
+            ), // TODO проверка uri на empty
             errorResId = net.maxsmr.core.ui.R.string.error_intent_open_geo
         )
     }
@@ -327,17 +338,23 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
             changeRoutingModeMenuItem,
             changeRoutingTypeMenuItem,
             changeSortPriorityMenuItem,
-            importMenuItem
+            exportMenuItem
         )
-        val isSuccessWithData = state?.isSuccessWithData() == true
+        val data = state?.data.orEmpty()
         items.forEach {
-            it?.isVisible = isSuccessWithData
+            it?.let {
+                if (data.isNotEmpty()) {
+                    it.isVisible = state?.isLoading == false
+                } else {
+                    it.isVisible = false
+                }
+            }
         }
-        exportMenuItem?.isVisible = state?.isLoading != true
+        importMenuItem?.isVisible = state?.isLoading != true
     }
 
     private fun refreshLastLocationInfoMenuItem(lastLocation: Location?) {
-        lastLocationInfoMenuItem?.isVisible = lastLocation  != null
+        lastLocationInfoMenuItem?.isVisible = lastLocation != null
     }
 
     companion object {

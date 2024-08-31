@@ -13,8 +13,6 @@ data class Address(
     val errorMessagesMap: HashMap<ErrorType, String?> = hashMapOf(),
 ) : java.io.Serializable {
 
-    val isEmpty = address.isEmpty() && location == null
-
     @Serializable
     data class Location(
         val latitude: Float,

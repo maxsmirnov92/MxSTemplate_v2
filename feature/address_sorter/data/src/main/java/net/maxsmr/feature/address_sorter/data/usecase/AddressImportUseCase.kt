@@ -25,7 +25,7 @@ class AddressImportUseCase @Inject constructor(
         val data = stream.readStringOrThrow()
 
         val items = json.decodeFromString<List<Address>>(data)
-            .filter { !it.isEmpty }
+            .filter { it.address.isNotEmpty() }
             .mapIndexed { index, item -> item.toEntity(index) }
         if (items.isEmpty()) {
             throw EmptyResultException(baseApplicationContext)

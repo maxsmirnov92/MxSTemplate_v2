@@ -100,8 +100,8 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
                             }
                         )
                     )
-                    ibNavigate.isVisible = item.isSuggested && item.address.isNotEmpty()
-                    ibInfo.isVisible = item.distance?.takeIf { it >= 0 } != null
+                    ibNavigate.isVisible = !item.isEmpty && item.isSuggested
+                    ibInfo.isVisible = item.distance?.takeIf { it >= 0 } != null && item.isSuggested
 
                     rvErrorMessages.isVisible = item.exceptionsData.isNotEmpty()
                     adapter.items = item.exceptionsData

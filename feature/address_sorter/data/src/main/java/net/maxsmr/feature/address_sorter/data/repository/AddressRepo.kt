@@ -19,7 +19,7 @@ interface AddressRepo {
 
     suspend fun addItems(items: List<AddressEntity>, rewrite: Boolean = false)
 
-    suspend fun addNewItem(query: String = EMPTY_STRING)
+    suspend fun addNewItem(query: String = EMPTY_STRING): AddressEntity
 
     suspend fun getItems(): List<AddressEntity>
 
@@ -42,7 +42,7 @@ interface AddressRepo {
     /**
      * Апдейт существующей Entity в таблице при вводе или создание новой при [id] null
      */
-    suspend fun updateQuery(id: Long?, query: String)
+    suspend fun updateQuery(id: Long?, query: String): AddressEntity
 
     suspend fun setLastLocation(location: Location?)
 }

@@ -53,7 +53,7 @@ class AddressRepoImpl(
                 if (rewrite) {
                     dao.clear()
                 } else {
-                    val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: -1
+                    val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: 0
                     items.forEachIndexed { i, item ->
                         item.sortOrder = maxSortOrder + i
                     }
@@ -63,9 +63,9 @@ class AddressRepoImpl(
         }
     }
 
-    override suspend fun addNewItem(query: String) {
-        withContext(ioDispatcher) {
-            updateQuery(null, query)
+    override suspend fun addNewItem(query: String): AddressEntity {
+        return withContext(ioDispatcher) {
+             updateQuery(null, query)
         }
     }
 
@@ -140,11 +140,11 @@ class AddressRepoImpl(
         }
     }
 
-    override suspend fun updateQuery(id: Long?, query: String) {
-        withContext(ioDispatcher) {
+    override suspend fun updateQuery(id: Long?, query: String): AddressEntity {
+        return withContext(ioDispatcher) {
             val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: -1
             val current = if (id != null && id > 0) dao.getById(id) else null
-            if (current?.address == query) return@withContext
+            if (current != null && current.address == query) return@withContext current
             val newEntity = current?.copy(
                 address = query,
                 isSuggested = false,
@@ -159,6 +159,7 @@ class AddressRepoImpl(
             dao.upsert(newEntity).also {
                 newEntity.id = it
             }
+            newEntity
         }
     }
 
@@ -169,15 +170,6 @@ class AddressRepoImpl(
                 location.longitude.toFloat()
             )
         })
-    }
-
-    private fun List<Address>.addIfNew(item: Address): List<Address> {
-        val result = mutableListOf<Address>()
-        result.addAll(this)
-        if (!result.any { it.id == item.id }) {
-            result.add(item)
-        }
-        return result
     }
 
     private suspend fun List<AddressEntity>.upsert() {
