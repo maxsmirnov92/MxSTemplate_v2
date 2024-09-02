@@ -8,10 +8,13 @@ import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
 
 interface RoutingDataSource {
 
+    /**
+     * @return табличный id целевой точки -> посчитанный [AddressRoute] со статусом
+     */
     suspend fun getDistanceMatrix(
         request: RoutingRequest,
         toAddressIdFunc: (Long) -> Long,
-    ): List<Pair<AddressRoute, Route.Status>>
+    ): Map<Long, Pair<AddressRoute?, Route.Status>>
 }
 
 class DoubleGisRoutingDataSource(
@@ -21,7 +24,7 @@ class DoubleGisRoutingDataSource(
     override suspend fun getDistanceMatrix(
         request: RoutingRequest,
         toAddressIdFunc: (Long) -> Long,
-    ): List<Pair<AddressRoute, Route.Status>> {
+    ): Map<Long, Pair<AddressRoute?, Route.Status>> {
         return DoubleGisRoutingDataService.instance(retrofit).getDistanceMatrix(request).asDomain(toAddressIdFunc)
     }
 }

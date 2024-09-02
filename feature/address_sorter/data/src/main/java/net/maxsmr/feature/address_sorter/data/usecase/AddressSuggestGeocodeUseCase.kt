@@ -43,7 +43,7 @@ class AddressSuggestGeocodeUseCase @Inject constructor(
                 }
             } else {
                 null
-            }) ?: throw EmptyResultException(baseApplicationContext)
+            }) ?: throw EmptyResultException(baseApplicationContext, true)
 
         } else {
             // если координаты есть от другого API

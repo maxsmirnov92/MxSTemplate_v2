@@ -28,7 +28,7 @@ class AddressImportUseCase @Inject constructor(
             .filter { it.address.isNotEmpty() }
             .mapIndexed { index, item -> item.toEntity(index) }
         if (items.isEmpty()) {
-            throw EmptyResultException(baseApplicationContext)
+            throw EmptyResultException(baseApplicationContext, false)
         }
 
         repository.addItems(items)

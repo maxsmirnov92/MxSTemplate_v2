@@ -18,6 +18,6 @@ class ReverseGeocodeUseCase @Inject constructor(
 ) : UseCase<Address.Location, AddressGeocode>(Dispatchers.IO) {
 
     override suspend fun execute(parameters: Address.Location): AddressGeocode {
-        return geocodeDataSource.reverseGeocode(parameters) ?: throw EmptyResultException(baseApplicationContext)
+        return geocodeDataSource.reverseGeocode(parameters) ?: throw EmptyResultException(baseApplicationContext, true)
     }
 }

@@ -27,20 +27,25 @@
     <string name="address_sorter_error_reverse_geocode_format">Произошла ошибка при обратном геокодировании: \"%s\"</string>
     <string name="address_sorter_error_reverse_geocode">Произошла неизвестная ошибка при обратном геокодировании</string>
 
-    <string name="address_sorter_menu_action_change_routing_mode">Тип движения</string>
-    <string name="address_sorter_menu_action_change_routing_type">Тип маршрута</string>
+    <string name="address_sorter_menu_action_change_routing_mode">Способ расчёта маршрута</string>
+    <string name="address_sorter_menu_action_change_routing_type">Тип маршрута (2GIS)</string>
     <string name="address_sorter_menu_action_change_sort_priority">Приоритет сортировки</string>
     <string name="address_sorter_dialog_change_routing_mode_title">@string/address_sorter_menu_action_change_routing_mode</string>
     <string name="address_sorter_dialog_change_routing_type_title">@string/address_sorter_menu_action_change_routing_type</string>
     <string name="address_sorter_dialog_change_sort_priority_title">@string/address_sorter_menu_action_change_sort_priority</string>
 
+    <string name="address_sorter_kilometers_format">%.2f км</string>
+    <string name="address_sorter_meters_format">%.2f м</string>
+
     <string-array name="address_sorter_routing_mode">
-        <item>Автомобильный</item>
-        <item>Автомобильный маршрут с полосами общественного транспорта</item>
-        <item>Грузовой транспорт</item>
-        <item>Пешеходный маршрут</item>
-        <item>Велосипедный маршрут</item>
+        <item>2GIS: Автомобильный</item>
+        <item>2GIS: Автомобильный с полосами общественного транспорта</item>
+        <item>2GIS: Грузовой транспорт</item>
+        <item>2GIS: Пешеходный</item>
+        <item>2GIS: Велосипедный</item>
+        <item>Яндекс подсказчик</item>
         <item>Прямой (без API)</item>
+        <item>Без пересчёта</item>
     </string-array>
 
     <string-array name="address_sorter_routing_type">

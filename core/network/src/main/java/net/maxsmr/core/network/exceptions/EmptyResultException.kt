@@ -6,5 +6,9 @@ import net.maxsmr.core.network.R
 
 class EmptyResultException(message: String = EMPTY_STRING): RuntimeException(message) {
 
-    constructor(context: Context) : this(context.getString(R.string.no_data))
+    constructor(context: Context, isResponse: Boolean) : this(context.getString(if (isResponse) {
+        R.string.error_no_response_data
+    } else {
+        R.string.error_no_data
+    }))
 }

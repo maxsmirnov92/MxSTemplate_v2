@@ -23,6 +23,8 @@ interface AddressRepo {
 
     suspend fun getItems(): List<AddressEntity>
 
+    suspend fun getItem(id: Long): AddressEntity?
+
     suspend fun deleteItem(id: Long)
 
     suspend fun updateItem(id: Long, updateFunc: (AddressEntity) -> AddressEntity)

@@ -32,11 +32,11 @@ class RoutingRequest(
         sources,
         targets,
         when(mode) {
-            RoutingMode.DRIVING -> "driving"
-            RoutingMode.TAXI -> "taxi"
-            RoutingMode.TRUCK -> "truck"
-            RoutingMode.WALKING -> "walking"
-            RoutingMode.BICYCLE -> "bicycle"
+            RoutingMode.DOUBLEGIS_DRIVING -> "driving"
+            RoutingMode.DOUBLEGIS_TAXI -> "taxi"
+            RoutingMode.DOUBLEGIS_TRUCK -> "truck"
+            RoutingMode.DOUBLEGIS_WALKING -> "walking"
+            RoutingMode.DOUBLEGIS_BICYCLE -> "bicycle"
             else -> throw IllegalArgumentException("Incorrect RoutingMode: $mode")
         },
         when(type) {

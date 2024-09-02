@@ -44,7 +44,7 @@ class AddressExportUseCase @Inject constructor(
     override suspend fun execute(parameters: Unit): String {
         val items = repository.getItems().map { it.toDomain() }.filter { it.address.isNotEmpty() }
         if (items.isEmpty()) {
-            throw EmptyResultException(baseApplicationContext)
+            throw EmptyResultException(baseApplicationContext, false)
         }
 
         val data = json.encodeToString(json.serializersModule.serializer(), items)
@@ -56,7 +56,7 @@ class AddressExportUseCase @Inject constructor(
             return result.getOrNull()?.let {
                 it.writeStringsOrThrow(resolver, listOf(data))
                 storage.path + it.nameOrThrow(resolver)
-            } ?: throw EmptyResultException(baseApplicationContext)
+            } ?: throw EmptyResultException(baseApplicationContext, false)
         }
     }
 

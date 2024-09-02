@@ -23,7 +23,7 @@ data class AppSettings(
     val updateNotificationInterval: Long = 300,
     val openLinksInExternalApps: Boolean = true,
     val startPageUrl: String = "https://google.com",
-    val routingMode: RoutingMode = RoutingMode.DRIVING,
+    val routingMode: RoutingMode = RoutingMode.DOUBLEGIS_DRIVING,
     val routingType: RoutingType = RoutingType.JAM,
     val sortPriority: SortPriority = SortPriority.DISTANCE
 ) : Serializable {

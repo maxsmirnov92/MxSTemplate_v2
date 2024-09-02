@@ -10,6 +10,6 @@
 
     <string name="network_type_cellular">Мобильная</string>
 
-    <string name="loading">Загрузка</string>
-    <string name="no_data">Нет данных</string>
+    <string name="error_no_data">Нет данных</string>
+    <string name="error_no_response_data">Нет данных ответа</string>
 </resources>

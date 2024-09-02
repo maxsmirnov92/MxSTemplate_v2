@@ -10,6 +10,6 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 @Serializable
 class AddressRoute(
     val id: Long,
-    val distance: Long,
+    val distance: Float,
     val duration: Long?,
 )

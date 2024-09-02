@@ -75,6 +75,12 @@ class AddressRepoImpl(
         }
     }
 
+    override suspend fun getItem(id: Long): AddressEntity? {
+        return withContext(ioDispatcher) {
+            dao.getById(id)
+        }
+    }
+
     override suspend fun deleteItem(id: Long) {
         withContext(ioDispatcher) {
             dao.deleteById(id)
@@ -83,7 +89,7 @@ class AddressRepoImpl(
 
     override suspend fun updateItem(id: Long, updateFunc: (AddressEntity) -> AddressEntity) {
         withContext(ioDispatcher) {
-            val entity = dao.getById(id) ?: return@withContext
+            val entity = dao.getById(id) ?: throw IllegalStateException("AddressEntity with id $id not exists")
             val newEntity = updateFunc(entity)
             if (newEntity.id != entity.id) {
                 throw IllegalStateException("AddressEntity id (${newEntity.id}) doesn't match source id (${entity.id})")

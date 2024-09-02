@@ -27,20 +27,25 @@
     <string name="address_sorter_error_reverse_geocode_format">Error occurred during reverse geocoding: \"%s\"</string>
     <string name="address_sorter_error_reverse_geocode">Unknown error occurred during reverse geocoding</string>
 
-    <string name="address_sorter_menu_action_change_routing_mode">Routing mode</string>
-    <string name="address_sorter_menu_action_change_routing_type">Routing type</string>
+    <string name="address_sorter_menu_action_change_routing_mode">Route calculation method</string>
+    <string name="address_sorter_menu_action_change_routing_type">Routing type (2GIS)</string>
     <string name="address_sorter_menu_action_change_sort_priority">Sort priority</string>
     <string name="address_sorter_dialog_change_routing_mode_title">@string/address_sorter_menu_action_change_routing_mode</string>
     <string name="address_sorter_dialog_change_routing_type_title">@string/address_sorter_menu_action_change_routing_type</string>
     <string name="address_sorter_dialog_change_sort_priority_title">@string/address_sorter_menu_action_change_sort_priority</string>
 
+    <string name="address_sorter_kilometers_format">%.2f km</string>
+    <string name="address_sorter_meters_format">%.2f m</string>
+
     <string-array name="address_sorter_routing_mode">
-        <item>Driving</item>
-        <item>Car route with public transport lanes</item>
-        <item>Truck</item>
-        <item>Walking</item>
-        <item>Bicycle</item>
+        <item>2GIS: Driving</item>
+        <item>2GIS: Driving with public transport lanes</item>
+        <item>2GIS: Truck</item>
+        <item>2GIS: Walking</item>
+        <item>2GIS: Bicycle</item>
+        <item>Yandex suggest</item>
         <item>Direct (no API)</item>
+        <item>No change</item>
     </string-array>
 
     <string-array name="address_sorter_routing_type">

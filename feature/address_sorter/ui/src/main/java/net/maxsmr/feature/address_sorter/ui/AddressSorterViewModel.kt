@@ -114,9 +114,6 @@ class AddressSorterViewModel @AssistedInject constructor(
             resultItemsState.value = LoadState.success(it.mergeWithSuggests())
             it.refreshFlows()
         }
-        resultItemsState.observe {
-            removeSnackbarsFromQueue()
-        }
     }
 
     override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
@@ -175,6 +172,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun doRefresh() {
+        removeSnackbarsFromQueue()
         resultItemsState.value = LoadState.loading(resultItemsState.value?.data.orEmpty())
         viewModelScope.launch {
             val result = addressSortUseCase.invoke(Unit)
@@ -291,6 +289,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onClearAction() {
+        removeSnackbarsFromQueue()
         showYesNoDialog(DIALOG_TAG_CLEAR_ITEMS, TextMessage(R.string.address_sorter_dialog_clear_items_message)) {
             if (it == DialogInterface.BUTTON_POSITIVE) {
                 viewModelScope.launch {
@@ -301,6 +300,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onLastLocationInfoAction() {
+        removeSnackbarsFromQueue()
         val location = locationViewModel.currentLocation.value?.let {
             Address.Location(it.latitude.toFloat(), it.longitude.toFloat())
         } ?: return
@@ -341,8 +341,8 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onInfoAction(item: AddressItem) {
+        removeSnackbarsFromQueue()
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
-
         viewModelScope.launch {
             val result = addressRoutingUseCase.invoke(AddressRoutingUseCase.Params(item.id, item.location))
             dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
@@ -362,19 +362,18 @@ class AddressSorterViewModel @AssistedInject constructor(
                 }
             }
 
-            val distanceMessage = (route?.distance?.toInt()
+            val distanceMessage = (route?.distance
             // distance ранее пересчитанный в итеме или возвращшённый suggest'ом
-                ?: item.distance?.roundToInt())?.let { distance ->
+                ?: item.distance)?.let { distance ->
                 TextMessage(
                     R.string.address_sorter_toast_distance_to_point_format,
                     if (distance > 1000) {
-                        val distanceKm = (distance / 1000f).roundToInt()
-                        PluralTextMessage(R.plurals.kilometers, distanceKm, distanceKm)
+                        val distanceKm = distance / 1000f
+                        TextMessage(R.string.address_sorter_kilometers_format, distanceKm, distanceKm)
                     } else {
-                        PluralTextMessage(R.plurals.meters, distance, distance)
+                        TextMessage(R.string.address_sorter_meters_format, distance, distance)
                     }
                 )
-
             }
             val durationMessage = route?.duration?.let { duration ->
                 decomposeTimeFormatted(
@@ -611,6 +610,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         val address: String,
         val location: Address.Location? = null,
         val distance: Float? = null,
+        val duration: Long? = null,
         val isSuggested: Boolean = false,
         val exceptionsData: ArrayList<AddressErrorMessageData> = arrayListOf(),
     ) : Serializable {
@@ -620,7 +620,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         companion object {
 
             fun Address.toUi() = AddressItem(
-                id, address, location, distance, isSuggested,
+                id, address, location, distance, duration, isSuggested,
                 ArrayList(errorMessagesMap.entries.map {
                     AddressErrorMessageData(it.key, it.value)
                 })

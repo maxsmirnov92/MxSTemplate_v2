@@ -18,7 +18,8 @@ class AlertHandler(
     lifecycleOwner: LifecycleOwner,
 ) : DefaultLifecycleObserver {
 
-    private val representationsMap = mutableMapOf<String, MutableList<Pair<Alert, AlertRepresentation>>>()
+    private val representationsMap =
+        mutableMapOf<Pair<AlertQueue, String>, MutableList<Pair<Alert, AlertRepresentation>>>()
 
     private var deferredHandles = mutableListOf<DeferredHandle>()
 
@@ -78,7 +79,8 @@ class AlertHandler(
         representationFactory: (Alert) -> AlertRepresentation?,
     ) {
         queue.asLiveData(tag).observe(this) { alertInfo ->
-            val representations = representationsMap[tag] ?: mutableListOf()
+            val key = Pair(queue, tag)
+            val representations = representationsMap[key] ?: mutableListOf()
             if (alertInfo == null || alertInfo.isReplaceable) {
                 // верхний при данном тэге нульный
                 // или текущий alert предполагает удаление остальных с тем же тэгом
@@ -97,7 +99,7 @@ class AlertHandler(
                     it.show()
                 }
             }
-            representationsMap[tag] = representations
+            representationsMap[key] = representations
         }
     }
 

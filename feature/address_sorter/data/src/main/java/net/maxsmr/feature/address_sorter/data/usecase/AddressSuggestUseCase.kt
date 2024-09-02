@@ -50,7 +50,7 @@ class AddressSuggestUseCase @Inject constructor(
                         val result = try {
                             val result = suggestDataSource.suggest(p.query, lastLocation)
                             if (result.isEmpty()) {
-                                throw EmptyResultException(baseApplicationContext)
+                                throw EmptyResultException(baseApplicationContext, true)
                             } else {
                                 UseCaseResult.Success(result)
                             }

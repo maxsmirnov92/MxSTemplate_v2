@@ -35,7 +35,7 @@ class SuggestResponse(
                             }
                         } ?: title),
                 null,
-                distance?.value
+                distance?.value?.takeIf { it >= 0 }
             )
         }
 

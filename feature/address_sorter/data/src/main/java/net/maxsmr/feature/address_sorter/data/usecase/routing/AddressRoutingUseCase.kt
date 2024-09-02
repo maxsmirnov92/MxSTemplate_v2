@@ -6,7 +6,9 @@ import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.UseCase
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.AddressRoute
+import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingMode
 import net.maxsmr.core.network.api.RoutingDataSource
+import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.api.doublegis.RoutingRequest
 import net.maxsmr.core.network.api.doublegis.RoutingResponse.Route
 import net.maxsmr.core.network.exceptions.EmptyResultException
@@ -20,6 +22,7 @@ class AddressRoutingUseCase @Inject constructor(
     private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
     private val routingDataSource: RoutingDataSource,
+    private val suggestDataSource: SuggestDataSource,
 ) : UseCase<AddressRoutingUseCase.Params, AddressRoute>(Dispatchers.IO) {
 
     override suspend fun execute(parameters: Params): AddressRoute {
@@ -31,58 +34,72 @@ class AddressRoutingUseCase @Inject constructor(
 
         val location = parameters.location ?: throw MissingLocationException(listOf(parameters.id))
 
-        if (lastLocation == null) {
+        if (lastLocation == null && mode != RoutingMode.NO_CHANGE) {
             // при отсутствии последней известной геолокации ни по одному из способов расчёт невозможен
             throw MissingLastLocationException()
         }
 
         // в этом UseCase не апдейтится routingException в итеме
-        return if (mode.isApi) {
-            val points = mutableListOf<RoutingRequest.Point>()
-            points.add(RoutingRequest.Point(lastLocation))
-            points.add(RoutingRequest.Point(location))
+        return if (lastLocation == null || mode == RoutingMode.NO_CHANGE) {
+            val item = addressRepo.getItem(parameters.id) ?: throw EmptyResultException(baseApplicationContext, false)
+            val distance = item.distance ?: throw RoutingFailedException(listOf(parameters.id to Route.Status.FAIL))
+            AddressRoute(parameters.id, distance, item.duration)
+        } else if (mode.isApi) {
 
-            val request = RoutingRequest(
-                points,
-                listOf(0),
-                listOf(1),
-                mode,
-                type
-            )
+            if (mode == RoutingMode.SUGGEST) {
+                val item = addressRepo.getItem(parameters.id) ?: throw EmptyResultException(baseApplicationContext, false)
+                val distance = suggestDataSource.suggest(item.address, lastLocation).getOrNull(0)?.distance ?: throw EmptyResultException(baseApplicationContext, true)
+                AddressRoute(parameters.id, distance, null)
+            } else {
 
-            val route: Pair<AddressRoute, Route.Status> = try {
-                routingDataSource.getDistanceMatrix(request) {
-                    if (it == 1L) {
-                        // точка назначения одна и она в 1-ом индексе
-                        parameters.id
-                    } else {
-                        -1
-                    }
-                }.getOrNull(0) ?: throw EmptyResultException(baseApplicationContext)
-            } catch (e: Exception) {
-                logger.e(formatException(e, "getDistanceMatrix"))
-                throw e
-            }
+                val points = mutableListOf<RoutingRequest.Point>()
+                points.add(RoutingRequest.Point(lastLocation))
+                points.add(RoutingRequest.Point(location))
 
-            addressRepo.updateItem(parameters.id) {
-                if (route.second == Route.Status.OK) {
-                    it.copy(
-                        distance = route.first.distance.toFloat(),
-                        duration = route.first.duration
-                    )
-                } else {
-                    it //.copy(routingException = route.second.id)
-                }.apply {
-                    this.id = it.id
-                    this.sortOrder = it.sortOrder
+                val request = RoutingRequest(
+                    points,
+                    listOf(0),
+                    listOf(1),
+                    mode,
+                    type
+                )
+
+                val routePair: Pair<AddressRoute?, Route.Status> = try {
+                    routingDataSource.getDistanceMatrix(request) {
+                        if (it == 1L) {
+                            // точка назначения одна и она в 1-ом индексе
+                            parameters.id
+                        } else {
+                            -1
+                        }
+                    }[parameters.id] ?: throw EmptyResultException(baseApplicationContext, true)
+                } catch (e: Exception) {
+                    logger.e(formatException(e, "getDistanceMatrix"))
+                    throw e
                 }
-            }
 
-            if (route.second != Route.Status.OK) {
-                throw RoutingFailedException(listOf(parameters.id to route.second))
-            }
+                addressRepo.updateItem(parameters.id) {
+                    val route = routePair.first
+                    if (routePair.second == Route.Status.OK && route != null) {
+                        it.copy(
+                            distance = route.distance.toFloat(),
+                            duration = route.duration
+                        )
+                    } else {
+                        it //.copy(routingException = route.second.id)
+                    }.apply {
+                        this.id = it.id
+                        this.sortOrder = it.sortOrder
+                    }
+                }
 
-            route.first
+                val route = routePair.first
+                if (routePair.second != Route.Status.OK || route == null) {
+                    throw RoutingFailedException(listOf(parameters.id to routePair.second))
+                }
+
+                route
+            }
         } else {
             val distance = getDirectDistanceByLocation(location, lastLocation)
 
@@ -100,7 +117,7 @@ class AddressRoutingUseCase @Inject constructor(
                 throw RoutingFailedException(listOf(parameters.id to Route.Status.FAIL))
             }
 
-            AddressRoute(parameters.id, distance.toLong(), null)
+            AddressRoute(parameters.id, distance, null)
         }
     }
 

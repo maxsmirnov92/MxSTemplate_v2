@@ -16,20 +16,32 @@ class RoutingResponse(
     val routes: List<Route>,
 ) : BaseDoubleGisRoutingResponse() {
 
-    fun asDomain(toAddressIdFunc: (Long) -> Long): List<Pair<AddressRoute, Route.Status>> =
-        routes.mapNotNull { r ->
+    fun asDomain(toAddressIdFunc: (Long) -> Long): Map<Long, Pair<AddressRoute?, Route.Status>> {
+        val result = mutableMapOf<Long, Pair<AddressRoute?, Route.Status>>()
+        routes.forEach { r ->
             val id = toAddressIdFunc(r.targetId)
-            if (id < 0) return@mapNotNull null
-            if (r.distance < 0) return@mapNotNull null
-            Pair(
+            if (id < 0) return@forEach
+            val route = if (r.distance >= 0) {
                 AddressRoute(
                     id,
-                    r.distance,
+                    r.distance.toFloat(),
                     r.duration.takeIf { it >= 0 },
-                ),
-                r.status
+                )
+            } else {
+                null
+            }
+            result[id] = Pair(
+                route,
+                if (r.status == Route.Status.OK && route == null) {
+                    // вручную меняем статус на FAIL, если был возвращён отрицательный distance
+                    Route.Status.FAIL
+                } else {
+                    r.status
+                }
             )
         }
+        return result
+    }
 
     /**
      * @param status Статус обработки запроса

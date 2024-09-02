@@ -1,39 +1,49 @@
 package net.maxsmr.core.domain.entities.feature.address_sorter.routing;
 
 /**
- * Тип движения
+ * Способ расчёта distance/duration
  */
 enum class RoutingMode {
 
     /**
      * автомобильный
      */
-    DRIVING,
+    DOUBLEGIS_DRIVING,
 
     /**
      * автомобильный маршрут, включающий полосы общественного транспорта
      */
-    TAXI,
+    DOUBLEGIS_TAXI,
 
     /**
      * грузовой транспорт
      */
-    TRUCK,
+    DOUBLEGIS_TRUCK,
 
     /**
      * пешеходный маршрут
      */
-    WALKING,
+    DOUBLEGIS_WALKING,
 
     /**
      * велосипедный маршрут
      */
-    BICYCLE,
+    DOUBLEGIS_BICYCLE,
 
     /**
-     * по прямой, без API
+     * Косвенно через подсказчик
      */
-    DIRECT;
+    SUGGEST,
 
-    val isApi get() = this != DIRECT
+    /**
+     * По прямой, без API
+     */
+    DIRECT,
+
+    /**
+     * Не пересчитывать
+     */
+    NO_CHANGE;
+
+    val isApi get() = this !in listOf(DIRECT, NO_CHANGE)
 }

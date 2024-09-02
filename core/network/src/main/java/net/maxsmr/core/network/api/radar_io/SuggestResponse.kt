@@ -39,7 +39,7 @@ class SuggestResponse(
                 "$it, $addressLabel"
             } ?: addressLabel,
             Location(latitude, longitude),
-            distance
+            distance?.takeIf { it >= 0 }
         )
 
         @Serializable
