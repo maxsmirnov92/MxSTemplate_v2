@@ -49,26 +49,8 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun getLastLocation(): Address.Location? {
-        // mapNotNull == висяк
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_LAST_LOCATION]?.let {
-                json.decodeFromStringOrNull(it) as Address.Location?
-            }
-        }.firstOrNull()
-    }
-
-    suspend fun setLastLocation(location: Address.Location?) {
-        val result: String = location?.let {
-            json.encodeToStringOrNull(location)
-        }.orEmpty()
-        dataStore.edit { prefs ->
-            prefs[FIELD_LAST_LOCATION] = result
-        }
-
-    }
-
     suspend fun getLastQueueId(): Int {
+        // mapNotNull == висяк
         return dataStore.data.map { prefs ->
             prefs[FIELD_LAST_QUEUE_ID]
         }.firstOrNull() ?: 0
@@ -168,7 +150,6 @@ class CacheDataStoreRepository @Inject constructor(
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
-        private val FIELD_LAST_LOCATION = stringPreferencesKey("lastLocation")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
         private val FIELD_ASKED_APP_DETAILS = booleanPreferencesKey("askedAppDetails")

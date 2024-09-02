@@ -3,31 +3,29 @@ package net.maxsmr.feature.address_sorter.data.usecase
 import kotlinx.coroutines.Dispatchers
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.UseCase
+import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.GeocodeDataSource
 import net.maxsmr.core.network.exceptions.EmptyResultException
-import net.maxsmr.feature.address_sorter.data.usecase.routing.getDirectDistanceByLocation
-import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.address_sorter.data.getDirectDistanceByLocation
 import javax.inject.Inject
 
 /**
  * Вызывается для уточнения геопозиции у выбранного [AddressSuggest]
  */
 class AddressSuggestGeocodeUseCase @Inject constructor(
-    private val cacheRepo: CacheDataStoreRepository,
     private val geocodeDataSource: GeocodeDataSource,
-) : UseCase<AddressSuggest, AddressGeocode>(Dispatchers.IO) {
+) : UseCase<AddressSuggestGeocodeUseCase.Parameters, AddressGeocode>(Dispatchers.IO) {
 
-    override suspend fun execute(parameters: AddressSuggest): AddressGeocode {
-        val lastLocation = cacheRepo.getLastLocation()
-        val location = parameters.location
+    override suspend fun execute(parameters: Parameters): AddressGeocode {
+        val location = parameters.suggest.location
         return if (location == null) {
             // у Яндекса в ответе suggest нет location - отдельный запрос геокодирования
-            val geocode = if (parameters.address.contains(ADDRESS_DIVIDERS_REGEX)) {
+            val geocode = if (parameters.suggest.address.contains(ADDRESS_DIVIDERS_REGEX)) {
                 // из-за названия объекта, идущим до разделителя,
                 // геокодирование выдаёт неподходящие результаты
-                var result = parameters.address
+                var result = parameters.suggest.address
                 ADDRESS_DIVIDERS.forEach { divider ->
                     result.substringAfterLast(divider).takeIf { it.isNotEmpty() }?.let {
                         result = it
@@ -35,21 +33,24 @@ class AddressSuggestGeocodeUseCase @Inject constructor(
                 }
                 result
             } else {
-                parameters.address
+                parameters.suggest.address
             }
-            geocodeDataSource.directGeocode(geocode, if (lastLocation != null) {
+            geocodeDataSource.directGeocode(geocode, parameters.lastLocation?.let { lastLocation ->
                 {
                     getDirectDistanceByLocation(it, lastLocation)
                 }
-            } else {
-                null
             }) ?: throw EmptyResultException(baseApplicationContext, true)
 
         } else {
             // если координаты есть от другого API
-            AddressGeocode(parameters.address, location)
+            AddressGeocode(parameters.suggest.address, location)
         }
     }
+
+    class Parameters(
+        val suggest: AddressSuggest,
+        val lastLocation: Address.Location?
+    )
 
     companion object {
 

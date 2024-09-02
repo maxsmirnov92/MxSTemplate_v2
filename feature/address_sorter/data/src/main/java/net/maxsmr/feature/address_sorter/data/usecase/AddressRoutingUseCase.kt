@@ -1,4 +1,4 @@
-package net.maxsmr.feature.address_sorter.data.usecase.routing
+package net.maxsmr.feature.address_sorter.data.usecase
 
 import kotlinx.coroutines.Dispatchers
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
@@ -12,7 +12,11 @@ import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.api.doublegis.RoutingRequest
 import net.maxsmr.core.network.api.doublegis.RoutingResponse.Route
 import net.maxsmr.core.network.exceptions.EmptyResultException
+import net.maxsmr.feature.address_sorter.data.getDirectDistanceByLocation
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
+import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLastLocationException
+import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLocationException
+import net.maxsmr.feature.address_sorter.data.usecase.exceptions.RoutingFailedException
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import javax.inject.Inject
@@ -26,14 +30,13 @@ class AddressRoutingUseCase @Inject constructor(
 ) : UseCase<AddressRoutingUseCase.Params, AddressRoute>(Dispatchers.IO) {
 
     override suspend fun execute(parameters: Params): AddressRoute {
-        val lastLocation = cacheRepo.getLastLocation()
-
         val settings = settingsRepo.getSettings()
         val mode = settings.routingMode
         val type = settings.routingType
 
         val location = parameters.location ?: throw MissingLocationException(listOf(parameters.id))
 
+        val lastLocation = parameters.lastLocation
         if (lastLocation == null && mode != RoutingMode.NO_CHANGE) {
             // при отсутствии последней известной геолокации ни по одному из способов расчёт невозможен
             throw MissingLastLocationException()
@@ -124,5 +127,6 @@ class AddressRoutingUseCase @Inject constructor(
     data class Params(
         val id: Long,
         val location: Address.Location?,
+        val lastLocation: Address.Location?
     )
 }

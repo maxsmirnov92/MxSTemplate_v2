@@ -16,9 +16,7 @@ import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.format.TimePluralFormat
 import net.maxsmr.commonutils.format.decomposeTimeFormatted
 import net.maxsmr.commonutils.gui.message.JoinTextMessage
-import net.maxsmr.commonutils.gui.message.PluralTextMessage
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.recharge
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
@@ -37,7 +35,7 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingMode
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingType
-import net.maxsmr.feature.address_sorter.data.usecase.routing.RoutingFailedException
+import net.maxsmr.feature.address_sorter.data.usecase.exceptions.RoutingFailedException
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asMultiChoiceDialog
 import net.maxsmr.core.ui.alert.representation.asOkDialog
@@ -51,9 +49,10 @@ import net.maxsmr.feature.address_sorter.data.usecase.AddressImportUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestGeocodeUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.AddressSortUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.ReverseGeocodeUseCase
-import net.maxsmr.feature.address_sorter.data.usecase.routing.AddressRoutingUseCase
-import net.maxsmr.feature.address_sorter.data.usecase.routing.MissingLastLocationException
-import net.maxsmr.feature.address_sorter.data.usecase.routing.MissingLocationException
+import net.maxsmr.feature.address_sorter.data.usecase.AddressRoutingUseCase
+import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLastLocationException
+import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLocationException
+import net.maxsmr.feature.address_sorter.data.toAddressLocation
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressErrorMessageData
@@ -61,7 +60,6 @@ import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
-import kotlin.math.roundToInt
 
 class AddressSorterViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
@@ -90,6 +88,8 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     val resultItemsState = MutableLiveData<LoadState<List<AddressInputData>>>(LoadState.success(emptyList()))
 
+    val lastLocation = MutableLiveData<Address.Location?>()
+
     override fun onInitialized() {
         super.onInitialized()
         viewModelScope.launch {
@@ -104,10 +104,8 @@ class AddressSorterViewModel @AssistedInject constructor(
             }
         }
         locationViewModel.currentLocation.observe {
-            viewModelScope.launch {
-                it?.let {
-                    repo.setLastLocation(it)
-                }
+            it?.let {
+                lastLocation.value = it.toAddressLocation()
             }
         }
         items.observe {
@@ -148,9 +146,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun clearLastLocation() {
-        viewModelScope.launch {
-            repo.setLastLocation(null)
-        }
+        lastLocation.value = null
     }
 
     fun onAddClick() {
@@ -167,7 +163,7 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     fun onTextChanged(id: Long, value: String) {
         suggestFlowMap[id]?.let {
-            it.flow.value = AddressSuggestUseCase.Parameters(id, value)
+            it.flow.value = AddressSuggestUseCase.Parameters(id, value, lastLocation.value)
         }
     }
 
@@ -175,7 +171,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         removeSnackbarsFromQueue()
         resultItemsState.value = LoadState.loading(resultItemsState.value?.data.orEmpty())
         viewModelScope.launch {
-            val result = addressSortUseCase.invoke(Unit)
+            val result = addressSortUseCase.invoke(lastLocation.value)
             val currentData = resultItemsState.value?.data.orEmpty()
             if (result is UseCaseResult.Error) {
                 val e = result.exception
@@ -300,10 +296,10 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onLastLocationInfoAction() {
-        removeSnackbarsFromQueue()
         val location = locationViewModel.currentLocation.value?.let {
             Address.Location(it.latitude.toFloat(), it.longitude.toFloat())
         } ?: return
+        removeSnackbarsFromQueue()
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
             val result = reverseGeocodeUseCase.invoke(location)
@@ -344,7 +340,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         removeSnackbarsFromQueue()
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
-            val result = addressRoutingUseCase.invoke(AddressRoutingUseCase.Params(item.id, item.location))
+            val result = addressRoutingUseCase.invoke(AddressRoutingUseCase.Params(item.id, item.location, lastLocation.value))
             dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
 
             val route = when (result) {
@@ -430,12 +426,13 @@ class AddressSorterViewModel @AssistedInject constructor(
      * Для адреса с данным [id] был выбран [AddressSuggestItem] из выпадающего списка
      */
     fun onSuggestSelected(id: Long, suggestItem: AddressSuggestItem) {
+        removeSnackbarsFromQueue()
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
             // убрать только из мапы
             onRemoveSuggests(id, true)
             val suggest = suggestItem.toDomain()
-            val geocodeResult = addressSuggestGeocodeUseCase.invoke(suggest)
+            val geocodeResult = addressSuggestGeocodeUseCase.invoke(AddressSuggestGeocodeUseCase.Parameters(suggest, lastLocation.value))
             // дальше должен быть mergeWithSuggests в Observer
             repo.specifyFromSuggest(id, suggest, geocodeResult)
 //          val current = suggestsLiveData.value?.toMutableMap() ?: mutableMapOf()
@@ -560,7 +557,7 @@ class AddressSorterViewModel @AssistedInject constructor(
             if (!suggestFlowMap.containsKey(it.id)) {
                 val flow = MutableStateFlow(
                     if (!it.isSuggested) {
-                        AddressSuggestUseCase.Parameters(it.id, it.address)
+                        AddressSuggestUseCase.Parameters(it.id, it.address, lastLocation.value)
                     } else {
                         null
                     }

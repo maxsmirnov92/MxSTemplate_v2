@@ -6,6 +6,7 @@ import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.UseCase
 import net.maxsmr.core.database.model.address_sorter.AddressEntity
+import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.AddressRoute
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingMode
 import net.maxsmr.core.network.api.RoutingDataSource
@@ -15,24 +16,21 @@ import net.maxsmr.core.network.api.doublegis.RoutingResponse.Route
 import net.maxsmr.core.network.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.R
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
-import net.maxsmr.feature.address_sorter.data.usecase.routing.MissingLocationException
-import net.maxsmr.feature.address_sorter.data.usecase.routing.RoutingFailedException
-import net.maxsmr.feature.address_sorter.data.usecase.routing.getDirectDistanceByLocation
-import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLocationException
+import net.maxsmr.feature.address_sorter.data.usecase.exceptions.RoutingFailedException
+import net.maxsmr.feature.address_sorter.data.getDirectDistanceByLocation
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import javax.inject.Inject
 
 class AddressSortUseCase @Inject constructor(
     private val addressRepo: AddressRepo,
-    private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
     private val routingDataSource: RoutingDataSource,
     private val suggestDataSource: SuggestDataSource,
-) : UseCase<Unit, List<AddressEntity>>(Dispatchers.IO) {
+) : UseCase<Address.Location?, List<AddressEntity>>(Dispatchers.IO) {
 
-    override suspend fun execute(parameters: Unit): List<AddressEntity> {
+    override suspend fun execute(parameters: Address.Location?): List<AddressEntity> {
         val entities = addressRepo.getItems()
-        val lastLocation = cacheRepo.getLastLocation()
 
         val settings = settingsRepo.getSettings()
         val mode = settings.routingMode
@@ -41,7 +39,7 @@ class AddressSortUseCase @Inject constructor(
         val missingLocationIds = mutableListOf<Long>()
         val failRouteIds = mutableListOf<Pair<Long, Route.Status>>()
 
-        val newEntities = if (lastLocation != null) {
+        val newEntities = if (parameters != null) {
 
             if (mode.isApi) {
 
@@ -53,7 +51,7 @@ class AddressSortUseCase @Inject constructor(
                     routePairs as MutableMap<Int, Pair<AddressRoute?, Route.Status>>
                     entities.forEach {
                         val distance =
-                            suggestDataSource.suggest(it.address, lastLocation).getOrNull(0)?.distance
+                            suggestDataSource.suggest(it.address, parameters).getOrNull(0)?.distance
                         val routePair = if (distance != null) {
                             AddressRoute(it.id, distance, null) to Route.Status.OK
                         } else {
@@ -73,7 +71,7 @@ class AddressSortUseCase @Inject constructor(
                         RoutingRequest.Point(location)
                     }.toMutableMap().apply {
                         // по нулевому id дописываем точку, от которой считать до всех остальных
-                        this[0] = RoutingRequest.Point(lastLocation)
+                        this[0] = RoutingRequest.Point(parameters)
                     }.mapNotNull {
                         if (it.value == null) {
                             null
@@ -153,7 +151,7 @@ class AddressSortUseCase @Inject constructor(
                     entities.map {
                         val location = it.location
                         val distance = if (location != null) {
-                            getDirectDistanceByLocation(location, lastLocation)
+                            getDirectDistanceByLocation(location, parameters)
                         } else {
                             if (it.isSuggested) {
                                 missingLocationIds.add(it.id)

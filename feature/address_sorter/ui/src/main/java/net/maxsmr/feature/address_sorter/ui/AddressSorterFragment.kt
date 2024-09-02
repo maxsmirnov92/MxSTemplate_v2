@@ -132,9 +132,6 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                 AlertFragmentDelegate(this@AddressSorterFragment, this)
             )
             handleEvents(this@AddressSorterFragment)
-            currentLocation.observe {
-                refreshLastLocationInfoMenuItem(it)
-            }
         }
 
         with(binding) {
@@ -174,6 +171,9 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                 }
                 refreshStateMenuItems(state)
             }
+            viewModel.lastLocation.observe {
+                refreshLastLocationInfoMenuItem(it)
+            }
         }
 
         adapter.registerItemsEventsListener(this)
@@ -200,7 +200,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         exportMenuItem = menu.findItem(R.id.actionExportToJson)
         clearMenuItem = menu.findItem(R.id.actionClear)
         refreshStateMenuItems(viewModel.resultItemsState.value)
-        refreshLastLocationInfoMenuItem(locationViewModel.getLastKnownLocation())
+        refreshLastLocationInfoMenuItem(viewModel.lastLocation.value)
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -353,7 +353,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         importMenuItem?.isVisible = state?.isLoading != true
     }
 
-    private fun refreshLastLocationInfoMenuItem(lastLocation: Location?) {
+    private fun refreshLastLocationInfoMenuItem(lastLocation: Address.Location?) {
         lastLocationInfoMenuItem?.isVisible = lastLocation != null
     }
 

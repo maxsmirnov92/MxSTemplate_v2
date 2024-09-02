@@ -12,16 +12,15 @@ import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.FlowUseCase
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.android.coroutines.usecase.asUseCaseResult
+import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
-import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import javax.inject.Inject
 
 class AddressSuggestUseCase @Inject constructor(
     private val addressRepo: AddressRepo,
-    private val cacheRepo: CacheDataStoreRepository,
     private val suggestDataSource: SuggestDataSource,
 ) : FlowUseCase<Flow<AddressSuggestUseCase.Parameters?>, List<AddressSuggest>>(Dispatchers.IO) {
 
@@ -45,10 +44,9 @@ class AddressSuggestUseCase @Inject constructor(
                     } else {
                         emit(UseCaseResult.Loading)
                         addressRepo.updateQuery(p.id, p.query)
-                        val lastLocation = cacheRepo.getLastLocation()
 //                        delay(5000)
                         val result = try {
-                            val result = suggestDataSource.suggest(p.query, lastLocation)
+                            val result = suggestDataSource.suggest(p.query, p.lastLocation)
                             if (result.isEmpty()) {
                                 throw EmptyResultException(baseApplicationContext, true)
                             } else {
@@ -65,6 +63,7 @@ class AddressSuggestUseCase @Inject constructor(
     data class Parameters(
         val id: Long,
         val query: String,
+        val lastLocation: Address.Location?
     )
 
     companion object {

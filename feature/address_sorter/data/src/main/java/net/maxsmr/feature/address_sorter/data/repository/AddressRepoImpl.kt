@@ -169,15 +169,6 @@ class AddressRepoImpl(
         }
     }
 
-    override suspend fun setLastLocation(location: Location?) = withContext(ioDispatcher) {
-        cacheRepo.setLastLocation(location?.let {
-            Address.Location(
-                location.latitude.toFloat(),
-                location.longitude.toFloat()
-            )
-        })
-    }
-
     private suspend fun List<AddressEntity>.upsert() {
         // AddressEntity пишем в таблицу и ждём изменения в resultAddresses
         val resultIds = dao.upsert(this)

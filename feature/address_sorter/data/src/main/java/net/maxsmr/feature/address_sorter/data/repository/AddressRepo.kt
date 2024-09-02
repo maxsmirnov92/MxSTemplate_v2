@@ -45,6 +45,4 @@ interface AddressRepo {
      * Апдейт существующей Entity в таблице при вводе или создание новой при [id] null
      */
     suspend fun updateQuery(id: Long?, query: String): AddressEntity
-
-    suspend fun setLastLocation(location: Location?)
 }

@@ -1,6 +1,5 @@
-package net.maxsmr.feature.address_sorter.data.usecase.routing
+package net.maxsmr.feature.address_sorter.data.usecase.exceptions
 
-import net.maxsmr.core.domain.entities.feature.address_sorter.routing.AddressRoute
 import net.maxsmr.core.network.api.doublegis.RoutingResponse.Route
 
 /**
