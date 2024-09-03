@@ -252,9 +252,12 @@
 # Сохранение всех метаданных
 -keepattributes Signature
 -keepattributes *Annotation*
+# Keep file names and line numbers.
 -keepattributes SourceFile,LineNumberTable
 
 -keepattributes Exceptions
+# Optional: Keep custom exceptions.
+-keep public class * extends java.lang.Exception
 
 -keepclassmembers,includedescriptorclasses class * { native <methods>; }
 -keepclasseswithmembernames,includedescriptorclasses class * {native <methods>;}

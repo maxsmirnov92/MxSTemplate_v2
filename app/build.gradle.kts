@@ -118,7 +118,7 @@ android {
 //            signingConfig = null
         }
         getByName("release") {
-            isDebuggable = true
+            isDebuggable = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -203,7 +203,16 @@ android {
 
     buildFeatures {
         viewBinding = true
+        dataBinding = true
         buildConfig = true
+    }
+
+    viewBinding {
+        enable = true
+    }
+
+    dataBinding {
+        enable = true
     }
 
 //    sourceSets {
