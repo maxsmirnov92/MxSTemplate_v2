@@ -28,6 +28,7 @@ import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_C
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.core.ui.openAnyIntentWithToastError
+import net.maxsmr.feature.address_sorter.data.toPointF
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputAdapter
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputListener
@@ -211,11 +212,13 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
             R.id.actionBuildRouteApp -> {
                 viewModel.onBuildRouteInApp { intent, app ->
-                    requireContext().openAnyIntentWithToastError(intent, errorResId = if (app == RoutingApp.YANDEX_NAVI) {
-                        R.string.address_sorter_error_build_route_yandex_navi
-                    } else {
-                        net.maxsmr.core.ui.R.string.error_intent_any
-                    })
+                    requireContext().openAnyIntentWithToastError(
+                        intent, errorResId = if (app == RoutingApp.YANDEX_NAVI) {
+                            R.string.address_sorter_error_build_route_yandex_navi
+                        } else {
+                            net.maxsmr.core.ui.R.string.error_intent_any
+                        }
+                    )
                 }
                 true
             }
@@ -282,14 +285,15 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     override fun onNavigateAction(item: AddressSorterViewModel.AddressItem) {
         if (item.isEmpty) return
-        requireContext().openAnyIntentWithToastError(
-            getViewLocationIntent(
-                item.location?.latitude,
-                item.location?.longitude,
-                item.address
-            ), // TODO проверка uri на empty
-            errorResId = net.maxsmr.core.ui.R.string.error_intent_open_geo
-        )
+        getViewLocationIntent(
+            item.location?.toPointF(),
+            item.address/*.takeIf { item.location == null }*/
+        )?.let {
+            requireContext().openAnyIntentWithToastError(
+                it,
+                errorResId = net.maxsmr.core.ui.R.string.error_intent_open_geo
+            )
+        }
     }
 
     override fun onInfoAction(item: AddressSorterViewModel.AddressItem) {
