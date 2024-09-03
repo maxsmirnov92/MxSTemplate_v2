@@ -28,7 +28,7 @@ data class AppSettings(
     val routingType: RoutingType = RoutingType.JAM,
     val sortPriority: SortPriority = SortPriority.DISTANCE,
     val routingApp: RoutingApp = RoutingApp.DOUBLEGIS,
-    val routingAppFromStart: Boolean = true,
+    val routingAppFromCurrent: Boolean = true,
 ) : Serializable {
 
     companion object {

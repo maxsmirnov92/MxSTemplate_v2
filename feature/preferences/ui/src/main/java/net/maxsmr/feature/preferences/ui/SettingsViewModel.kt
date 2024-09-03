@@ -25,6 +25,8 @@ import net.maxsmr.feature.preferences.data.domain.AppSettings
 import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
+import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
+
 import javax.inject.Inject
 
 @HiltViewModel
@@ -99,6 +101,16 @@ class SettingsViewModel @Inject constructor(
         isValidByBlank = true
     )
 
+    val routingAppField: Field<RoutingApp> = Field.Builder(RoutingApp.DOUBLEGIS)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_ROUTING_APP)
+        .build()
+
+    val routingAppFromCurrentField: Field<Boolean> = Field.Builder(false)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_ROUTING_APP_FROM_CURRENT)
+        .build()
+
     private val allFields = listOf<Field<*>>(
         maxDownloadsField,
         connectTimeoutField,
@@ -108,7 +120,9 @@ class SettingsViewModel @Inject constructor(
         disableNotificationsField,
         updateNotificationIntervalStateField,
         openLinksInExternalAppsField,
-        startPageUrlField
+        startPageUrlField,
+        routingAppField,
+        routingAppFromCurrentField
     )
 
     private val appSettings by persistableLiveData<AppSettings>()
@@ -167,6 +181,14 @@ class SettingsViewModel @Inject constructor(
         startPageUrlField.clearErrorOnChange(this) {
             appSettings.value = currentAppSettings.copy(startPageUrl = it)
         }
+
+        routingAppField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(routingApp = it)
+        }
+
+        routingAppFromCurrentField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(routingAppFromCurrent = it)
+        }
     }
 
     override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
@@ -195,20 +217,8 @@ class SettingsViewModel @Inject constructor(
                     cacheRepository.clearPostNotificationAsked()
                 }
             }
-            repository.updateSettings(
-                AppSettings(
-                    maxDownloadsField.value,
-                    connectTimeoutField.value,
-                    loadByWiFiOnlyField.value,
-                    retryOnConnectionFailureField.value,
-                    retryDownloadsField.value,
-                    disableNotifications,
-                    updateNotificationIntervalStateField.value.value,
-                    openLinksInExternalAppsField.value.value,
-                    startPageUrlField.value.takeIf { it.isNotEmpty() } ?: URL_PAGE_BLANK
-                )
-            )
 
+            repository.updateSettings(currentAppSettings)
             updateSettings()
             navigationAction?.invoke()
         }
@@ -253,6 +263,8 @@ class SettingsViewModel @Inject constructor(
             LongFieldWithState(settings.updateNotificationInterval, !settings.disableNotifications)
         openLinksInExternalAppsField.value = BooleanFieldWithState(settings.openLinksInExternalApps, isAtLeastTiramisu())
         startPageUrlField.value = settings.startPageUrl
+        routingAppField.value = settings.routingApp
+        routingAppFromCurrentField.value = settings.routingAppFromCurrent
     }
 
     private suspend fun updateSettings() {
@@ -274,5 +286,7 @@ class SettingsViewModel @Inject constructor(
         const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
         const val KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE = "update_notification_interval_state"
         const val KEY_FIELD_OPEN_LINKS_IN_EXTERNAL_APPS = "open_links_in_external_apps"
+        const val KEY_FIELD_ROUTING_APP = "routing_app"
+        const val KEY_FIELD_ROUTING_APP_FROM_CURRENT = "routing_app_from_current"
     }
 }

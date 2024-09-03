@@ -5,7 +5,7 @@
     <string name="address_sorter_edit_hint">Input address</string>
     <string name="address_sorter_menu_action_refresh">Refresh</string>
     <string name="address_sorter_menu_action_last_location_info">Last location info</string>
-    <string name="address_sorter_menu_action_build_route_app">Build route in app</string>
+    <string name="address_sorter_menu_action_build_route_app">Build route</string>
     <string name="address_sorter_menu_action_import_from_json">Import from JSON</string>
     <string name="address_sorter_menu_action_export_to_json">Export to JSON</string>
     <string name="address_sorter_menu_action_clear">Clear</string>
@@ -29,7 +29,7 @@
     <string name="address_sorter_error_reverse_geocode_format">Error occurred during reverse geocoding: \"%s\"</string>
     <string name="address_sorter_error_reverse_geocode">Unknown error occurred during reverse geocoding</string>
 
-    <string name="address_sorter_menu_action_change_routing_mode">Route calculation method</string>
+    <string name="address_sorter_menu_action_change_routing_mode">Distance calculation method</string>
     <string name="address_sorter_menu_action_change_routing_type">Routing type (2GIS)</string>
     <string name="address_sorter_menu_action_change_sort_priority">Sort priority</string>
     <string name="address_sorter_dialog_change_routing_mode_title">@string/address_sorter_menu_action_change_routing_mode</string>

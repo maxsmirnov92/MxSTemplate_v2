@@ -47,7 +47,6 @@ import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.location.LocationViewModel
-import net.maxsmr.core.ui.openAnyIntentWithToastError
 import net.maxsmr.feature.address_sorter.data.getDoubleGisRouteIntent
 import net.maxsmr.feature.address_sorter.data.getYandexNaviRouteIntent
 import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestUseCase
@@ -356,11 +355,11 @@ class AddressSorterViewModel @AssistedInject constructor(
             withContext(Dispatchers.IO) {
                 when (settings.routingApp) {
                     RoutingApp.DOUBLEGIS -> {
-                        getDoubleGisRouteIntent(locations, false)
+                        getDoubleGisRouteIntent(locations, settings.routingAppFromCurrent)
                     }
 
                     RoutingApp.YANDEX_NAVI -> {
-                        getYandexNaviRouteIntent(locations, settings.routingAppFromStart)
+                        getYandexNaviRouteIntent(locations, settings.routingAppFromCurrent)
                     }
                 }
             }?.let {

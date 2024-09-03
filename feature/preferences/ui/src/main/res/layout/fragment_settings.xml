@@ -19,26 +19,21 @@
             android:layout_height="?attr/actionBarSize"
             app:title="@string/settings_feature_title" />
 
-        <FrameLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/backgroundLightGray">
-
-        </FrameLayout>
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/svSettings"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_margin="@dimen/halfOfDefaultPadding"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:background="@drawable/shape_background_white_corners"
             android:orientation="vertical"
-            android:padding="10dp">
+            android:padding="@dimen/defaultPadding">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilMaxDownloads"
@@ -61,7 +56,7 @@
                 style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="@dimen/defaultPadding"
                 tools:hint="@string/settings_field_connect_timeout_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -86,8 +81,8 @@
                 android:id="@+id/switchRetryOnConnectionFailure"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/settings_field_retry_on_connection_failure_field"
+                android:layout_marginTop="@dimen/defaultPadding"
+                android:text="@string/settings_field_retry_on_connection_failure"
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
                 app:switchPadding="4dp" />
 
@@ -95,7 +90,7 @@
                 android:id="@+id/switchRetryDownloads"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="@dimen/defaultPadding"
                 android:text="@string/settings_field_retry_failed_downloads"
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
                 app:switchPadding="4dp" />
@@ -104,7 +99,7 @@
                 android:id="@+id/switchDisableNotifications"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="@dimen/defaultPadding"
                 android:text="@string/settings_field_disable_notifications"
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
                 app:switchPadding="4dp" />
@@ -114,7 +109,7 @@
                 style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="@dimen/defaultPadding"
                 tools:hint="@string/settings_field_update_notification_interval_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -130,7 +125,7 @@
                 android:id="@+id/switch_open_links_in_external_apps"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="@dimen/defaultPadding"
                 android:text="@string/settings_field_open_links_in_external_apps"
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
                 app:switchPadding="4dp" />
@@ -140,7 +135,7 @@
                 style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="@dimen/defaultPadding"
                 tools:hint="@string/settings_field_start_page_url_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -149,6 +144,42 @@
                     android:inputType="textUri" />
 
             </com.google.android.material.textfield.TextInputLayout>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/defaultPadding">
+
+                <TextView
+                    android:id="@+id/tvRoutingAppName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_toStartOf="@+id/spinnerRoutingApp"
+                    android:gravity="center_vertical"
+                    android:text="@string/settings_field_routing_app"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                    android:textColor="@color/textColorPrimary"
+                    android:textSize="@dimen/textSizeNormal" />
+
+                <androidx.appcompat.widget.AppCompatSpinner
+                    android:id="@+id/spinnerRoutingApp"
+                    android:layout_width="160dp"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="20dp" />
+
+            </RelativeLayout>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchRoutingAppFromCurrent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/defaultPadding"
+                android:text="@string/settings_field_routing_app_from_current"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                app:switchPadding="4dp" />
 
         </LinearLayout>
 
