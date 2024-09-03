@@ -3,7 +3,6 @@ package net.maxsmr.feature.about
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
@@ -13,7 +12,6 @@ import net.maxsmr.commonutils.convertAnyToPx
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
-import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
@@ -21,17 +19,12 @@ import net.maxsmr.feature.about.adapter.DonateAddressAdapter
 import net.maxsmr.feature.about.adapter.DonateAddressAdapterData
 import net.maxsmr.feature.about.adapter.DonateAddressClickListener
 import net.maxsmr.feature.about.databinding.FragmentAboutBinding
-import net.maxsmr.feature.rate.BaseRateAppFragmentDelegate
 
 abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<VM>(), DonateAddressClickListener {
-
-    abstract val rateDelegate: BaseRateAppFragmentDelegate
 
     abstract val description: AboutViewModel.AboutAppDescription
 
     override val layoutId: Int = R.layout.fragment_about
-
-    override val menuResId: Int = R.menu.menu_about
 
     private val binding by viewBinding(FragmentAboutBinding::bind)
 
@@ -82,24 +75,6 @@ abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<V
                 }
             }?: run {
                 ivLogo.setImageResource(description.logoResId)
-            }
-        }
-    }
-
-    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-        return when (menuItem.itemId) {
-            R.id.actionRateApp -> {
-                rateDelegate.onRateAppSelected()
-                true
-            }
-
-            R.id.actionFeedback -> {
-                rateDelegate.navigateToFeedback(false)
-                true
-            }
-
-            else -> {
-                super.onMenuItemSelected(menuItem)
             }
         }
     }

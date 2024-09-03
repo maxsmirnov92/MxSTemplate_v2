@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name" translatable="false">MxSTemplate</string>
-    <string name="browser_name">Browser</string>
+    <string name="app_name">@string/address_sorter_feature_title</string>
+    <string name="menu_navigation_address_sorter">Main</string>
 </resources>

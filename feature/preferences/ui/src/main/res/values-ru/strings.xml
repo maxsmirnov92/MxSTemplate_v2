@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_feature_title">Настройки</string>
-    <string name="settings_field_max_downloads_hint">Максимальное число одновременных загрузок (0 - неограничено)</string>
-    <string name="settings_field_connect_timeout_hint">Таймаут соединения (секунды, 0 - без таймаута)</string>
-    <string name="settings_field_retry_on_connection_failure">Автоматически делать перезапросы при сбоях соединения</string>
-    <string name="settings_field_load_by_wi_fi_only">Загружать только при наличии Wi-Fi</string>
-    <string name="settings_field_retry_failed_downloads">Повторять неудавшиеся из-за сети загрузки при её появлении</string>
-    <string name="settings_field_disable_notifications">Отключить уведомления сервиса загрузок</string>
-    <string name="settings_field_update_notification_interval_hint">Интервал обновления уведомлений с активной загрузкой (мс)</string>
-    <string name="settings_field_open_links_in_external_apps">Открывать поддерживаемые ссылки во внешних приложениях</string>
-    <string name="settings_field_start_page_url_hint">Стартовая страница</string>
     <string name="settings_field_routing_app">Приложение для построения маршрута</string>
     <string name="settings_field_routing_app_from_current">Строить маршрут от последней известной геопозиции</string>
 

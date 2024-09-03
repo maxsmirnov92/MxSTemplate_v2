@@ -48,10 +48,10 @@ data class AppVersion(
 val appVersion = AppVersion(1, "common")
 
 android {
-    namespace = "net.maxsmr.mxstemplate"
+    namespace = "net.maxsmr.address_sorter"
 
     defaultConfig {
-        applicationId = "net.maxsmr.mxstemplate"
+        applicationId = "net.maxsmr.address_sorter"
         versionCode = appVersion.code
         versionName = appVersion.name
         project.ext.set("archivesBaseName", "${project.name}_${appVersion.name}_${appVersion.type}")
@@ -236,11 +236,11 @@ dependencies {
 
     implementation(project(":feature:mobile_services"))
     implementation(project(":feature:preferences:ui"))
-    implementation(project(":feature:download:ui"))
+    implementation(project(":feature:download:data"))
     implementation(project(":feature:address_sorter:ui"))
-    implementation(project(":feature:webview:ui"))
+//    implementation(project(":feature:webview:ui"))
 
-    implementation(project(":feature:rate"))
+//    implementation(project(":feature:rate"))
     implementation(project(":feature:about"))
 
     implementation(libs.jodaTime)

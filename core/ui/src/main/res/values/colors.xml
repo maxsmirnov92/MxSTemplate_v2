@@ -101,8 +101,9 @@
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <color name="green_200">#64b900</color>
+    <color name="green_500">#5ba900</color>
+    <color name="green_700">#3c7000</color>
     <color name="gray_light">#F4F4F4</color>
     <color name="gray_medium">#b3b3b3</color>
     <color name="gray_dark">#4b4b4b</color>
@@ -110,25 +111,24 @@
     <color name="azure">#007AFF</color>
     <color name="yellow">#FFCB14</color>
 
-    <color name="colorPrimary">@color/purple_500</color>
-    <color name="colorPrimaryVariant">@color/colorPrimaryDark</color>
-    <color name="colorPrimaryDark">@color/purple_700</color>
-    <color name="colorSecondary">@color/teal_200</color>
-    <color name="colorSecondaryVariant">@color/teal_700</color>
+    <color name="colorPrimary">@color/green_200</color>
+    <color name="colorPrimaryVariant">@color/green_500</color>
+    <color name="colorPrimaryDark">@color/green_700</color>
+    <color name="colorSecondary">@color/purple_200</color>
+    <color name="colorSecondaryVariant">@color/purple_700</color>
     <color name="colorAccent">@color/colorPrimary</color>
     <color name="colorControlNormal">@color/black</color>
     <color name="colorControlActivated">@color/colorPrimary</color>
     <color name="colorControlHighlight">@color/colorControlActivated</color>
     <color name="colorControlDisabled">#cecdcd</color>
 
-<!--    #96cbc6-->
     <color name="textColorHighlight">@color/colorControlHighlight</color>
     <color name="textColorPrimary">@color/black</color>
     <color name="textColorSecondary">@color/white</color>
     <color name="textColorDisabled">@color/colorControlDisabled</color>
     <color name="textColorHint">#6d6f70</color>
     <color name="textColorError">#EE3124</color>
-<!--    <color name="textColorToolbar">#cecdcd</color>-->
+    <!--    <color name="textColorToolbar">#cecdcd</color>-->
 
     <color name="snackbarTextColor">@color/textColorSecondary</color>
     <color name="snackbarActionColor">#1BC886</color>

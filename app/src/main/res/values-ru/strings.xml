@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="browser_name">Браузер</string>
+    <string name="app_name">@string/address_sorter_feature_title</string>
+    <string name="menu_navigation_address_sorter">Главный</string>
 </resources>

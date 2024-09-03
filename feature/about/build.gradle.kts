@@ -11,7 +11,7 @@ android {
 
 dependencies {
     implementation(project(":core:di"))
-    implementation(project(":feature:rate"))
-    implementation(project(":feature:mobile_services"))
+//    implementation(project(":feature:rate"))
+//    implementation(project(":feature:mobile_services"))
     implementation(project(":feature:preferences:data"))
 }
