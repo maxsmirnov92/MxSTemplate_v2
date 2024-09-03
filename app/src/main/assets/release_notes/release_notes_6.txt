@@ -1,0 +1,4 @@
+• Added building route with all points option in external apps: 2GIS or Yandex Navigator
+• Added dialog with file name input when exporting addresses
+• Implemented auto refresh API key for routing
+• Various fixes and improvements

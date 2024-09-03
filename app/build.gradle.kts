@@ -45,7 +45,7 @@ data class AppVersion(
     constructor(code: Int, type: String) : this(code, getVersionName(code), type)
 }
 
-val appVersion = AppVersion(1, "common")
+val appVersion = AppVersion(6, "common")
 
 android {
     namespace = "net.maxsmr.address_sorter"

@@ -1,0 +1,10 @@
+First public release
+
+Introducing key features:
+• Address suggest by request
+• Obtaining the coordinates of the object by direct geocoding
+• Possibility of dragging and swiping addresses
+• Sorting by distance/time to the place
+• Different ways of calculating the route
+• Information on the last known location by reverse geocoding
+• Navigation to the external cards application with the name or coordinates of the place
