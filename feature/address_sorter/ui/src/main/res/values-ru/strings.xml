@@ -5,9 +5,11 @@
     <string name="address_sorter_edit_hint">Введите адрес</string>
     <string name="address_sorter_menu_action_refresh">Обновить</string>
     <string name="address_sorter_menu_action_last_location_info">Информация о последнем местоположении</string>
+    <string name="address_sorter_menu_action_build_route_app">Построить маршрут в приложении</string>
     <string name="address_sorter_menu_action_import_from_json">Импортировать из JSON</string>
     <string name="address_sorter_menu_action_export_to_json">Экспортировать в JSON</string>
     <string name="address_sorter_menu_action_clear">Очистить</string>
+    <string name="address_sorter_error_build_route_yandex_navi">Приложение \"Яндекс Навигатор\" не установлено</string>
 
     <string name="address_sorter_dialog_address_import_error_message_format">Не удалось импортировать адреса: \"%s\"</string>
     <string name="address_sorter_dialog_address_import_error_message">Не удалось импортировать адреса</string>

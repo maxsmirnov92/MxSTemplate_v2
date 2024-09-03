@@ -1,6 +1,5 @@
 package net.maxsmr.feature.address_sorter.ui
 
-import android.location.Location
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
@@ -24,6 +23,7 @@ import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
+import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_GPS_PERMISSION
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
@@ -109,6 +109,8 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
     private var lastLocationInfoMenuItem: MenuItem? = null
 
+    private var buildRouteAppMenuItem: MenuItem? = null
+
     private var changeRoutingModeMenuItem: MenuItem? = null
 
     private var changeRoutingTypeMenuItem: MenuItem? = null
@@ -171,6 +173,9 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
                 }
                 refreshStateMenuItems(state)
             }
+            viewModel.resultLocationsState.observe {
+                refreshBuildRouteAppMenuItem(it)
+            }
             viewModel.lastLocation.observe {
                 refreshLastLocationInfoMenuItem(it)
             }
@@ -193,6 +198,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         super.onCreateMenu(menu, inflater)
         refreshMenuItem = menu.findItem(R.id.actionRefresh)
         lastLocationInfoMenuItem = menu.findItem(R.id.actionLastLocationInfo)
+        buildRouteAppMenuItem = menu.findItem(R.id.actionBuildRouteApp)
         changeRoutingModeMenuItem = menu.findItem(R.id.actionChangeRoutingMode)
         changeRoutingTypeMenuItem = menu.findItem(R.id.actionChangeRoutingType)
         changeSortPriorityMenuItem = menu.findItem(R.id.actionChangeSortPriority)
@@ -201,6 +207,7 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         clearMenuItem = menu.findItem(R.id.actionClear)
         refreshStateMenuItems(viewModel.resultItemsState.value)
         refreshLastLocationInfoMenuItem(viewModel.lastLocation.value)
+        refreshBuildRouteAppMenuItem(viewModel.resultLocationsState.value)
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -212,6 +219,17 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
             R.id.actionLastLocationInfo -> {
                 viewModel.onLastLocationInfoAction()
+                true
+            }
+
+            R.id.actionBuildRouteApp -> {
+                viewModel.onBuildRouteInApp { intent, app ->
+                    requireContext().openAnyIntentWithToastError(intent, errorResId = if (app == RoutingApp.YANDEX_NAVI) {
+                        R.string.address_sorter_error_build_route_yandex_navi
+                    } else {
+                        net.maxsmr.core.ui.R.string.error_intent_any
+                    })
+                }
                 true
             }
 
@@ -355,6 +373,17 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
     private fun refreshLastLocationInfoMenuItem(lastLocation: Address.Location?) {
         lastLocationInfoMenuItem?.isVisible = lastLocation != null
+    }
+
+    private fun refreshBuildRouteAppMenuItem(state: LoadState<List<Address.Location>>?) {
+        val data = state?.data.orEmpty()
+        buildRouteAppMenuItem?.let {
+            if (data.isNotEmpty()) {
+                it.isVisible = state?.isLoading == false
+            } else {
+                it.isVisible = false
+            }
+        }
     }
 
     companion object {

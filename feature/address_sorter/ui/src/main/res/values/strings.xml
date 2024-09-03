@@ -5,9 +5,11 @@
     <string name="address_sorter_edit_hint">Input address</string>
     <string name="address_sorter_menu_action_refresh">Refresh</string>
     <string name="address_sorter_menu_action_last_location_info">Last location info</string>
+    <string name="address_sorter_menu_action_build_route_app">Build route in app</string>
     <string name="address_sorter_menu_action_import_from_json">Import from JSON</string>
     <string name="address_sorter_menu_action_export_to_json">Export to JSON</string>
     <string name="address_sorter_menu_action_clear">Clear</string>
+    <string name="address_sorter_error_build_route_yandex_navi">\"Yandex Navigator\" app is not installed</string>
 
     <string name="address_sorter_dialog_address_import_error_message_format">Cannot import addresses: \"%s\"</string>
     <string name="address_sorter_dialog_address_import_error_message">Cannot import addresses</string>

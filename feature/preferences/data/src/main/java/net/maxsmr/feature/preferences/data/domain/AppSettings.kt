@@ -6,6 +6,7 @@ import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.readStringOrThrow
 import net.maxsmr.commonutils.writeBytesOrThrow
 import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
+import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingMode
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingType
 import java.io.InputStream
@@ -25,7 +26,9 @@ data class AppSettings(
     val startPageUrl: String = "https://google.com",
     val routingMode: RoutingMode = RoutingMode.DOUBLEGIS_DRIVING,
     val routingType: RoutingType = RoutingType.JAM,
-    val sortPriority: SortPriority = SortPriority.DISTANCE
+    val sortPriority: SortPriority = SortPriority.DISTANCE,
+    val routingApp: RoutingApp = RoutingApp.DOUBLEGIS,
+    val routingAppFromStart: Boolean = true,
 ) : Serializable {
 
     companion object {

@@ -14,6 +14,12 @@
         app:iconTint="@color/white"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/actionBuildRouteApp"
+        android:icon="@drawable/ic_menu_route"
+        android:title="@string/address_sorter_menu_action_build_route_app"
+        app:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/actionChangeRoutingMode"
         android:title="@string/address_sorter_menu_action_change_routing_mode" />
     <item
