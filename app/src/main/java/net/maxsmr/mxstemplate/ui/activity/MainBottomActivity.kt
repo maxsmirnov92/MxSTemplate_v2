@@ -15,7 +15,7 @@ class MainBottomActivity : BaseBottomNavigationActivity() {
     override val navigationGraphResId: Int = R.navigation.navigation_main
 
     override val topLevelDestinationIds =
-        setOf(R.id.navigationDownloads, R.id.navigationWebView, R.id.navigationSettings, R.id.navigationAbout)
+        setOf(R.id.navigationDownloads, R.id.navigationAddressSorter, R.id.navigationWebView, R.id.navigationSettings, R.id.navigationAbout)
 
     override val navigationMenuResId: Int = R.menu.menu_navigation_main
 

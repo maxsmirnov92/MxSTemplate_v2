@@ -31,6 +31,22 @@
     </fragment>
 
     <fragment
+        android:id="@+id/navigationAddressSorter"
+        android:name="net.maxsmr.mxstemplate.ui.fragment.MainAddressSorterFragment"
+        android:label="@string/address_sorter_feature_title"
+        tools:layout="@layout/fragment_address_sorter">
+
+        <action
+            android:id="@+id/actionToWebViewFragment"
+            app:destination="@id/navigationWebView"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out" />
+
+    </fragment>
+
+    <fragment
         android:id="@+id/navigationWebView"
         android:name="net.maxsmr.mxstemplate.ui.fragment.MainWebViewFragment"
         android:label="@string/webview_feature_title"

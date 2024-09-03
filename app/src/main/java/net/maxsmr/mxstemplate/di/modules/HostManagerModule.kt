@@ -4,7 +4,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import net.maxsmr.address_sorter.manager.host.DoubleGisRoutingHostManager
+import net.maxsmr.mxstemplate.manager.host.DoubleGisRoutingHostManager
 import net.maxsmr.core.network.HostManager
 import net.maxsmr.mxstemplate.manager.host.RadarIoHostManager
 import net.maxsmr.mxstemplate.manager.host.YandexGeocodeHostManager

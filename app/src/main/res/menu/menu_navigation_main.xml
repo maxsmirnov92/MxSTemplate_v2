@@ -5,6 +5,10 @@
         android:icon="@drawable/ic_download"
         android:title="@string/download_feature_title" />
     <item
+        android:id="@+id/navigationAddressSorter"
+        android:icon="@drawable/ic_address_sorter"
+        android:title="@string/address_sorter_feature_title" />
+    <item
         android:id="@+id/navigationWebView"
         android:icon="@drawable/ic_menu_web_view"
         android:title="@string/webview_feature_title" />

@@ -1,4 +1,4 @@
-package net.maxsmr.address_sorter.manager.host
+package net.maxsmr.mxstemplate.manager.host
 
 import net.maxsmr.core.network.HostChangeListener
 import net.maxsmr.core.network.HostManager

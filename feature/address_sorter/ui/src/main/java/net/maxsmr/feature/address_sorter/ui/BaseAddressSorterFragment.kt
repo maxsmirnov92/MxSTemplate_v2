@@ -9,7 +9,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
@@ -33,12 +32,8 @@ import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputAdapter
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputListener
 import net.maxsmr.feature.address_sorter.ui.databinding.FragmentAddressSorterBinding
-import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.permissionchecker.PermissionsHelper
-import javax.inject.Inject
 
-@AndroidEntryPoint
-class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
+abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         AddressInputListener, BaseDraggableDelegationAdapter.ItemsEventsListener<AddressInputData> {
 
     override val layoutId: Int = R.layout.fragment_address_sorter
@@ -93,17 +88,9 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
 
         ).build()
 
-    @Inject
-    override lateinit var permissionsHelper: PermissionsHelper
+    abstract val locationFactory: LocationViewModel.Factory
 
-    @Inject
-    lateinit var locationFactory: LocationViewModel.Factory
-
-    @Inject
-    lateinit var factory: AddressSorterViewModel.Factory
-
-    @Inject
-    lateinit var cacheRepo: CacheDataStoreRepository
+    abstract val factory: AddressSorterViewModel.Factory
 
     private var refreshMenuItem: MenuItem? = null
 
@@ -131,9 +118,9 @@ class AddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         with(locationViewModel) {
             handleAlerts(
                 // dialogQueue не из locationViewModel
-                AlertFragmentDelegate(this@AddressSorterFragment, this)
+                AlertFragmentDelegate(this@BaseAddressSorterFragment, this)
             )
-            handleEvents(this@AddressSorterFragment)
+            handleEvents(this@BaseAddressSorterFragment)
         }
 
         with(binding) {

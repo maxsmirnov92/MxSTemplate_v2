@@ -228,7 +228,7 @@ dependencies {
     implementation(project(":feature:mobile_services"))
     implementation(project(":feature:preferences:ui"))
     implementation(project(":feature:download:ui"))
-//    implementation(project(":feature:address_sorter:ui"))
+    implementation(project(":feature:address_sorter:ui"))
     implementation(project(":feature:webview:ui"))
 
     implementation(project(":feature:rate"))
