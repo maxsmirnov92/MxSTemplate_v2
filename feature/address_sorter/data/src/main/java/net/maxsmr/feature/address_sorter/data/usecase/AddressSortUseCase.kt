@@ -19,6 +19,7 @@ import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLocationException
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.RoutingFailedException
 import net.maxsmr.feature.address_sorter.data.getDirectDistanceByLocation
+import net.maxsmr.feature.address_sorter.data.getDisplayedMessageResId
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import javax.inject.Inject
 
@@ -46,7 +47,6 @@ class AddressSortUseCase @Inject constructor(
                 val routePairs: Map<Long, Pair<AddressRoute?, Route.Status>>
 
                 if (mode == RoutingMode.SUGGEST) {
-
                     routePairs = mutableMapOf()
                     routePairs as MutableMap<Int, Pair<AddressRoute?, Route.Status>>
                     entities.forEach {
@@ -58,9 +58,6 @@ class AddressSortUseCase @Inject constructor(
                             null to Route.Status.FAIL
                         }
                         routePairs[it.id] = routePair
-                        if (routePair.second != Route.Status.OK) {
-                            failRouteIds.add(it.id to routePair.second)
-                        }
                     }
                 } else {
 
@@ -123,12 +120,13 @@ class AddressSortUseCase @Inject constructor(
                         val route = routePair.first
                         if (routePair.second == Route.Status.OK && route != null) {
                             entity.copy(
-                                distance = route.distance.toFloat(),
-                                duration = route.duration
+                                distance = route.distance,
+                                duration = route.duration,
+                                routingErrorMessage = null
                             )
                         } else {
                             entity.copy(
-                                routingErrorMessage = routePair.second.id
+                                routingErrorMessage = baseApplicationContext.getString(routePair.second.getDisplayedMessageResId())
                             )
                         }.apply {
                             this.id = entity.id
@@ -164,7 +162,8 @@ class AddressSortUseCase @Inject constructor(
                             // актуализация пересчитанным валидным значением
                             it.copy(
                                 distance = distance,
-                                duration = null
+                                duration = null,
+                                routingErrorMessage = null
                             ).apply {
                                 this.id = it.id
                             }
@@ -172,8 +171,7 @@ class AddressSortUseCase @Inject constructor(
                             if (location != null) {
                                 failRouteIds.add(it.id to Route.Status.FAIL)
                                 it.copy(
-                                    // "неизвестная ошибка"
-                                    routingErrorMessage = EMPTY_STRING
+                                    routingErrorMessage = baseApplicationContext.getString(Route.Status.FAIL.getDisplayedMessageResId())
                                 )
                             } else {
                                 if (it.isSuggested) {

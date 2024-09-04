@@ -94,7 +94,7 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
                     etText.applySuggestions(
                         suggestsLoadState.copyOf(
                             data = if (!item.isSuggested) {
-                                suggestsLoadState.data?.map { it.address }.orEmpty()
+                                suggestsLoadState.data?.map { it.displayedAddress }.orEmpty()
                             } else {
                                 listOf()
                             }

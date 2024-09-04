@@ -21,35 +21,49 @@ class AddressSuggestGeocodeUseCase @Inject constructor(
     override suspend fun execute(parameters: Parameters): AddressGeocode {
         val location = parameters.suggest.location
         return if (location == null) {
+            // displayedAddress более полный, но с ним geocode не всегда корректен
+            val requestAddress =
+                parameters.suggest.geocodeAddress.takeIf { it.isNotEmpty() } ?: parameters.suggest.displayedAddress
             // у Яндекса в ответе suggest нет location - отдельный запрос геокодирования
-            val geocode = if (parameters.suggest.address.contains(ADDRESS_DIVIDERS_REGEX)) {
+            val geocode = if (requestAddress.contains(ADDRESS_DIVIDERS_REGEX)) {
                 // из-за названия объекта, идущим до разделителя,
                 // геокодирование выдаёт неподходящие результаты
-                var result = parameters.suggest.address
+                var result = requestAddress
                 ADDRESS_DIVIDERS.forEach { divider ->
                     result.substringAfterLast(divider).takeIf { it.isNotEmpty() }?.let {
                         result = it
                     }
                 }
-                result
+                result.trim().takeIf { it.isNotEmpty() } ?: requestAddress.trim()
             } else {
-                parameters.suggest.address
+                requestAddress.trim()
+            }
+            if (geocode.isEmpty()) {
+                throw EmptyResultException(baseApplicationContext, false)
             }
             geocodeDataSource.directGeocode(geocode, parameters.lastLocation?.let { lastLocation ->
                 {
                     getDirectDistanceByLocation(it, lastLocation)
                 }
-            }) ?: throw EmptyResultException(baseApplicationContext, true)
+            })?.let { result ->
+                parameters.suggest.displayedAddress.takeIf { it.isNotEmpty() }?.let {
+                    result.copy(name = it)
+                } ?: result
+            } ?: throw EmptyResultException(baseApplicationContext, true)
 
         } else {
             // если координаты есть от другого API
-            AddressGeocode(parameters.suggest.address, location)
+            AddressGeocode(parameters.suggest.displayedAddress, location)
         }
     }
 
+    /**
+     * @param lastLocation может потребоваться для выбора
+     * наиболее близкого результата из GeocodeResponse
+     */
     class Parameters(
         val suggest: AddressSuggest,
-        val lastLocation: Address.Location?
+        val lastLocation: Address.Location?,
     )
 
     companion object {

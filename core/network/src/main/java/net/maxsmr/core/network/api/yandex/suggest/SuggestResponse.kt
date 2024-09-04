@@ -10,7 +10,7 @@ class SuggestResponse(
     val results: List<Result> = emptyList(),
 ) : BaseYandexSuggestResponse() {
 
-    fun asDomain(): List<AddressSuggest> = results.map { it.asDomain() }.filter { it.address.isNotEmpty() }
+    fun asDomain(): List<AddressSuggest> = results.map { it.asDomain() }.filter { it.displayedAddress.isNotEmpty() }
 
     @Serializable
     class Result(
@@ -23,17 +23,18 @@ class SuggestResponse(
     ) {
 
         fun asDomain(): AddressSuggest {
+            val formattedAddress = address?.formattedAddress?.takeIf { it.isNotEmpty() }
             val title = title?.text.orEmpty()
+            val subtitle = subtitle?.text?.takeIf { it.isNotEmpty() }
             return AddressSuggest(
-                address?.formattedAddress?.takeIf { it.isNotEmpty() }
-                    ?: (subtitle?.text?.takeIf { it.isNotEmpty() }
-                        ?.let {
-                            if (title.isNotEmpty()) {
-                                "$it, $title"
-                            } else {
-                                title
-                            }
-                        } ?: title),
+                formattedAddress ?: (subtitle?.let {
+                    if (title.isNotEmpty()) {
+                        "$it, $title"
+                    } else {
+                        title
+                    }
+                } ?: title),
+                formattedAddress ?: subtitle ?: title,
                 null,
                 distance?.value?.takeIf { it >= 0 }
             )

@@ -10,8 +10,8 @@ class RoutingFailedException(
 ): RuntimeException() {
 
     init {
-        if (routes.isEmpty()) {
-            throw IllegalArgumentException("routes is empty")
+        if (routes.none { it.second != Route.Status.OK }) {
+            throw IllegalArgumentException("Failed routes is empty")
         }
     }
 }

@@ -13,6 +13,7 @@ import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDel
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
 import net.maxsmr.commonutils.getViewLocationIntent
+import net.maxsmr.commonutils.gui.addFloatingActionButtonScrollListener
 import net.maxsmr.commonutils.gui.runAction
 import net.maxsmr.commonutils.gui.scrollTo
 import net.maxsmr.commonutils.states.LoadState
@@ -118,7 +119,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
         with(locationViewModel) {
             handleAlerts(
-                // dialogQueue не из locationViewModel
+                // должен использоваться dialogQueue из locationViewModel
                 AlertFragmentDelegate(this@BaseAddressSorterFragment, this)
             )
             handleEvents(this@BaseAddressSorterFragment)
@@ -130,6 +131,15 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
             rvContent.adapter = adapter
             touchHelper.attachToRecyclerView(binding.rvContent)
+
+            var shouldHideFab = true
+            rvContent.addFloatingActionButtonScrollListener(fabAdd, FAB_SHOW_DELAY) {
+                val result = shouldHideFab
+                if (!shouldHideFab && it != 0) {
+                    shouldHideFab = true
+                }
+                result
+            }
 
             fabAdd.setOnClickListener {
                 viewModel.onAddClick()
@@ -150,6 +160,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
                     containerEmpty.isVisible = false
                     if (shouldScrollToEnd) {
                         rvContent.runAction {
+                            shouldHideFab = false
                             rvContent.scrollTo(items.size - 1, true)
                         }
                         shouldScrollToEnd = false
@@ -380,5 +391,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
     companion object {
 
         private const val REQUEST_CODE_CHOOSE_JSON = 1
+
+        private const val FAB_SHOW_DELAY = 1000L
     }
 }

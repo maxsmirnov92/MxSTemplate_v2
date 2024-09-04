@@ -47,6 +47,7 @@ import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.location.LocationViewModel
+import net.maxsmr.feature.address_sorter.data.getDisplayedMessageResId
 import net.maxsmr.feature.address_sorter.data.getDoubleGisRouteIntent
 import net.maxsmr.feature.address_sorter.data.getYandexNaviRouteIntent
 import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestUseCase
@@ -372,6 +373,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     fun onInfoAction(item: AddressItem) {
         removeSnackbarsFromQueue()
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
+
         viewModelScope.launch {
             val result =
                 addressRoutingUseCase.invoke(AddressRoutingUseCase.Params(item.id, item.location, lastLocation.value))
@@ -419,9 +421,15 @@ class AddressSorterViewModel @AssistedInject constructor(
                     )
                 }
             }
-            val resultMessage = if (distanceMessage != null && durationMessage != null) {
+            var resultMessage = if (distanceMessage != null && durationMessage != null) {
                 JoinTextMessage(".\n", distanceMessage, durationMessage)
             } else distanceMessage ?: durationMessage
+
+            resultMessage?.let {
+                item.location?.let { location ->
+                    resultMessage = JoinTextMessage("\n\n", it, TextMessage("(${location.latitude}, ${location.longitude})"))
+                }
+            }
 
             resultMessage?.let {
                 showSnackbar(
@@ -574,10 +582,10 @@ class AddressSorterViewModel @AssistedInject constructor(
             is RoutingFailedException -> {
                 val count = e.routes.size
                 if (count == 1) {
-                    TextMessage(R.string.address_sorter_error_routing_count_format, 1)
+                    TextMessage(R.string.address_sorter_error_routing_format,
+                        TextMessage(e.routes[0].second.getDisplayedMessageResId()))
                 } else {
-                    TextMessage(R.string.address_sorter_error_routing_format, e.routes[0].second)
-
+                    TextMessage(R.string.address_sorter_error_routing_count_format, count)
                 }
             }
 
@@ -665,19 +673,20 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     data class AddressSuggestItem(
-        val address: String,
+        val displayedAddress: String,
+        val geocodeAddress: String,
         val location: Address.Location?,
         val distance: Float?,
     ) : Serializable {
 
         fun toDomain() = AddressSuggest(
-            address, location, distance
+            displayedAddress, geocodeAddress, location, distance
         )
 
         companion object {
 
             fun AddressSuggest.toUi() = AddressSuggestItem(
-                address, location, distance
+                displayedAddress, geocodeAddress, location, distance
             )
         }
     }

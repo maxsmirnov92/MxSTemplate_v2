@@ -83,9 +83,10 @@
         android:layout_marginBottom="@dimen/defaultPadding"
         android:elevation="6dp"
         app:backgroundTint="@color/colorAccent"
-        app:rippleColor="@color/white"
         app:fabSize="normal"
         app:pressedTranslationZ="12dp"
+        app:rippleColor="@color/white"
         app:srcCompat="@drawable/ic_plus_white" />
+<!--    app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"-->
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

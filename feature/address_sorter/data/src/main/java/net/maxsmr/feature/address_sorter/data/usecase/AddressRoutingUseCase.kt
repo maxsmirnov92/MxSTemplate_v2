@@ -42,7 +42,7 @@ class AddressRoutingUseCase @Inject constructor(
             throw MissingLastLocationException()
         }
 
-        // в этом UseCase не апдейтится routingException в итеме
+        // в этом UseCase не апдейтится routingErrorMessage в итеме
         return if (lastLocation == null || mode == RoutingMode.NO_CHANGE) {
             val item = addressRepo.getItem(parameters.id) ?: throw EmptyResultException(baseApplicationContext, false)
             val distance = item.distance ?: throw RoutingFailedException(listOf(parameters.id to Route.Status.FAIL))
@@ -85,8 +85,9 @@ class AddressRoutingUseCase @Inject constructor(
                     val route = routePair.first
                     if (routePair.second == Route.Status.OK && route != null) {
                         it.copy(
-                            distance = route.distance.toFloat(),
-                            duration = route.duration
+                            distance = route.distance,
+                            duration = route.duration,
+                            routingErrorMessage = null
                         )
                     } else {
                         it //.copy(routingException = route.second.id)
@@ -110,7 +111,8 @@ class AddressRoutingUseCase @Inject constructor(
                 addressRepo.updateItem(parameters.id) {
                     it.copy(
                         distance = distance,
-                        duration = null
+                        duration = null,
+                        routingErrorMessage = null
                     ).apply {
                         this.id = it.id
                         this.sortOrder = it.sortOrder

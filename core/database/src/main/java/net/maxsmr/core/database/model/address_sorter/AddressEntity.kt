@@ -101,7 +101,7 @@ data class AddressEntity(
             location: Address.Location? = null,
             locationErrorMessage: String? = null,
         ) = AddressEntity(
-            address = address,
+            address = displayedAddress,
             location = location ?: this.location,
             distance = distance,
             isSuggested = true,

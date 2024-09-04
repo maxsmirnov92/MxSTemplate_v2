@@ -2,6 +2,7 @@ package net.maxsmr.mxstemplate.ui.activity
 
 import android.view.LayoutInflater
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.android.baseApplicationContext
@@ -22,6 +23,7 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
     override val headerView: View by lazy {
         LayoutHeaderNavigationViewBinding.inflate(LayoutInflater.from(this)).apply {
             tvTitle.setText(R.string.app_name)
+            tvSubHeader.isVisible = false
         }.root
     }
 

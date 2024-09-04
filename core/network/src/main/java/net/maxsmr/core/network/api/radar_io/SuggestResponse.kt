@@ -1,8 +1,8 @@
 package net.maxsmr.core.network.api.radar_io
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address.Location
+import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.retrofit.converters.api.BaseRadarIoResponse
 
 @Serializable
@@ -34,13 +34,17 @@ class SuggestResponse(
         val addressLabel: String,
     ) {
 
-        fun asDomain() = net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest(
-            county.takeIf { !it.isNullOrEmpty() }?.let {
+        fun asDomain(): AddressSuggest {
+            val address = county.takeIf { !it.isNullOrEmpty() }?.let {
                 "$it, $addressLabel"
-            } ?: addressLabel,
-            Location(latitude, longitude),
-            distance?.takeIf { it >= 0 }
-        )
+            } ?: addressLabel
+            return AddressSuggest(
+                address,
+                address,
+                Location(latitude, longitude),
+                distance?.takeIf { it >= 0 }
+            )
+        }
 
         @Serializable
         data class Geometry(

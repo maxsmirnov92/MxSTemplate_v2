@@ -48,8 +48,8 @@ class GeocodeResponse(
         val location = obj?.second
         return if (location != null) {
             AddressGeocode(
-                collection.property.metaData.suggest?.takeIf { it.isNotEmpty() } ?:
-                collection.property.metaData.request,
+                collection.property.metaData.suggest?.takeIf { it.isNotEmpty() }
+                    ?: collection.property.metaData.request,
                 location,
                 obj.first.description,
             )
@@ -127,17 +127,17 @@ class GeocodeResponse(
             @Serializable
             class MetaDataProperty(
                 @SerialName("GeocoderMetaData")
-                val metaData: GeocoderMetaData
+                val metaData: GeocoderMetaData,
             ) {
 
                 @Serializable
                 class GeocoderMetaData(
                     val kind: String? = null,
                     @Serializable(Precision.Serializer::class)
-                    val precision: Precision? = null
+                    val precision: Precision? = null,
                 ) {
 
-                    enum class Precision(override val id: String): StringId {
+                    enum class Precision(override val id: String) : StringId {
 
                         EXACT("exact"),
                         NUMBER("number"),
