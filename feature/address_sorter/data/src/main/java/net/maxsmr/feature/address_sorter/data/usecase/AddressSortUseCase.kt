@@ -2,7 +2,6 @@ package net.maxsmr.feature.address_sorter.data.usecase
 
 import kotlinx.coroutines.Dispatchers
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
-import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.UseCase
 import net.maxsmr.core.database.model.address_sorter.AddressEntity
@@ -13,7 +12,7 @@ import net.maxsmr.core.network.api.RoutingDataSource
 import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.api.doublegis.RoutingRequest
 import net.maxsmr.core.network.api.doublegis.RoutingResponse.Route
-import net.maxsmr.core.network.exceptions.EmptyResultException
+import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.R
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLocationException

@@ -11,7 +11,7 @@ import net.maxsmr.core.network.api.RoutingDataSource
 import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.api.doublegis.RoutingRequest
 import net.maxsmr.core.network.api.doublegis.RoutingResponse.Route
-import net.maxsmr.core.network.exceptions.EmptyResultException
+import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.getDirectDistanceByLocation
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLastLocationException

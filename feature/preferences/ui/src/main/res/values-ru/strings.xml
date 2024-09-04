@@ -14,8 +14,8 @@
     <string name="settings_field_routing_app_from_current">Строить маршрут от последней известной геопозиции</string>
 
     <string-array name="settings_field_routing_app_values">
-        <item>2GIS</item>
-        <item>Yandex Navigator</item>
+        <item>2ГИС</item>
+        <item>Яндекс Навигатор</item>
     </string-array>
 
     <string name="settings_dialog_confirm_message">Есть изменения</string>

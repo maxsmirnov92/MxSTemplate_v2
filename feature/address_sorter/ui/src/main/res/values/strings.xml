@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="address_sorter_feature_title">Address Sorter</string>
+    <string name="address_sorter_feature_title">Geo Address Sorter</string>
     <string name="address_sorter_empty_text">No added adresses</string>
     <string name="address_sorter_edit_hint">Input address</string>
     <string name="address_sorter_menu_action_refresh">Refresh</string>

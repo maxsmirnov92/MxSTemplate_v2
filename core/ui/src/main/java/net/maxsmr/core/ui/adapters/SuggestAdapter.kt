@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.databinding.ItemSuggestDropdownWhiteBinding
 
@@ -53,13 +54,20 @@ open class SuggestAdapter(
             state.isLoading -> {
                 context.getString(net.maxsmr.core.android.R.string.loading)
             }
-            state.isSuccessWithData() -> {
+
+            state.isSuccessWithData { data -> !data.isNullOrEmpty() } -> {
                 state.data?.getOrNull(position).orEmpty()
             }
+
             else -> {
-                state.error?.message?.takeIf { mes -> mes.isNotEmpty() }?.let { mes ->
-                    context.getString(net.maxsmr.core.android.R.string.error_format, mes)
-                } ?: context.getString(net.maxsmr.core.android.R.string.error_unexpected)
+                val error = state.error
+                if (error !is EmptyResultException) {
+                    error?.message?.takeIf { mes -> mes.isNotEmpty() }?.let { mes ->
+                        context.getString(net.maxsmr.core.android.R.string.error_format, mes)
+                    } ?: context.getString(net.maxsmr.core.android.R.string.error_unexpected)
+                } else {
+                    context.getString(net.maxsmr.core.android.R.string.no_data)
+                }
             }
         }
     }
@@ -69,17 +77,19 @@ open class SuggestAdapter(
             val state = state ?: return@also
             with(ItemSuggestDropdownWhiteBinding.bind(it)) {
                 pbSuggest.isVisible = state.isLoading
-                tvItemSuggest.setTextColor(ContextCompat.getColor(
-                        context, if (state.isError()) {
+                tvItemSuggest.setTextColor(
+                    ContextCompat.getColor(
+                        context, if (state.isError() && state.error !is EmptyResultException) {
                             R.color.textColorError
                         } else {
                             R.color.textColorPrimary
                         }
-                    ))
+                    )
+                )
                 root.setOnClickListener {
                     onItemSelect(position)
                 }
-                root.isEnabled = state.isSuccessWithData()
+                root.isEnabled = state.isSuccessWithData { data -> !data.isNullOrEmpty() }
             }
         }
     }

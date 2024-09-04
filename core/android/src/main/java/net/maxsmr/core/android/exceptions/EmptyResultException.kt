@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.exceptions
+package net.maxsmr.core.android.exceptions
 
 import android.content.Context
 import net.maxsmr.commonutils.text.EMPTY_STRING

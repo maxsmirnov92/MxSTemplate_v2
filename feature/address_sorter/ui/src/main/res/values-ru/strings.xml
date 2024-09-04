@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="address_sorter_feature_title">Сортировщик адресов</string>
+    <string name="address_sorter_feature_title">Сортировщик Адресов</string>
     <string name="address_sorter_empty_text">Нет добавленных адресов</string>
     <string name="address_sorter_edit_hint">Введите адрес</string>
     <string name="address_sorter_menu_action_refresh">Обновить</string>

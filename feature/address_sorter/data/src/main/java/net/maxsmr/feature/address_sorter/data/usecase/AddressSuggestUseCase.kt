@@ -15,7 +15,7 @@ import net.maxsmr.core.android.coroutines.usecase.asUseCaseResult
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.SuggestDataSource
-import net.maxsmr.core.network.exceptions.EmptyResultException
+import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import javax.inject.Inject
 

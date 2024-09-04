@@ -7,7 +7,7 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.GeocodeDataSource
-import net.maxsmr.core.network.exceptions.EmptyResultException
+import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.getDirectDistanceByLocation
 import javax.inject.Inject
 
