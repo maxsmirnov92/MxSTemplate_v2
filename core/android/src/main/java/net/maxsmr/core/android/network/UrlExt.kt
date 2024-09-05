@@ -59,11 +59,7 @@ fun String?.isUrlValid(
     return toValidUri(orBlank, isNonResource, schemeIfEmpty) != null
 }
 
-fun String?.isHostValid(): Boolean {
-    return (this?.split(".")?.takeIf { parts ->
-        parts.all { it.isNotEmpty() }
-    }?.size ?: 0) > 1
-}
+fun String?.isHostValid() = getHostParts().size > 1
 
 /**
  * Сравнение двух хостов без учёта первого домена
@@ -71,11 +67,17 @@ fun String?.isHostValid(): Boolean {
 fun String?.equalsIgnoreSubDomain(other: String?): Boolean {
     fun String?.excludeSubDomain(): String {
         return if (this != null && this.isHostValid()) {
-            PublicSuffixDatabase.get().getEffectiveTldPlusOne(this).orEmpty()
+            // выкидываем часть только если это "www"
+            if ("www".equals(getHostParts().getOrNull(0), true)) {
+                PublicSuffixDatabase.get().getEffectiveTldPlusOne(this).orEmpty()
+            } else {
+                this
+            }
         } else {
             EMPTY_STRING
         }
     }
+
     val thisDomain = this.excludeSubDomain()
     val otherDomain = other?.excludeSubDomain().orEmpty()
     return thisDomain.equals(otherDomain, true)
@@ -91,6 +93,11 @@ fun Uri?.equalsIgnoreSubDomain(other: Uri?): Boolean {
 fun String?.isAnyResourceScheme() = !this.isNullOrEmpty() && RESOURCE_SCHEMES.any { this.equals(it, true) }
 
 fun String?.isAnyNetScheme() = !this.isNullOrEmpty() && NET_SCHEMES.any { this.equals(it, true) }
+
+private fun String?.getHostParts(): List<String> = this?.split(".")
+    ?.takeIf { parts ->
+        parts.all { it.isNotEmpty() }
+    }.orEmpty()
 
 const val URL_PAGE_BLANK = "about:blank"
 
