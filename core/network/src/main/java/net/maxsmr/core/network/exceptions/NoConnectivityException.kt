@@ -1,9 +1,15 @@
 package net.maxsmr.core.network.exceptions
 
-import net.maxsmr.core.network.NETWORK_OFFLINE
-import java.io.IOException
+import android.content.Context
+import net.maxsmr.core.network.CustomErrorCode
+import net.maxsmr.core.network.R
 
-open class NoConnectivityException(
-    val code: Int = NETWORK_OFFLINE,
-    message: String = ""
-) : IOException(message)
+open class NoConnectivityException(message: String) : NetworkException(
+    CustomErrorCode.NETWORK_OFFLINE.code,
+    message
+) {
+
+    constructor(context: Context) : this(
+        context.getString(R.string.error_no_connection)
+    )
+}

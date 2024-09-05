@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="error_no_internet">There is no internet connection, check the Internet connection settings.</string>
-    <string name="error_server_unavailable">Server not responding</string>
-    <string name="error_no_connection">No connection</string>
+    <string name="error_no_connection">There is no internet connection</string>
     <string name="error_no_preferable_connection">No preferable connection type</string>
     <string name="error_no_preferable_connection_format">No preferable connection type (%s)</string>
+    <string name="error_server_unavailable">Server not responding</string>
     <string name="error_unexpected_try_again">An unexpected error occurred, please try again later</string>
     <string name="error_bad_gateway">Request timeout is expired. Try again later</string>
 

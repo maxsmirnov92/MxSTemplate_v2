@@ -1,18 +1,19 @@
 package net.maxsmr.core.network.client.okhttp.interceptors
 
+import android.content.Context
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 import okhttp3.Interceptor
 import okhttp3.Response
 
 class NetworkConnectionInterceptor(
+    private val context: Context,
     private val connectivityChecker: ConnectivityChecker,
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         if (!connectivityChecker.isConnected()) {
-            throw NoConnectivityException()
+            throw NoConnectivityException(context)
         }
-
         return chain.proceed(chain.request())
     }
 }

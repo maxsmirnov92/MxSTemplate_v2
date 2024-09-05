@@ -24,33 +24,27 @@ class ResponseErrorMessageInterceptor(
         val request = chain.request()
         val response = chain.proceed(request)
 
-        if (!response.isSuccessful) {
-            val baseConverter = try {
-                retrofitProvider().responseBodyConverter<BaseResponse>(
-                    BaseResponse::class.java, if (responseAnnotation != null) {
-                        arrayOf(responseAnnotation)
-                    } else {
-                        arrayOfNulls<Annotation>(0)
-                    }
-                )
-            } catch (e: Exception) {
-                logger.e(e)
-                null
-            }
-            if (baseConverter != null && response.body != null) {
-                try {
-                    // Читаем тело ответа в буфер, чтобы предотвратить закрытие потока
-                    val baseResponse = baseConverter.convert(response.peekBody(Long.MAX_VALUE))
-                    if (baseResponse != null && baseResponse.isOk) {
-                        // если в API не подразумеваются внутренние коды
-                        throw ApiException(response.code, baseResponse.errorMessage)
-                    }
-                } catch (e: ApiException) {
-                    logger.w(e)
-                    e.message?.takeIf { it.isNotEmpty() }?.let {
-                        // при наличии errorMessage - продолжаем цепочку с изменённым response
-                        return response.newBuilder().message(it).build()
-                    }
+        if (!response.isSuccessful && response.body != null) {
+            // неуспешный на уровне http респонс, но есть тело, внутренний ответ которого сл-но надо учесть
+            val baseConverter = retrofitProvider().responseBodyConverter<BaseResponse>(
+                BaseResponse::class.java, if (responseAnnotation != null) {
+                    arrayOf(responseAnnotation)
+                } else {
+                    arrayOfNulls<Annotation>(0)
+                }
+            )
+            try {
+                // Читаем тело ответа в буфер, чтобы предотвратить закрытие потока
+                val baseResponse = baseConverter.convert(response.peekBody(Long.MAX_VALUE))
+                if (baseResponse != null && baseResponse.isOk) {
+                    // если в API не подразумеваются внутренние коды или он оказался 0
+                    throw ApiException(response.code, baseResponse.errorMessage)
+                }
+            } catch (e: ApiException) {
+                logger.w(e)
+                e.message?.takeIf { it.isNotEmpty() }?.let {
+                    // при наличии errorMessage - продолжаем цепочку с изменённым response
+                    return response.newBuilder().message(it).build()
                 }
             }
         }

@@ -1,10 +1,9 @@
 package net.maxsmr.core.network.retrofit.converters
 
-import net.maxsmr.core.network.JSON_PARSE_ERROR
 import net.maxsmr.core.network.OnServerResponseListener
 import net.maxsmr.core.network.ParameterizedTypeImpl
 import net.maxsmr.core.network.exceptions.ApiException
-import net.maxsmr.core.network.exceptions.NetworkException
+import net.maxsmr.core.network.exceptions.JsonParseException
 import net.maxsmr.core.network.retrofit.internal.cache.OfflineCache
 import okhttp3.ResponseBody
 import retrofit2.Converter
@@ -46,7 +45,7 @@ internal class EnvelopeObjectTypeConverter<E : BaseEnvelope<*>, O : BaseEnvelope
 //                }
 
                 return@Converter if (envelope.isOk) {
-                    envelope.result.takeIf { it != null } ?: throw NetworkException(JSON_PARSE_ERROR, "Envelope result is null")
+                    envelope.result.takeIf { it != null } ?: throw JsonParseException("Envelope result is null")
                 } else {
                     throw ApiException(envelope.errorCode, envelope.errorMessage)
                 }
@@ -75,8 +74,8 @@ internal class EnvelopeObjectTypeConverter<E : BaseEnvelope<*>, O : BaseEnvelope
 
                 return@Converter if (envelope.isOk) {
                     envelope.result?.get(envelopeObjectType)
-                        ?: throw NetworkException(
-                            JSON_PARSE_ERROR, "Field \"$envelopeObjectType\" not found in response"
+                        ?: throw JsonParseException(
+                            "Field \"$envelopeObjectType\" not found in response"
                         )
                 } else {
                     throw ApiException(envelope.errorCode, envelope.errorMessage)

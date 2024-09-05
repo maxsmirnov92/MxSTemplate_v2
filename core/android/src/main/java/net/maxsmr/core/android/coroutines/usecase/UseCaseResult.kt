@@ -1,6 +1,5 @@
 package net.maxsmr.core.android.coroutines.usecase
 
-import androidx.annotation.StringRes
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,13 +13,13 @@ import net.maxsmr.core.network.NO_ERROR_API
 import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.exceptions.NoConnectivityException
+import net.maxsmr.core.network.exceptions.OkHttpException
 import net.maxsmr.core.network.getErrorCode
 import java.io.IOException
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import javax.net.ssl.SSLException
-
 
 sealed class UseCaseResult<out R> {
 
@@ -102,7 +101,7 @@ fun <T, U> ILoadState<T>.asUseCaseResult(mapOnSuccess: (data: T) -> U) = when {
 fun <T> UseCaseResult<T>.asState() = when (this) {
     is UseCaseResult.Loading -> LoadState.loading()
     is UseCaseResult.Success -> LoadState.success(this.data)
-    is UseCaseResult.Error -> LoadState.error(this.exception) // TODO errorMessage не учитывается
+    is UseCaseResult.Error -> LoadState.error(this.exception)
 }
 
 fun <T, U> UseCaseResult<T>.mapData(mapData: (data: T) -> U): UseCaseResult<U> = when (this) {
@@ -112,7 +111,7 @@ fun <T, U> UseCaseResult<T>.mapData(mapData: (data: T) -> U): UseCaseResult<U> =
 }
 
 fun <T> UseCaseResult<T>?.isNetworkError(): Boolean {
-    return this is UseCaseResult.Error && (this.exception is NetworkException || this.exception is NoConnectivityException)
+    return this is UseCaseResult.Error && this.exception is NetworkException
 }
 
 fun <T> UseCaseResult<T>.getErrorCode(): Int = when (this) {
@@ -129,26 +128,11 @@ fun <T> Flow<T>.asUseCaseResult(): Flow<UseCaseResult<T>> {
         .catch { emit(it.asUseCaseResult()) }
 }
 
-fun Throwable.asUseCaseResult() = when (this) {
-    is ApiException -> {
-        UseCaseResult.Error(this)
+fun <T> Throwable.asUseCaseResult(): UseCaseResult<T> {
+    val cause = if (this is OkHttpException) {
+        this.cause ?: RuntimeException("Request failed")
+    } else {
+        this
     }
-
-    is NetworkException,
-    is NoConnectivityException,
-    is SocketException,
-    is UnknownHostException,
-    is SSLException,
-    is SocketTimeoutException,
-    is IOException,
-    -> {
-        UseCaseResult.Error(this,
-            this.message?.takeIf { it.isNotEmpty() }?.let { TextMessage(it) }
-                ?: TextMessage(net.maxsmr.core.network.R.string.error_no_internet)
-        )
-    }
-
-    else -> {
-        UseCaseResult.Error(this)
-    }
+    return UseCaseResult.Error(cause)
 }

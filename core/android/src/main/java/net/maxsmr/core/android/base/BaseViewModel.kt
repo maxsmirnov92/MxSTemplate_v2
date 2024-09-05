@@ -204,7 +204,6 @@ abstract class BaseViewModel(
 
         when (error) {
             is NetworkException -> showNoInternetDialog()
-            is NoConnectivityException -> showNoInternetDialog()
             is ApiException -> showOkDialog(
                 DIALOG_TAG_SERVER_ERROR,
                 message ?: TextMessage(R.string.error_unexpected)
@@ -217,7 +216,7 @@ abstract class BaseViewModel(
     private fun showNoInternetDialog() {
         AlertDialogBuilder(DIALOG_TAG_NO_INTERNET)
             .setTitle(net.maxsmr.core.network.R.string.error_server_unavailable)
-            .setMessage(net.maxsmr.core.network.R.string.error_no_internet)
+            .setMessage(net.maxsmr.core.network.R.string.error_no_connection)
             .setAnswers(Alert.Answer(R.string.understand))
             .build()
     }

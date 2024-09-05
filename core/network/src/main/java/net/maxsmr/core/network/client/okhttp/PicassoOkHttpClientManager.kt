@@ -8,10 +8,11 @@ class PicassoOkHttpClientManager(
     private val forceCacheInterceptor: Interceptor,
     private val httpLoggingInterceptor: HttpLoggingInterceptor,
     timeout: Long,
-): BaseOkHttpClientManager(0, timeout, timeout, timeout) {
+) : BaseOkHttpClientManager(0, timeout, timeout, timeout) {
 
     override fun configureBuild(builder: OkHttpClient.Builder) {
         with(builder) {
+            super.configureBuild(this)
             addInterceptor(forceCacheInterceptor)
             addInterceptor(httpLoggingInterceptor)
         }

@@ -11,6 +11,7 @@ import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.text.charsetForNameOrNull
 import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
+import net.maxsmr.core.network.exceptions.OkHttpException
 import okhttp3.*
 import okhttp3.internal.readBomAsCharset
 import okio.Buffer
@@ -64,7 +65,12 @@ suspend fun OkHttpClient.newCallSuspended(request: Request, checkSuccess: Boolea
         }
         call.enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                continuation.resumeWithException(e) // RuntimeException("Request failed", e)
+                val cause = if (e is OkHttpException) {
+                    e.cause ?: RuntimeException("Request failed")
+                } else {
+                    e
+                }
+                continuation.resumeWithException(cause)
             }
 
             override fun onResponse(call: Call, response: Response) {

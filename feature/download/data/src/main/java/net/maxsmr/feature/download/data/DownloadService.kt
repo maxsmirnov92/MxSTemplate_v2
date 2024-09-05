@@ -60,6 +60,8 @@ import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
 import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.network.Method
+import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
+import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.core.network.ContentDispositionType
 import net.maxsmr.core.network.ProgressRequestBody
 import net.maxsmr.core.network.ProgressResponseBody
@@ -75,6 +77,7 @@ import net.maxsmr.core.network.hasBytesAcceptRanges
 import net.maxsmr.core.network.hasContentDisposition
 import net.maxsmr.core.network.newCallSuspended
 import net.maxsmr.core.network.writeBufferedOrThrow
+import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
 import net.maxsmr.feature.download.data.DownloadService.NotificationParams
 import net.maxsmr.feature.download.data.DownloadService.Params
@@ -84,8 +87,6 @@ import net.maxsmr.feature.download.data.model.BaseDownloadParams
 import net.maxsmr.feature.download.data.model.IntentSenderParams
 import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
 import net.maxsmr.feature.download.data.storage.StoreException
-import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
-import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.permissionchecker.PermissionsHelper
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.MediaType
@@ -410,11 +411,11 @@ class DownloadService : Service() {
                     }
                 }
                 if (!hasPreferableConnection) {
-                    throw NoPreferableConnectivityException(types)
+                    throw NoPreferableConnectivityException(types, this@DownloadService.context)
                 }
 
                 val client = okHttpClient.newBuilder().apply {
-                    withTimeouts(params.requestParams.connectTimeout)
+                    withTimeouts(params.requestParams.connectTimeout.takeIf { it >= 0 } ?: CONNECT_TIMEOUT_DEFAULT)
                     retryOnConnectionFailure(params.requestParams.retryOnConnectionFailure)
                 }.addNetworkInterceptor {
                     val originalResponse: Response = it.proceed(it.request())

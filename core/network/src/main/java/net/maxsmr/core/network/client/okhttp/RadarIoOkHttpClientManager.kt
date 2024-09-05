@@ -1,5 +1,6 @@
 package net.maxsmr.core.network.client.okhttp
 
+import android.content.Context
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
 import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
@@ -14,11 +15,13 @@ import java.util.Locale
 class RadarIoOkHttpClientManager(
     private val authorization: String,
     private val defaultCountry: String = "RU",
+    context: Context,
     connectivityChecker: ConnectivityChecker,
     callTimeout: Long,
     retrofitProvider: (() -> Retrofit),
 ) : BaseRestOkHttpClientManager(
     callTimeout,
+    context = context,
     connectivityChecker = connectivityChecker,
     responseAnnotation = ResponseObjectType(BaseRadarIoResponse::class),
     retrofitProvider = retrofitProvider

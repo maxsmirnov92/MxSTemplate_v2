@@ -19,7 +19,7 @@ open class HttpProtocolException(
     val responseMessage: String = EMPTY_STRING,
     val responseBodyString: String = EMPTY_STRING,
     val responseBodyHeaders: ArrayList<Pair<String, String>> = arrayListOf(),
-    message: String? = null,
+    message: String = EMPTY_STRING,
 ) : NetworkException(responseCode, message) {
 
     constructor(source: HttpProtocolException) : this(
@@ -31,7 +31,7 @@ open class HttpProtocolException(
         source.responseMessage,
         source.responseBodyString,
         source.responseBodyHeaders,
-        source.message
+        source.message.orEmpty()
     )
 
     override fun toString(): String {

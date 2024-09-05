@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:alpha="0.5"
         android:gravity="center"
-        android:text="@string/error_no_internet"
+        android:text="@string/error_no_connection"
         android:textColor="@color/textColorPrimary"
         android:textSize="14sp" />
 

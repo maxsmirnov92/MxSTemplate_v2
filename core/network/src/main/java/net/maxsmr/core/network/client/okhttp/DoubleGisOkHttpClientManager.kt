@@ -1,5 +1,6 @@
 package net.maxsmr.core.network.client.okhttp
 
+import android.content.Context
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
 import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
@@ -13,11 +14,13 @@ import retrofit2.Retrofit
 class DoubleGisOkHttpClientManager(
     private val apiKey: String,
     private val version: String = "2.0",
+    context: Context,
     connectivityChecker: ConnectivityChecker,
     callTimeout: Long,
     retrofitProvider: (() -> Retrofit),
 ) : BaseRestOkHttpClientManager(
     callTimeout,
+    context = context,
     connectivityChecker = connectivityChecker,
     responseAnnotation = ResponseObjectType(BaseDoubleGisRoutingResponse::class),
     retrofitProvider = retrofitProvider

@@ -12,7 +12,7 @@ const val DI_NAME_DATABASE_NAME = "database_name"
 annotation class Preferences(val type: PreferencesType)
 
 enum class PreferencesType {
-    APP, PERMISSIONS, SESSION_RADAR_IO
+    APP, PERMISSIONS
 }
 
 @Qualifier

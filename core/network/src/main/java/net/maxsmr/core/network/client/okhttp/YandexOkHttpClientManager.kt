@@ -1,5 +1,6 @@
 package net.maxsmr.core.network.client.okhttp
 
+import android.content.Context
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
 import okhttp3.Interceptor
@@ -12,13 +13,15 @@ import java.util.Locale
 class YandexOkHttpClientManager(
     private val apiKey: String,
     private val localization: LocalizationField,
-    private val defaultLangOrLocale: String,
+    private val defaultLangOrLocale: String = "ru",
+    context: Context,
     connectivityChecker: ConnectivityChecker,
     callTimeout: Long,
     responseAnnotation: Annotation?,
     retrofitProvider: (() -> Retrofit),
 ) : BaseRestOkHttpClientManager(
     callTimeout,
+    context = context,
     connectivityChecker = connectivityChecker,
     responseAnnotation = responseAnnotation,
     retrofitProvider = retrofitProvider

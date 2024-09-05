@@ -230,18 +230,20 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         if (!data.isForMainFrame) {
             return
         }
-        with(viewModel) {
-            // используем инфу о состоянии для последнего ресурса с той же урлой
-            val currentResource = currentWebViewData.value?.takeIf { it.data?.url == data.url }
-            (if (currentResource != null && currentResource.isError()) {
-                // если до этого в onPageLoadError выставлялся еррор - оставляем статус
-                currentResource.copyOf(data)
-            } else {
-                // в случае успеха (перед ним был loading) предоставляем возможность отдельно проанализировать данные респонса
-                hasResponseError(data)?.let {
-                    LoadState.error(it, data)
-                } ?: LoadState.success(data)
-            }).notifyChanged()
+        webView.post {
+            with(viewModel) {
+                // используем инфу о состоянии для последнего ресурса с той же урлой
+                val currentResource = currentWebViewData.value
+                (if (currentResource != null && currentResource.isError()) {
+                    // если до этого в onPageLoadError выставлялся еррор - оставляем статус
+                    currentResource.copyOf(data)
+                } else {
+                    // в случае успеха (перед ним был loading) предоставляем возможность отдельно проанализировать данные респонса
+                    hasResponseError(data)?.let {
+                        LoadState.error(it, data)
+                    } ?: LoadState.success(data)
+                }).notifyChanged(false)
+            }
         }
     }
 
@@ -445,9 +447,16 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
 
     protected open fun shouldAcceptNonHtmlData(responseData: String?) = true
 
-    private fun LoadState<WebViewData>.notifyChanged() {
-        webView.post {
+    private fun LoadState<WebViewData>.notifyChanged(shouldPost: Boolean = true) {
+        fun notifyResourceChanged() {
             viewModel.notifyResourceChanged(this, webView.title)
+        }
+        if (shouldPost) {
+            webView.post {
+                notifyResourceChanged()
+            }
+        } else {
+            notifyResourceChanged()
         }
     }
 

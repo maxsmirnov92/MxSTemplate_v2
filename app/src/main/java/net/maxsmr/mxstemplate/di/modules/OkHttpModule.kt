@@ -100,18 +100,21 @@ class OkHttpModule {
 
     @[Provides Singleton DownloaderOkHttpClient]
     fun provideDownloaderOkHttpClient(
+        @ApplicationContext context: Context,
         @DownloadHttpLoggingInterceptor
         httpLoggingInterceptor: HttpLoggingInterceptor,
     ): OkHttpClient = DownloadOkHttpClientManager(
+        context,
         NetworkConnectivityChecker,
         httpLoggingInterceptor,
         NETWORK_TIMEOUT
     ).build()
 
     @[Provides Singleton RadarIoOkHttpClient]
-    fun provideRadarIoOkHttpClient(): OkHttpClient {
+    fun provideRadarIoOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
         return RadarIoOkHttpClientManager(
             BuildConfig.AUTHORIZATION_RADAR_IO,
+            context = context,
             connectivityChecker = NetworkConnectivityChecker,
             callTimeout = NETWORK_TIMEOUT
         ) {
@@ -121,11 +124,12 @@ class OkHttpModule {
     }
 
     @[Provides Singleton YandexSuggestOkHttpClient]
-    fun provideYandexSuggestOkHttpClient(): OkHttpClient {
+    fun provideYandexSuggestOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
         return YandexOkHttpClientManager(
             BuildConfig.API_KEY_YANDEX_SUGGEST,
             YandexOkHttpClientManager.LocalizationField.LANG,
             "ru",
+            context,
             NetworkConnectivityChecker,
             NETWORK_TIMEOUT,
             responseAnnotation = ResponseObjectType(BaseYandexSuggestResponse::class),
@@ -136,11 +140,12 @@ class OkHttpModule {
     }
 
     @[Provides Singleton YandexGeocodeOkHttpClient]
-    fun provideYandexGeocodeOkHttpClient(): OkHttpClient {
+    fun provideYandexGeocodeOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
         return YandexOkHttpClientManager(
             BuildConfig.API_KEY_YANDEX_GEOCODE,
             YandexOkHttpClientManager.LocalizationField.LOCALE,
             "ru_RU",
+            context,
             NetworkConnectivityChecker,
             NETWORK_TIMEOUT,
             responseAnnotation = null // ситуативный BaseEnvelopeWithObject подставить нельзя, а BaseEnvelope не требуется
@@ -151,9 +156,10 @@ class OkHttpModule {
     }
 
     @[Provides Singleton DoubleGisRoutingOkHttpClient]
-    fun provideDoubleGisRoutingOkHttpClient(): OkHttpClient {
+    fun provideDoubleGisRoutingOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
         return DoubleGisOkHttpClientManager(
             BuildConfig.DEMO_KEY_DOUBLE_GIS_ROUTING,
+            context = context,
             connectivityChecker = NetworkConnectivityChecker,
             callTimeout = NETWORK_TIMEOUT
         ) {

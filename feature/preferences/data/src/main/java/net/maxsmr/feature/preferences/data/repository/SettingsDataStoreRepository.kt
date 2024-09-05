@@ -4,7 +4,7 @@ import androidx.datastore.core.DataStore
 import kotlinx.coroutines.flow.firstOrNull
 import net.maxsmr.core.di.DataStoreType
 import net.maxsmr.core.di.DataStores
-import net.maxsmr.feature.preferences.data.domain.AppSettings
+import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import javax.inject.Inject
 import javax.inject.Singleton
 

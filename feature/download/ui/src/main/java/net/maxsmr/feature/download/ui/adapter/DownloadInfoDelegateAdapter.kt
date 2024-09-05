@@ -241,34 +241,9 @@ fun downloadInfoAdapterDelegate(listener: DownloadListener) =
                         is DownloadState.Failed -> {
                             statusColorResId = R.color.textColorDownloadFailed
 
-                            val error = state.e
-                            val message = if (error is NoPreferableConnectivityException) {
-                                val typeNames = error.types.map {
-                                    when (it) {
-                                        CELLULAR -> context.getString(net.maxsmr.core.network.R.string.network_type_cellular)
-                                        WIFI -> context.getString(net.maxsmr.core.network.R.string.network_type_wifi)
-                                    }
-                                }
-                                if (typeNames.isNotEmpty()) {
-                                    context.getString(
-                                        net.maxsmr.core.network.R.string.error_no_preferable_connection_format,
-                                        typeNames.joinToString("/")
-                                    )
-                                } else {
-                                    context.getString(
-                                        net.maxsmr.core.network.R.string.error_no_preferable_connection
-                                    )
-                                }
-                            } else if (error is NoConnectivityException) {
-                                context.getString(net.maxsmr.core.network.R.string.error_no_connection)
-                            } else {
-                                error?.message?.takeIf { it.isNotEmpty() }
-                            }
-                            if (message != null) {
-                                context.getString(R.string.download_status_failed_format, message)
-                            } else {
-                                context.getString(R.string.download_status_failed_unknown)
-                            }
+                            state.e?.message?.takeIf { it.isNotEmpty() }?.let {
+                                context.getString(R.string.download_status_failed_format, it)
+                            } ?: context.getString(R.string.download_status_failed_unknown)
                         }
 
                         is DownloadState.Cancelled -> {

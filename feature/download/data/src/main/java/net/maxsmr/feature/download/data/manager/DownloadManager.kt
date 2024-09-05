@@ -1,7 +1,5 @@
 package net.maxsmr.feature.download.data.manager
 
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,6 +32,8 @@ import net.maxsmr.core.android.network.isUrlValid
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.domain.entities.feature.network.Method
+import net.maxsmr.core.domain.entities.feature.settings.AppSettings
+import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.MAX_DOWNLOADS_UNLIMITED
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.core.utils.readObject
@@ -43,7 +43,6 @@ import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading.Type
 import net.maxsmr.feature.download.data.DownloadsRepo
 import net.maxsmr.feature.download.data.DownloadsViewModel
-import net.maxsmr.feature.preferences.data.domain.AppSettings
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.File
 import java.io.Serializable
@@ -569,7 +568,7 @@ class DownloadManager @Inject constructor(
         // есть проблемы с актуальностью значений из-за suspend'ов, читаем вручную по месту
         // при этом getRaw() suspend - ставим его на первое место
         // (с 2-мя suspend'ами - settings выше - эта проблема актуальна)
-        val maxDownloadsCount = settings.maxDownloads
+        val maxDownloadsCount = settings.maxDownloads.takeIf { it >= 0 } ?: MAX_DOWNLOADS_UNLIMITED
         val downloads = downloadsRepo.getRaw() // state.downloads
         val downloadsPendingQueue = downloadsPendingQueue.value // state.downloadsPendingQueue
         val downloadsLaunchedQueue = downloadsLaunchedQueue.value // state.downloadsLaunchedQueue
@@ -798,10 +797,5 @@ class DownloadManager @Inject constructor(
                     "downloadsPendingQueue=$downloadsPendingQueue," +
                     "downloadsLaunchedQueue=$downloadsLaunchedQueue)"
         }
-    }
-
-    companion object {
-
-        const val MAX_DOWNLOADS_UNLIMITED = 0
     }
 }

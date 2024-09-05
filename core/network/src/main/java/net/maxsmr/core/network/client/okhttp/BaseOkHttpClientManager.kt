@@ -3,6 +3,7 @@ package net.maxsmr.core.network.client.okhttp
 import androidx.annotation.CallSuper
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.core.network.client.okhttp.interceptors.ExceptionHandlingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.ResponseErrorMessageInterceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -21,7 +22,10 @@ abstract class BaseOkHttpClientManager(
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
-    protected abstract fun configureBuild(builder: OkHttpClient.Builder)
+    @CallSuper
+    protected open fun configureBuild(builder: OkHttpClient.Builder) {
+        builder.addInterceptor(ExceptionHandlingInterceptor())
+    }
 
     fun build(): OkHttpClient {
         return OkHttpClient.Builder().apply {

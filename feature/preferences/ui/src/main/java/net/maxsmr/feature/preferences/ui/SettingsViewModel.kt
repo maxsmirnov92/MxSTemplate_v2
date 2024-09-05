@@ -13,7 +13,9 @@ import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableValue
-import net.maxsmr.core.android.network.URL_PAGE_BLANK
+import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
+import net.maxsmr.core.domain.entities.feature.settings.AppSettings
+import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
@@ -21,12 +23,8 @@ import net.maxsmr.core.ui.fields.BooleanFieldWithState
 import net.maxsmr.core.ui.fields.LongFieldWithState
 import net.maxsmr.core.ui.fields.toggleRequiredFieldState
 import net.maxsmr.core.ui.fields.urlField
-import net.maxsmr.feature.preferences.data.domain.AppSettings
-import net.maxsmr.feature.preferences.data.domain.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
-
 import javax.inject.Inject
 
 @HiltViewModel
