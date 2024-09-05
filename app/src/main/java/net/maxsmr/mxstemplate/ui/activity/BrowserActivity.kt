@@ -33,19 +33,12 @@ class BrowserActivity : BaseNavigationActivity() {
             }
         }
 
-    override val canUseFragmentDelegates: Boolean
-        get() {
-            val app = baseApplicationContext as App
-            return app.isActivityFirstAndSingle(BrowserActivity::class.java)
-        }
-
     @Inject
     lateinit var settingsRepo: SettingsDataStoreRepository
 
-    override fun onNewIntent(intent: Intent) {
+    override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         intent.toWebViewCustomizer()?.let {
-            setIntent(intent)
             navController.navigate(
                 BrowserWebViewFragmentDirections.actionToWebViewFragment(it)
             )

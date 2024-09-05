@@ -4,12 +4,30 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
+import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.ui.components.BaseApplication
 import net.maxsmr.permissionchecker.PermissionsCallbacks
 import net.maxsmr.permissionchecker.PermissionsHelper
 
-open class BaseActivity: AppCompatActivity() {
+open class BaseActivity : AppCompatActivity() {
 
-    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("BaseActivity")
+    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
+
+    open val canUseFragmentDelegates: Boolean get() {
+        val app = baseApplicationContext as BaseApplication
+        return app.isActivityFirstAndSingle(javaClass)
+    }
+
+    protected val callerClass: Class<*>?
+        get() = intent?.getStringExtra(EXTRA_CALLER_CLASS_NAME)?.takeIf { it.isNotEmpty() }?.let {
+            try {
+                Class.forName(it)
+            } catch (e: Exception) {
+                logger.e(formatException(e, "Class.forName"))
+                null
+            }
+        }
 
     /**
      * При первом запросе разрешений из PermissionsHelper запоминаем [PermissionsHelper.ResultListener] по данному коду,
@@ -17,7 +35,10 @@ open class BaseActivity: AppCompatActivity() {
      */
     private val permissionResultListeners = mutableMapOf<Int, PermissionsHelper.ResultListener?>()
 
-    open val canUseFragmentDelegates = true
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
 
     /**
      * Разрешения запрашивать только с хостовой активити, чтобы результат прилетал сюда
@@ -58,5 +79,10 @@ open class BaseActivity: AppCompatActivity() {
         const val REQUEST_CODE_WRITE_EXTERNAL_PERMISSION = 3
 
         const val REQUEST_CODE_IN_APP_UPDATES = 1001
+
+        /**
+         * Опционально, передать эту экстру с именем класса для понимания, кто вызвал
+         */
+        const val EXTRA_CALLER_CLASS_NAME = "caller_class_name"
     }
 }

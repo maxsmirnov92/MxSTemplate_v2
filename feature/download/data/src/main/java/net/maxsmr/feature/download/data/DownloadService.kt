@@ -854,7 +854,8 @@ class DownloadService : Service() {
                 PendingIntent.getActivity(
                     context,
                     0,
-                    Intent(context, it),
+                    Intent(context, it)
+                        .putExtra(BaseActivity.EXTRA_CALLER_CLASS_NAME, DownloadService::class.java.canonicalName),
                     withMutabilityFlag(FLAG_UPDATE_CURRENT, false)
                 )
             )
