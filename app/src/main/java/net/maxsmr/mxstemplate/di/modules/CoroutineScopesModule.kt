@@ -1,4 +1,4 @@
-package net.maxsmr.core.di
+package net.maxsmr.mxstemplate.di.modules
 
 import dagger.Module
 import dagger.Provides
@@ -6,13 +6,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
+import net.maxsmr.core.di.ApplicationScope
 import javax.inject.Qualifier
 import javax.inject.Singleton
-
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class ApplicationScope
 
 @Module
 @InstallIn(SingletonComponent::class)

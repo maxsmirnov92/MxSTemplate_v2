@@ -9,6 +9,10 @@ const val DI_NAME_DATABASE_NAME = "database_name"
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
+annotation class ApplicationScope
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
 annotation class Preferences(val type: PreferencesType)
 
 enum class PreferencesType {
