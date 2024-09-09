@@ -12,11 +12,11 @@
 
     <style name="TextInputOutlinedWithCorners" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
         <!--        <item name="boxBackgroundColor">#f0f5fa</item>-->
-        <!--        <item name="boxStrokeColor">@color/colorPrimary</item>-->
         <!--        <item name="boxStrokeWidth">0dp</item>-->
         <!--        <item name="boxStrokeWidthFocused">0dp</item>-->
         <!--        <item name="boxBackgroundMode">filled</item>-->
         <!--        <item name="android:background">#f0f5fa</item>-->
+        <item name="boxStrokeColor">@color/colorPrimary</item>
         <item name="boxCornerRadiusBottomEnd">@dimen/textInputCornersRadius</item>
         <item name="boxCornerRadiusBottomStart">@dimen/textInputCornersRadius</item>
         <item name="boxCornerRadiusTopEnd">@dimen/textInputCornersRadius</item>
