@@ -1,10 +1,13 @@
 package net.maxsmr.feature.address_sorter.ui
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -14,8 +17,11 @@ import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelper
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
 import net.maxsmr.commonutils.getViewLocationIntent
 import net.maxsmr.commonutils.gui.addFloatingActionButtonScrollListener
+import net.maxsmr.commonutils.gui.bindToTextNotNull
+import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.gui.runAction
 import net.maxsmr.commonutils.gui.scrollTo
+import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
@@ -25,14 +31,17 @@ import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.alert.representation.DialogRepresentation
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_GPS_PERMISSION
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.core.ui.openAnyIntentWithToastError
 import net.maxsmr.feature.address_sorter.data.toPointF
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputAdapter
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputListener
+import net.maxsmr.feature.address_sorter.ui.databinding.DialogExportFileNameBinding
 import net.maxsmr.feature.address_sorter.ui.databinding.FragmentAddressSorterBinding
 
 abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
@@ -181,6 +190,47 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
         }
 
         adapter.registerItemsEventsListener(this)
+    }
+
+    override fun handleAlerts(delegate: AlertFragmentDelegate<AddressSorterViewModel>) {
+        super.handleAlerts(delegate)
+        bindAlertDialog(AddressSorterViewModel.DIALOG_TAG_EXPORT_FILE_NAME) {
+
+            val positiveAnswer = it.answers.getOrNull(0) ?: throw IllegalStateException("Required positive answer is missing")
+            val negativeAnswer = it.answers.getOrNull(1) ?: throw IllegalStateException("Required negative answer is missing")
+
+            val dialogBinding = DialogExportFileNameBinding.inflate(LayoutInflater.from(requireContext()))
+
+            dialogBinding.etFileName.bindToTextNotNull(viewModel.exportFileNameField)
+            viewModel.exportFileNameField.observeFromText(dialogBinding.etFileName, viewLifecycleOwner)
+            viewModel.exportFileNameField.bindHintError(viewLifecycleOwner, dialogBinding.tilFileName)
+
+            val onAction: () -> Unit = {
+                viewModel.onExportPositiveAction()
+                requireActivity().hideKeyboard()
+            }
+
+            dialogBinding.etFileName.setOnEditorActionListener { v, actionId, event ->
+                if (actionId == IME_ACTION_DONE) {
+                    positiveAnswer.select?.invoke()
+                    onAction.invoke()
+                    true
+                } else {
+                    false
+                }
+            }
+
+            DialogRepresentation.Builder(requireContext(), it)
+                .setCustomView(dialogBinding.root) {
+                    viewModel.exportFileNameField.errorLive.observe { error ->
+                        (this as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = error == null
+                    }
+                }
+                .setCancelable(true)
+                .setPositiveButton(positiveAnswer, onAction)
+                .setNegativeButton(negativeAnswer)
+                .build()
+        }
     }
 
     override fun onResume() {

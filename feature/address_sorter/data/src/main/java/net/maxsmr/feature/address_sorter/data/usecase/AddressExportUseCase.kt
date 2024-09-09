@@ -8,9 +8,12 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import net.maxsmr.commonutils.media.nameOrThrow
 import net.maxsmr.commonutils.media.writeStringsOrThrow
+import net.maxsmr.commonutils.text.appendExtension
+import net.maxsmr.commonutils.text.removeExtension
 import net.maxsmr.core.android.baseAppName
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.ContentType
+import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.content.storage.shared.SharedStorage
 import net.maxsmr.core.android.coroutines.usecase.UseCase
@@ -22,7 +25,7 @@ import javax.inject.Inject
 class AddressExportUseCase @Inject constructor(
     private val repository: AddressRepo,
     @BaseJson private val json: Json,
-) : UseCase<Unit, String>(Dispatchers.IO) {
+) : UseCase<String, String>(Dispatchers.IO) {
 
     private val storage: ContentStorage<Uri> by lazy {
         ContentStorage.createUriStorage(
@@ -40,7 +43,7 @@ class AddressExportUseCase @Inject constructor(
         baseApplicationContext.contentResolver
     }
 
-    override suspend fun execute(parameters: Unit): String {
+    override suspend fun execute(parameters: String): String {
         val items = repository.getItems().map { it.toDomain() }.filter { it.address.isNotEmpty() }
         if (items.isEmpty()) {
             throw EmptyResultException(baseApplicationContext, false)
@@ -48,7 +51,11 @@ class AddressExportUseCase @Inject constructor(
 
         val data = json.encodeToString(json.serializersModule.serializer(), items)
 
-        val result = storage.create(RESOURCE_NAME_ADDRESSES, baseAppName)
+        val result = storage.create(
+            (parameters.takeIf { it.isNotEmpty() } ?: EXPORT_FILE_NAME_DEFAULT)
+                .removeExtension().appendExtension(FileFormat.JSON.extension),
+            baseAppName
+        )
         if (result is Result.Failure) {
             throw result.error
         } else {
@@ -61,6 +68,6 @@ class AddressExportUseCase @Inject constructor(
 
     companion object {
 
-        private const val RESOURCE_NAME_ADDRESSES = "addresses.json"
+        const val EXPORT_FILE_NAME_DEFAULT = "addresses"
     }
 }

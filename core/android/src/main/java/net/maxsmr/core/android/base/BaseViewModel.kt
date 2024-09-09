@@ -164,7 +164,7 @@ abstract class BaseViewModel(
 
     fun showYesNoDialog(
         tag: String,
-        message: TextMessage,
+        message: TextMessage?,
         title: TextMessage? = null,
         @StringRes positiveAnswerResId: Int = R.string.yes,
         @StringRes negativeAnswerResId: Int = R.string.no,

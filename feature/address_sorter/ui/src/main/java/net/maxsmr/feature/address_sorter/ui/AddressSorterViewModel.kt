@@ -21,6 +21,7 @@ import net.maxsmr.commonutils.format.TimePluralFormat
 import net.maxsmr.commonutils.format.decomposeTimeFormatted
 import net.maxsmr.commonutils.gui.message.JoinTextMessage
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
@@ -46,6 +47,7 @@ import net.maxsmr.core.ui.alert.representation.asMultiChoiceDialog
 import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
+import net.maxsmr.core.ui.fields.fileNameField
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.feature.address_sorter.data.getDisplayedMessageResId
 import net.maxsmr.feature.address_sorter.data.getDoubleGisRouteIntent
@@ -61,6 +63,7 @@ import net.maxsmr.feature.address_sorter.data.usecase.AddressRoutingUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLastLocationException
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLocationException
 import net.maxsmr.feature.address_sorter.data.toAddressLocation
+import net.maxsmr.feature.address_sorter.data.usecase.AddressExportUseCase.Companion.EXPORT_FILE_NAME_DEFAULT
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressErrorMessageData
@@ -94,6 +97,8 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     private val suggestFlowMap = mutableMapOf<Long, FlowInfo>()
 
+    val exportFileNameField: Field<String> = state.fileNameField(isRequired = true, initialValue = EXPORT_FILE_NAME_DEFAULT)
+
     val resultItemsState = MutableLiveData<LoadState<List<AddressInputData>>>(LoadState.success(emptyList()))
 
     val resultLocationsState = resultItemsState.map {
@@ -123,6 +128,9 @@ class AddressSorterViewModel @AssistedInject constructor(
         items.observe {
             resultItemsState.value = LoadState.success(it.mergeWithSuggests())
             it.refreshFlows()
+        }
+        exportFileNameField.valueLive.observe {
+            exportFileNameField.validateAndSetByRequired()
         }
     }
 
@@ -213,9 +221,19 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onExportAddressesAction() {
+        showYesNoDialog(DIALOG_TAG_EXPORT_FILE_NAME,
+            message = null,
+            title = TextMessage(R.string.address_sorter_dialog_address_export_file_name_title),
+            positiveAnswerResId = android.R.string.ok,
+            negativeAnswerResId = android.R.string.cancel
+        )
+    }
+
+    fun onExportPositiveAction() {
+        if (exportFileNameField.hasError) return
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
-            val result = addressExportUseCase.invoke(Unit)
+            val result = addressExportUseCase.invoke(exportFileNameField.value)
             dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
             if (result.succeeded) {
                 showOkDialog(
@@ -703,6 +721,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     companion object {
 
         const val DIALOG_TAG_IMPORT_FAILED = "import_failed"
+        const val DIALOG_TAG_EXPORT_FILE_NAME = "export_file_name"
         const val DIALOG_TAG_EXPORT_SUCCESS = "export_success"
         const val DIALOG_TAG_EXPORT_FAILED = "export_failed"
         const val DIALOG_TAG_CHANGE_ROUTING_MODE = "change_routing_mode"

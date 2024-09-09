@@ -16,6 +16,7 @@
     <string name="address_sorter_dialog_address_export_success_message_format">Адреса экспортированы в %s</string>
     <string name="address_sorter_dialog_address_export_error_message_format">Не удалось экспортировать адреса: \"%s\"</string>
     <string name="address_sorter_dialog_address_export_error_message">Не удалось экспортировать адреса</string>
+    <string name="address_sorter_dialog_address_export_file_name_title">Имя JSON файла</string>
 
     <string name="address_sorter_dialog_clear_items_message">Убрать все адреса?</string>
     <string name="address_sorter_toast_distance_to_point_format">Растояние до места: %s</string>

@@ -38,7 +38,7 @@ fun AlertQueueItem.Builder.showOkAlert(
 }
 
 fun AlertQueueItem.Builder.showYesNoAlert(
-    message: TextMessage,
+    message: TextMessage?,
     title: TextMessage? = null,
     @StringRes positiveAnswerResId: Int = R.string.yes,
     @StringRes negativeAnswerResId: Int = R.string.no,
