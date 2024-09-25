@@ -9,9 +9,6 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 
-/**
- * @param [retrofitProvider] при наличии [Retrofit] будет задейстоваться [ResponseErrorMessageInterceptor]
- */
 abstract class BaseOkHttpClientManager(
     private val callTimeout: Long,
     private val readTimeout: Long = 0L,

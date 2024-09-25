@@ -7,6 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.runBlocking
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.baseApplicationContext
@@ -26,8 +27,8 @@ import net.maxsmr.core.network.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.RadarIoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.YandexOkHttpClientManager
 import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
-import net.maxsmr.core.network.retrofit.converters.api.BaseDoubleGisRoutingResponse
 import net.maxsmr.core.network.retrofit.converters.api.BaseYandexSuggestResponse
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.di.ModuleAppEntryPoint
 import okhttp3.CacheControl
@@ -156,12 +157,19 @@ class OkHttpModule {
     }
 
     @[Provides Singleton DoubleGisRoutingOkHttpClient]
-    fun provideDoubleGisRoutingOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
+    fun provideDoubleGisRoutingOkHttpClient(
+        @ApplicationContext context: Context,
+        cacheRepo: CacheDataStoreRepository,
+    ): OkHttpClient {
         return DoubleGisOkHttpClientManager(
-            BuildConfig.DEMO_KEY_DOUBLE_GIS_ROUTING,
             context = context,
             connectivityChecker = NetworkConnectivityChecker,
-            callTimeout = NETWORK_TIMEOUT
+            callTimeout = NETWORK_TIMEOUT,
+            apiKeyProvider = {
+                runBlocking {
+                    cacheRepo.getDoubleGisRoutingKey()
+                }
+            }
         ) {
             EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
                 .doubleGisRoutingRetrofit().instance

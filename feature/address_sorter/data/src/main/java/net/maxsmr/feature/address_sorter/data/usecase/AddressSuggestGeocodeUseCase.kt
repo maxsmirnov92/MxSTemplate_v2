@@ -16,7 +16,7 @@ import javax.inject.Inject
  */
 class AddressSuggestGeocodeUseCase @Inject constructor(
     private val geocodeDataSource: GeocodeDataSource,
-) : UseCase<AddressSuggestGeocodeUseCase.Parameters, AddressGeocode>(Dispatchers.IO) {
+) : UseCase<AddressSuggestGeocodeUseCase.Parameters, AddressGeocode>(Dispatchers.Default) {
 
     override suspend fun execute(parameters: Parameters): AddressGeocode {
         val location = parameters.suggest.location

@@ -27,7 +27,7 @@ class AddressSortUseCase @Inject constructor(
     private val settingsRepo: SettingsDataStoreRepository,
     private val routingDataSource: RoutingDataSource,
     private val suggestDataSource: SuggestDataSource,
-) : UseCase<Address.Location?, List<AddressEntity>>(Dispatchers.IO) {
+) : UseCase<Address.Location?, List<AddressEntity>>(Dispatchers.Default) {
 
     override suspend fun execute(parameters: Address.Location?): List<AddressEntity> {
         val entities = addressRepo.getItems()

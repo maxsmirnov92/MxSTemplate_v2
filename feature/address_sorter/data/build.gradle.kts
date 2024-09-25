@@ -9,6 +9,7 @@ android {
 
 dependencies {
     implementation(project(":feature:preferences:data"))
+    implementation(project(":feature:download:data"))
     implementation(project(":core:android"))
 
     implementation(libs.kotlinx.serialization.json)

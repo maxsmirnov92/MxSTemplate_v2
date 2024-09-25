@@ -8,34 +8,30 @@ import androidx.annotation.StringRes
 import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.asLiveData
-import androidx.lifecycle.map
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.ALGORITHM_SHA1
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.gui.message.TextMessageException
 import net.maxsmr.commonutils.live.event.VmEvent
-import net.maxsmr.commonutils.live.mapNotNull
 import net.maxsmr.commonutils.live.unsubscribeIf
 import net.maxsmr.commonutils.media.readString
 import net.maxsmr.commonutils.media.takePersistableReadPermission
-import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.Status
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
@@ -50,7 +46,6 @@ import net.maxsmr.feature.download.data.DownloadService.Params.Companion.default
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.data.manager.DownloadManager.FailAddReason
 import net.maxsmr.feature.download.data.model.IntentSenderParams
-import java.net.URL
 import javax.inject.Inject
 
 /**
@@ -64,8 +59,7 @@ import javax.inject.Inject
 class DownloadsViewModel @Inject constructor(
     private val downloadRepo: DownloadsRepo,
     private val downloadManager: DownloadManager,
-    @BaseJson
-    private val json: Json,
+    @BaseJson private val json: Json,
     state: SavedStateHandle,
 ) : BaseHandleableViewModel(state) {
 
@@ -80,10 +74,20 @@ class DownloadsViewModel @Inject constructor(
         downloadRepo.getIntentSenderListFiltered(list.map { it.name }).asLiveData()
     }
 
-    private val failedStartParamsEvent = MutableStateFlow<VmEvent<DownloadService.Params>?>(null)
+    private val failedStartParamsFlow = MutableStateFlow<List<DownloadService.Params>>(listOf())
+
+    val failedStartParams = failedStartParamsFlow.asLiveData()
 
     override fun onInitialized() {
         super.onInitialized()
+
+        fun refreshFailed(params: DownloadService.Params) {
+            val currentFailed = failedStartParamsFlow.value.toMutableList()
+            currentFailed.removeIf { p -> p.url == params.url }
+            currentFailed.add(params)
+            failedStartParamsFlow.value = currentFailed
+        }
+
         viewModelScope.launch {
             downloadManager.successAddedToQueueEvents.collect {
                 it.targetResourceName.takeIf { res -> res.isNotEmpty() }?.let { name ->
@@ -98,6 +102,8 @@ class DownloadsViewModel @Inject constructor(
         }
         viewModelScope.launch {
             downloadManager.failedAddedToQueueEvents.collect {
+                refreshFailed(it.first)
+
                 val name = it.first.targetResourceName
                 val reason = TextMessage.ResArg(
                     when (it.second) {
@@ -131,6 +137,7 @@ class DownloadsViewModel @Inject constructor(
         }
         viewModelScope.launch {
             downloadManager.failedStartParamsEvents.collect {
+                refreshFailed(it)
                 showOkDialog(
                     DIALOG_TAG_FAILED_START,
                     TextMessage(
@@ -139,6 +146,13 @@ class DownloadsViewModel @Inject constructor(
                     ),
                     TextMessage(R.string.download_dialog_failed_start_title)
                 )
+            }
+        }
+        viewModelScope.launch {
+            downloadManager.resultItems.collect { items ->
+                val currentFailed = failedStartParamsFlow.value.toMutableList()
+                currentFailed.removeIf { failed -> items.any { it.params.url == failed.url } }
+                failedStartParamsFlow.value = currentFailed
             }
         }
     }
@@ -180,8 +194,10 @@ class DownloadsViewModel @Inject constructor(
      * @param mimeType заранее известный тип из ответа, если есть
      */
     @JvmOverloads
-    fun enqueueDownload(paramsModel: DownloadParamsModel, mimeType: String? = null) {
-        enqueueDownload(paramsModel.toParams(mimeType))
+    fun enqueueDownload(paramsModel: DownloadParamsModel, mimeType: String? = null): DownloadService.Params {
+        val params = paramsModel.toParams(mimeType)
+        enqueueDownload(params)
+        return params
     }
 
     /**
@@ -191,94 +207,35 @@ class DownloadsViewModel @Inject constructor(
         downloadManager.enqueueDownload(params)
     }
 
-    @JvmOverloads
-    fun observeDownloadPOST(
-        uri: URL?,
-        @DrawableRes smallIconResId: Int,
-        resource: LoadState<*>?,
-        body: DownloadService.RequestParams.Body,
-        fileName: String? = null,
-        format: FileFormat? = null,
-        notification: DownloadService.NotificationParams = DownloadService.NotificationParams(
-            smallIconResId,
-            successActions = defaultNotificationActions(
-                baseApplicationContext
-            ),
-        ),
-    ): LiveData<LoadState<DownloadInfoWithUri>> {
-        resource ?: return MutableLiveData(
-            LoadState.error(
-                TextMessageException(
-                    TextMessage(messageResId = R.string.download_error)
-                )
-            )
-        )
-        uri ?: return MutableLiveData(resource.copyOf())
-        return observeDownload(
-            defaultPOSTServiceParamsFor(
-                uri.toString(),
-                fileName,
-                body,
-                format = format,
-                notificationParams = notification
-            )
-        )
-    }
-
-    @JvmOverloads
-    fun observeDownloadGET(
-        uri: URL?,
-        @DrawableRes smallIconResId: Int,
-        resource: LoadState<*>?,
-        fileName: String? = null,
-        format: FileFormat? = null,
-        notification: DownloadService.NotificationParams = DownloadService.NotificationParams(
-            smallIconResId,
-            successActions = defaultNotificationActions(baseApplicationContext)
-        ),
-    ): LiveData<LoadState<DownloadInfoWithUri>> {
-        resource ?: return MutableLiveData(
-            LoadState.error(
-                TextMessageException(
-                    TextMessage(messageResId = R.string.download_error)
-                )
-            )
-        )
-        uri ?: return MutableLiveData(resource.copyOf())
-        return observeDownload(
-            defaultGETServiceParamsFor(
-                uri.toString(),
-                fileName,
-                format = format,
-                notificationParams = notification
-            )
-        )
-    }
-
-    // FIXME исправить логику на notifier
-    private fun observeDownload(params: DownloadService.Params): LiveData<LoadState<DownloadInfoWithUri>> {
-        // на этом моменте нет гарантий, что resourceMimeType от клиентского кода совпадёт с тем,
-        // что будет в сервисе после получения респонса ->
-        // возможен поиск только по имени без расширения
-        val resourceName = params.resourceNameWithoutExt
-        return downloadsInfos
-            .mapNotNull { info ->
-                info.find { it.name == resourceName }?.let {
-                    DownloadInfoWithUri(params.requestParams.url.toUri(), it)
-                }
+    fun observeDownload(params: DownloadService.Params): LiveData<LoadState<DownloadInfoWithParams>> {
+        val url = params.url
+        return combine(downloadManager.resultItems, failedStartParamsFlow) { items, failedParams ->
+            Pair(items, failedParams)
+        }.mapNotNull { pair ->
+            pair.second.find { it.url == url }?.let {
+                return@mapNotNull Pair(it, null)
             }
-            .map {
-                when (it.downloadInfo.status) {
-                    is DownloadInfo.Status.Loading -> LoadState.loading(it)
+            pair.first.find { it.params.url == url }?.let {
+                return@mapNotNull Pair(it.params, it.downloadInfo)
+            }
+        }.map {
+            val info = it.second
+            if (info != null) {
+                when (info.status) {
+                    is DownloadInfo.Status.Loading -> LoadState.loading(DownloadInfoWithParams(it.first, info))
+
                     is DownloadInfo.Status.Error -> LoadState.error(
-                        it.downloadInfo.statusAsError?.reason ?: RuntimeException(),
-                        it
+                        info.statusAsError?.reason ?: RuntimeException(),
+                        DownloadInfoWithParams(it.first, info)
                     )
 
-                    is DownloadInfo.Status.Success -> LoadState.success<DownloadInfoWithUri>(it)
+                    is DownloadInfo.Status.Success -> LoadState.success(DownloadInfoWithParams(it.first, info))
                 }
+            } else {
+                // DownloadInfo не было, т.к. был зафиксирован еррор добавления в очередь / старта сервиса
+                LoadState.error(RuntimeException())
             }
-            .unsubscribeIf { !it.isLoading }
+        }.asLiveData().unsubscribeIf { !it.isLoading }
     }
 
     fun observeOnce(
@@ -301,8 +258,11 @@ class DownloadsViewModel @Inject constructor(
         downloadsInfos.observe(owner, observer)
     }
 
-    data class DownloadInfoWithUri(
-        val uri: Uri,
+    /**
+     * @param downloadInfo отсутствует, если старт / добавление в очередь не удались
+     */
+    data class DownloadInfoWithParams(
+        val params: DownloadService.Params,
         val downloadInfo: DownloadInfo,
     )
 
@@ -339,7 +299,7 @@ class DownloadsViewModel @Inject constructor(
         )
 
         @JvmStatic
-        private fun DownloadParamsModel.toParams(mimeType: String? = null): DownloadService.Params = with(this) {
+        fun DownloadParamsModel.toParams(mimeType: String? = null): DownloadService.Params = with(this) {
             val url = url.trim()
             val bodyUri = bodyUri?.trim()
             val targetHashInfo = targetSha1Hash?.takeIf { it.isNotEmpty() }?.let {

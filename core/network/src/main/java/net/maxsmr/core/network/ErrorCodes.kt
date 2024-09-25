@@ -18,7 +18,7 @@ fun Throwable.getErrorCode(): Int {
     }
 }
 
-enum class ApiErrorCode(val code: Int) {
+enum class HttpErrorCode(val code: Int) {
 
     BAD_REQUEST(400),
     UNAUTHORIZED(401),

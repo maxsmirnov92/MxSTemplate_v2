@@ -9,6 +9,7 @@ import android.view.View
 import android.view.inputmethod.EditorInfo.IME_ACTION_DONE
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -43,6 +44,7 @@ import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputListener
 import net.maxsmr.feature.address_sorter.ui.databinding.DialogExportFileNameBinding
 import net.maxsmr.feature.address_sorter.ui.databinding.FragmentAddressSorterBinding
+import net.maxsmr.feature.download.data.DownloadsViewModel
 
 abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         AddressInputListener, BaseDraggableDelegationAdapter.ItemsEventsListener<AddressInputData> {
@@ -51,7 +53,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     override val viewModel: AddressSorterViewModel by viewModels {
         AbstractSavedStateViewModelFactory(this) {
-            factory.create(it, locationViewModel)
+            factory.create(it, locationViewModel, downloadsViewModel, routingKeyUrl)
         }
     }
 
@@ -62,6 +64,8 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
             locationFactory.create(it, null)
         }
     }
+
+    private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
     private val adapter = AddressInputAdapter(this)
 
@@ -102,6 +106,8 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
     abstract val locationFactory: LocationViewModel.Factory
 
     abstract val factory: AddressSorterViewModel.Factory
+
+    protected abstract val routingKeyUrl: String
 
     private var refreshMenuItem: MenuItem? = null
 

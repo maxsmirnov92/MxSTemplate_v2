@@ -27,7 +27,7 @@ class AddressRoutingUseCase @Inject constructor(
     private val settingsRepo: SettingsDataStoreRepository,
     private val routingDataSource: RoutingDataSource,
     private val suggestDataSource: SuggestDataSource,
-) : UseCase<AddressRoutingUseCase.Params, AddressRoute>(Dispatchers.IO) {
+) : UseCase<AddressRoutingUseCase.Params, AddressRoute>(Dispatchers.Default) {
 
     override suspend fun execute(parameters: Params): AddressRoute {
         val settings = settingsRepo.getSettings()

@@ -1,6 +1,7 @@
 package net.maxsmr.mxstemplate.ui.fragment
 
 import dagger.hilt.android.AndroidEntryPoint
+import net.maxsmr.core.di.DI_NAME_ROUTING_KEY_URL
 import net.maxsmr.core.di.DI_NAME_VERSION_CODE
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IFragmentDelegate
@@ -16,7 +17,7 @@ import javax.inject.Inject
 import javax.inject.Named
 
 @AndroidEntryPoint
-class MainAddressSorterFragment: BaseAddressSorterFragment() {
+class MainAddressSorterFragment : BaseAddressSorterFragment() {
 
     private val releaseNotesDelegate by lazy {
         ReleaseNotesFragmentDelegate(
@@ -40,6 +41,10 @@ class MainAddressSorterFragment: BaseAddressSorterFragment() {
 
     @Inject
     override lateinit var factory: AddressSorterViewModel.Factory
+
+    @Inject
+    @Named(DI_NAME_ROUTING_KEY_URL)
+    override lateinit var routingKeyUrl: String
 
     @Inject
     lateinit var cacheRepo: CacheDataStoreRepository

@@ -42,7 +42,6 @@ import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading.Type
 import net.maxsmr.feature.download.data.DownloadsRepo
-import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.File
 import java.io.Serializable
@@ -603,10 +602,10 @@ class DownloadManager @Inject constructor(
                         } else {
                             notificationParams?.copy(
                                 updateNotificationInterval = settings.updateNotificationInterval
-                            ) ?: DownloadService.NotificationParams(
+                            ) /*?: DownloadService.NotificationParams(
                                 updateNotificationInterval = settings.updateNotificationInterval,
                                 successActions = DownloadsViewModel.defaultNotificationActions(baseApplicationContext)
-                            )
+                            )*/
                         },
                         resourceName,
                         storageType,

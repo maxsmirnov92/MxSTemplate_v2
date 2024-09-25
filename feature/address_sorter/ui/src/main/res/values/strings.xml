@@ -60,4 +60,7 @@
         <item>Distance</item>
         <item>Duration</item>
     </string-array>
+
+    <string name="address_sorter_download_routing_key_failed_format">Error occurred when downloading API key: \"%s\"</string>
+    <string name="address_sorter_download_routing_key_failed">Unknown error occurred when downloading API key</string>
 </resources>

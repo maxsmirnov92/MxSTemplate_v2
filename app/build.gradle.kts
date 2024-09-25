@@ -78,8 +78,8 @@ android {
         )
         buildConfigField(
             "String",
-            "DEMO_KEY_DOUBLE_GIS_ROUTING",
-            "\"${appProperties.getProperty("demoKeyDoubleGisRouting")}\""
+            "URL_DEMO_KEY_DOUBLE_GIS_ROUTING",
+            "\"${appProperties.getProperty("urlDemoKeyDoubleGisRouting")}\""
         )
         buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getProperty("devEmailAddress")}\"")
 

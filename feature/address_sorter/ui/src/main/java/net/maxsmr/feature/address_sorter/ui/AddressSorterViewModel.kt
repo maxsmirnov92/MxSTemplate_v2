@@ -22,6 +22,7 @@ import net.maxsmr.commonutils.format.decomposeTimeFormatted
 import net.maxsmr.commonutils.gui.message.JoinTextMessage
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
+import net.maxsmr.commonutils.media.readString
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
@@ -30,17 +31,23 @@ import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
+import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.android.coroutines.usecase.asState
 import net.maxsmr.core.android.coroutines.usecase.data
 import net.maxsmr.core.android.coroutines.usecase.mapData
 import net.maxsmr.core.android.coroutines.usecase.succeeded
+import net.maxsmr.core.android.exceptions.EmptyResultException
+import net.maxsmr.core.android.network.isUrlValid
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
+import net.maxsmr.core.domain.entities.feature.address_sorter.routing.AddressRoute
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingMode
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingType
+import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
+import net.maxsmr.core.network.HttpErrorCode
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.RoutingFailedException
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asMultiChoiceDialog
@@ -68,15 +75,24 @@ import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.C
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressErrorMessageData
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
+import net.maxsmr.feature.download.data.DownloadService
+import net.maxsmr.feature.download.data.DownloadsViewModel
+import net.maxsmr.feature.download.data.DownloadsViewModel.Companion.toParams
+import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
+import retrofit2.HttpException
 import java.io.Serializable
 import java.util.concurrent.TimeUnit
 
 class AddressSorterViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val locationViewModel: LocationViewModel,
+    @Assisted private val downloadsViewModel: DownloadsViewModel,
+    @Assisted private val routingKeyUrl: String,
     private val repo: AddressRepo,
     private val settingsRepo: SettingsDataStoreRepository,
+    private val cacheRepo: CacheDataStoreRepository,
     private val addressImportUseCase: AddressImportUseCase,
     private val addressExportUseCase: AddressExportUseCase,
     private val addressSuggestUseCase: AddressSuggestUseCase,
@@ -97,7 +113,8 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     private val suggestFlowMap = mutableMapOf<Long, FlowInfo>()
 
-    val exportFileNameField: Field<String> = state.fileNameField(isRequired = true, initialValue = EXPORT_FILE_NAME_DEFAULT)
+    val exportFileNameField: Field<String> =
+        state.fileNameField(isRequired = true, initialValue = EXPORT_FILE_NAME_DEFAULT)
 
     val resultItemsState = MutableLiveData<LoadState<List<AddressInputData>>>(LoadState.success(emptyList()))
 
@@ -163,6 +180,9 @@ class AddressSorterViewModel @AssistedInject constructor(
         delegate.bindAlertDialog(DIALOG_TAG_ROUTING_FAILED) {
             it.asOkDialog(delegate.context)
         }
+        delegate.bindAlertDialog(DIALOG_TAG_DOWNLOAD_KEY_FAILED) {
+            it.asOkDialog(delegate.context)
+        }
     }
 
     fun clearLastLocation() {
@@ -190,17 +210,61 @@ class AddressSorterViewModel @AssistedInject constructor(
     fun doRefresh() {
         removeSnackbarsFromQueue()
         resultItemsState.value = LoadState.loading(resultItemsState.value?.data.orEmpty())
+
         viewModelScope.launch {
-            val result = addressSortUseCase.invoke(lastLocation.value)
-            val currentData = resultItemsState.value?.data.orEmpty()
-            if (result is UseCaseResult.Error) {
-                val e = result.exception
-                resultItemsState.value = LoadState.error(e, currentData)
-                showRoutingFailedMessage(e, result.errorMessage())
-            } else if (result is UseCaseResult.Success && result.data.isEmpty()) {
-                // поскольку не будет выставления в items.observe {}
-                resultItemsState.value = LoadState.success(currentData)
+
+            var wasKeyDownloaded = false
+
+            suspend fun doAddressSort() {
+                val result = addressSortUseCase.invoke(lastLocation.value)
+                val currentData = resultItemsState.value?.data.orEmpty()
+                if (result is UseCaseResult.Error) {
+                    val e = result.exception
+
+                    fun handleBaseError(showMessage: Boolean = true) {
+                        resultItemsState.value = LoadState.error(e, currentData)
+                        if (showMessage) {
+                            showRoutingFailedMessage(e, result.errorMessage())
+                        }
+                    }
+
+                    if (shouldDownloadRoutingKey(e) && !wasKeyDownloaded) {
+                        downloadsViewModel.observeDownload(enqueueDownloadRoutingKey()).observe {
+                            viewModelScope.launch {
+
+                                fun handleDownloadError(e: Throwable?) {
+                                    showDownloadRoutingKeyError(e)
+                                    handleBaseError(false)
+                                }
+
+                                if (it.isSuccessWithData()) {
+                                    val key = withContext(Dispatchers.IO) {
+                                        it.data?.downloadInfo?.localUri?.readString(baseApplicationContext.contentResolver)
+                                            .orEmpty()
+                                    }
+                                    if (key.isNotEmpty()) {
+                                        wasKeyDownloaded = true
+                                        cacheRepo.setDoubleGisRoutingKey(key)
+                                        // повтор юзкейса с актуализированным ключом
+                                        doAddressSort()
+                                    } else {
+                                        handleDownloadError(EmptyResultException())
+                                    }
+                                } else if (!it.isLoading) {
+                                    handleDownloadError(it.error)
+                                }
+                            }
+                        }
+                    } else {
+                        handleBaseError()
+                    }
+                } else if (result is UseCaseResult.Success && result.data.isEmpty()) {
+                    // поскольку не будет выставления в items.observe {}
+                    resultItemsState.value = LoadState.success(currentData)
+                }
             }
+
+            doAddressSort()
         }
     }
 
@@ -221,7 +285,8 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onExportAddressesAction() {
-        showYesNoDialog(DIALOG_TAG_EXPORT_FILE_NAME,
+        showYesNoDialog(
+            DIALOG_TAG_EXPORT_FILE_NAME,
             message = null,
             title = TextMessage(R.string.address_sorter_dialog_address_export_file_name_title),
             positiveAnswerResId = android.R.string.ok,
@@ -393,70 +458,122 @@ class AddressSorterViewModel @AssistedInject constructor(
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
 
         viewModelScope.launch {
-            val result =
-                addressRoutingUseCase.invoke(AddressRoutingUseCase.Params(item.id, item.location, lastLocation.value))
-            dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
 
-            val route = when (result) {
-                is UseCaseResult.Error -> {
-                    showRoutingFailedMessage(result.exception, result.errorMessage())
-                    null
-                }
+            fun handleResult(route: AddressRoute?) {
+                dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
 
-                is UseCaseResult.Success -> {
-                    result.data
-                }
-
-                else -> {
-                    null
-                }
-            }
-
-            val distanceMessage = (route?.distance
-            // distance ранее пересчитанный в итеме или возвращшённый suggest'ом
-                ?: item.distance)?.let { distance ->
-                TextMessage(
-                    R.string.address_sorter_toast_distance_to_point_format,
-                    if (distance > 1000) {
-                        val distanceKm = distance / 1000f
-                        TextMessage(R.string.address_sorter_kilometers_format, distanceKm, distanceKm)
-                    } else {
-                        TextMessage(R.string.address_sorter_meters_format, distance, distance)
-                    }
-                )
-            }
-            val durationMessage = route?.duration?.let { duration ->
-                decomposeTimeFormatted(
-                    duration,
-                    TimeUnit.SECONDS,
-                    TimePluralFormat.NORMAL_WITH_VALUE,
-                    emptyIfZero = false,
-                    timeUnitsToExclude = setOf(TimeUnit.MILLISECONDS, TimeUnit.MICROSECONDS, TimeUnit.NANOSECONDS)
-                ).takeIf { it.isNotEmpty() }?.let {
+                val distanceMessage = (route?.distance
+                // distance ранее пересчитанный в итеме или возвращшённый suggest'ом
+                    ?: item.distance)?.let { distance ->
                     TextMessage(
-                        R.string.address_sorter_toast_duration_to_point_format,
-                        JoinTextMessage(", ", it)
+                        R.string.address_sorter_toast_distance_to_point_format,
+                        if (distance > 1000) {
+                            val distanceKm = distance / 1000f
+                            TextMessage(R.string.address_sorter_kilometers_format, distanceKm, distanceKm)
+                        } else {
+                            TextMessage(R.string.address_sorter_meters_format, distance, distance)
+                        }
+                    )
+                }
+                val durationMessage = route?.duration?.let { duration ->
+                    decomposeTimeFormatted(
+                        duration,
+                        TimeUnit.SECONDS,
+                        TimePluralFormat.NORMAL_WITH_VALUE,
+                        emptyIfZero = false,
+                        timeUnitsToExclude = setOf(TimeUnit.MILLISECONDS, TimeUnit.MICROSECONDS, TimeUnit.NANOSECONDS)
+                    ).takeIf { it.isNotEmpty() }?.let {
+                        TextMessage(
+                            R.string.address_sorter_toast_duration_to_point_format,
+                            JoinTextMessage(", ", it)
+                        )
+                    }
+                }
+                var resultMessage = if (distanceMessage != null && durationMessage != null) {
+                    JoinTextMessage(".\n", distanceMessage, durationMessage)
+                } else distanceMessage ?: durationMessage
+
+                resultMessage?.let {
+                    item.location?.let { location ->
+                        resultMessage =
+                            JoinTextMessage("\n\n", it, TextMessage("(${location.latitude}, ${location.longitude})"))
+                    }
+                }
+
+                resultMessage?.let {
+                    showSnackbar(
+                        it,
+                        SnackbarExtraData(length = SnackbarExtraData.SnackbarLength.INDEFINITE),
+                        Alert.Answer(android.R.string.ok),
+                        uniqueStrategy = AlertQueueItem.UniqueStrategy.Replace
                     )
                 }
             }
-            var resultMessage = if (distanceMessage != null && durationMessage != null) {
-                JoinTextMessage(".\n", distanceMessage, durationMessage)
-            } else distanceMessage ?: durationMessage
 
-            resultMessage?.let {
-                item.location?.let { location ->
-                    resultMessage = JoinTextMessage("\n\n", it, TextMessage("(${location.latitude}, ${location.longitude})"))
+            var wasKeyDownloaded = false
+
+            suspend fun doAddressRouting() {
+
+                val result =
+                    addressRoutingUseCase.invoke(
+                        AddressRoutingUseCase.Params(
+                            item.id,
+                            item.location,
+                            lastLocation.value
+                        )
+                    )
+
+                val route = when (result) {
+                    is UseCaseResult.Error -> {
+                        val e = result.exception
+                        if (shouldDownloadRoutingKey(e) && !wasKeyDownloaded) {
+                            downloadsViewModel.observeDownload(enqueueDownloadRoutingKey()).observe {
+                                viewModelScope.launch {
+                                    var isHandled = false
+                                    if (it.isSuccessWithData()) {
+                                        val key = withContext(Dispatchers.IO) {
+                                            it.data?.downloadInfo?.localUri?.readString(baseApplicationContext.contentResolver)
+                                                .orEmpty()
+                                        }
+                                        if (key.isNotEmpty()) {
+                                            wasKeyDownloaded = true
+                                            isHandled = true
+                                            cacheRepo.setDoubleGisRoutingKey(key)
+                                            // повтор юзкейса с актуализированным ключом
+                                            doAddressRouting()
+                                        } else {
+                                            showDownloadRoutingKeyError(EmptyResultException())
+                                        }
+                                    } else if (it.isLoading) {
+                                        isHandled = true
+                                    } else {
+                                        showDownloadRoutingKeyError(it.error)
+                                    }
+                                    if (!isHandled) {
+                                        handleResult(null)
+                                    }
+                                }
+                            }
+                            return
+                        }
+
+                        showRoutingFailedMessage(result.exception, result.errorMessage())
+                        null
+                    }
+
+                    is UseCaseResult.Success -> {
+                        result.data
+                    }
+
+                    else -> {
+                        null
+                    }
                 }
+
+                handleResult(route)
             }
 
-            resultMessage?.let {
-                showSnackbar(
-                    it,
-                    SnackbarExtraData(length = SnackbarExtraData.SnackbarLength.INDEFINITE),
-                    Alert.Answer(android.R.string.ok),
-                    uniqueStrategy = AlertQueueItem.UniqueStrategy.Replace
-                )
-            }
+            doAddressRouting()
         }
     }
 
@@ -570,7 +687,7 @@ class AddressSorterViewModel @AssistedInject constructor(
             TextMessage(R.string.address_sorter_error_reverse_geocode_format, it)
         } ?: TextMessage(R.string.address_sorter_error_reverse_geocode)
 
-        showOkDialog(DIALOG_TAG_ROUTING_FAILED, message)
+        showOkDialog(DIALOG_TAG_REVERSE_GEOCODE_FAILED, message)
     }
 
     private fun showRoutingFailedMessage(e: Throwable, useCaseMessage: TextMessage?) {
@@ -600,8 +717,10 @@ class AddressSorterViewModel @AssistedInject constructor(
             is RoutingFailedException -> {
                 val count = e.routes.size
                 if (count == 1) {
-                    TextMessage(R.string.address_sorter_error_routing_format,
-                        TextMessage(e.routes[0].second.getDisplayedMessageResId()))
+                    TextMessage(
+                        R.string.address_sorter_error_routing_format,
+                        TextMessage(e.routes[0].second.getDisplayedMessageResId())
+                    )
                 } else {
                     TextMessage(R.string.address_sorter_error_routing_count_format, count)
                 }
@@ -614,6 +733,38 @@ class AddressSorterViewModel @AssistedInject constructor(
             }
         }
         showOkDialog(DIALOG_TAG_ROUTING_FAILED, message)
+    }
+
+    private fun shouldDownloadRoutingKey(e: Throwable): Boolean {
+        return e is HttpException && e.code() in arrayOf(
+            HttpErrorCode.FORBIDDEN.code,
+            HttpErrorCode.UNAUTHORIZED.code
+        ) && routingKeyUrl.isUrlValid()
+    }
+
+    private fun enqueueDownloadRoutingKey(): DownloadService.Params {
+        val params = DownloadParamsModel(routingKeyUrl).toParams()
+        DownloadService.Params(
+            params.requestParams,
+            null,
+            params.resourceName,
+            DownloadServiceStorage.Type.INTERNAL,
+            params.subDirPath,
+            params.targetHashInfo,
+            params.skipIfDownloaded,
+            params.replaceFile,
+            params.deleteUnfinished,
+            params.retryWithNotifier
+        ).let {
+            downloadsViewModel.enqueueDownload(it)
+            return it
+        }
+    }
+
+    private fun showDownloadRoutingKeyError(e: Throwable?) {
+        showOkDialog(DIALOG_TAG_DOWNLOAD_KEY_FAILED, e?.message?.takeIf { it.isNotEmpty() }?.let {
+            TextMessage(R.string.address_sorter_download_routing_key_failed_format, it)
+        } ?: TextMessage(R.string.address_sorter_download_routing_key_failed))
     }
 
     private fun List<AddressItem>.refreshFlows() {
@@ -715,6 +866,8 @@ class AddressSorterViewModel @AssistedInject constructor(
         fun create(
             state: SavedStateHandle,
             locationViewModel: LocationViewModel,
+            downloadsViewModel: DownloadsViewModel,
+            routingKeyUrl: String,
         ): AddressSorterViewModel
     }
 
@@ -730,5 +883,6 @@ class AddressSorterViewModel @AssistedInject constructor(
         const val DIALOG_TAG_CLEAR_ITEMS = "clear_items"
         const val DIALOG_TAG_REVERSE_GEOCODE_FAILED = "reverse_geocode_failed"
         const val DIALOG_TAG_ROUTING_FAILED = "routing_failed"
+        const val DIALOG_TAG_DOWNLOAD_KEY_FAILED = "download_key_failed"
     }
 }

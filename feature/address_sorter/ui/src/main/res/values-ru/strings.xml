@@ -60,4 +60,7 @@
         <item>Расстояние</item>
         <item>Время</item>
     </string-array>
+
+    <string name="address_sorter_download_routing_key_failed_format">Произошла ошибка во время загрузки API ключа: \"%s\"</string>
+    <string name="address_sorter_download_routing_key_failed">Произошла неизвестная ошибка во время загрузки API ключа</string>
 </resources>

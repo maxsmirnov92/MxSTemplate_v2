@@ -9,6 +9,9 @@ import net.maxsmr.core.network.client.okhttp.interceptors.ResponseErrorMessageIn
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 
+/**
+ * @param [retrofitProvider] при наличии [Retrofit] будет задейстоваться [ResponseErrorMessageInterceptor]
+ */
 abstract class BaseRestOkHttpClientManager(
     callTimeout: Long,
     readTimeout: Long = 0L,

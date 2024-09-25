@@ -15,7 +15,7 @@ import javax.inject.Inject
  */
 class ReverseGeocodeUseCase @Inject constructor(
     private val geocodeDataSource: GeocodeDataSource
-) : UseCase<Address.Location, AddressGeocode>(Dispatchers.IO) {
+) : UseCase<Address.Location, AddressGeocode>(Dispatchers.Default) {
 
     override suspend fun execute(parameters: Address.Location): AddressGeocode {
         return geocodeDataSource.reverseGeocode(parameters) ?: throw EmptyResultException(baseApplicationContext, true)
