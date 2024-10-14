@@ -65,6 +65,9 @@ abstract class BaseNavigationFragment<VM : BaseHandleableViewModel> : BaseMenuFr
     }
 
     fun <T> getNavigationResult(key: String = KEY_FRAGMENT_RESULT) =
+        findNavController().currentBackStackEntry?.savedStateHandle?.get<T>(key)
+
+    fun <T> getNavigationResultLiveData(key: String = KEY_FRAGMENT_RESULT) =
         findNavController().currentBackStackEntry?.savedStateHandle?.getLiveData<T>(key)
 
     fun <T> setNavigationResult(result: T, key: String = KEY_FRAGMENT_RESULT) {
