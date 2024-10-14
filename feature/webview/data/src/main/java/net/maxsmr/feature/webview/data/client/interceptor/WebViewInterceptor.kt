@@ -7,6 +7,6 @@ class WebViewInterceptor: IWebViewInterceptor {
 
     override fun shouldIntercept(
         url: String,
-        interceptCondition: (String) -> IWebViewInterceptor.InterceptedUrl?,
-    ): IWebViewInterceptor.InterceptedUrl? = interceptCondition(url)
+        interceptCondition: () -> IWebViewInterceptor.InterceptedUrl?,
+    ): IWebViewInterceptor.InterceptedUrl? = interceptCondition()
 }

@@ -7,7 +7,7 @@ import java.io.Serializable
 
 interface IWebViewInterceptor : Serializable {
 
-    fun shouldIntercept(url: String, interceptCondition: (String) -> InterceptedUrl?): InterceptedUrl?
+    fun shouldIntercept(url: String, interceptCondition: () -> InterceptedUrl?): InterceptedUrl?
 
     fun getStubForInterceptedRequest() = WebResourceResponse(
         FileFormat.HTML.mimeType,

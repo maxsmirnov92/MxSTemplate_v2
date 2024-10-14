@@ -13,9 +13,9 @@ class OnceWebViewInterceptor : IWebViewInterceptor {
     /**
      * @return [InterceptedUrl] если [interceptCondition] вернул значение впервые иначе null
      */
-    override fun shouldIntercept(url: String, interceptCondition: (String) -> InterceptedUrl?): InterceptedUrl? {
+    override fun shouldIntercept(url: String, interceptCondition: () -> InterceptedUrl?): InterceptedUrl? {
         if (isIntercepted.get()) return null
-        val interceptedUrlType = interceptCondition.invoke(url)
+        val interceptedUrlType = interceptCondition.invoke()
         if (interceptedUrlType != null) {
             if (isIntercepted.compareAndSet(false, true)) {
                 return interceptedUrlType

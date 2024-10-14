@@ -1,12 +1,18 @@
 package net.maxsmr.feature.webview.data.client
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Build
 import android.text.TextUtils
-import android.webkit.*
+import android.webkit.SslErrorHandler
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.annotation.CallSuper
 import androidx.annotation.MainThread
 import androidx.annotation.RequiresApi
@@ -17,13 +23,15 @@ import net.maxsmr.commonutils.URL_SCHEME_MAIL
 import net.maxsmr.commonutils.URL_SCHEME_MARKET
 import net.maxsmr.commonutils.URL_SCHEME_TEL
 import net.maxsmr.commonutils.getDialIntent
-import net.maxsmr.commonutils.getViewLocationIntent
 import net.maxsmr.commonutils.getViewUrlIntent
 import net.maxsmr.commonutils.isAtLeastNougat
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logException
 import net.maxsmr.commonutils.media.getMimeTypeFromUrl
+import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.core.android.content.FileFormat
+import net.maxsmr.core.android.network.isUrlValid
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.asStringCloned
 import net.maxsmr.core.network.exceptions.HttpProtocolException
@@ -41,6 +49,7 @@ import net.maxsmr.feature.webview.data.client.interceptor.WebViewInterceptor
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
 import okhttp3.Response
+import java.net.URISyntaxException
 import java.nio.charset.Charset
 
 /**
@@ -100,7 +109,9 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     ): WebResourceResponse? {
         logger.d("shouldInterceptRequest, url: $url, method: $method, headers: $headers, isForMainFrame: $isForMainFrame")
         onStartLoading(url, isForMainFrame)
-        return if (shouldInterceptCommand(view, url, ::shouldInterceptFromRequest)) {
+        return if (shouldInterceptCommand(view, url) {
+                    shouldInterceptFromRequest(url)
+                }) {
             webViewInterceptor?.getStubForInterceptedRequest()
         } else {
             val response: Response? = if (method == Method.GET.value) {
@@ -126,12 +137,17 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     // вызовется при < 21 api
     @CallSuper
     override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-        return shouldInterceptCommand(view, url, ::shouldInterceptFromOverrideUrlWithCheck)
+        return shouldInterceptCommand(view, url) {
+            shouldInterceptFromOverrideUrlWithCheck(view, url)
+        }
     }
 
     @CallSuper
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-        return shouldInterceptCommand(view, request.url.toString(), ::shouldInterceptFromOverrideUrlWithCheck)
+        val url = request.url.toString()
+        return shouldInterceptCommand(view, url) {
+            shouldInterceptFromOverrideUrlWithCheck(view, url)
+        }
     }
 
     @MainThread
@@ -280,9 +296,9 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     private fun shouldInterceptCommand(
         view: WebView,
         url: String,
-        interceptedFunc: (String) -> InterceptedUrl?,
+        interceptedFunc: () -> InterceptedUrl?,
     ): Boolean {
-        val interceptedUrlType = webViewInterceptor?.shouldIntercept(url) { _url -> interceptedFunc(_url) }
+        val interceptedUrlType = webViewInterceptor?.shouldIntercept(url) { interceptedFunc() }
         return if (interceptedUrlType != null) {
             // первый или повторный перехват урлы в зав-ти от реализации webViewInterceptor
             onUrlIntercepted(view, interceptedUrlType)
@@ -296,7 +312,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
      * Срабатывает при редиректах по страницам, например при клике по ссылке;
      * затем идёт [shouldInterceptRequest]
      */
-    private fun shouldInterceptFromOverrideUrlWithCheck(url: String): InterceptedUrl? {
+    private fun shouldInterceptFromOverrideUrlWithCheck(view: WebView, url: String): InterceptedUrl? {
         val uri = url.toUri()
         val scheme = uri.scheme
         var handled = false
@@ -323,6 +339,29 @@ open class InterceptWebViewClient @JvmOverloads constructor(
                     getViewUrlIntent(uri, null),
                     errorResId = net.maxsmr.core.ui.R.string.error_intent_open_market
                 )
+            }
+
+            URL_SCHEME_INTENT -> {
+                val intent = try {
+                    Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+                } catch (e: URISyntaxException) {
+                    logException(logger, e)
+                    null
+                }
+                intent?.let {
+                    handled = if (!context.startActivitySafe(intent)) {
+                        val fallbackUrl =
+                            intent.getStringExtra("browser_fallback_url").takeIf { it.isUrlValid(orBlank = true) }
+                        if (fallbackUrl != null) {
+                            view.loadUrl(fallbackUrl)
+                            true
+                        } else {
+                            false
+                        }
+                    } else {
+                        true
+                    }
+                }
             }
             // перебирать остальные известные не http/https схемы
             // для открытия аппов напрямую,
@@ -404,6 +443,8 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     }
 
     companion object {
+
+        const val URL_SCHEME_INTENT = "intent"
 
         fun WebResourceRequest.toReadableString(): String {
             return "WebResourceRequest(url='$url', isForMainFrame='$isForMainFrame', isRedirect=${

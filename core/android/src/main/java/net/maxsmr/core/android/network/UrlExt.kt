@@ -87,6 +87,9 @@ fun Uri?.equalsIgnoreSubDomain(other: Uri?): Boolean {
     if (this == null && other == null) {
         return true
     }
+    if (this?.scheme != other?.scheme) {
+        return false
+    }
     return this?.host?.equalsIgnoreSubDomain(other?.host) ?: false
 }
 
