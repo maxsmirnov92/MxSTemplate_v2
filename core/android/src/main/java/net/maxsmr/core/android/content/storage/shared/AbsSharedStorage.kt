@@ -23,9 +23,8 @@ abstract class AbsSharedStorage(
 
     /**
      * Название приложения в качестве поддиректории основной директории расшариваемых файлов.
-     * Не менять.
      */
-    val appDir by lazy { baseAppName }
+    open val appDir by lazy { baseAppName }
 
     override fun exists(name: String, path: String?): Result<Boolean, Exception> {
         return super.exists(name, this.path)

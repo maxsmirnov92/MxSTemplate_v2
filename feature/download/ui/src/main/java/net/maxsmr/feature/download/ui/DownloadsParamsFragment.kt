@@ -196,7 +196,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
         binding.btStart.setOnClickListener {
             requireActivity().clearFocus()
             doOnPermissionsResult(
-                BaseActivity.REQUEST_CODE_WRITE_EXTERNAL_PERMISSION,
+                BaseActivity.REQUEST_CODE_PERMISSION_WRITE_EXTERNAL_STORAGE,
                 listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE) // post_notifications не является обязательным для работы сервиса
             ) {
                 viewModel.onStartDownloadClick { field ->
@@ -236,7 +236,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
         return when (menuItem.itemId) {
             R.id.action_pick_json -> {
                 doOnPermissionsResult(
-                    BaseActivity.REQUEST_CODE_WRITE_EXTERNAL_PERMISSION,
+                    BaseActivity.REQUEST_CODE_PERMISSION_WRITE_EXTERNAL_STORAGE,
                     listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 ) {
                     viewModel.onLoadFromJsonAction(requireContext()) {

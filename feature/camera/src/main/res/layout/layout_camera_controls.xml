@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:orientation="vertical"
+    tools:parentTag="android.widget.LinearLayout"
+    tools:showIn="@layout/fragment_camera_2">
+
+    <TextView
+        android:id="@+id/tvCameraState"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textAllCaps="true"
+        android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+        android:textColor="@color/textColorHint"
+        app:fontFamily="@font/roboto_bold"
+        tools:text="opened" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/defaultPadding"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <androidx.appcompat.widget.AppCompatSpinner
+            android:id="@+id/spinnerCameraFacing"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+
+        <Button
+            android:id="@+id/btToggleCameraState"
+            style="@style/Button.Primary"
+            android:layout_weight="1"
+            tools:text="@string/camera_open" />
+
+    </LinearLayout>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btCameraTakePicture"
+        style="@style/Button.Primary"
+        android:layout_marginTop="@dimen/defaultPadding"
+        android:text="@string/camera_take_picture" />
+
+</merge>

@@ -26,7 +26,6 @@ interface ContentStorage<T> {
 
     val path: String
 
-
     /**
      * Проверка **физического** существования ресурса
      *
@@ -98,6 +97,12 @@ interface ContentStorage<T> {
      */
     fun write(resource: T, content: String): Result<Unit, Exception>
 
+    fun write(content: InputStream, name: String, path: String? = null): Result<Unit, Exception> =
+        create(name, path)
+            .flatMap { write(it, content) }
+
+    fun write(resource: T, content: InputStream): Result<Unit, Exception>
+
     /**
      * Читает все данные из ресурса с именем [name].
      *
@@ -118,6 +123,8 @@ interface ContentStorage<T> {
      * 1. Result.Failure - если возникло исключение
      */
     fun read(resource: T): Result<String, Exception>
+
+    fun read(resource: T, outputStream: OutputStream): Result<Unit, Exception>
 
     /**
      * Удаляет ресурс с именем [name]

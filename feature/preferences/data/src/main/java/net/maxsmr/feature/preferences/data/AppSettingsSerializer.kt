@@ -3,7 +3,8 @@ package net.maxsmr.feature.preferences.data
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import kotlinx.serialization.json.Json
-import net.maxsmr.commonutils.readStringOrThrow
+import net.maxsmr.commonutils.stream.readStringOrThrow
+import net.maxsmr.commonutils.stream.writeBytesOrThrow
 import net.maxsmr.commonutils.writeBytesOrThrow
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import java.io.InputStream

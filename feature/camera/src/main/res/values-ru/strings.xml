@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="camera_open">Открыть камеру</string>
+    <string name="camera_close">Закрыть камеру</string>
+    <string name="camera_take_picture">Сделать фото</string>
+    <string-array name="camera_facing_values">
+        <item>Не указано</item>
+        <item>Задняя</item>
+        <item>Фронтальная</item>
+    </string-array>
+</resources>

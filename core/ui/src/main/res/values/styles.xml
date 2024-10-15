@@ -67,4 +67,11 @@
     <style name="SwitchStyle" parent="@style/Widget.AppCompat.CompoundButton.Switch">
         <item name="android:textColor">@color/textColorPrimary</item>
     </style>
+
+    <style name="ProgressBarStyle" parent="@style/Widget.AppCompat.ProgressBar">
+        <item name="android:indeterminate">true</item>
+        <item name="android:indeterminateTint">@color/colorAccent</item>
+        <item name="android:indeterminateTintMode">src_atop</item>
+    </style>
+
 </resources>

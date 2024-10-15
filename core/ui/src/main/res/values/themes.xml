@@ -30,6 +30,7 @@
         <item name="autoCompleteTextViewStyle">@style/AppAutoCompleteStyle</item>
         <item name="android:textViewStyle">@style/TextView</item>
         <item name="buttonStyle">@style/Button</item>
+        <item name="progressBarStyle">@style/ProgressBarStyle</item>
         <item name="android:textColorPrimary">@color/textColorPrimary</item>
         <!--     Базовый шрифт для всего аппа   -->
         <item name="android:fontFamily">@font/roboto_regular</item>

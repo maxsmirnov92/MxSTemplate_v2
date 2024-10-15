@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="camera_feature_v2_title" translatable="false">Camera API 2</string>
+    <string name="camera_feature_x_title" translatable="false">Camera X</string>
+    <string name="camera_id_format" translatable="false">id=%s</string>
+    <string name="camera_open">Open camera</string>
+    <string name="camera_close">Close camera</string>
+    <string name="camera_take_picture">Take picture</string>
+    <string-array name="camera_facing_values">
+        <item>None</item>
+        <item>Back</item>
+        <item>Front</item>
+    </string-array>
+</resources>

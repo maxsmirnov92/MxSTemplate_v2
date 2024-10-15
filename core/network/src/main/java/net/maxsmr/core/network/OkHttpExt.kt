@@ -2,11 +2,11 @@ package net.maxsmr.core.network
 
 import android.text.TextUtils
 import kotlinx.coroutines.suspendCancellableCoroutine
-import net.maxsmr.commonutils.IStreamNotifier
 import net.maxsmr.commonutils.REG_EX_FILE_NAME
-import net.maxsmr.commonutils.copyStreamOrThrow
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.commonutils.stream.IStreamNotifier
+import net.maxsmr.commonutils.stream.copyStreamOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.text.charsetForNameOrNull
 import net.maxsmr.core.ProgressListener

@@ -28,7 +28,7 @@ fun CacheDataStoreRepository.observePostNotificationPermissionAsked(
     postNotificationAsked?.asLiveData()?.observe(fragment.viewLifecycleOwner) { asked ->
         if (!asked) {
             fragment.doOnPermissionsResult(
-                BaseActivity.REQUEST_CODE_NOTIFICATIONS_PERMISSION,
+                BaseActivity.REQUEST_CODE_PERMISSION_NOTIFICATIONS,
                 PermissionsHelper.withPostNotificationsByApiVersion(emptySet()),
                 onDenied = {
                     setPostNotificationAsked()

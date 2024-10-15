@@ -33,7 +33,7 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation
-import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_GPS_PERMISSION
+import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_PERMISSION_GPS
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.location.LocationViewModel
@@ -385,7 +385,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     private fun doRequestGps(targetAction: (() -> Unit)? = null) {
         locationViewModel.registerLocationUpdatesOnGpsCheck(this,
-            REQUEST_CODE_GPS_PERMISSION,
+            REQUEST_CODE_PERMISSION_GPS,
             isGpsOnly = false,
             requireFineLocation = true,
             checkOnly = false,

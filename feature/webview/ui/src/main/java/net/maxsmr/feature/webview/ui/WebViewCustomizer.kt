@@ -2,13 +2,13 @@ package net.maxsmr.feature.webview.ui
 
 import android.net.Uri
 import androidx.annotation.Keep
-import net.maxsmr.commonutils.CHARSET_DEFAULT
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.network.URL_PAGE_BLANK
 import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import net.maxsmr.core.android.network.isUrlValid
 import java.io.Serializable
+import java.nio.charset.Charset
 
 /**
  * Инкапсулирет задание свойств для [android.webkit.WebView]
@@ -129,7 +129,7 @@ class WebViewCustomizer private constructor(
     data class WebViewDataArgs @JvmOverloads constructor(
         val data: String,
         val mimeType: String = FileFormat.HTML.mimeType,
-        val charset: String = CHARSET_DEFAULT,
+        val charset: String = Charset.defaultCharset().name(),
         val forceBase64: Boolean = true
     ): Serializable
 

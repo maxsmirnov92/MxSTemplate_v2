@@ -12,7 +12,7 @@ android {
 }
 
 dependencies {
-    api("core_android.libs:commonutils-release-1.1.1.1@aar")
+    api("core_android.libs:commonutils-release-1.1.2@aar")
     api("core_android.libs:permissionchecker-release-1.2.1.0@aar")
 
     implementation(project(":core:di"))

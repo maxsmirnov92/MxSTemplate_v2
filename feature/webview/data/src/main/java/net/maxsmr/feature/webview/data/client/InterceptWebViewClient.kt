@@ -19,6 +19,7 @@ import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import net.maxsmr.commonutils.URL_SCHEME_GEO
 import net.maxsmr.commonutils.URL_SCHEME_GEO_GOOGLE
+import net.maxsmr.commonutils.URL_SCHEME_INTENT
 import net.maxsmr.commonutils.URL_SCHEME_MAIL
 import net.maxsmr.commonutils.URL_SCHEME_MARKET
 import net.maxsmr.commonutils.URL_SCHEME_TEL
@@ -443,8 +444,6 @@ open class InterceptWebViewClient @JvmOverloads constructor(
     }
 
     companion object {
-
-        const val URL_SCHEME_INTENT = "intent"
 
         fun WebResourceRequest.toReadableString(): String {
             return "WebResourceRequest(url='$url', isForMainFrame='$isForMainFrame', isRedirect=${

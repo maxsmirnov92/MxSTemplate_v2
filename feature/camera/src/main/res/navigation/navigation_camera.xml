@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:startDestination="@id/navigationCamera2"
+    android:id="@+id/navigation_camera">
+
+    <fragment
+        android:id="@+id/navigationCamera2"
+        android:name="net.maxsmr.feature.camera.ui.Camera2Fragment"
+        android:label="@string/camera_feature_v2_title"
+        tools:layout="@layout/fragment_camera2" />
+
+</navigation>

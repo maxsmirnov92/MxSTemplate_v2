@@ -15,7 +15,6 @@ import androidx.annotation.CallSuper
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import net.maxsmr.commonutils.CHARSET_DEFAULT
 import net.maxsmr.commonutils.gui.BaseUrlParams
 import net.maxsmr.commonutils.gui.loadDataCompat
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
@@ -180,7 +179,6 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             setSupportZoom(true)
             displayZoomControls = false
             builtInZoomControls = true
-            defaultTextEncodingName = CHARSET_DEFAULT
             allowContentAccess = true
             allowFileAccess = true
         }

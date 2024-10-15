@@ -6,6 +6,8 @@ import android.net.Uri
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.flatMap
 import com.github.kittinunf.result.mapEither
+import net.maxsmr.commonutils.media.openResolverOutputStreamOrThrow
+import net.maxsmr.commonutils.stream.copyStreamOrThrow
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -24,10 +26,14 @@ abstract class UriContentStorage(
     }
 
     override fun write(resource: Uri, content: String): Result<Unit, Exception> = Result.of {
-        openOutputStream(resource).get().apply {
-            write(content.toByteArray())
-            flush()
+        openOutputStream(resource).get().use {
+            it.write(content.toByteArray())
+            it.flush()
         }
+    }
+
+    override fun write(resource: Uri, content: InputStream): Result<Unit, Exception> = Result.of {
+        content.copyStreamOrThrow(openOutputStream(resource).get(), closeInput = false, closeOutput = true)
     }
 
     override fun read(name: String, path: String?): Result<String, Exception> =
@@ -39,6 +45,10 @@ abstract class UriContentStorage(
         }
     }
 
+    override fun read(resource: Uri, outputStream: OutputStream): Result<Unit, Exception> = Result.of {
+        openInputStream(resource).get().copyStreamOrThrow(outputStream, closeInput = true, closeOutput = false)
+    }
+
     override fun delete(resource: Uri): Result<Boolean, Exception> = Result.of {
         resolver.delete(resource, null, null) > 0
     }
@@ -48,7 +58,7 @@ abstract class UriContentStorage(
     }
 
     override fun openOutputStream(resource: Uri): Result<OutputStream, Exception> = Result.of {
-        resolver.openOutputStream(resource) ?: throw IOException("Can't open stream from $resource")
+        resource.openResolverOutputStreamOrThrow(resolver)
     }
 
     override fun shareUri(name: String, path: String?): Result<Uri?, Exception> =

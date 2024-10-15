@@ -74,9 +74,10 @@ open class BaseActivity : AppCompatActivity() {
         // (в отношении остального пользовать ResultLauncher'ы)
         // все объявлять здесь
 
-        const val REQUEST_CODE_NOTIFICATIONS_PERMISSION = 1
-        const val REQUEST_CODE_GPS_PERMISSION = 2
-        const val REQUEST_CODE_WRITE_EXTERNAL_PERMISSION = 3
+        const val REQUEST_CODE_PERMISSION_NOTIFICATIONS = 1
+        const val REQUEST_CODE_PERMISSION_GPS = 2
+        const val REQUEST_CODE_PERMISSION_WRITE_EXTERNAL_STORAGE = 3
+        const val REQUEST_CODE_PERMISSION_CAMERA = 4
 
         const val REQUEST_CODE_IN_APP_UPDATES = 1001
 

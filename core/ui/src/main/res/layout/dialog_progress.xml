@@ -17,10 +17,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:layout_margin="12dp"
-        android:indeterminate="true"
-        android:indeterminateTint="@color/colorAccent"
-        android:indeterminateTintMode="src_atop" />
+        android:layout_margin="12dp" />
 
     <TextView
         android:id="@+id/tvTitle"

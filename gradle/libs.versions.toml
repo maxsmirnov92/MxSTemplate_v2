@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.0.20"
+kotlin = "2.0.21"
 androidxAppCompat = "1.7.0"
 androidxConstraintLayout = "2.1.4"
 androidxConstraintLayoutCompose = "1.0.1"

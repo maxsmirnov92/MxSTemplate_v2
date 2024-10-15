@@ -6,6 +6,7 @@ import com.github.kittinunf.result.NoException
 import com.github.kittinunf.result.Result
 import com.github.kittinunf.result.getOrNull
 import net.maxsmr.commonutils.media.toContentUri
+import net.maxsmr.commonutils.stream.copyStreamOrThrow
 import java.io.*
 
 /**
@@ -32,12 +33,7 @@ abstract class FileContentStorage(
 
     override fun write(resource: File, content: String): Result<Unit, Exception> = write(resource, content, false)
 
-    fun write(resource: File, content: String, append: Boolean): Result<Unit, Exception> = Result.of {
-        FileOutputStream(resource, append).use {
-            it.write(content.toByteArray())
-            it.flush()
-        }
-    }
+    override fun write(resource: File, content: InputStream): Result<Unit, Exception> = write(resource, content, false)
 
     override fun read(resource: File): Result<String, Exception> = Result.of {
         if (!resource.exists() || !resource.isFile) {
@@ -46,6 +42,13 @@ abstract class FileContentStorage(
         val bytes = ByteArray(resource.length().toInt())
         FileInputStream(resource).use { it.read(bytes) }
         String(bytes)
+    }
+
+    override fun read(resource: File, outputStream: OutputStream): Result<Unit, Exception> = Result.of {
+        if (!resource.exists() || !resource.isFile) {
+            throw IOException("Can't read from file $resource")
+        }
+        FileInputStream(resource).copyStreamOrThrow(outputStream, closeInput = true, closeOutput = false)
     }
 
     override fun delete(resource: File): Result<Boolean, Exception> = Result.of {
@@ -65,6 +68,17 @@ abstract class FileContentStorage(
     }
 
     override fun requiredPermissions(read: Boolean, write: Boolean): Array<String> = emptyArray()
+
+    fun write(resource: File, content: String, append: Boolean): Result<Unit, Exception> = Result.of {
+        FileOutputStream(resource, append).use {
+            it.write(content.toByteArray())
+            it.flush()
+        }
+    }
+
+    fun write(resource: File, content: InputStream, append: Boolean): Result<Unit, Exception> = Result.of {
+        content.copyStreamOrThrow(FileOutputStream(resource, append), closeInput = false, closeOutput = true)
+    }
 
     /**
      * Возвращает целевую директорию файла
