@@ -2,13 +2,19 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    app:startDestination="@id/navigationCamera2"
+    app:startDestination="@id/navigationCameraX"
     android:id="@+id/navigation_camera">
 
     <fragment
         android:id="@+id/navigationCamera2"
         android:name="net.maxsmr.feature.camera.ui.Camera2Fragment"
-        android:label="@string/camera_feature_v2_title"
-        tools:layout="@layout/fragment_camera2" />
+        android:label="@string/camera_screen_v2_title"
+        tools:layout="@layout/fragment_camera_2" />
+
+    <fragment
+        android:id="@+id/navigationCameraX"
+        android:name="net.maxsmr.feature.camera.ui.CameraXFragment"
+        android:label="@string/camera_screen_x_title"
+        tools:layout="@layout/fragment_camera_x" />
 
 </navigation>

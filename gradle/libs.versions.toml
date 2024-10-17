@@ -89,6 +89,7 @@ leakCanary = "2.14"
 googlePlayReview = "2.0.1"
 googlePlayAppUpdates = "2.1.0"
 ruStoreSdkBom = "6.0.0"
+cameraX = "1.3.4"
 
 [libraries]
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
@@ -218,6 +219,10 @@ android-gradle = { group = "com.android.tools.build", name = "gradle", version.r
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 room-gradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "room" }
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraX" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraX" }
+androidx-camera-extensions = { group = "androidx.camera", name = "camera-extensions", version.ref = "cameraX" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraX" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradle" }

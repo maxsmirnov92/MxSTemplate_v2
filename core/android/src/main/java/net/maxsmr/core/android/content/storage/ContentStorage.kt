@@ -179,7 +179,7 @@ interface ContentStorage<T> {
      * 1. Result.Success - если [OutputStream] успешно открыт
      * 1. Result.Failure - если возникло исключение
      */
-    fun openOutputStream(name: String, path: String? = null): Result<OutputStream, Exception> =
+    fun openOutputStream(name: String, path: String? = null): Result<Pair<T, OutputStream>, Exception> =
         getOrCreate(name, path).flatMap { openOutputStream(it) }
 
     /**
@@ -189,7 +189,7 @@ interface ContentStorage<T> {
      * 1. Result.Success - если [OutputStream] успешно открыт
      * 1. Result.Failure - если возникло исключение
      */
-    fun openOutputStream(resource: T): Result<OutputStream, Exception>
+    fun openOutputStream(resource: T): Result<Pair<T, OutputStream>, Exception>
 
     /**
      * Перемещает содержимое ресурса с именем [srcName] в хранилище [dstStorage] в ресурс с именем [dstName]
@@ -271,9 +271,9 @@ interface ContentStorage<T> {
     ): Result<Unit, Exception> = Result.of {
         val streamIn = openInputStream(src).get()
         val streamOut = dstStorage.openOutputStream(dstName, dstPath).get()
-        streamIn.copyTo(streamOut)
+        streamIn.copyTo(streamOut.second)
         streamIn.close()
-        streamOut.close()
+        streamOut.second.close()
     }
 
     /**

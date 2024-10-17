@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="camera_feature_v2_title" translatable="false">Camera API 2</string>
-    <string name="camera_feature_x_title" translatable="false">Camera X</string>
+    <string name="camera_screen_v2_title" translatable="false">Camera API 2</string>
+    <string name="camera_screen_x_title" translatable="false">Camera X</string>
     <string name="camera_id_format" translatable="false">id=%s</string>
     <string name="camera_open">Open camera</string>
     <string name="camera_close">Close camera</string>
@@ -11,4 +11,7 @@
         <item>Back</item>
         <item>Front</item>
     </string-array>
+    <string name="camera_error_open_format">Error when opening camera: %s</string>
+    <string name="camera_error_state_format">Camera error occurred: %s</string>
+    <string name="camera_error_take_picture_format">Error when taking picture: %s</string>
 </resources>

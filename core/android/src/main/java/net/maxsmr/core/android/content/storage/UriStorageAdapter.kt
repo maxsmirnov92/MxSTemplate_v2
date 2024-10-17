@@ -55,8 +55,11 @@ class UriStorageAdapter(
         return fileStorage.openInputStream(name, path)
     }
 
-    override fun openOutputStream(name: String, path: String?): Result<OutputStream, Exception> {
-        return fileStorage.openOutputStream(name, path)
+    override fun openOutputStream(name: String, path: String?): Result<Pair<Uri, OutputStream>, Exception> {
+        return Result.of {
+            val result = fileStorage.openOutputStream(name, path).get()
+            Pair(result.first.toUri(context), result.second)
+        }
     }
 
     override fun shareUri(name: String, path: String?): Result<Uri?, Exception> {

@@ -54,7 +54,7 @@ abstract class AbsSharedStorage(
         return super.openInputStream(name, this.path)
     }
 
-    override fun openOutputStream(name: String, path: String?): Result<OutputStream, Exception> {
+    override fun openOutputStream(name: String, path: String?): Result<Pair<Uri, OutputStream>, Exception> {
         return super.openOutputStream(name, this.path)
     }
 

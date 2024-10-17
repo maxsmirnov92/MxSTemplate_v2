@@ -59,8 +59,8 @@ abstract class FileContentStorage(
         FileInputStream(resource)
     }
 
-    override fun openOutputStream(resource: File): Result<OutputStream, Exception> = Result.of {
-        FileOutputStream(resource)
+    override fun openOutputStream(resource: File): Result<Pair<File, OutputStream>, Exception> = Result.of {
+        Pair(resource, FileOutputStream(resource))
     }
 
     override fun shareUri(name: String, path: String?): Result<Uri?, Exception> = Result.of {

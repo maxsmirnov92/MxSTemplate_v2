@@ -26,14 +26,14 @@ abstract class UriContentStorage(
     }
 
     override fun write(resource: Uri, content: String): Result<Unit, Exception> = Result.of {
-        openOutputStream(resource).get().use {
+        openOutputStream(resource).get().second.use {
             it.write(content.toByteArray())
             it.flush()
         }
     }
 
     override fun write(resource: Uri, content: InputStream): Result<Unit, Exception> = Result.of {
-        content.copyStreamOrThrow(openOutputStream(resource).get(), closeInput = false, closeOutput = true)
+        content.copyStreamOrThrow(openOutputStream(resource).get().second, closeInput = false, closeOutput = true)
     }
 
     override fun read(name: String, path: String?): Result<String, Exception> =
@@ -57,8 +57,8 @@ abstract class UriContentStorage(
         resolver.openInputStream(resource) ?: throw IOException("Can't open stream from $resource")
     }
 
-    override fun openOutputStream(resource: Uri): Result<OutputStream, Exception> = Result.of {
-        resource.openResolverOutputStreamOrThrow(resolver)
+    override fun openOutputStream(resource: Uri): Result<Pair<Uri, OutputStream>, Exception> = Result.of {
+        Pair(resource, resource.openResolverOutputStreamOrThrow(resolver))
     }
 
     override fun shareUri(name: String, path: String?): Result<Uri?, Exception> =
