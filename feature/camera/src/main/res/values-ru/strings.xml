@@ -11,4 +11,5 @@
     <string name="camera_error_open_format">Ошибка при открытии камеры: %s</string>
     <string name="camera_error_state_format">Произошла ошибка камеры: %s</string>
     <string name="camera_error_take_picture_format">Ошибка при взятии изображения: %s</string>
+    <string name="camera_menu_action_flashlight">Подсветка</string>
 </resources>

@@ -8,6 +8,8 @@ import android.net.Uri
 import androidx.annotation.MainThread
 import androidx.annotation.RequiresPermission
 import androidx.camera.core.Camera
+import androidx.camera.core.CameraControl
+import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.CameraState
 import androidx.camera.core.ImageAnalysis
@@ -15,6 +17,7 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.core.UseCaseGroup
+import androidx.camera.core.ZoomState
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.AspectRatioStrategy.FALLBACK_RULE_AUTO
 import androidx.camera.core.resolutionselector.ResolutionSelector
@@ -25,6 +28,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.map
 import net.maxsmr.commonutils.asActivityOrThrow
 import net.maxsmr.commonutils.gui.DiffOrientationEventListener
 import net.maxsmr.commonutils.gui.getSurfaceRotation
@@ -73,7 +77,7 @@ class CameraXController(
     }
 
     /**
-     * Executor для Analyzer и взятия фото
+     * Executor для ImageAnalyzer и ImageCapture
      */
     private val cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -94,7 +98,8 @@ class CameraXController(
      */
     val cameraLoadState = _cameraLoadState as LiveData<LoadState<Unit>>
 
-    private val orientationIntervalListener = object : DiffOrientationEventListener(context, notifyDiffThreshold = 25) {
+    private val orientationIntervalListener =
+        object : DiffOrientationEventListener(context, notifyDiffThreshold = 25) {
             override fun onCorrectedRotationChanged(correctedRotation: Int) {
                 val rotation = getSurfaceRotation(getCorrectedRotationDegreesForCameraX(correctedRotation))
 //                В Preview не влияет на отображение фреймов,
@@ -116,13 +121,26 @@ class CameraXController(
         get() {
             if (camera == null || cameraProvider == null) return true
             val value = camera?.cameraInfo?.cameraState?.value?.type
-            return value == CameraState.Type.CLOSING || value == CameraState.Type.CLOSED
+            return value == CameraState.Type.CLOSED
         }
 
     val cameraFacing: CameraFacing?
         get() = camera?.let {
             CameraFacing.resolveByCameraX(it.cameraInfo.lensFacing)
         }
+
+    val cameraInfo: CameraInfo?
+        get() = camera?.cameraInfo
+
+    val cameraControl: CameraControl?
+        get() = camera?.cameraControl
+
+    /**
+     * LiveData, на которые можно подписаться;
+     * Появляются в OPEN состоянии
+     */
+    var observables: CameraObservables? = null
+        private set
 
     private var isPendingStart = false
 
@@ -145,22 +163,26 @@ class CameraXController(
 
                     when (it.type) {
                         CameraState.Type.OPEN -> {
-                            _cameraLoadState.successLoad(Unit)
                             orientationIntervalListener.enable()
+                            _cameraLoadState.successLoad(Unit)
                         }
 
                         CameraState.Type.CLOSED -> {
                             orientationIntervalListener.disable()
+                            _cameraLoadState.successLoad(Unit)
+
                             if (isPendingClose) {
-                                _cameraLoadState.successLoad(Unit)
                                 // close может быть при первом подключении к камере и при onStop lifecycle,
                                 // обнулять при этом не надо
                                 isPendingClose = false
+
                                 cameraProvider = null
                                 camera = null
                                 preview = null
                                 imageCapture = null
                                 imageAnalysis = null
+                                observables = null
+
                                 if (isPendingStart) {
                                     isPendingStart = false
                                     startCamera()
@@ -173,7 +195,6 @@ class CameraXController(
                         }
                     }
 
-
                     it.error?.let { error ->
                         logger.e("Camera error occurred: $error")
                         if (!isCameraOpened) {
@@ -182,6 +203,18 @@ class CameraXController(
                         errorCallbacks?.onCameraStateError(error)
                     }
                 }
+
+                // из актуальной camera взять LiveData
+                observables = CameraObservables(
+                    if (value.cameraInfo.hasFlashUnit()) {
+                        value.cameraInfo.torchState.map { state ->
+                            TorchState.resolve(state)
+                        }
+                    } else {
+                        TorchState.NONE.just()
+                    },
+                    value.cameraInfo.zoomState
+                )
             } else {
                 field?.cameraInfo?.cameraState?.removeObservers(lifecycleOwner)
             }
@@ -203,9 +236,13 @@ class CameraXController(
     @MainThread
     fun restartCamera() {
         logger.d("restartCamera")
-        closeCamera()
-        // дожидаемся корректного закрытия текущей, прежде чем стартовать следующую
-        isPendingStart = true
+        if (!isCameraClosed) {
+            closeCamera()
+            // дожидаемся корректного закрытия текущей, прежде чем стартовать следующую
+            isPendingStart = true
+        } else {
+            startCamera()
+        }
     }
 
     @RequiresPermission(Manifest.permission.CAMERA)
@@ -271,7 +308,6 @@ class CameraXController(
                         cameraSelector,
                         this.build()
                     )
-
                 }
             } catch (e: Exception) {
                 onStartError(e)
@@ -376,6 +412,25 @@ class CameraXController(
             setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
         }.build()
     }
+
+    enum class TorchState(val value: Int) {
+
+        ON(androidx.camera.core.TorchState.ON),
+        OFF(androidx.camera.core.TorchState.OFF),
+        NONE(-1);
+
+        companion object {
+
+            @JvmStatic
+            fun resolve(value: Int) = entries.find { it.value == value }
+                ?: throw IllegalArgumentException("Unknown value: $value")
+        }
+    }
+
+    class CameraObservables(
+        val torchState: LiveData<TorchState>,
+        val zoomState: LiveData<ZoomState>,
+    )
 
     interface ErrorCallbacks {
 

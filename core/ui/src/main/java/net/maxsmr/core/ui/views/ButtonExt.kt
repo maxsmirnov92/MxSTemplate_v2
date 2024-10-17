@@ -2,12 +2,17 @@ package net.maxsmr.core.ui.views
 
 import android.graphics.drawable.Drawable
 import androidx.annotation.ColorRes
+import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.google.android.material.button.MaterialButton
 import net.maxsmr.core.ui.R
 
-fun MaterialButton.setShowProgress(toggle: Boolean, @ColorRes colorResId: Int? = null) {
+fun MaterialButton.setShowProgress(
+    toggle: Boolean,
+    @ColorRes colorResId: Int? = null,
+    @DrawableRes defaultDrawableResId: Int? = null
+) {
     icon = if (toggle) {
         CircularProgressDrawable(context).apply {
             setStyle(CircularProgressDrawable.DEFAULT)
@@ -15,9 +20,10 @@ fun MaterialButton.setShowProgress(toggle: Boolean, @ColorRes colorResId: Int? =
             start()
         }
     } else {
-        null
-    }
-    icon?.let { // callback to redraw button icon
+        defaultDrawableResId?.let {
+            ContextCompat.getDrawable(context, it)
+        }
+    }?.also {
         it.callback = object : Drawable.Callback {
             override fun unscheduleDrawable(who: Drawable, what: Runnable) {
             }

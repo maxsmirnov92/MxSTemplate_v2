@@ -3,6 +3,9 @@ package net.maxsmr.feature.camera.ui
 import android.Manifest
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -16,7 +19,7 @@ import net.maxsmr.commonutils.live.observeLoadStateOnce
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.ui.components.activities.BaseActivity
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.views.setShowProgress
 import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.CameraXController
@@ -29,11 +32,13 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class CameraXFragment : BaseVmFragment<CameraXViewModel>(), ErrorCallbacks {
+class CameraXFragment : BaseNavigationFragment<CameraXViewModel>(), ErrorCallbacks {
 
     override val layoutId: Int = R.layout.fragment_camera_x
 
     override val viewModel: CameraXViewModel by viewModels()
+
+    override val menuResId: Int = R.menu.menu_camera_x
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -52,8 +57,12 @@ class CameraXFragment : BaseVmFragment<CameraXViewModel>(), ErrorCallbacks {
         )
     }
 
+    private var flashLightMenuItem: MenuItem? = null
+
     @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: CameraXViewModel) {
+        super.onViewCreated(view, savedInstanceState, viewModel)
+
         with(LayoutCameraControlsBinding.bind(binding.containerControls)) {
             val adapter = ArrayAdapter.createFromResource(
                 requireContext(),
@@ -76,7 +85,9 @@ class CameraXFragment : BaseVmFragment<CameraXViewModel>(), ErrorCallbacks {
             }
 
             controller.cameraStateType.observe {
-                toggleRequestedOrientationByState(controller.isCameraOpened)
+                val isOpened = controller.isCameraOpened
+
+                toggleRequestedOrientationByState(isOpened)
 
                 btToggleCameraState.setText(
                     if (controller.isCameraClosed) {
@@ -85,7 +96,29 @@ class CameraXFragment : BaseVmFragment<CameraXViewModel>(), ErrorCallbacks {
                         R.string.camera_close
                     }
                 )
-                btCameraTakePicture.isEnabled = controller.isCameraOpened
+                btCameraTakePicture.isEnabled = isOpened
+
+//                if (isOpened && controller.cameraInfo?.hasFlashUnit() != true) {
+//                    viewModel.flashLightState.value = null
+//                }
+
+                controller.observables?.let {
+                    if (isOpened) {
+                        it.torchState.observe { state ->
+                            viewModel.flashLightState.value = when(state) {
+                                CameraXController.TorchState.ON -> true
+                                CameraXController.TorchState.OFF -> false
+                                else -> null
+                            }
+                        }
+//                        it.zoomState.observe(viewLifecycleOwner) {}
+                    }
+
+                    if (controller.isCameraClosed) {
+                        it.torchState.removeObservers(viewLifecycleOwner)
+//                        it.zoomState.removeObservers(viewLifecycleOwner)
+                    }
+                }
             }
 
             viewModel.cameraFacingField.valueLive.observe {
@@ -96,7 +129,7 @@ class CameraXFragment : BaseVmFragment<CameraXViewModel>(), ErrorCallbacks {
                 }
                 if (it == null) {
                     controller.closeCamera()
-                } else if (controller.cameraFacing != it && !controller.isCameraClosed) {
+                } else if (controller.cameraFacing != it && controller.isCameraOpened) {
                     // переоткрытие камеры (если открыта) при несовпадении текущего facing
                     doOnPermissionsResult(
                         BaseActivity.REQUEST_CODE_PERMISSION_CAMERA,
@@ -106,6 +139,10 @@ class CameraXFragment : BaseVmFragment<CameraXViewModel>(), ErrorCallbacks {
                     }
                 }
                 btToggleCameraState.isEnabled = it != null
+            }
+
+            viewModel.flashLightState.observe {
+                refreshFlashLightItem(it)
             }
 
             btToggleCameraState.setOnClickListener {
@@ -122,7 +159,7 @@ class CameraXFragment : BaseVmFragment<CameraXViewModel>(), ErrorCallbacks {
             }
             btCameraTakePicture.setOnClickListener {
                 controller.takePicture(ContentStorage.StorageType.SHARED).observeLoadStateOnce(viewLifecycleOwner) {
-                    btCameraTakePicture.setShowProgress(it.isLoading)
+                    btCameraTakePicture.setShowProgress(it.isLoading, defaultDrawableResId = R.drawable.ic_capture)
                     btCameraTakePicture.isEnabled = !it.isLoading && controller.isCameraOpened
                     if (it.isError()) {
                         it.error?.let { e ->
@@ -163,11 +200,43 @@ class CameraXFragment : BaseVmFragment<CameraXViewModel>(), ErrorCallbacks {
         }
     }
 
+    override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateMenu(menu, inflater)
+        flashLightMenuItem = menu.findItem(R.id.actionFlash)
+        refreshFlashLightItem(viewModel.flashLightState.value)
+    }
+
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        return when (menuItem.itemId) {
+            R.id.actionFlash -> {
+                viewModel.flashLightState.value?.let {
+                    controller.cameraControl?.enableTorch(!it)
+                }
+                true
+            }
+
+            else -> {
+                false
+            }
+        }
+    }
+
     override fun onCameraStartError(e: Exception) {
         viewModel.showCameraOpenError(e)
     }
 
     override fun onCameraStateError(e: CameraState.StateError) {
         viewModel.showCameraStateError(e)
+    }
+
+    private fun refreshFlashLightItem(state: Boolean?) {
+        flashLightMenuItem?.let { item ->
+            if (state != null) {
+                item.setIcon(if (state) R.drawable.ic_flash_on else R.drawable.ic_flash_off)
+                item.isVisible = true
+            } else {
+                item.isVisible = false
+            }
+        }
     }
 }

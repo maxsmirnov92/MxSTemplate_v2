@@ -14,4 +14,5 @@
     <string name="camera_error_open_format">Error when opening camera: %s</string>
     <string name="camera_error_state_format">Camera error occurred: %s</string>
     <string name="camera_error_take_picture_format">Error when taking picture: %s</string>
+    <string name="camera_menu_action_flashlight">Flashlight</string>
 </resources>
