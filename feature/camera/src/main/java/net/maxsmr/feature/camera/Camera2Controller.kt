@@ -32,7 +32,6 @@ import androidx.core.os.ExecutorCompat
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import net.maxsmr.commonutils.gui.DiffOrientationEventListener
-import net.maxsmr.commonutils.gui.DiffOrientationEventListener.Companion.ROTATION_NOT_SPECIFIED
 import net.maxsmr.commonutils.isAtLeastPie
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
@@ -42,9 +41,12 @@ import net.maxsmr.commonutils.text.appendExtension
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.content.storage.ContentStorage.StorageType
+import net.maxsmr.feature.camera.utils.getCameraIdFromFacing
+import net.maxsmr.feature.camera.utils.getCameraSensorOrientationDegrees
+import net.maxsmr.feature.camera.utils.getCorrectedRotationDegreesForCamera
+import net.maxsmr.feature.camera.utils.getPictureSizes
+import net.maxsmr.feature.camera.utils.setTextureTransform
 import java.util.concurrent.Executor
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 // TODO колбеки для клиентского кода
 class Camera2Controller(private val textureView: TextureView) {
@@ -172,18 +174,8 @@ class Camera2Controller(private val textureView: TextureView) {
         }
 
         try {
-            var cameraId: String? = null
-
-            for (id in manager.cameraIdList) {
-                val characteristics = manager.getCameraCharacteristics(id)
-                val facing = characteristics.get(CameraCharacteristics.LENS_FACING) ?: continue
-                if (CameraFacing.resolve(facing) == params.facing) {
-                    cameraId = id
-                    break
-                }
-            }
-
-            cameraId = cameraId?.takeIf { it.isNotEmpty() } ?: manager.cameraIdList.getOrNull(0)
+            val cameraId: String? = manager.getCameraIdFromFacing(params.facing)?.takeIf { it.isNotEmpty() }
+                ?: manager.cameraIdList.getOrNull(0)
 
             if (cameraId == null) {
                 logger.w("No available cameras")
@@ -196,8 +188,7 @@ class Camera2Controller(private val textureView: TextureView) {
 
             manager.openCamera(cameraId, cameraStateCallback, backgroundHandler)
             _cameraId.value = cameraId
-            _cameraFacing.value = CameraFacing.resolve(facing)
-                ?: throw IllegalArgumentException("Unknown camera facing")
+            _cameraFacing.value = CameraFacing.resolveByCamera2(facing)
 
             logger.d("openCamera success")
         } catch (e: CameraAccessException) {
@@ -306,7 +297,8 @@ class Camera2Controller(private val textureView: TextureView) {
                         CaptureRequest.JPEG_ORIENTATION,
                         getCorrectedRotationDegreesForCamera(
                             _cameraFacing.value == CameraFacing.FRONT,
-                            orientationIntervalListener.lastCorrectedRotation
+                            orientationIntervalListener.lastCorrectedRotation,
+                            characteristics.getCameraSensorOrientationDegrees()
                         )
                     )
 
@@ -485,18 +477,6 @@ class Camera2Controller(private val textureView: TextureView) {
             val sessionMode: SessionMode = SessionMode.REGULAR,
             val controlMode: ControlMode = ControlMode.AUTO,
         )
-    }
-
-    enum class CameraFacing(val value: Int) {
-
-        BACK(CameraCharacteristics.LENS_FACING_BACK),
-        FRONT(CameraCharacteristics.LENS_FACING_FRONT);
-
-        companion object {
-
-            @JvmStatic
-            internal fun resolve(id: Int) = entries.find { it.value == id }
-        }
     }
 
     enum class SessionMode {

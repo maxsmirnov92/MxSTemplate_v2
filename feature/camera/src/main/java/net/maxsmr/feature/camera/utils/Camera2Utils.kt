@@ -1,4 +1,4 @@
-package net.maxsmr.feature.camera
+package net.maxsmr.feature.camera.utils
 
 import android.graphics.ImageFormat
 import android.graphics.Matrix
@@ -6,9 +6,11 @@ import android.graphics.PointF
 import android.graphics.RectF
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCharacteristics
+import android.hardware.camera2.CameraManager
 import android.util.Size
 import android.view.TextureView
 import net.maxsmr.commonutils.gui.getRotationDegrees
+import net.maxsmr.feature.camera.CameraFacing
 
 fun TextureView.setTextureTransform(characteristics: CameraCharacteristics) {
     val texture = surfaceTexture ?: return
@@ -90,4 +92,21 @@ fun CameraCharacteristics.getPreviewSize(): Size? {
 fun CameraCharacteristics.getCameraSensorOrientationDegrees(): Int {
     val sensorOrientation = get(CameraCharacteristics.SENSOR_ORIENTATION)
     return (360 - (sensorOrientation ?: 0)) % 360
+}
+
+fun CameraManager.getCameraIdFromFacing(targetFacing: CameraFacing): String? {
+    for (id in cameraIdList) {
+        val characteristics = getCameraCharacteristics(id)
+        val facing = characteristics.get(CameraCharacteristics.LENS_FACING) ?: continue
+        if (CameraFacing.resolveByCamera2(facing) == targetFacing) {
+            return id
+        }
+    }
+    return null
+}
+
+fun CameraManager.getCameraSensorOrientationDegrees(targetFacing: CameraFacing): Int? {
+    return getCameraIdFromFacing(targetFacing)?.let {
+        getCameraCharacteristics(it).getCameraSensorOrientationDegrees()
+    }
 }

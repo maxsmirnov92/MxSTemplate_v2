@@ -14,6 +14,7 @@ import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
+import androidx.camera.core.UseCaseGroup
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.AspectRatioStrategy.FALLBACK_RULE_AUTO
 import androidx.camera.core.resolutionselector.ResolutionSelector
@@ -25,6 +26,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import net.maxsmr.commonutils.asActivityOrThrow
+import net.maxsmr.commonutils.gui.DiffOrientationEventListener
+import net.maxsmr.commonutils.gui.getSurfaceRotation
 import net.maxsmr.commonutils.lifecycleOwnerOrThrow
 import net.maxsmr.commonutils.live.errorLoad
 import net.maxsmr.commonutils.live.just
@@ -33,19 +36,25 @@ import net.maxsmr.commonutils.live.successLoad
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logException
+import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.appendExtension
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.content.storage.ContentStorage.StorageType
+import net.maxsmr.feature.camera.utils.getCorrectedRotationDegreesForCameraX
+import net.maxsmr.feature.camera.utils.getDisplayAspectRatio
 import java.util.concurrent.Executors
 
+/**
+ * @param imageAnalyzerProvider null, если анализ фреймов не требуется
+ */
 class CameraXController(
     private val previewView: PreviewView,
     private val lensFacingProvider: () -> CameraFacing = { CameraFacing.BACK },
     private val imageAnalyzerProvider: (() -> ImageAnalysis.Analyzer)? = null,
-    private val previewBuilderFunc: (Preview.Builder.() -> Unit)? = null,
-    private val imageBuilderFunc: (ImageCapture.Builder.() -> Unit)? = null,
+    private val previewBuilderConfig: (Preview.Builder.() -> Unit)? = null,
+    private val imageBuilderConfig: (ImageCapture.Builder.() -> Unit)? = null,
     private val errorCallbacks: ErrorCallbacks? = null,
 ) {
 
@@ -66,7 +75,7 @@ class CameraXController(
     /**
      * Executor для Analyzer и взятия фото
      */
-    private val executor = Executors.newSingleThreadExecutor()
+    private val cameraExecutor = Executors.newSingleThreadExecutor()
 
     private val _cameraStateType = MutableLiveData(CameraState.Type.CLOSED)
 
@@ -81,9 +90,20 @@ class CameraXController(
      * Текущее загрузочное состояние камеры:
      * 1. Loading - в процессе подключения/отключения
      * 2. Success - успешное подключение/отключение
-     * 3. Error - ошибка, при которой подключение не удалось или камера перестала быть OPENED
+     * 3. Error - ошибка, при которой подключение не удалось или камера перестала быть [CameraState.Type.OPEN]
      */
     val cameraLoadState = _cameraLoadState as LiveData<LoadState<Unit>>
+
+    private val orientationIntervalListener = object : DiffOrientationEventListener(context, notifyDiffThreshold = 25) {
+            override fun onCorrectedRotationChanged(correctedRotation: Int) {
+                val rotation = getSurfaceRotation(getCorrectedRotationDegreesForCameraX(correctedRotation))
+//                В Preview не влияет на отображение фреймов,
+//                т.к. CameraX автоматически корректирует визуальное представление
+//                preview?.targetRotation = rotation
+                imageCapture?.targetRotation = rotation
+                imageAnalysis?.targetRotation = rotation
+            }
+        }
 
     val isCameraOpened: Boolean
         get() {
@@ -101,7 +121,7 @@ class CameraXController(
 
     val cameraFacing: CameraFacing?
         get() = camera?.let {
-            CameraFacing.resolve(it.cameraInfo.lensFacing)
+            CameraFacing.resolveByCameraX(it.cameraInfo.lensFacing)
         }
 
     private var isPendingStart = false
@@ -123,25 +143,36 @@ class CameraXController(
                     logger.d("Camera state changed: $it")
                     _cameraStateType.value = it.type
 
-                    if (it.type == CameraState.Type.OPEN) {
-                        _cameraLoadState.successLoad(Unit)
-                    }
+                    when (it.type) {
+                        CameraState.Type.OPEN -> {
+                            _cameraLoadState.successLoad(Unit)
+                            orientationIntervalListener.enable()
+                        }
 
-                    if (it.type == CameraState.Type.CLOSED && isPendingClose) {
-                        // close может быть при первом подключении к камере и при onStop lifecycle,
-                        // обнулять при этом не надо
-                        isPendingClose = false
-                        cameraProvider = null
-                        camera = null
-                        preview = null
-                        imageCapture = null
-                        imageAnalysis = null
-                        _cameraLoadState.successLoad(Unit)
-                        if (isPendingStart) {
-                            isPendingStart = false
-                            startCamera()
+                        CameraState.Type.CLOSED -> {
+                            orientationIntervalListener.disable()
+                            if (isPendingClose) {
+                                _cameraLoadState.successLoad(Unit)
+                                // close может быть при первом подключении к камере и при onStop lifecycle,
+                                // обнулять при этом не надо
+                                isPendingClose = false
+                                cameraProvider = null
+                                camera = null
+                                preview = null
+                                imageCapture = null
+                                imageAnalysis = null
+                                if (isPendingStart) {
+                                    isPendingStart = false
+                                    startCamera()
+                                }
+                            }
+                        }
+
+                        else -> {
+                            // do nothing
                         }
                     }
+
 
                     it.error?.let { error ->
                         logger.e("Camera error occurred: $error")
@@ -208,38 +239,54 @@ class CameraXController(
                 val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get().also {
                     this.cameraProvider = it
                 }
-
-                createImagePreview().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                    preview = it
-                }
-                imageCapture = createImageCapture()
-                imageAnalysis = createImageAnalysis()
-
                 cameraProvider.unbindAll()
 
-                val cameraSelector = CameraSelector.Builder()
-                    .requireLensFacing(lensFacingProvider().value)
-                    .build()
+                with(UseCaseGroup.Builder()) {
 
-                // без активного пермишна камера не откроется молча без ошибок
-                camera = cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    imageCapture,
-                    imageAnalysis
-                )
+                    createImagePreview().also {
+                        it.setSurfaceProvider(previewView.surfaceProvider)
+                        preview = it
+                        addUseCase(it)
+                    }
+                    imageCapture = createImageCapture().also {
+                        addUseCase(it)
+                    }
+                    imageAnalysis = createImageAnalysis().also {
+                        if (it != null) {
+                            addUseCase(it)
+                        }
+                    }
+
+                    val cameraSelector = CameraSelector.Builder()
+                        .requireLensFacing(lensFacingProvider().toCameraXValue())
+                        .build()
+
+                    previewView.viewPort?.let {
+                        setViewPort(it)
+                    }
+
+                    // без активного пермишна камера не откроется молча без ошибок
+                    camera = cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        this.build()
+                    )
+
+                }
             } catch (e: Exception) {
                 onStartError(e)
             }
         }, ContextCompat.getMainExecutor(context))
     }
 
+    /**
+     * @param imageConfig меняет ранее инициализированный [ImageCapture] нужными параметрами
+     */
     @MainThread
     fun takePicture(
         storageType: StorageType,
         resourceNameFunc: (Long) -> String = { it.toString() },
+        imageConfig: (ImageCapture.() -> Unit)? = null,
     ): LiveData<LoadState<Uri>> {
         logger.d("takePicture, storageType: $storageType")
 
@@ -269,12 +316,13 @@ class CameraXController(
         val outputFileOptions = ImageCapture.OutputFileOptions.Builder(resource.second)
             .setMetadata(metadata)
             .build()
+        imageConfig?.invoke(capture)
 
         val result = MutableLiveData<LoadState<Uri>>(LoadState.loading())
 
         capture.takePicture(
             outputFileOptions,
-            executor,
+            cameraExecutor,
             object : ImageCapture.OnImageSavedCallback {
 
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
@@ -286,6 +334,7 @@ class CameraXController(
 
                 override fun onError(exception: ImageCaptureException) {
                     logger.e("onError, exception: $exception")
+                    resource.first.delete(context.contentResolver)
                     result.errorLoad(exception, false)
                 }
             }
@@ -297,21 +346,23 @@ class CameraXController(
     private fun createImagePreview() = Preview.Builder()
         .setResolutionSelector(resolutionSelector())
         .setTargetRotation(previewView.display.rotation)
-        .apply { previewBuilderFunc?.invoke(this) }
+        .apply { previewBuilderConfig?.invoke(this) }
         .build()
         .apply { setSurfaceProvider(previewView.surfaceProvider) }
 
-    private fun createImageAnalysis() =
-        ImageAnalysis.Builder()
+    private fun createImageAnalysis(): ImageAnalysis? {
+        val analyzer = imageAnalyzerProvider?.invoke() ?: return null
+        return ImageAnalysis.Builder()
             .setImageQueueDepth(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
-            .apply { imageAnalyzerProvider?.invoke()?.let { setAnalyzer(executor, it) } }
+            .apply { setAnalyzer(cameraExecutor, analyzer) }
+    }
 
     private fun createImageCapture() =
         ImageCapture.Builder()
             .setResolutionSelector(resolutionSelector())
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-            .apply { imageBuilderFunc?.invoke(this) }
+            .apply { imageBuilderConfig?.invoke(this) }
             .build()
 
     private fun resolutionSelector(): ResolutionSelector {
@@ -324,18 +375,6 @@ class CameraXController(
             )
             setResolutionStrategy(ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY)
         }.build()
-    }
-
-    enum class CameraFacing(val value: Int) {
-
-        BACK(CameraSelector.LENS_FACING_BACK),
-        FRONT(CameraSelector.LENS_FACING_FRONT);
-
-        companion object {
-
-            @JvmStatic
-            internal fun resolve(id: Int) = entries.find { it.value == id }
-        }
     }
 
     interface ErrorCallbacks {

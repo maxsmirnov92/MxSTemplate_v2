@@ -5,7 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
-import net.maxsmr.feature.camera.CameraXController.CameraFacing
+import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.R
 
 class CameraXViewModel(state: SavedStateHandle): BaseHandleableViewModel(state) {

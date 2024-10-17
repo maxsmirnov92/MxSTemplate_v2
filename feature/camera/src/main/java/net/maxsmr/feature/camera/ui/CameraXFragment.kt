@@ -18,12 +18,13 @@ import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.views.setShowProgress
+import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.CameraXController
 import net.maxsmr.feature.camera.CameraXController.ErrorCallbacks
 import net.maxsmr.feature.camera.R
 import net.maxsmr.feature.camera.databinding.FragmentCameraXBinding
 import net.maxsmr.feature.camera.databinding.LayoutCameraControlsBinding
-import net.maxsmr.feature.camera.toggleRequestedOrientationByState
+import net.maxsmr.feature.camera.utils.toggleRequestedOrientationByState
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -42,11 +43,11 @@ class CameraXFragment : BaseVmFragment<CameraXViewModel>(), ErrorCallbacks {
     private val controller: CameraXController by lazy {
         CameraXController(
             binding.containerPreview.previewView,
-            imageBuilderFunc = {
+            imageBuilderConfig = {
                 setFlashMode(FLASH_MODE_AUTO)
             },
             lensFacingProvider = {
-                viewModel.cameraFacingField.value ?: CameraXController.CameraFacing.BACK
+                viewModel.cameraFacingField.value ?: CameraFacing.BACK
             }, errorCallbacks = this
         )
     }
@@ -67,7 +68,7 @@ class CameraXFragment : BaseVmFragment<CameraXViewModel>(), ErrorCallbacks {
                     viewModel.cameraFacingField.value = if (position == 0) {
                         null
                     } else {
-                        CameraXController.CameraFacing.entries[position - 1]
+                        CameraFacing.entries[position - 1]
                     }
                 }
 

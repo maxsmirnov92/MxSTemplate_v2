@@ -2,14 +2,11 @@ package net.maxsmr.feature.camera.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.content.pm.ActivityInfo
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.combine
@@ -19,12 +16,12 @@ import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.camera.Camera2Controller
-import net.maxsmr.feature.camera.Camera2Controller.CameraFacing
 import net.maxsmr.feature.camera.Camera2Controller.CameraState
+import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.R
 import net.maxsmr.feature.camera.databinding.FragmentCamera2Binding
 import net.maxsmr.feature.camera.databinding.LayoutCameraControlsBinding
-import net.maxsmr.feature.camera.toggleRequestedOrientationByState
+import net.maxsmr.feature.camera.utils.toggleRequestedOrientationByState
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
