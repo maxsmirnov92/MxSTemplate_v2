@@ -172,7 +172,7 @@ class CommonInAppUpdateChecker(
             .addOnFailureListener {
                 logger.w("getAppUpdateInfo failed", it)
             }
-            .addOnCompleteListener {
+            .addOnCompleteListener(fragment.requireActivity()) {
                 logger.i("getAppUpdateInfo complete")
                 isChecking = false
             }

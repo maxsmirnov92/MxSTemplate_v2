@@ -14,5 +14,13 @@
     <string name="camera_error_open_format">Error when opening camera: %s</string>
     <string name="camera_error_state_format">Camera error occurred: %s</string>
     <string name="camera_error_take_picture_format">Error when taking picture: %s</string>
-    <string name="camera_menu_action_flashlight">Flashlight</string>
+    <string name="camera_menu_action_toggle_flashlight_on">Turn flashlight on</string>
+    <string name="camera_menu_action_toggle_flashlight_off">Turn flashlight off</string>
+    <string name="camera_menu_action_toggle_recognition_start">Start recognition</string>
+    <string name="camera_menu_action_toggle_recognition_stop">Stop recognition</string>
+    <string name="camera_fps_text_format" translatable="false">FPS: %d</string>
+    <string name="camera_dialog_capture_recognition_result_title">Recognition results</string>
+    <string name="camera_dialog_capture_recognition_result_message_failed_format">Failed to recognize text: %s</string>
+    <string name="camera_recognize_number_failed_format">Failed to recognize number: %s</string>
+    <string name="camera_recognize_number_failed">Failed to recognize number</string>
 </resources>

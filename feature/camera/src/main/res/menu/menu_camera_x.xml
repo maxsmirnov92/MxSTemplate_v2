@@ -2,8 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/actionFlash"
+        android:id="@+id/actionToggleFlash"
         android:icon="@drawable/ic_flash_off"
-        android:title="@string/camera_menu_action_flashlight"
+        android:title="@string/camera_menu_action_toggle_flashlight_on"
         app:showAsAction="always" />
+    <item
+        android:id="@+id/actionToggleRecognition"
+        android:icon="@android:drawable/ic_media_play"
+        android:title="@string/camera_menu_action_toggle_flashlight_on"
+        app:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
 </menu>

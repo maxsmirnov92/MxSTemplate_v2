@@ -16,7 +16,6 @@ enum class CameraFacing() {
     fun toCameraXValue() = when (this) {
         BACK -> CameraSelector.LENS_FACING_BACK
         FRONT -> CameraSelector.LENS_FACING_FRONT
-
     }
 
     companion object {
@@ -34,6 +33,5 @@ enum class CameraFacing() {
             CameraSelector.LENS_FACING_FRONT -> FRONT
             else -> throw IllegalArgumentException("Unknown facing id: $id")
         }
-
     }
 }

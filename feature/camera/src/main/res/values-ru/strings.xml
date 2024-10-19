@@ -11,5 +11,12 @@
     <string name="camera_error_open_format">Ошибка при открытии камеры: %s</string>
     <string name="camera_error_state_format">Произошла ошибка камеры: %s</string>
     <string name="camera_error_take_picture_format">Ошибка при взятии изображения: %s</string>
-    <string name="camera_menu_action_flashlight">Подсветка</string>
+    <string name="camera_menu_action_toggle_flashlight_on">Включить подсветку</string>
+    <string name="camera_menu_action_toggle_flashlight_off">Отключить подсветку</string>
+    <string name="camera_menu_action_toggle_recognition_start">Начать распознавание</string>
+    <string name="camera_menu_action_toggle_recognition_stop">Остановить распознавание</string>
+    <string name="camera_dialog_capture_recognition_result_title">Результаты распознавания</string>
+    <string name="camera_dialog_capture_recognition_result_message_failed_format">Не удалось распознать текст: %s</string>
+    <string name="camera_recognize_number_failed_format">Не удалось распознать номер: %s</string>
+    <string name="camera_recognize_number_failed">Не удалось распознать номер</string>
 </resources>

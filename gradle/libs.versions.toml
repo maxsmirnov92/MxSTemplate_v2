@@ -58,7 +58,7 @@ zxingCore = "3.4.0"
 zxingParent = "3.4.0"
 zxingEmbedded = "3.3.0"
 flowLayout = "1.3.3"
-androidxNavigation = "2.8.2"
+androidxNavigation = "2.8.3"
 androidGradle = "8.6.1"
 #firebaseCrashlyticsPlugin = "3.0.2"
 #firebaseAppDistributionPlugin = "5.0.0"
@@ -72,7 +72,7 @@ androidxTestExtJunit = "1.2.1"
 androidxComposeBom = "2024.09.03"
 gridlayout = "1.0.0"
 r8 = "8.5.35"
-lint = "31.7.0"
+lint = "31.7.1"
 androidDesugarJdkLibs = "2.1.2"
 androidxComposeCompiler = "1.5.10"
 stfalconImageViewer = "v1.0.1"
@@ -86,10 +86,13 @@ adapterdelegates4Kotlin = "4.3.2"
 ioClient = "1.0.0"
 kittinunfResult = "4.0.0"
 leakCanary = "2.14"
-googlePlayReview = "2.0.1"
+googlePlayReview = "2.0.2"
 googlePlayAppUpdates = "2.1.0"
 ruStoreSdkBom = "6.0.0"
+
 cameraX = "1.3.4"
+googleMlKit = "19.0.1"
+huaweiMl = "3.11.0.301"
 
 [libraries]
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
@@ -219,10 +222,17 @@ android-gradle = { group = "com.android.tools.build", name = "gradle", version.r
 kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 room-gradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", version.ref = "room" }
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
+
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraX" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraX" }
 androidx-camera-extensions = { group = "androidx.camera", name = "camera-extensions", version.ref = "cameraX" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraX" }
+
+#GMS ML kit
+google-mlkit-text-recognition = { group = "com.google.android.gms", name = "play-services-mlkit-text-recognition", version.ref = "googleMlKit" }
+#HMS ML kit
+huawei-ml-computer-vision-ocr = { group = "com.huawei.hms", name = "ml-computer-vision-ocr", version.ref = "huaweiMl" }
+huawei-ml-computer-vision-ocr-latin-model = { group = "com.huawei.hms", name = "ml-computer-vision-ocr-latin-model", version.ref = "huaweiMl" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradle" }

@@ -13,7 +13,7 @@
 
     <fragment
         android:id="@+id/navigationCameraX"
-        android:name="net.maxsmr.feature.camera.ui.CameraXFragment"
+        android:name="net.maxsmr.feature.camera.ui.CameraXRecognitionFragment"
         android:label="@string/camera_screen_x_title"
         tools:layout="@layout/fragment_camera_x" />
 

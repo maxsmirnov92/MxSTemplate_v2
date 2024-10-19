@@ -6,10 +6,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
-import net.maxsmr.core.di.DI_NAME_ROUTING_KEY_URL
 import net.maxsmr.core.di.Preferences
 import net.maxsmr.core.di.PreferencesType
-import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.manager.UUIDManager
 import net.maxsmr.permissionchecker.PermissionsHelper
 import net.maxsmr.permissionchecker.PrefsStorage
@@ -27,9 +25,6 @@ class AppModule {
 
     @[Provides Singleton Named(DI_NAME_MAIN_ACTIVITY_CLASS)]
     fun provideMainActivityClassName(): String = "net.maxsmr.mxstemplate.ui.activity.MainBottomActivity"
-
-    @[Provides Singleton Named(DI_NAME_ROUTING_KEY_URL)]
-    fun provideRoutingKeyUrl(): String = BuildConfig.URL_DEMO_KEY_DOUBLE_GIS_ROUTING
 
     @[Provides Singleton]
     fun providePermissionHelper(

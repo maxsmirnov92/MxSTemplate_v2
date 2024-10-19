@@ -48,6 +48,7 @@ import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.content.storage.ContentStorage.StorageType
 import net.maxsmr.feature.camera.utils.getCorrectedRotationDegreesForCameraX
 import net.maxsmr.feature.camera.utils.getDisplayAspectRatio
+import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
 /**
@@ -55,6 +56,7 @@ import java.util.concurrent.Executors
  */
 class CameraXController(
     private val previewView: PreviewView,
+    private val imageAnalyzerExecutor: Executor,
     private val lensFacingProvider: () -> CameraFacing = { CameraFacing.BACK },
     private val imageAnalyzerProvider: (() -> ImageAnalysis.Analyzer)? = null,
     private val previewBuilderConfig: (Preview.Builder.() -> Unit)? = null,
@@ -76,10 +78,7 @@ class CameraXController(
         context.lifecycleOwnerOrThrow()
     }
 
-    /**
-     * Executor для ImageAnalyzer и ImageCapture
-     */
-    private val cameraExecutor = Executors.newSingleThreadExecutor()
+    private val imageCaptureExecutor = Executors.newSingleThreadExecutor()
 
     private val _cameraStateType = MutableLiveData(CameraState.Type.CLOSED)
 
@@ -358,7 +357,7 @@ class CameraXController(
 
         capture.takePicture(
             outputFileOptions,
-            cameraExecutor,
+            imageCaptureExecutor,
             object : ImageCapture.OnImageSavedCallback {
 
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
@@ -391,7 +390,7 @@ class CameraXController(
         return ImageAnalysis.Builder()
             .setImageQueueDepth(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             .build()
-            .apply { setAnalyzer(cameraExecutor, analyzer) }
+            .apply { setAnalyzer(imageAnalyzerExecutor, analyzer) }
     }
 
     private fun createImageCapture() =

@@ -1,7 +1,6 @@
 package net.maxsmr.mxstemplate.ui.fragment
 
 import dagger.hilt.android.AndroidEntryPoint
-import net.maxsmr.core.di.DI_NAME_ROUTING_KEY_URL
 import net.maxsmr.core.di.DI_NAME_VERSION_CODE
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IFragmentDelegate
@@ -10,6 +9,7 @@ import net.maxsmr.feature.about.ReleaseNotesFragmentDelegate
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel
 import net.maxsmr.feature.address_sorter.ui.BaseAddressSorterFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.RELEASE_NOTES_ASSETS_FOLDER_NAME_EN
 import net.maxsmr.mxstemplate.RELEASE_NOTES_ASSETS_FOLDER_NAME_RU
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -42,9 +42,9 @@ class MainAddressSorterFragment : BaseAddressSorterFragment() {
     @Inject
     override lateinit var factory: AddressSorterViewModel.Factory
 
-    @Inject
-    @Named(DI_NAME_ROUTING_KEY_URL)
-    override lateinit var routingKeyUrl: String
+    override val routingKeyUrl: String by lazy {
+        BuildConfig.URL_DEMO_KEY_DOUBLE_GIS_ROUTING
+    }
 
     @Inject
     lateinit var cacheRepo: CacheDataStoreRepository

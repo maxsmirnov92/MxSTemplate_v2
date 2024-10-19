@@ -6,7 +6,6 @@ const val DI_NAME_MAIN_ACTIVITY_CLASS = "main_activity_class"
 const val DI_NAME_VERSION_CODE = "version_code"
 const val DI_NAME_VERSION_NAME = "version_name"
 const val DI_NAME_DATABASE_NAME = "database_name"
-const val DI_NAME_ROUTING_KEY_URL = "routing_key_url"
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)

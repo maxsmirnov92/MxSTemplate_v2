@@ -7,12 +7,15 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import net.maxsmr.core.android.location.receiver.ILocationReceiver
+import net.maxsmr.feature.camera.recognition.ITextRecognition
+import net.maxsmr.feature.camera.recognition.TextRecognitionResolver
 import net.maxsmr.mobile_services.IMobileServicesAvailability
 import net.maxsmr.mobile_services.MobileServicesAvailability
 import net.maxsmr.mobile_services.market.MarketIntentLauncher
 import net.maxsmr.mobile_services.market.WrappedMarketIntentLauncher
 import net.maxsmr.mobile_services.market.startActivityMarketIntent
 import net.maxsmr.mobile_services.receiver.LocationReceiverResolver
+import net.maxsmr.mxstemplate.BuildConfig
 import javax.inject.Singleton
 
 /**
@@ -44,5 +47,12 @@ class MobileServicesModule {
         availability: IMobileServicesAvailability,
     ): ILocationReceiver {
         return LocationReceiverResolver(context, availability).resolve()
+    }
+
+    @[Singleton Provides]
+    fun provideTextRecognition(
+        availability: IMobileServicesAvailability,
+    ): ITextRecognition {
+        return TextRecognitionResolver(BuildConfig.API_KEY_HUAWEI_ML_ANALYZER, availability).resolve()
     }
 }

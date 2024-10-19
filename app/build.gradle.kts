@@ -64,24 +64,29 @@ android {
         buildConfigField(
             "String",
             "AUTHORIZATION_RADAR_IO",
-            "\"${appProperties.getProperty("authorizationRadarIo")}\""
+            "\"${appProperties.getPropertyNotNull("authorizationRadarIo")}\""
         )
         buildConfigField(
             "String",
             "API_KEY_YANDEX_SUGGEST",
-            "\"${appProperties.getProperty("apiKeyYandexSuggest")}\""
+            "\"${appProperties.getPropertyNotNull("apiKeyYandexSuggest")}\""
         )
         buildConfigField(
             "String",
             "API_KEY_YANDEX_GEOCODE",
-            "\"${appProperties.getProperty("apiKeyYandexGeocode")}\""
+            "\"${appProperties.getPropertyNotNull("apiKeyYandexGeocode")}\""
+        )
+        buildConfigField(
+            "String",
+            "API_KEY_HUAWEI_ML_ANALYZER",
+            "\"${appProperties.getPropertyNotNull("apiKeyHuaweiMlAnalyzer")}\""
         )
         buildConfigField(
             "String",
             "URL_DEMO_KEY_DOUBLE_GIS_ROUTING",
-            "\"${appProperties.getProperty("urlDemoKeyDoubleGisRouting")}\""
+            "\"${appProperties.getPropertyNotNull("urlDemoKeyDoubleGisRouting")}\""
         )
-        buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getProperty("devEmailAddress")}\"")
+        buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getPropertyNotNull("devEmailAddress")}\"")
 
         val donateProperties = Properties()
         donateProperties.load(FileInputStream(File(rootDir, "app/donate.properties")))
@@ -309,9 +314,9 @@ fun ApplicationVariantDimension.applySigningConfig(
             signingConfigs {
                 create(signingConfigName) {
                     storeFile = File("${System.getenv("ANDROID_HOME")}/$signingConfigName.keystore")
-                    keyAlias = properties.getProperty("alias")
-                    keyPassword = properties.getProperty("signingPassword")
-                    storePassword = properties.getProperty("signingPassword")
+                    keyAlias = properties.getPropertyNotNull("alias")
+                    keyPassword = properties.getPropertyNotNull("signingPassword")
+                    storePassword = properties.getPropertyNotNull("signingPassword")
                 }
                 logger.info("Signing config \"$signingConfigName\" created")
             }
@@ -418,3 +423,5 @@ fun getTasksMatcher(): Matcher {
     }
     return pattern.matcher(requests)
 }
+
+fun Properties.getPropertyNotNull(key: String): String = getProperty(key).takeIf { it != "null" }.orEmpty()
