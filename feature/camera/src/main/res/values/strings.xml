@@ -20,7 +20,11 @@
     <string name="camera_menu_action_toggle_recognition_stop">Stop recognition</string>
     <string name="camera_fps_text_format" translatable="false">FPS: %d</string>
     <string name="camera_dialog_capture_recognition_result_title">Recognition results</string>
-    <string name="camera_dialog_capture_recognition_result_message_failed_format">Failed to recognize text: %s</string>
-    <string name="camera_recognize_number_failed_format">Failed to recognize number: %s</string>
-    <string name="camera_recognize_number_failed">Failed to recognize number</string>
+    <string name="camera_recognize_text_failed_format">Failed to recognize text: %s</string>
+    <string name="camera_recognize_text_failed">Failed to recognize text</string>
+    <string name="camera_recognize_text_type_bank_card_format">Bank card number: %s</string>
+    <string name="camera_recognize_text_type_doc_type_format">Document number: %1$s (%2$s)</string>
+    <string name="camera_recognize_text_type_email_format" translatable="false">Email: %s</string>
+    <string name="camera_recognize_text_type_rus_phone_format">Phone number: %s</string>
+    <string name="camera_recognize_text_type_grz_format">Vehicle sign: %1$s (%2$s)</string>
 </resources>

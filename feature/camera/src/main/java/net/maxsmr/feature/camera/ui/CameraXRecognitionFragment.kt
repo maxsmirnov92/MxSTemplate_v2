@@ -7,12 +7,12 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.camera.core.CameraState
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture.FLASH_MODE_AUTO
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
@@ -20,6 +20,7 @@ import net.maxsmr.commonutils.graphic.createBitmapFromUri
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.live.observeLoadStateOnce
 import net.maxsmr.commonutils.live.zip
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
@@ -32,6 +33,12 @@ import net.maxsmr.feature.camera.CameraXController.ErrorCallbacks
 import net.maxsmr.feature.camera.R
 import net.maxsmr.feature.camera.databinding.FragmentCameraXBinding
 import net.maxsmr.feature.camera.databinding.LayoutCameraControlsBinding
+import net.maxsmr.feature.camera.recognition.cases.BankCardTextMatcherNumberUseCase
+import net.maxsmr.feature.camera.recognition.cases.DocTypeTextMatcherUseCase
+import net.maxsmr.feature.camera.recognition.cases.EmailTextMatcherUseCase
+import net.maxsmr.feature.camera.recognition.cases.ExactTextMatcherUseCase
+import net.maxsmr.feature.camera.recognition.cases.GrzTextMatcherUseCase
+import net.maxsmr.feature.camera.recognition.cases.RusPhoneTextMatcherUseCase
 import net.maxsmr.feature.camera.utils.toggleRequestedOrientationByState
 import net.maxsmr.permissionchecker.PermissionsHelper
 import java.lang.String.join
@@ -46,7 +53,18 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
 
     override val viewModel: CameraXRecognitionViewModel by viewModels {
         AbstractSavedStateViewModelFactory(this) {
-            factory.create(it, Executors.newSingleThreadExecutor())
+            factory.create(
+                it,
+                Executors.newSingleThreadExecutor(),
+                listOf(
+                    BankCardTextMatcherNumberUseCase(),
+                    RusPhoneTextMatcherUseCase(),
+                    EmailTextMatcherUseCase(),
+                    GrzTextMatcherUseCase(),
+                    DocTypeTextMatcherUseCase(),
+                    ExactTextMatcherUseCase("Camera X")
+                )
+            )
         }
     }
 
@@ -170,15 +188,11 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
             }
 
             btToggleCameraState.setOnClickListener {
-                if (controller.isCameraOpened) {
-                    controller.closeCamera()
-                } else {
-                    doOnPermissionsResult(
-                        BaseActivity.REQUEST_CODE_PERMISSION_CAMERA,
-                        listOf(Manifest.permission.CAMERA)
-                    ) {
-                        controller.startCamera()
-                    }
+                doOnPermissionsResult(
+                    BaseActivity.REQUEST_CODE_PERMISSION_CAMERA,
+                    listOf(Manifest.permission.CAMERA)
+                ) {
+                    controller.toggleCamera()
                 }
             }
             btCameraTakePicture.setOnClickListener {
@@ -227,24 +241,25 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
             }.observe {
                 val results = it.second
                 if (results != null && it.first == true) {
-                    if (results is CameraXRecognitionViewModel.NumberRecognitionResult.RecognizedNumber) {
-                        containerPreview.tvRecognitionSuccessResult.text = results.number
+                    if (results is CameraXRecognitionViewModel.TextRecognitionResult.Success) {
+                        containerPreview.tvRecognitionSuccessResult.text = results.message.get(requireContext())
                         containerPreview.tvRecognitionSuccessResult.isVisible = true
+                        containerPreview.tvRecognitionFailureResult.isVisible = false
                     } else {
-                        results as CameraXRecognitionViewModel.NumberRecognitionResult.FailedRecognition
+                        results as CameraXRecognitionViewModel.TextRecognitionResult.Failed
                         val textResult = mutableListOf<String>().apply {
-                            results.text?.let { text ->
+                            results.sourceText?.let { text ->
                                 add(text)
                             }
-                            results.exception?.message?.takeIf { it.isNotEmpty() }?.let { message ->
+                            results.exception.message?.let { message ->
                                 add(message)
                             }
-                        }
-                        containerPreview.tvRecognitionFailureResult.text = if (textResult.isNotEmpty()) {
-                            getString(R.string.camera_recognize_number_failed_format, join("\n\n", textResult))
+                        }.mapNotNull { it.takeIf { it.isNotEmpty() } }
+                        containerPreview.tvRecognitionFailureResult.setTextOrGone(if (textResult.isNotEmpty()) {
+                            getString(R.string.camera_recognize_text_failed_format, join("\n\n", textResult))
                         } else {
-                            getString(R.string.camera_recognize_number_failed)
-                        }
+                            EMPTY_STRING // getString(R.string.camera_recognize_text_failed)
+                        })
                         containerPreview.tvRecognitionFailureResult.isVisible = true
                     }
                 } else {
@@ -272,6 +287,15 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
         }.observe {
             refreshToggleRecognitionMenuItemItem(it.first ?: false, it.second == CameraState.Type.OPEN)
         }
+        viewModel.recognitionStateLiveData.observe {
+            with(requireActivity().window) {
+                if (it) {
+                    addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                } else {
+                    clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                }
+            }
+        }
     }
 
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
@@ -296,7 +320,7 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
 
             R.id.actionToggleRecognition -> {
                 val state = viewModel.recognitionStateLiveData.value ?: false
-                viewModel.recognitionStateLiveData.value = !state
+                viewModel.setRecognitionState(!state)
                 true
             }
 

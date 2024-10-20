@@ -44,7 +44,21 @@ class FragmentViewBindingDelegate<T : ViewBinding> @JvmOverloads constructor(
     private var binding: T? = null
 
     init {
-        fragment.lifecycle.addObserver(LifecycleObserver())
+        fragment.lifecycle.addObserver(this)
+    }
+
+    override fun onCreate(owner: LifecycleOwner) {
+        if (owner === fragment) {
+            fragment.viewLifecycleOwnerLiveData.observe(fragment) { viewLifecycleOwner ->
+                viewLifecycleOwner.lifecycle.addObserver(this)
+            }
+        }
+    }
+
+    override fun onDestroy(owner: LifecycleOwner) {
+        if (owner !== fragment) {
+            AppExecutors.mainThread.execute { binding = null }
+        }
     }
 
     override fun getValue(thisRef: Fragment, property: KProperty<*>): T = get(thisRef)
@@ -62,24 +76,6 @@ class FragmentViewBindingDelegate<T : ViewBinding> @JvmOverloads constructor(
 
         return viewBindingFactory(rootViewProvider?.invoke()
                 ?: thisRef.requireView()).also { this.binding = it }
-    }
-
-
-    private inner class LifecycleObserver : DefaultLifecycleObserver {
-
-        override fun onCreate(owner: LifecycleOwner) {
-            if (owner === fragment) {
-                fragment.viewLifecycleOwnerLiveData.observe(fragment) { viewLifecycleOwner ->
-                    viewLifecycleOwner.lifecycle.addObserver(this)
-                }
-            }
-        }
-
-        override fun onDestroy(owner: LifecycleOwner) {
-            if (owner !== fragment) {
-                AppExecutors.mainThread.execute { binding = null }
-            }
-        }
     }
 
     companion object {

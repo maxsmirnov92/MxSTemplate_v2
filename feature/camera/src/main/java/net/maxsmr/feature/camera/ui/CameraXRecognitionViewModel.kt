@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import androidx.camera.core.CameraState
 import androidx.camera.core.ImageProxy
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -18,7 +19,11 @@ import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logException
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
+import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
+import net.maxsmr.core.android.coroutines.usecase.data
+import net.maxsmr.core.android.coroutines.usecase.succeeded
 import net.maxsmr.core.android.exceptions.EmptyResultException
+import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine.Companion.joinLines
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asOkDialog
@@ -27,18 +32,25 @@ import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.FrameCalculator
 import net.maxsmr.feature.camera.R
 import net.maxsmr.feature.camera.recognition.ITextRecognition
+import net.maxsmr.feature.camera.recognition.cases.BankCardTextMatcherNumberUseCase
+import net.maxsmr.feature.camera.recognition.cases.BaseTextMatcherUseCase
+import net.maxsmr.feature.camera.recognition.cases.DocTypeTextMatcherUseCase
+import net.maxsmr.feature.camera.recognition.cases.EmailTextMatcherUseCase
+import net.maxsmr.feature.camera.recognition.cases.GrzTextMatcherUseCase
+import net.maxsmr.feature.camera.recognition.cases.RusPhoneTextMatcherUseCase
+import java.io.Serializable
 import java.util.concurrent.Executor
 
+/**
+ * @param textMatcherUseCases юзкейсы для применения в onFrameReceived
+ * @param textRecognition Google или Huawei реализация распознавателя текста
+ */
 class CameraXRecognitionViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted val imageAnalyzerExecutor: Executor,
-    @Assisted private val numberLength: Int,
+    @Assisted val textMatcherUseCases: List<BaseTextMatcherUseCase<*>>,
     private val textRecognition: ITextRecognition,
 ) : BaseHandleableViewModel(state) {
-
-    init {
-        require(numberLength > 0) {"Incorrect numberLength: $numberLength"}
-    }
 
     /**
      * Целевой тип камеры (совпадёт с фактическим при успешном подключении)
@@ -53,14 +65,16 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
      */
     val flashLightStateLiveData by persistableLiveDataInitial<Boolean?>(null)
 
+    private val _recognitionStateLiveData by persistableLiveDataInitial(false)
+
     /**
      * Текущее состояние распознавания
      */
-    val recognitionStateLiveData by persistableLiveDataInitial(false)
+    val recognitionStateLiveData = _recognitionStateLiveData as LiveData<Boolean>
 
     val frameStatsLiveData by persistableLiveData<FrameCalculator.FrameStats?>()
 
-    val realtimeResultsLiveData by persistableLiveData<NumberRecognitionResult?>()
+    val realtimeResultsLiveData by persistableLiveData<TextRecognitionResult?>()
 
     val captureResultsLiveData by persistableLiveData<TextRecognitionResult?>()
 
@@ -77,17 +91,17 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     override fun onInitialized() {
         super.onInitialized()
         captureResultsLiveData.observe {
-            if (it is TextRecognitionResult.RecognizedText) {
+            if (it is TextRecognitionResult.Success) {
                 showOkDialog(
                     DIALOG_TAG_CAPTURE_RECOGNITION_RESULT,
-                    TextMessage(it.text),
+                    it.message,
                     TextMessage(R.string.camera_dialog_capture_recognition_result_title)
                 )
-            } else if (it is TextRecognitionResult.FailedRecognition) {
+            } else if (it is TextRecognitionResult.Failed) {
                 showOkDialog(
                     DIALOG_TAG_CAPTURE_RECOGNITION_RESULT,
                     TextMessage(R.string.camera_dialog_capture_recognition_result_title),
-                    TextMessage(R.string.camera_dialog_capture_recognition_result_message_failed_format,
+                    TextMessage(R.string.camera_recognize_text_failed_format,
                         it.exception.message)
                 )
             }
@@ -103,6 +117,7 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        viewModelScope
         clearStatsData()
         textRecognition.dispose()
     }
@@ -111,7 +126,7 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     fun onFrameReceived(imageProxy: ImageProxy) {
         frameCalculator.onFrame()
 
-        if (recognitionStateLiveData.value != true) {
+        if (_recognitionStateLiveData.value != true) {
             imageProxy.close()
             return
         }
@@ -125,25 +140,27 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
         }
 
         viewModelScope.launch(dispatcher) {
-            try {
-                val result = textRecognition.processFrame(frame, rotationDegrees)
-                val number = result.map { it.text }.firstOrNull {
-                    val subNumbers = it.split(" ")
-                    subNumbers.isNotEmpty() && subNumbers.flatMap { it.asIterable() }.all { it.isDigit() }
-                }
-                val lines = result.joinLines()
-                realtimeResultsLiveData.postValue(
-                    if (number != null && number.replace(" ", "").length >= numberLength) {
-                        NumberRecognitionResult.RecognizedNumber(number, lines)
-                    } else {
-                        NumberRecognitionResult.FailedRecognition(lines, null)
-                    }
-                )
+
+            val recognizedLines = try {
+               textRecognition.processFrame(frame, rotationDegrees)
             } catch (e: Exception) {
                 logException(logger, e, "processFrame")
-                realtimeResultsLiveData.postValue(NumberRecognitionResult.FailedRecognition(null, e))
+                realtimeResultsLiveData.postValue(TextRecognitionResult.Failed(e))
+                null
             } finally {
                 imageProxy.close()
+            }
+
+            recognizedLines?.let {
+                val results = textMatcherUseCases.map {
+                    it.invokeWithLines(recognizedLines)
+                }
+                val result = results.find {
+                    it is TextRecognitionResult.Success
+                } ?: results.find {
+                    it is TextRecognitionResult.Failed
+                }
+                realtimeResultsLiveData.postValue(result)
             }
         }
     }
@@ -158,13 +175,19 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
                 if (result.isEmpty()) {
                     throw EmptyResultException()
                 }
-                captureResultsLiveData.postValue(TextRecognitionResult.RecognizedText(result.joinLines()))
+                captureResultsLiveData.postValue(TextRecognitionResult.Success(TextMessage(result.joinLines())))
             } catch (e: Exception) {
                 logException(logger, e, "processFrame")
-                captureResultsLiveData.postValue(TextRecognitionResult.FailedRecognition(e))
+                captureResultsLiveData.postValue(TextRecognitionResult.Failed(e))
             } finally {
                 imageBitmap.recycle()
             }
+        }
+    }
+
+    fun setRecognitionState(toggle: Boolean) {
+        if (!toggle || textMatcherUseCases.isNotEmpty()) {
+            _recognitionStateLiveData.value = toggle
         }
     }
 
@@ -193,28 +216,59 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
                 e.message.takeIf { !it.isNullOrEmpty() } ?: e.toString()))
     }
 
+    private suspend fun BaseTextMatcherUseCase<*>.invokeWithLines(lines: List<RecognizedLine>): TextRecognitionResult {
+        val result = this.invoke(lines)
+        return if (result.succeeded) {
+            when(val r = result.data?.result) {
+                is DocTypeTextMatcherUseCase.DocumentResult -> {
+                    TextRecognitionResult.Success(TextMessage(R.string.camera_recognize_text_type_doc_type_format, r.number, r.type.name))
+                }
+                is GrzTextMatcherUseCase.GrzResult -> {
+                    TextRecognitionResult.Success(TextMessage(R.string.camera_recognize_text_type_grz_format, r.number, r.type.name))
+                }
+                is BankCardTextMatcherNumberUseCase.CardNumberResult -> {
+                    TextRecognitionResult.Success(TextMessage(R.string.camera_recognize_text_type_bank_card_format, result.data?.sourceText))
+                }
+                is EmailTextMatcherUseCase.EmailResult -> {
+                    TextRecognitionResult.Success(TextMessage(R.string.camera_recognize_text_type_email_format, r.email))
+                }
+                is RusPhoneTextMatcherUseCase.RusPhoneResult -> {
+                    TextRecognitionResult.Success(TextMessage(R.string.camera_recognize_text_type_rus_phone_format, r.phone))
+                }
+                is String -> {
+                    TextRecognitionResult.Success(TextMessage(r))
+                }
+                else -> {
+                    TextRecognitionResult.Failed(RuntimeException("Unknown result type: $r"))
+                }
+            }
+        } else if (result is UseCaseResult.Error) {
+            val e = result.exception
+            if (e is BaseTextMatcherUseCase.FailedRecognitionException) {
+                TextRecognitionResult.Failed(e, e.sourceText)
+            } else {
+                TextRecognitionResult.Failed(e)
+            }
+        } else {
+            TextRecognitionResult.Failed(RuntimeException())
+        }
+    }
+
     @AssistedFactory
     interface Factory {
 
         fun create(
             state: SavedStateHandle,
             imageAnalyzerExecutor: Executor,
-            numberLength: Int = 16 // TODO разные стратегии определения по регуляркам
+            textRecognitionUseCases: List<BaseTextMatcherUseCase<*>>
         ): CameraXRecognitionViewModel
     }
 
-    sealed interface NumberRecognitionResult {
+    sealed interface TextRecognitionResult: Serializable {
 
-        data class RecognizedNumber(val number: String, val text: String) : NumberRecognitionResult
+        data class Success(val message: TextMessage) : TextRecognitionResult
 
-        data class FailedRecognition(val text: String?, val exception: Exception?) : NumberRecognitionResult
-    }
-
-    sealed interface TextRecognitionResult {
-
-        data class RecognizedText(val text: String) : TextRecognitionResult
-
-        data class FailedRecognition(val exception: Exception) : TextRecognitionResult
+        data class Failed(val exception: Throwable, val sourceText: String? = null) : TextRecognitionResult
     }
 
     companion object {

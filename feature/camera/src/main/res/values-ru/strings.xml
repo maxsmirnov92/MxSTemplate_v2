@@ -16,7 +16,10 @@
     <string name="camera_menu_action_toggle_recognition_start">Начать распознавание</string>
     <string name="camera_menu_action_toggle_recognition_stop">Остановить распознавание</string>
     <string name="camera_dialog_capture_recognition_result_title">Результаты распознавания</string>
-    <string name="camera_dialog_capture_recognition_result_message_failed_format">Не удалось распознать текст: %s</string>
-    <string name="camera_recognize_number_failed_format">Не удалось распознать номер: %s</string>
-    <string name="camera_recognize_number_failed">Не удалось распознать номер</string>
+    <string name="camera_recognize_text_failed_format">Не удалось распознать текст: %s</string>
+    <string name="camera_recognize_text_failed">Не удалось распознать текст</string>
+    <string name="camera_recognize_text_type_bank_card_format">Номер банковской карты: %s</string>
+    <string name="camera_recognize_text_type_doc_type_format">Номер документа: %1$s (%2$s)</string>
+    <string name="camera_recognize_text_type_rus_phone_format">Номер телефона: %s</string>
+    <string name="camera_recognize_text_type_grz_format">ГРЗ: %1$s (%2$s)</string>
 </resources>

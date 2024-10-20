@@ -7,6 +7,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.annotation.MainThread
 import androidx.annotation.RequiresPermission
+import androidx.camera.core.AspectRatio
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraControl
 import androidx.camera.core.CameraInfo
@@ -31,6 +32,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
 import net.maxsmr.commonutils.asActivityOrThrow
 import net.maxsmr.commonutils.gui.DiffOrientationEventListener
+import net.maxsmr.commonutils.gui.StandardAspectRatio
+import net.maxsmr.commonutils.gui.getDisplayStandardAspectRatio
 import net.maxsmr.commonutils.gui.getSurfaceRotation
 import net.maxsmr.commonutils.lifecycleOwnerOrThrow
 import net.maxsmr.commonutils.live.errorLoad
@@ -47,7 +50,6 @@ import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.content.storage.ContentStorage.StorageType
 import net.maxsmr.feature.camera.utils.getCorrectedRotationDegreesForCameraX
-import net.maxsmr.feature.camera.utils.getDisplayAspectRatio
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
@@ -246,6 +248,17 @@ class CameraXController(
 
     @RequiresPermission(Manifest.permission.CAMERA)
     @MainThread
+    fun toggleCamera() {
+        logger.d("toggleCamera")
+        if (isCameraClosed) {
+            startCamera()
+        } else {
+            closeCamera()
+        }
+    }
+
+    @RequiresPermission(Manifest.permission.CAMERA)
+    @MainThread
     fun startCamera() {
         logger.d("startCamera")
 
@@ -404,7 +417,11 @@ class CameraXController(
         return ResolutionSelector.Builder().apply {
             setAspectRatioStrategy(
                 AspectRatioStrategy(
-                    activity.getDisplayAspectRatio(),
+                    if (activity.getDisplayStandardAspectRatio() == StandardAspectRatio._4_3) {
+                        AspectRatio.RATIO_4_3
+                    } else {
+                        AspectRatio.RATIO_16_9
+                    },
                     FALLBACK_RULE_AUTO
                 )
             )

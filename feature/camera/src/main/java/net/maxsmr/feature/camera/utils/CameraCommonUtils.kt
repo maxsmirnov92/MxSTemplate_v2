@@ -31,7 +31,7 @@ fun Fragment.toggleRequestedOrientationByState(isCameraOpened: Boolean) {
 fun getRotationSize(
     sensorOrientationDegrees: Int,
     displayRotationDegrees: Int,
-    previewSize: Size
+    previewSize: Size,
 ): Size {
     if (sensorOrientationDegrees > 360
             || displayRotationDegrees > 360
