@@ -117,14 +117,13 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        viewModelScope
         clearStatsData()
         textRecognition.dispose()
     }
 
     @SuppressLint("UnsafeOptInUsageError")
     fun onFrameReceived(imageProxy: ImageProxy) {
-        frameCalculator.onFrame()
+        frameCalculator.onFrame() // imageProxy.imageInfo.timestamp
 
         if (_recognitionStateLiveData.value != true) {
             imageProxy.close()
