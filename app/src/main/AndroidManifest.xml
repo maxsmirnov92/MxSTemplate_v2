@@ -21,6 +21,8 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+
     <uses-permission android:name="android.permission.INTERNET" />
     <!--  по остальным пермишнам мёрж из других манифестов  -->
 
@@ -40,7 +42,7 @@
 
         <!--  при  adjustPan проблемы с пустым пространством при отсутствующей клавиатуре остаются   -->
         <activity
-            android:name=".ui.activity.MainBottomActivity"
+            android:name="net.maxsmr.feature.notification_reader.ui.NotificationReaderActivity"
             android:exported="true"
             android:launchMode="singleInstance"
             android:taskAffinity=""
@@ -120,6 +122,30 @@
             android:foregroundServiceType="specialUse"
             android:label="@string/download_service_label" />
 
+        <service
+            android:name="net.maxsmr.feature.notification_reader.data.NotificationReaderListenerService"
+            android:exported="true"
+            android:foregroundServiceType="specialUse"
+            android:label="@string/notification_reader_service_label"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".BootCompeteReceiver"
+            android:directBootAware="true"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -147,12 +173,12 @@
                 tools:replace="android:resource" />
         </provider>
 
-<!--        <meta-data-->
-<!--            android:name="android.webkit.WebView.EnableSafeBrowsing"-->
-<!--            android:value="true" />-->
-<!--        <meta-data-->
-<!--            android:name="com.android.webview.WebViewUpdateService"-->
-<!--            android:value="com.google.android.webview" />-->
+        <!--        <meta-data-->
+        <!--            android:name="android.webkit.WebView.EnableSafeBrowsing"-->
+        <!--            android:value="true" />-->
+        <!--        <meta-data-->
+        <!--            android:name="com.android.webview.WebViewUpdateService"-->
+        <!--            android:value="com.google.android.webview" />-->
         <meta-data
             android:name="com.google.mlkit.vision.DEPENDENCIES"
             android:value="ocr" />

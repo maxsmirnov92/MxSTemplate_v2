@@ -5,6 +5,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import net.maxsmr.mxstemplate.manager.host.DoubleGisRoutingHostManager
+import net.maxsmr.mxstemplate.manager.host.NotificationReaderHostManager
 import net.maxsmr.core.network.host.HostManager
 import net.maxsmr.mxstemplate.manager.host.RadarIoHostManager
 import net.maxsmr.mxstemplate.manager.host.YandexGeocodeHostManager
@@ -26,4 +27,7 @@ class HostManagerModule {
 
     @[Provides Singleton net.maxsmr.core.di.DoubleGisRoutingHostManager]
     fun provideDoubleGisRoutingHostManager(): HostManager = DoubleGisRoutingHostManager()
+
+    @[Provides Singleton net.maxsmr.core.di.NotificationReaderHostManager]
+    fun provideNotificationReaderHostManager(): HostManager = NotificationReaderHostManager()
 }

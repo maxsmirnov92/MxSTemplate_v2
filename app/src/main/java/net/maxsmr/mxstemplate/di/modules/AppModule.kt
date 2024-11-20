@@ -29,7 +29,7 @@ class AppModule {
     ) = UUIDManager(sharedPreferences)
 
     @[Provides Singleton Named(DI_NAME_MAIN_ACTIVITY_CLASS)]
-    fun provideMainActivityClassName(): String = "net.maxsmr.mxstemplate.ui.activity.MainBottomActivity"
+    fun provideMainActivityClassName(): String = "net.maxsmr.feature.notification_reader.ui.NotificationReaderActivity"
 
     @[Provides Singleton Named(DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD)]
     fun provideDownloadServiceForegroundId(): Int = -1

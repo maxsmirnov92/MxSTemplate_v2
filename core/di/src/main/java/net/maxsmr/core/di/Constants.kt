@@ -57,6 +57,10 @@ annotation class DoubleGisRoutingHostManager
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
+annotation class NotificationReaderHostManager
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
 annotation class DownloaderOkHttpClient
 
 @Qualifier
@@ -81,6 +85,10 @@ annotation class DoubleGisRoutingOkHttpClient
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
+annotation class NotificationReaderOkHttpClient
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
 annotation class DownloadHttpLoggingInterceptor
 
 @Qualifier
@@ -102,3 +110,7 @@ annotation class YandexGeocodeRetrofit
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DoubleGisRoutingRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class NotificationReaderRetrofit

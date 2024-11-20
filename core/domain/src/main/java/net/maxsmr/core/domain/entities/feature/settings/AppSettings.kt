@@ -13,7 +13,7 @@ data class AppSettings(
     val loadByWiFiOnly: Boolean = false,
     val retryOnConnectionFailure: Boolean = true,
     val retryDownloads: Boolean = true,
-    val disableNotifications: Boolean = false,
+    val disableNotifications: Boolean = true,
     val updateNotificationInterval: Long = UPDATE_NOTIFICATION_INTERVAL_DEFAULT,
     val openLinksInExternalApps: Boolean = true,
     val startPageUrl: String = "https://google.com",
@@ -22,6 +22,9 @@ data class AppSettings(
     val sortPriority: SortPriority = SortPriority.DISTANCE,
     val routingApp: RoutingApp = RoutingApp.DOUBLEGIS,
     val routingAppFromCurrent: Boolean = true,
+    val whiteBlackListPackagesUrl: String = "",
+    val isWhiteListPackages: Boolean = true,
+    val failedNotificationsWatcherInterval: Long = 5000L
 ) : Serializable {
 
     companion object {

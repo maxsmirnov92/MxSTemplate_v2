@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_reader_service_label">Notification reader</string>
+    <string name="notification_reader_notification_channel_name">Reader channel</string>
+    <string name="notification_reader_notification_text">Чтение нотификаций…</string>
+</resources>

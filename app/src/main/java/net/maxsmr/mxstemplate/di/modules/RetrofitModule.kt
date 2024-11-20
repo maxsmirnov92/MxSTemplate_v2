@@ -11,6 +11,9 @@ import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.DoubleGisRoutingHostManager
 import net.maxsmr.core.di.DoubleGisRoutingOkHttpClient
 import net.maxsmr.core.di.DoubleGisRoutingRetrofit
+import net.maxsmr.core.di.NotificationReaderHostManager
+import net.maxsmr.core.di.NotificationReaderOkHttpClient
+import net.maxsmr.core.di.NotificationReaderRetrofit
 import net.maxsmr.core.di.RadarIoHostManager
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.RadarIoRetrofit
@@ -97,6 +100,25 @@ class RetrofitModule {
         @ApplicationContext context: Context,
         @DoubleGisRoutingHostManager hostManager: HostManager,
         @DoubleGisRoutingOkHttpClient okHttpClient: Provider<OkHttpClient>,
+        @BaseJson json: Json,
+    ): CommonRetrofitClient {
+        return CommonRetrofitClient(
+            hostManager.baseUrl.toHttpUrl(),
+            json,
+            File(context.cacheDir, "OkHttpCache").path,
+            BuildConfig.PROTOCOL_VERSION,
+            false
+            // cacheManager.getDisableCache()
+        ) {
+            okHttpClient.get()
+        }
+    }
+
+    @[Provides Singleton NotificationReaderRetrofit]
+    fun provideNotificationReaderRetrofit(
+        @ApplicationContext context: Context,
+        @NotificationReaderHostManager hostManager: HostManager,
+        @NotificationReaderOkHttpClient okHttpClient: Provider<OkHttpClient>,
         @BaseJson json: Json,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(

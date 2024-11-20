@@ -16,6 +16,7 @@ import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.di.DoubleGisRoutingOkHttpClient
 import net.maxsmr.core.di.DownloadHttpLoggingInterceptor
 import net.maxsmr.core.di.DownloaderOkHttpClient
+import net.maxsmr.core.di.NotificationReaderOkHttpClient
 import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
 import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
@@ -23,14 +24,15 @@ import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.network.client.okhttp.DoubleGisOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.DownloadOkHttpClientManager
+import net.maxsmr.core.network.client.okhttp.NotificationReaderOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.RadarIoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.YandexOkHttpClientManager
 import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
 import net.maxsmr.core.network.retrofit.converters.api.BaseYandexSuggestResponse
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.di.ModuleAppEntryPoint
+import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.CacheControl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -165,4 +167,24 @@ class OkHttpModule {
                 .doubleGisRoutingRetrofit().instance
         }.build()
     }
+
+    @[Provides Singleton NotificationReaderOkHttpClient]
+    fun provideNotificationReaderOkHttpClient(
+        @ApplicationContext context: Context,
+        cacheRepo: CacheDataStoreRepository,
+    ): OkHttpClient {
+        return NotificationReaderOkHttpClientManager(
+            context = context,
+            connectivityChecker = NetworkConnectivityChecker,
+            apiKeyProvider = {
+                runBlocking {
+                    cacheRepo.getNotificationReaderKey(BuildConfig.API_KEY_NOTIFICATION_READER)
+                }
+            }
+        ) {
+            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
+                .notificationReaderRetrofit().instance
+        }.build()
+    }
+
 }

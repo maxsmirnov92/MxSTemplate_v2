@@ -6,6 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
 import net.maxsmr.core.database.dao.download.DownloadsDao
+import net.maxsmr.core.database.dao.notification_reader.NotificationReaderDao
 import net.maxsmr.mxstemplate.db.AppDataBase
 
 @Module
@@ -17,4 +18,7 @@ object DaosModule {
 
     @Provides
     fun providesAddressDao(database: AppDataBase): AddressDao = database.addressDao(database)
+
+    @Provides
+    fun providesNotificationReaderDao(database: AppDataBase): NotificationReaderDao = database.notificationReaderDao(database)
 }
