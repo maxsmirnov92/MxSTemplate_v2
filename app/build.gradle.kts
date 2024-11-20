@@ -91,8 +91,6 @@ android {
             addressesString
         )
 
-
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -234,6 +232,7 @@ dependencies {
     implementation(project(":feature:address_sorter:ui"))
     implementation(project(":feature:webview:ui"))
     implementation(project(":feature:camera"))
+    implementation(project(":feature:notification_reader:ui"))
 
     implementation(project(":feature:rate"))
     implementation(project(":feature:about"))
@@ -360,6 +359,11 @@ fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
         "String",
         "API_KEY_HUAWEI_ML_ANALYZER",
         "\"${appProperties.getPropertyNotNull("apiKeyHuaweiMlAnalyzer")}\""
+    )
+    buildConfigField(
+        "String",
+        "API_KEY_NOTIFICATION_READER",
+        "\"${appProperties.getPropertyNotNull("apiKeyNotificationReader")}\""
     )
     buildConfigField(
         "String",

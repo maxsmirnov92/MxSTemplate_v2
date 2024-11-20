@@ -9,6 +9,7 @@ import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.ILoadState.Status
 import net.maxsmr.core.database.dao.download.DownloadsDao
 import net.maxsmr.core.database.model.download.DownloadInfo
+import net.maxsmr.core.network.api.NotificationReaderDataSource
 import net.maxsmr.feature.download.data.manager.DownloadsHashManager
 import net.maxsmr.feature.download.data.model.IntentSenderParams
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -20,7 +21,7 @@ import kotlin.random.Random
 @Singleton
 class DownloadsRepo @Inject constructor(
     private val dao: DownloadsDao,
-    private val cacheRepo: CacheDataStoreRepository
+    private val cacheRepo: CacheDataStoreRepository,
     ) {
 
     private val intentSenderFlow = MutableStateFlow<VmEvent<IntentSenderParams>?>(null)

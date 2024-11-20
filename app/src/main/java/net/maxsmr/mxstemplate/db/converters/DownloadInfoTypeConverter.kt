@@ -1,4 +1,4 @@
-package net.maxsmr.mxstemplate.db.converters;
+package net.maxsmr.mxstemplate.db.converters
 
 import androidx.room.TypeConverter
 import net.maxsmr.commonutils.asByteArray

@@ -7,6 +7,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.DoubleGisRoutingRetrofit
+import net.maxsmr.core.di.NotificationReaderRetrofit
 import net.maxsmr.core.di.RadarIoRetrofit
 import net.maxsmr.core.di.YandexGeocodeRetrofit
 import net.maxsmr.core.di.YandexSuggestRetrofit
@@ -39,4 +40,7 @@ internal interface ModuleAppEntryPoint {
 
     @DoubleGisRoutingRetrofit
     fun doubleGisRoutingRetrofit(): CommonRetrofitClient
+
+    @NotificationReaderRetrofit
+    fun notificationReaderRetrofit(): CommonRetrofitClient
 }

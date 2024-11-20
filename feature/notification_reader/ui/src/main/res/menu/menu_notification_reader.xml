@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/actionServiceStartStop"
+        android:icon="@android:drawable/ic_media_play"
+        android:title="@string/notification_reader_menu_action_service_start"
+        app:iconTint="@color/white"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/actionImportKey"
+        android:title="@string/notification_reader_menu_action_import_key" />
+</menu>

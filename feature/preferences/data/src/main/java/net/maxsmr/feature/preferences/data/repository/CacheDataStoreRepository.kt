@@ -1,5 +1,6 @@
 package net.maxsmr.feature.preferences.data.repository
 
+import android.content.Context
 import android.os.Build
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -8,6 +9,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -195,6 +197,44 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
+    suspend fun getNotificationReaderKey(defaultKey: String): String {
+        var result = dataStore.data.map { prefs ->
+            prefs[FIELD_KEY_NOTIFICATION_READER_API_KEY]
+        }.firstOrNull().orEmpty()
+        if (result.isEmpty()) {
+            setNotificationReaderKey(defaultKey)
+            result = defaultKey
+        }
+        return result
+    }
+
+    suspend fun setNotificationReaderKey(key: String) {
+        dataStore.edit { prefs ->
+            prefs[FIELD_KEY_NOTIFICATION_READER_API_KEY] = key
+        }
+    }
+
+    suspend fun isPackageInWhiteList(
+        context: Context,
+        packageName: String,
+        isWhiteList: Boolean
+    ): Boolean = getPackagesWhiteList().let {
+        context.packageName != packageName && (it.isEmpty()
+                || if (isWhiteList) it.contains(packageName) else !it.contains(packageName))
+    }
+
+    suspend fun getPackagesWhiteList(): Set<String> {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_KEY_PACKAGES_WHITE_LIST]
+        }.firstOrNull().orEmpty()
+    }
+
+    suspend fun setPackagesWhiteList(packages: Set<String>) {
+        dataStore.edit { prefs ->
+            prefs[FIELD_KEY_PACKAGES_WHITE_LIST] = packages
+        }
+    }
+
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
@@ -205,6 +245,8 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_SEEN_RELEASE_NOTES_VERSION_CODES = stringPreferencesKey("seenReleaseNotesVersionCodes")
         private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")
         private val FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY = stringPreferencesKey("keyDoubleGisRoutingApiKey")
+        private val FIELD_KEY_NOTIFICATION_READER_API_KEY = stringPreferencesKey("keyNotificationReader")
+        private val FIELD_KEY_PACKAGES_WHITE_LIST = stringSetPreferencesKey("keyPackagesWhiteList")
         private val FIELD_KEY_DEMO_PERIOD_EXPIRED = booleanPreferencesKey("demoPeriodExpired")
         private val FIELD_KEY_TUTORIAL_COMPLETED = booleanPreferencesKey("tutorialCompleted")
     }
