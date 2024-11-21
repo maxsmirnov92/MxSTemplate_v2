@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class NotificationReaderDataRequest(
-    val content: String,
+    val contentText: String,
     val packageName: String,
     val timestamp: Instant,
 ) {

@@ -31,7 +31,7 @@ class NotificationReaderRepository @Inject constructor(
                     settingsRepo.getSettings().isWhiteListPackages)) {
             dao.upsert(
                 NotificationReaderEntity(
-                    content = content,
+                    contentText = content,
                     packageName = packageName,
                     timestamp = System.currentTimeMillis(),
                     status = NotificationReaderEntity.New

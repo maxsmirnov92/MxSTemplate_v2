@@ -6,4 +6,10 @@
     <string name="notification_reader_toast_start_add_in_settings">App must be selected in settings to start service</string>
     <string name="notification_reader_toast_stop_remove_in_settings">App must be unselected in settings to stop service</string>
     <string name="notification_reader_snack_cannot_start_service">Cannot start service</string>
+    <string name="notification_reader_package_name_unknown">Unknown package</string>
+    <string name="notification_reader_content_empty">No content</string>
+    <string name="notification_reader_no_notifications">No notifications</string>
+    <string name="notification_reader_status_new">New</string>
+    <string name="notification_reader_status_loading">Loading…</string>
+    <string name="notification_reader_status_failed">Failed</string>
 </resources>

@@ -17,7 +17,7 @@ import net.maxsmr.feature.download.ui.R
 import net.maxsmr.feature.download.ui.databinding.ItemHeaderBinding
 import java.io.Serializable
 
-val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("HeadersDelegateAdapter")
+val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("HeadersAdapterDelegate")
 
 fun headersAdapterDelegate(listener: HeaderListener) =
     adapterDelegate<HeaderInfoAdapterData, HeaderInfoAdapterData, HeadersViewHolder>(

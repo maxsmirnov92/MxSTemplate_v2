@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="textColorNotificationNew">#0006cf</color>
+    <color name="textColorNotificationLoading">#6dc100</color>
+</resources>

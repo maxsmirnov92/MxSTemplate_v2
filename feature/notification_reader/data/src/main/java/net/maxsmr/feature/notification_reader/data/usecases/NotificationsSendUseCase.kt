@@ -19,7 +19,7 @@ class NotificationsSendUseCase @Inject constructor(
     override suspend fun execute(parameters: Parameters) {
         val notifications = parameters.notifications
         if (notifications.isEmpty()) return
-        logger.d("NotificationSendUseCase execute, parameters: $parameters")
+        logger.d("execute, parameters: $parameters")
 
         readerRepo.upsertNotifications(notifications.map {
             if (it.status != NotificationReaderEntity.Loading) {
@@ -34,7 +34,7 @@ class NotificationsSendUseCase @Inject constructor(
 
             dataSource.notifyData(notifications.map {
                 NotificationReaderDataRequest(
-                    it.content,
+                    it.contentText,
                     it.packageName,
                     it.timestamp
                 )
@@ -52,7 +52,7 @@ class NotificationsSendUseCase @Inject constructor(
         }
     }
 
-    class Parameters(
+    data class Parameters(
         val notifications: List<NotificationReaderEntity>,
         val preferredConnectionTypes: Set<PreferableType> = setOf()
     )

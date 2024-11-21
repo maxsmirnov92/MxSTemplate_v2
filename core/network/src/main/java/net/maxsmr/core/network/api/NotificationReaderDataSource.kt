@@ -36,7 +36,7 @@ class MockNotificationReaderDataSource : BaseNotificationReaderDataSource {
         if (Random.nextInt(Int.MAX_VALUE / 2) % 2 == 0) {
             return NotificationReaderDataResponse()
         } else {
-            throw ApiException(UNKNOWN_ERROR)
+            throw ApiException(UNKNOWN_ERROR, "Random error")
         }
     }
 }

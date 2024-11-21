@@ -8,14 +8,19 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import net.maxsmr.android.recyclerview.views.decoration.Divider
+import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.feature.notification_reader.data.NotificationReaderListenerService
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
+import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
+import net.maxsmr.feature.notification_reader.ui.databinding.FragmentNotificationReaderBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -28,6 +33,10 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
 
     override val menuResId: Int = R.menu.menu_notification_reader
 
+    private val binding by viewBinding(FragmentNotificationReaderBinding::bind)
+
+    private val adapter = NotificationsAdapter()
+
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
 
@@ -38,6 +47,7 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: NotificationReaderViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
+
         viewModel.serviceTargetState.observe {
             if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
                 val context = requireContext()
@@ -70,6 +80,27 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
                 refreshServiceStateMenuItem(result)
             }
         }
+
+        with(binding) {
+            viewModel.notificationsItems.observe {
+                adapter.items = it
+                if (it.isNotEmpty()) {
+                    rvNotifications.isVisible = true
+                    tvNotificationsEmpty.isVisible = false
+                } else {
+                    rvNotifications.isVisible = false
+                    tvNotificationsEmpty.isVisible = true
+                }
+            }
+
+            rvNotifications.adapter = adapter
+            rvNotifications.addItemDecoration(
+                DividerItemDecoration.Builder(requireContext())
+                    .setDivider(Divider.Space(8), DividerItemDecoration.Mode.ALL)
+                    .build()
+            )
+        }
+
         navigateToManageOverlay()
     }
 
