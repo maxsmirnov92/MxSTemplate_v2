@@ -6,6 +6,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Provider
+import javax.inject.Singleton
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.DoubleGisRoutingHostManager
@@ -30,8 +32,6 @@ import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.io.File
-import javax.inject.Provider
-import javax.inject.Singleton
 
 @[Module
 InstallIn(SingletonComponent::class)]

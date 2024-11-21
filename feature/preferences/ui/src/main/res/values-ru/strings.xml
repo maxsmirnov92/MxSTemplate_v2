@@ -2,9 +2,10 @@
 <resources>
     <string name="settings_feature_title">Настройки</string>
 
+    <string name="settings_field_notifications_url_hint">URL для отправки уведомлений</string>
     <string name="settings_field_white_black_list_packages_url_hint">URL с белым/чёрным списком имён пакетов</string>
     <string name="settings_field_white_list_packages">Белый список с именами пакетов</string>
-    <string name="settings_field_failed_notifications_watcher_interval_hint">Интервал для повторных попыток отправки неудавшихся нотификация (секунды, 0 - отключить)</string>
+    <string name="settings_field_failed_notifications_watcher_interval_hint">Интервал для повторных попыток отправки неудавшихся уведомлений (секунды, 0 - отключить)</string>
     <string name="settings_field_connect_timeout_hint">Таймаут соединения (секунды, 0 - без таймаута)</string>
     <string name="settings_field_retry_on_connection_failure">Автоматически делать перезапросы при сбоях соединения</string>
     <string name="settings_field_load_by_wi_fi_only">Загружать только при наличии Wi-Fi</string>
@@ -15,7 +16,7 @@
     <string name="settings_dialog_confirm_neutral_button">Не сохранять</string>
     <string name="settings_dialog_confirm_negative_button">@android:string/cancel</string>
     <string name="settings_menu_action_save">Сохранить</string>
-    <string name="settings_menu_action_import_key">Выберать файл с API ключом</string>
+    <string name="settings_menu_action_import_key">Выбрать файл с API ключом</string>
 
     <string name="settings_dialog_key_import_error_message_format">Не удалось прочитать API ключ: \"%s\"</string>
     <string name="settings_dialog_key_import_error_message">Не удалось прочитать API ключ</string>

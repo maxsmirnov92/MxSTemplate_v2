@@ -367,6 +367,11 @@ fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
         "URL_DEMO_KEY_DOUBLE_GIS_ROUTING",
         "\"${appProperties.getPropertyNotNull("urlDemoKeyDoubleGisRouting")}\""
     )
+    buildConfigField(
+        "String",
+        "URL_NOTIFICATION_READER",
+        "\"${appProperties.getPropertyNotNull("urlNotificationReader")}\""
+    )
     buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getPropertyNotNull("devEmailAddress")}\"")
 }
 

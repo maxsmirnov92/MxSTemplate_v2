@@ -79,6 +79,10 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
             if (manager.doStart(requireContext()) == ManagerStartResult.SETTINGS_NEEDED) {
                 viewModel.showToast(TextMessage(R.string.notification_reader_toast_start_add_in_settings))
             }
+        } else {
+            // при возврате с экрана настроек, когда разрешение было отозвано,
+            // можно попытаться остановить ещё раз
+            manager.doStop(requireContext())
         }
         refreshServiceStateMenuItem()
     }
@@ -92,7 +96,7 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.actionServiceStartStop -> {
-                viewModel.serviceTargetState.value = !NotificationReaderListenerService.isRunning()
+                viewModel.toggleServiceTargetState()
                 true
             }
 
@@ -113,7 +117,7 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
     }
 
     private fun refreshServiceStateMenuItem(
-        isRunning: Boolean = NotificationReaderListenerService.isRunning()
+        isRunning: Boolean = viewModel.isServiceRunning()
     ) {
         toggleServiceStateMenuItem?.let { item ->
             item.setIcon(if (isRunning) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play)

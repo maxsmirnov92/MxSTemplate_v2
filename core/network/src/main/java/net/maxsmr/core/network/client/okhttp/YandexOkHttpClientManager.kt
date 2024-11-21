@@ -19,7 +19,7 @@ class YandexOkHttpClientManager(
     context: Context,
     connectivityChecker: ConnectivityChecker,
     responseAnnotation: Annotation?,
-    retrofitProvider: (() -> Retrofit),
+    retrofitProvider: () -> Retrofit,
 ) : BaseRestOkHttpClientManager(
     connectTimeout,
     context = context,

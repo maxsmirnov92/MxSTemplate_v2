@@ -1,8 +1,10 @@
 package net.maxsmr.core.network.client.okhttp
 
 import android.content.Context
+import net.maxsmr.core.network.HostManager
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
+import net.maxsmr.core.network.client.okhttp.interceptors.UrlChangeInterceptor
 import net.maxsmr.core.network.retrofit.converters.BaseResponse
 import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
 import okhttp3.Interceptor
@@ -13,12 +15,15 @@ import retrofit2.Retrofit
 
 class NotificationReaderOkHttpClientManager(
     private val apiKeyProvider: () -> String,
+    private val hostManagerProvider: () -> HostManager,
     connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
+    retryOnConnectionFailure: Boolean,
     context: Context,
     connectivityChecker: ConnectivityChecker,
-    retrofitProvider: (() -> Retrofit),
+    retrofitProvider: () -> Retrofit,
 ) : BaseRestOkHttpClientManager(
     connectTimeout,
+    retryOnConnectionFailure = retryOnConnectionFailure,
     context = context,
     connectivityChecker = connectivityChecker,
     responseAnnotation = ResponseObjectType(BaseResponse::class),
@@ -29,6 +34,7 @@ class NotificationReaderOkHttpClientManager(
         with(builder) {
             super.configureBuild(this)
             addInterceptor(NotificationReaderInterceptor())
+            addInterceptor(UrlChangeInterceptor(hostManagerProvider))
         }
     }
 

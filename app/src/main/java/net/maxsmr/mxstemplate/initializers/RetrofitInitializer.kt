@@ -42,5 +42,6 @@ class RetrofitInitializer : Initializer<Unit> {
         notificationReaderRetrofit.init()
     }
 
+
     override fun dependencies(): List<Class<out Initializer<*>>> = listOf()
 }

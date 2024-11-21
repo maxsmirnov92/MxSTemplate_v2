@@ -2,13 +2,14 @@
 <resources>
     <string name="settings_feature_title">Settings</string>
 
+    <string name="settings_field_notifications_url_hint">URL for sending notifications</string>
     <string name="settings_field_white_black_list_packages_url_hint">URL with white/black package names list</string>
     <string name="settings_field_white_list_packages">White list package names</string>
     <string name="settings_field_failed_notifications_watcher_interval_hint">Watcher interval for failed notifications (seconds, 0 - disable)</string>
     <string name="settings_field_connect_timeout_hint">Connect timeout (seconds, 0 - no timeout)</string>
     <string name="settings_field_retry_on_connection_failure">Auto retry requests if connection fails</string>
     <string name="settings_field_load_by_wi_fi_only">Try to load only when Wi-Fi is available</string>
-    <string name="settings_field_retry_failed_downloads">Repeat downloads that failed due to the network when it appears</string>
+    <string name="settings_field_retry_failed_downloads">Repeat loads that failed due to the network when it appears</string>
 
     <string name="settings_dialog_confirm_message">There are some changes</string>
     <string name="settings_dialog_confirm_yes_button">Save</string>

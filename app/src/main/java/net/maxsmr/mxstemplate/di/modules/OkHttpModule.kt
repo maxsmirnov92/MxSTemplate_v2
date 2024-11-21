@@ -7,6 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Provider
 import kotlinx.coroutines.runBlocking
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
@@ -16,12 +17,14 @@ import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.di.DoubleGisRoutingOkHttpClient
 import net.maxsmr.core.di.DownloadHttpLoggingInterceptor
 import net.maxsmr.core.di.DownloaderOkHttpClient
+import net.maxsmr.core.di.NotificationReaderHostManager
 import net.maxsmr.core.di.NotificationReaderOkHttpClient
 import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
 import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexSuggestOkHttpClient
+import net.maxsmr.core.network.HostManager
 import net.maxsmr.core.network.client.okhttp.DoubleGisOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.DownloadOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.NotificationReaderOkHttpClientManager
@@ -32,6 +35,7 @@ import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
 import net.maxsmr.core.network.retrofit.converters.api.BaseYandexSuggestResponse
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.mxstemplate.di.ModuleAppEntryPoint
+import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.CacheControl
 import okhttp3.Interceptor
@@ -172,19 +176,22 @@ class OkHttpModule {
     fun provideNotificationReaderOkHttpClient(
         @ApplicationContext context: Context,
         cacheRepo: CacheDataStoreRepository,
+        settingsRepository: SettingsDataStoreRepository,
+        @NotificationReaderHostManager hostManager: Provider<HostManager>,
     ): OkHttpClient {
-        return NotificationReaderOkHttpClientManager(
-            context = context,
-            connectivityChecker = NetworkConnectivityChecker,
-            apiKeyProvider = {
-                runBlocking {
-                    cacheRepo.getNotificationReaderKey(BuildConfig.API_KEY_NOTIFICATION_READER)
-                }
-            }
-        ) {
-            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
-                .notificationReaderRetrofit().instance
-        }.build()
+        return runBlocking {
+            NotificationReaderOkHttpClientManager(
+                context = context,
+                connectivityChecker = NetworkConnectivityChecker,
+                connectTimeout = settingsRepository.getSettings().connectTimeout,
+                retryOnConnectionFailure = settingsRepository.getSettings().retryOnConnectionFailure,
+                apiKeyProvider = { runBlocking { cacheRepo.getNotificationReaderKey(BuildConfig.API_KEY_NOTIFICATION_READER) } },
+                hostManagerProvider = { hostManager.get() }
+            ) {
+                EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
+                    .notificationReaderRetrofit().instance
+            }.build()
+        }
     }
 
 }

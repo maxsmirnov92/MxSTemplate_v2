@@ -12,7 +12,6 @@ import net.maxsmr.core.network.api.BaseNotificationReaderDataSource
 import net.maxsmr.core.network.api.DoubleGisRoutingDataSource
 import net.maxsmr.core.network.api.GeocodeDataSource
 import net.maxsmr.core.network.api.MockNotificationReaderDataSource
-import net.maxsmr.core.network.api.NotificationReaderDataSource
 import net.maxsmr.core.network.api.RoutingDataSource
 import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.api.YandexGeocodeDataSource

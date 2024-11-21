@@ -36,9 +36,24 @@
             android:padding="@dimen/defaultPadding">
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilNotificationsUrl"
+                style="@style/TextInputOutlinedWithCorners"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:hint="@string/settings_field_notifications_url_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etNotificationsUrl"
+                    style="@style/SingleLineInputText"
+                    android:inputType="textUri" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilWhiteListPackagesUrl"
                 style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
+                android:layout_marginTop="@dimen/defaultPadding"
                 android:layout_height="wrap_content"
                 tools:hint="@string/settings_field_white_black_list_packages_url_hint">
 
@@ -118,7 +133,6 @@
                 android:text="@string/settings_field_retry_failed_downloads"
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
                 app:switchPadding="4dp" />
-
 
         </LinearLayout>
 
