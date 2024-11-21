@@ -12,10 +12,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.setValueIfNew
-import net.maxsmr.core.android.content.pick.ContentPicker
-import net.maxsmr.core.android.content.pick.PickRequest
-import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.notification_reader.data.NotificationReaderListenerService
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
@@ -26,26 +22,11 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderViewModel>() {
 
-    override val layoutId: Int = R.layout.fragment_app_notification
+    override val layoutId: Int = R.layout.fragment_notification_reader
 
     override val viewModel by viewModels<NotificationReaderViewModel>()
 
     override val menuResId: Int = R.menu.menu_notification_reader
-
-    private val contentPicker: ContentPicker = FragmentContentPickerBuilder()
-        .addRequest(
-            PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_API_KEY)
-                .addSafParams(SafPickerParams.text())
-                .needPersistableUriAccess(true)
-                .onSuccess {
-                    viewModel.onPickApiKeyFromFile(it.uri)
-                }
-                .onError {
-                    viewModel.onPickerResultError(it)
-                }
-                .build()
-
-        ).build()
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -110,11 +91,6 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
-            R.id.actionImportKey -> {
-                contentPicker.pick(REQUEST_CODE_CHOOSE_API_KEY, requireContext())
-                true
-            }
-
             R.id.actionServiceStartStop -> {
                 viewModel.serviceTargetState.value = !NotificationReaderListenerService.isRunning()
                 true
@@ -147,10 +123,5 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
                 R.string.notification_reader_menu_action_service_start
             }))
         }
-    }
-
-    companion object {
-
-        private const val REQUEST_CODE_CHOOSE_API_KEY = 1
     }
 }

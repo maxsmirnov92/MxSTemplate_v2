@@ -29,25 +29,7 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
         }.root
     }
 
-    override val backPressedOverrideMode: BackPressedMode
-        get() = if (currentNavDestinationId != R.id.navigationWebView) {
-            BackPressedMode.PRESS_TWICE_LAST
-        } else {
-            BackPressedMode.NO_CHANGE
-        }
-
-    @Inject
-    lateinit var settingsRepo: SettingsDataStoreRepository
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        navigateWithGraphFragmentsFromCaller()
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        navigateWithGraphFragmentsFromCaller()
-    }
+    override val backPressedOverrideMode: BackPressedMode = BackPressedMode.PRESS_TWICE_LAST
 
     override fun setupNavigationView() {
         super.setupNavigationView()
@@ -55,19 +37,6 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
             drawerLayout.closeDrawers()
             navController.navigateWithGraphFragments(
                 item,
-                lifecycleScope,
-                settingsRepo,
-                currentNavFragment
-            )
-        }
-    }
-
-    private fun navigateWithGraphFragmentsFromCaller() {
-        callerClass?.let {
-            navController.navigateWithGraphFragmentsFromCaller(
-                it,
-                lifecycleScope,
-                settingsRepo,
                 currentNavFragment
             )
         }

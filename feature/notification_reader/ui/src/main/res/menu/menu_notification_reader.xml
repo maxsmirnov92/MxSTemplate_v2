@@ -7,7 +7,4 @@
         android:title="@string/notification_reader_menu_action_service_start"
         app:iconTint="@color/white"
         app:showAsAction="always" />
-    <item
-        android:id="@+id/actionImportKey"
-        android:title="@string/notification_reader_menu_action_import_key" />
 </menu>

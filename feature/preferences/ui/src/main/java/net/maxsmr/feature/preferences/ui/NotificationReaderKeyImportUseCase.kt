@@ -1,4 +1,4 @@
-package net.maxsmr.feature.notification_reader.data
+package net.maxsmr.feature.preferences.ui
 
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers

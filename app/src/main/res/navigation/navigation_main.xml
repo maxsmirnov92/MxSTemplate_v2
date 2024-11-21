@@ -2,145 +2,23 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/navigation_download"
-    app:startDestination="@+id/navigationDownloads">
+    android:id="@+id/navigation_app_notification"
+    app:startDestination="@+id/navigationNotificationReader">
+
 
     <fragment
-        android:id="@+id/navigationDownloads"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.MainDownloadsPagerFragment"
-        android:label="@string/download_feature_title"
-        tools:layout="@layout/fragment_downloads_pager">
+        android:id="@+id/navigationNotificationReader"
+        android:name="net.maxsmr.feature.notification_reader.ui.NotificationReaderFragment"
+        android:label="@string/notification_reader_feature_title"
+        tools:layout="@layout/fragment_notification_reader" />
 
-        <!--  action используется при кастомном переходе в bottom/drawer или при стандартном navigate -->
-        <action
-            android:id="@+id/actionToWebViewFragment"
-            app:destination="@id/navigationWebView"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/slide_out"
-            app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out" />
-
-        <action
-            android:id="@+id/actionToAboutFragment"
-            app:destination="@id/navigationAbout"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/slide_out"
-            app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigationAddressSorter"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.MainAddressSorterFragment"
-        android:label="@string/address_sorter_feature_title"
-        tools:layout="@layout/fragment_address_sorter">
-
-        <action
-            android:id="@+id/actionToWebViewFragment"
-            app:destination="@id/navigationWebView"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/slide_out"
-            app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigationWebView"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.MainWebViewFragment"
-        android:label="@string/webview_feature_title"
-        tools:layout="@layout/fragment_webview">
-
-        <action
-            android:id="@+id/actionToAboutFragment"
-            app:destination="@id/navigationAbout"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/slide_out"
-            app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out" />
-
-        <argument
-            android:name="customizer"
-            app:argType="net.maxsmr.feature.webview.ui.WebViewCustomizer" />
-
-    </fragment>
 
     <fragment
         android:id="@+id/navigationSettings"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.MainSettingsFragment"
+        android:name="net.maxsmr.feature.showcase.settings.GuideSettingsFragment"
         android:label="@string/settings_feature_title"
-        tools:layout="@layout/fragment_settings">
+        tools:layout="@layout/fragment_settings" />
 
-        <action
-            android:id="@+id/actionToWebViewFragment"
-            app:destination="@id/navigationWebView"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/slide_out"
-            app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out" />
-
-        <action
-            android:id="@+id/actionToAboutFragment"
-            app:destination="@id/navigationAbout"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/slide_out"
-            app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigationAbout"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.MainAboutFragment"
-        android:label="@string/about_feature_title"
-        tools:layout="@layout/fragment_about">
-
-        <action
-            android:id="@+id/actionToWebViewFragment"
-            app:destination="@id/navigationWebView"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/slide_out"
-            app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out" />
-
-        <action
-            android:id="@+id/actionToFeedbackFragment"
-            app:destination="@id/navigationFeedback"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/slide_out"
-            app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out" />
-
-        <argument
-            android:name="isForRate"
-            app:argType="boolean" />
-
-    </fragment>
-
-    <fragment
-        android:id="@+id/navigationFeedback"
-        android:name="net.maxsmr.mxstemplate.ui.fragment.MainFeedbackFragment"
-        android:label="@string/rate_feedback_title"
-        tools:layout="@layout/fragment_feedback">
-
-        <action
-            android:id="@+id/actionToWebViewFragment"
-            app:destination="@id/navigationWebView"
-            app:enterAnim="@anim/slide_in"
-            app:exitAnim="@anim/slide_out"
-            app:popEnterAnim="@anim/slide_in"
-            app:popExitAnim="@anim/slide_out" />
-
-        <argument
-            android:name="emailAddress"
-            app:argType="string" />
-
-        <argument
-            android:name="shouldNavigateToMarket"
-            app:argType="boolean" />
-
-    </fragment>
 
     <!--  остальные destination, которых нет в menu,
     для навигации в пределах хоста - писать сюда же -->

@@ -1,46 +1,54 @@
 package net.maxsmr.feature.preferences.ui
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
 import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableValue
-import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
+import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
-import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
-import net.maxsmr.core.ui.fields.BooleanFieldWithState
-import net.maxsmr.core.ui.fields.LongFieldWithState
-import net.maxsmr.core.ui.fields.toggleRequiredFieldState
 import net.maxsmr.core.ui.fields.urlField
-import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsDataStoreRepository,
-    val cacheRepository: CacheDataStoreRepository,
+    private val keyImportUseCase: NotificationReaderKeyImportUseCase,
     state: SavedStateHandle,
 ) : BaseHandleableViewModel(state) {
 
-    val maxDownloadsField: Field<Int> = Field.Builder(0)
+    val whiteBlackListPackagesUrlField = state.urlField(
+        R.string.settings_field_white_black_list_packages_url_hint,
+        isRequired = false,
+        isValidByBlank = true
+    )
+
+    val whiteListPackagesField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
-        .validators(Field.Validator(net.maxsmr.core.ui.R.string.field_error_value_negative) {
+        .persist(state, KEY_FIELD_WHITE_LIST_PACKAGES)
+        .build()
+
+    val failedNotificationsWatcherIntervalField: Field<Long> = Field.Builder(0L)
+        .emptyIf { false }
+        .validators(Field.Validator({
+            return@Validator TextMessage(net.maxsmr.core.ui.R.string.field_error_value_negative)
+        }) {
             it >= 0
         })
-        .hint(R.string.settings_field_max_downloads_hint)
-        .persist(state, KEY_FIELD_MAX_DOWNLOADS)
+        .hint(R.string.settings_field_failed_notifications_watcher_interval_hint)
+        .persist(state, KEY_FIELD_FAILED_NOTIFICATIONS_WATCHER_INTERVAL)
         .build()
 
     val connectTimeoutField: Field<Long> = Field.Builder(0L)
@@ -69,58 +77,14 @@ class SettingsViewModel @Inject constructor(
         .persist(state, KEY_FIELD_RETRY_DOWNLOADS)
         .build()
 
-    val disableNotificationsField: Field<Boolean> = Field.Builder(false)
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_DISABLE_NOTIFICATIONS)
-        .build()
-
-    val updateNotificationIntervalStateField: Field<LongFieldWithState> = Field.Builder(LongFieldWithState(0))
-        .emptyIf { false }
-        .validators(Field.Validator({
-            return@Validator TextMessage(
-                net.maxsmr.core.ui.R.string.field_error_value_more_or_equal_format,
-                UPDATE_NOTIFICATION_INTERVAL_MIN
-            )
-        }) {
-            it.value >= UPDATE_NOTIFICATION_INTERVAL_MIN
-        })
-        .hint(R.string.settings_field_update_notification_interval_hint)
-        .persist(state, KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE)
-        .build()
-
-    val openLinksInExternalAppsField: Field<BooleanFieldWithState> = Field.Builder(BooleanFieldWithState(false))
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_OPEN_LINKS_IN_EXTERNAL_APPS)
-        .build()
-
-    val startPageUrlField = state.urlField(
-        R.string.settings_field_start_page_url_hint,
-        isRequired = false,
-        isValidByBlank = true
-    )
-
-    val routingAppField: Field<RoutingApp> = Field.Builder(RoutingApp.DOUBLEGIS)
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_ROUTING_APP)
-        .build()
-
-    val routingAppFromCurrentField: Field<Boolean> = Field.Builder(false)
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_ROUTING_APP_FROM_CURRENT)
-        .build()
-
     private val allFields = listOf<Field<*>>(
-        maxDownloadsField,
+        whiteBlackListPackagesUrlField,
+        whiteListPackagesField,
+        failedNotificationsWatcherIntervalField,
         connectTimeoutField,
         loadByWiFiOnlyField,
         retryOnConnectionFailureField,
         retryDownloadsField,
-        disableNotificationsField,
-        updateNotificationIntervalStateField,
-        openLinksInExternalAppsField,
-        startPageUrlField,
-        routingAppField,
-        routingAppFromCurrentField
     )
 
     private val appSettings by persistableLiveData<AppSettings>()
@@ -141,8 +105,16 @@ class SettingsViewModel @Inject constructor(
             }
         }
 
-        maxDownloadsField.clearErrorOnChange(this) {
-            appSettings.value = currentAppSettings.copy(maxDownloads = it)
+        whiteBlackListPackagesUrlField.clearErrorOnChange(this) {
+            appSettings.value = currentAppSettings.copy(whiteBlackListPackagesUrl = it)
+        }
+
+        whiteListPackagesField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(isWhiteListPackages = it)
+        }
+
+        failedNotificationsWatcherIntervalField.clearErrorOnChange(this) {
+            appSettings.value = currentAppSettings.copy(failedNotificationsWatcherInterval = it)
         }
 
         connectTimeoutField.clearErrorOnChange(this) {
@@ -158,34 +130,6 @@ class SettingsViewModel @Inject constructor(
         }
         retryDownloadsField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(retryDownloads = it)
-        }
-
-        disableNotificationsField.valueLive.observe {
-            appSettings.value = currentAppSettings.copy(disableNotifications = it)
-            updateNotificationIntervalStateField.toggleRequiredFieldState(
-                !it,
-                net.maxsmr.core.ui.R.string.field_error_empty,
-            )
-        }
-
-        updateNotificationIntervalStateField.clearErrorOnChange(this) {
-            appSettings.value = currentAppSettings.copy(updateNotificationInterval = it.value)
-        }
-
-        openLinksInExternalAppsField.valueLive.observe {
-            appSettings.value = currentAppSettings.copy(openLinksInExternalApps = it.value)
-        }
-
-        startPageUrlField.clearErrorOnChange(this) {
-            appSettings.value = currentAppSettings.copy(startPageUrl = it)
-        }
-
-        routingAppField.valueLive.observe {
-            appSettings.value = currentAppSettings.copy(routingApp = it)
-        }
-
-        routingAppFromCurrentField.valueLive.observe {
-            appSettings.value = currentAppSettings.copy(routingAppFromCurrent = it)
         }
     }
 
@@ -208,12 +152,6 @@ class SettingsViewModel @Inject constructor(
             }
             if (hasChanges.value != true) {
                 return@launch
-            }
-            val disableNotifications = disableNotificationsField.value
-            if (!disableNotifications) {
-                viewModelScope.launch {
-                    cacheRepository.clearPostNotificationAsked()
-                }
             }
 
             repository.updateSettings(currentAppSettings)
@@ -249,20 +187,31 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
+    fun onPickApiKeyFromFile(uri: Uri) {
+        dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
+        viewModelScope.launch {
+            val result = keyImportUseCase.invoke(uri)
+            dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
+            if (result is UseCaseResult.Error) {
+                showOkDialog(
+                    DIALOG_TAG_IMPORT_FAILED,
+                    result.errorMessage()?.let {
+                        TextMessage(R.string.settings_dialog_key_import_error_message_format, it)
+                    } ?: TextMessage(R.string.settings_dialog_key_import_error_message)
+                )
+            }
+        }
+    }
+
     private fun restoreFields(settings: AppSettings) {
         // используется для того, чтобы выставить initial'ы в филды
-        maxDownloadsField.value = settings.maxDownloads
+        whiteBlackListPackagesUrlField.value = settings.whiteBlackListPackagesUrl
+        whiteListPackagesField.value = settings.isWhiteListPackages
+        failedNotificationsWatcherIntervalField.value = settings.failedNotificationsWatcherInterval
         connectTimeoutField.value = settings.connectTimeout
         loadByWiFiOnlyField.value = settings.loadByWiFiOnly
         retryOnConnectionFailureField.value = settings.retryOnConnectionFailure
         retryDownloadsField.value = settings.retryDownloads
-        disableNotificationsField.value = settings.disableNotifications
-        updateNotificationIntervalStateField.value =
-            LongFieldWithState(settings.updateNotificationInterval, !settings.disableNotifications)
-        openLinksInExternalAppsField.value = BooleanFieldWithState(settings.openLinksInExternalApps, isAtLeastTiramisu())
-        startPageUrlField.value = settings.startPageUrl
-        routingAppField.value = settings.routingApp
-        routingAppFromCurrentField.value = settings.routingAppFromCurrent
     }
 
     private suspend fun updateSettings() {
@@ -275,16 +224,13 @@ class SettingsViewModel @Inject constructor(
     companion object {
 
         const val DIALOG_TAG_CONFIRM_EXIT = "confirm_exit"
+        const val DIALOG_TAG_IMPORT_FAILED = "import_failed"
 
-        const val KEY_FIELD_MAX_DOWNLOADS = "max_downloads"
+        const val KEY_FIELD_WHITE_LIST_PACKAGES = "white_list_packages"
+        const val KEY_FIELD_FAILED_NOTIFICATIONS_WATCHER_INTERVAL = "failed_notifications_watcher_interval"
         const val KEY_FIELD_CONNECT_TIMEOUT = "connect_timeout"
         const val KEY_FIELD_LOAD_BY_WI_FI_ONLY = "load_by_wi_fi_only"
         const val KEY_FIELD_RETRY_ON_CONNECTION_FAILURE = "retry_on_connection_failure"
         const val KEY_FIELD_RETRY_DOWNLOADS = "retry_downloads"
-        const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
-        const val KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE = "update_notification_interval_state"
-        const val KEY_FIELD_OPEN_LINKS_IN_EXTERNAL_APPS = "open_links_in_external_apps"
-        const val KEY_FIELD_ROUTING_APP = "routing_app"
-        const val KEY_FIELD_ROUTING_APP_FROM_CURRENT = "routing_app_from_current"
     }
 }

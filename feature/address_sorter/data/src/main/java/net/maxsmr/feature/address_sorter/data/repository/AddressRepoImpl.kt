@@ -1,6 +1,5 @@
 package net.maxsmr.feature.address_sorter.data.repository
 
-import android.location.Location
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job

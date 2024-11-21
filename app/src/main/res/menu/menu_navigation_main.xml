@@ -1,23 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+
     <item
-        android:id="@+id/navigationDownloads"
-        android:icon="@drawable/ic_download"
-        android:title="@string/download_feature_title" />
-    <item
-        android:id="@+id/navigationAddressSorter"
-        android:icon="@drawable/ic_address_sorter"
-        android:title="@string/address_sorter_feature_title" />
-    <item
-        android:id="@+id/navigationWebView"
-        android:icon="@drawable/ic_menu_web_view"
-        android:title="@string/webview_feature_title" />
+        android:id="@+id/navigationNotificationReader"
+        android:title="@string/notification_reader_feature_title" />
+
     <item
         android:id="@+id/navigationSettings"
         android:icon="@drawable/ic_menu_settings"
         android:title="@string/settings_feature_title" />
-    <item
-        android:id="@+id/navigationAbout"
-        android:icon="@drawable/ic_menu_about"
-        android:title="@string/about_feature_title" />
+
 </menu>
