@@ -24,7 +24,7 @@ data class AppSettings(
     val routingAppFromCurrent: Boolean = true,
     val whiteBlackListPackagesUrl: String = "",
     val isWhiteListPackages: Boolean = true,
-    val failedNotificationsWatcherInterval: Long = 5000L
+    val failedNotificationsWatcherInterval: Long = 15000L
 ) : Serializable {
 
     companion object {

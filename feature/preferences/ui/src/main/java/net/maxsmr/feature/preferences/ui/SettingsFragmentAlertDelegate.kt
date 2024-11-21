@@ -2,8 +2,10 @@ package net.maxsmr.feature.preferences.ui
 
 import androidx.fragment.app.Fragment
 import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.representation.asOkDialog
 import net.maxsmr.core.ui.view.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.feature.preferences.ui.SettingsViewModel.Companion.DIALOG_TAG_CONFIRM_EXIT
+import net.maxsmr.feature.preferences.ui.SettingsViewModel.Companion.DIALOG_TAG_IMPORT_FAILED
 
 class SettingsFragmentAlertDelegate(
     fragment: Fragment,
@@ -15,6 +17,8 @@ class SettingsFragmentAlertDelegate(
         bindAlertDialog(DIALOG_TAG_CONFIRM_EXIT) {
             it.asYesNoNeutralDialog(context)
         }
+        bindAlertDialog(DIALOG_TAG_IMPORT_FAILED) {
+            it.asOkDialog(context)
+        }
     }
-
 }

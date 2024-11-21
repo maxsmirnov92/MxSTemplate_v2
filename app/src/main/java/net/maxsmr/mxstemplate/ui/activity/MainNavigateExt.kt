@@ -1,32 +1,20 @@
 package net.maxsmr.mxstemplate.ui.activity
 
 import android.view.MenuItem
-import androidx.annotation.IdRes
-import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.navOptions
-import kotlinx.coroutines.launch
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.feature.download.data.DownloadService
-import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import net.maxsmr.feature.webview.ui.WebViewCustomizer
+import net.maxsmr.feature.notification_reader.data.NotificationReaderListenerService
 import net.maxsmr.mxstemplate.R
-import net.maxsmr.mxstemplate.ui.fragment.MainDownloadsPagerFragmentDirections
-import net.maxsmr.mxstemplate.ui.getViewUrlStrategy
 
 internal fun NavController.navigateWithGraphFragmentsFromCaller(
     callerClass: Class<*>,
-    lifecycleScope: LifecycleCoroutineScope,
-    settingsRepo: SettingsDataStoreRepository,
     currentNavFragment: BaseNavigationFragment<*, *>?,
 ) {
-    if (callerClass.isAssignableFrom(DownloadService::class.java)) {
+    if (callerClass.isAssignableFrom(NotificationReaderListenerService::class.java)) {
         navigateWithGraphFragments(
-            R.id.navigationDownloads,
-            lifecycleScope,
-            settingsRepo,
+            R.id.navigationNotificationReader,
             currentNavFragment,
         )
     }
@@ -34,26 +22,20 @@ internal fun NavController.navigateWithGraphFragmentsFromCaller(
 
 internal fun NavController.navigateWithGraphFragments(
     item: MenuItem,
-    lifecycleScope: LifecycleCoroutineScope,
-    settingsRepo: SettingsDataStoreRepository,
     currentNavFragment: BaseNavigationFragment<*, *>?,
 ): Boolean {
     return navigateWithGraphFragments(
         item.itemId,
-        lifecycleScope,
-        settingsRepo,
         currentNavFragment
     )
 }
 
 internal fun NavController.navigateWithGraphFragments(
-    @IdRes destinationId: Int,
-    lifecycleScope: LifecycleCoroutineScope,
-    settingsRepo: SettingsDataStoreRepository,
+    destinationId: Int,
     currentNavFragment: BaseNavigationFragment<*, *>?,
 ): Boolean {
     val targetAction = {
-        navigateWithGraphFragments(destinationId, lifecycleScope, settingsRepo)
+        navigateWithGraphFragments(destinationId)
     }
     val selected = currentBackStackEntry?.destination?.hierarchy?.any {
         it.id == destinationId
@@ -67,12 +49,8 @@ internal fun NavController.navigateWithGraphFragments(
     }
 }
 
-private fun NavController.navigateWithGraphFragments(
-    @IdRes destinationId: Int,
-    lifecycleScope: LifecycleCoroutineScope,
-    settingsRepo: SettingsDataStoreRepository,
-) {
-    fun navOptions() = navOptions {
+private fun NavController.navigateWithGraphFragments(destinationId: Int) {
+    fun navOptions() = androidx.navigation.navOptions {
         // убирает все до startDestinationId, на них сработает onDestroy
         popUpTo(graph.findStartDestination().id) { // startDestinationId
             saveState = true
@@ -87,21 +65,5 @@ private fun NavController.navigateWithGraphFragments(
         // при этом на новом будет вызван onCreate,
         // а на предыдущем не вызван onDestroy (если только не попадает в popupTo)
     }
-
-    if (destinationId == R.id.navigationWebView) {
-        lifecycleScope.launch {
-            val settings = settingsRepo.getSettings()
-            navigate(
-                MainDownloadsPagerFragmentDirections.actionToWebViewFragment(
-                    WebViewCustomizer.Builder()
-                        .setUrl(settings.startPageUrl)
-                        .setViewUrlStrategy(settings.getViewUrlStrategy())
-                        .build()
-                ),
-                navOptions = navOptions()
-            )
-        }
-    } else {
-        navigate(resId = destinationId, args = null, navOptions = navOptions())
-    }
+    navigate(resId = destinationId, args = null, navOptions = navOptions())
 }

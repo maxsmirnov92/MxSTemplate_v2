@@ -36,18 +36,42 @@
             android:padding="@dimen/defaultPadding">
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilMaxDownloads"
+                android:id="@+id/tilWhiteListPackagesUrl"
                 style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:hint="@string/settings_field_max_downloads_hint">
+                tools:hint="@string/settings_field_white_black_list_packages_url_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etMaxDownloads"
+                    android:id="@+id/etWhiteListPackagesUrl"
+                    style="@style/SingleLineInputText"
+                    android:inputType="textUri" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchWhiteListPackages"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/defaultPadding"
+                android:text="@string/settings_field_white_list_packages"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                app:switchPadding="4dp" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilFailedNotificationsWatcherInterval"
+                style="@style/TextInputOutlinedWithCorners"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/defaultPadding"
+                tools:hint="@string/settings_field_failed_notifications_watcher_interval_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etFailedNotificationsWatcherInterval"
                     style="@style/SingleLineInputText"
                     android:inputType="numberDecimal"
                     android:maxLength="10"
-                    tools:hint="@string/settings_field_max_downloads_hint" />
+                    tools:hint="@string/settings_field_failed_notifications_watcher_interval_hint" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -95,91 +119,6 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
                 app:switchPadding="4dp" />
 
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switchDisableNotifications"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/defaultPadding"
-                android:text="@string/settings_field_disable_notifications"
-                android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                app:switchPadding="4dp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilUpdateNotificationInterval"
-                style="@style/TextInputOutlinedWithCorners"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/defaultPadding"
-                tools:hint="@string/settings_field_update_notification_interval_hint">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etUpdateNotificationInterval"
-                    style="@style/SingleLineInputText"
-                    android:inputType="numberDecimal"
-                    android:maxLength="10"
-                    tools:hint="@string/settings_field_update_notification_interval_hint" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switch_open_links_in_external_apps"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/defaultPadding"
-                android:text="@string/settings_field_open_links_in_external_apps"
-                android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                app:switchPadding="4dp" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilStartPageUrl"
-                style="@style/TextInputOutlinedWithCorners"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/defaultPadding"
-                tools:hint="@string/settings_field_start_page_url_hint">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etStartPageUrl"
-                    style="@style/SingleLineInputText"
-                    android:inputType="textUri" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/defaultPadding">
-
-                <TextView
-                    android:id="@+id/tvRoutingAppName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:layout_toStartOf="@+id/spinnerRoutingApp"
-                    android:gravity="center_vertical"
-                    android:text="@string/settings_field_routing_app"
-                    android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                    android:textColor="@color/textColorPrimary"
-                    android:textSize="@dimen/textSizeNormal" />
-
-                <androidx.appcompat.widget.AppCompatSpinner
-                    android:id="@+id/spinnerRoutingApp"
-                    android:layout_width="160dp"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:layout_marginStart="20dp" />
-
-            </RelativeLayout>
-
-            <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switchRoutingAppFromCurrent"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/defaultPadding"
-                android:text="@string/settings_field_routing_app_from_current"
-                android:textAppearance="@style/TextAppearance.AppCompat.Small"
-                app:switchPadding="4dp" />
 
         </LinearLayout>
 

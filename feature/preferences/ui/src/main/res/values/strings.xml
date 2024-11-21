@@ -1,28 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_feature_title">Settings</string>
-    <string name="settings_field_max_downloads_hint">Max simultaneous downloads count (0 - unlimited)</string>
+
+    <string name="settings_field_white_black_list_packages_url_hint">URL with white/black package names list</string>
+    <string name="settings_field_white_list_packages">White list package names</string>
+    <string name="settings_field_failed_notifications_watcher_interval_hint">Watcher interval for failed notifications (seconds, 0 - disable)</string>
     <string name="settings_field_connect_timeout_hint">Connect timeout (seconds, 0 - no timeout)</string>
     <string name="settings_field_retry_on_connection_failure">Auto retry requests if connection fails</string>
     <string name="settings_field_load_by_wi_fi_only">Try to load only when Wi-Fi is available</string>
     <string name="settings_field_retry_failed_downloads">Repeat downloads that failed due to the network when it appears</string>
-    <string name="settings_field_disable_notifications">Disable notifications from download service</string>
-    <string name="settings_field_update_notification_interval_hint">Notification update interval for active download (ms)</string>
-    <string name="settings_field_open_links_in_external_apps">Open supported links in external apps</string>
-    <string name="settings_field_start_page_url_hint">Start page</string>
-    <string name="settings_field_routing_app">App for building route</string>
-    <string name="settings_field_routing_app_from_current">Build route from last known geolocation</string>
-
-    <string-array name="settings_field_routing_app_values">
-        <item>2GIS</item>
-        <item>Yandex Navigator</item>
-    </string-array>
 
     <string name="settings_dialog_confirm_message">There are some changes</string>
     <string name="settings_dialog_confirm_yes_button">Save</string>
     <string name="settings_dialog_confirm_neutral_button">Don\'t save</string>
     <string name="settings_dialog_confirm_negative_button">@android:string/cancel</string>
     <string name="settings_menu_action_save">Save</string>
+    <string name="settings_menu_action_import_key">Choose file with API key</string>
 
-
+    <string name="settings_dialog_key_import_error_message_format">Cannot read API key: \"%s\"</string>
+    <string name="settings_dialog_key_import_error_message">Cannot read API key</string>
 </resources>

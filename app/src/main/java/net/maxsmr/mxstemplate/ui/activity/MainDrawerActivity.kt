@@ -5,13 +5,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.ui.components.activities.BaseDrawerNavigationActivity
 import net.maxsmr.core.ui.view.databinding.LayoutHeaderNavigationViewBinding
-import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.mxstemplate.R
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainDrawerActivity : BaseDrawerNavigationActivity() {
@@ -27,15 +24,7 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
         }.root
     }
 
-    override val backPressedOverrideMode: BackPressedMode
-        get() = if (currentNavDestinationId != R.id.navigationWebView) {
-            BackPressedMode.PRESS_TWICE_LAST
-        } else {
-            BackPressedMode.NO_CHANGE
-        }
-
-    @Inject
-    lateinit var settingsRepo: SettingsDataStoreRepository
+    override val backPressedOverrideMode: BackPressedMode = BackPressedMode.PRESS_TWICE_LAST
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,8 +42,6 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
             drawerLayout.closeDrawers()
             navController.navigateWithGraphFragments(
                 item,
-                lifecycleScope,
-                settingsRepo,
                 currentNavFragment
             )
         }
@@ -64,8 +51,6 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
         callerClass?.let {
             navController.navigateWithGraphFragmentsFromCaller(
                 it,
-                lifecycleScope,
-                settingsRepo,
                 currentNavFragment
             )
         }

@@ -7,4 +7,7 @@
         android:title="@string/settings_menu_action_save"
         app:iconTint="@drawable/selector_color_control"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/actionImportKey"
+        android:title="@string/settings_menu_action_import_key" />
 </menu>

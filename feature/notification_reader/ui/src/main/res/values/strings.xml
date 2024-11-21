@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="notification_reader_feature_title">Notifications</string>
-    <string name="notification_reader_menu_action_import_key">Choose file with API key</string>
     <string name="notification_reader_menu_action_service_start">Start</string>
     <string name="notification_reader_menu_action_service_stop">Start</string>
     <string name="notification_reader_toast_start_add_in_settings">App must be selected in settings to start service</string>
     <string name="notification_reader_toast_stop_remove_in_settings">App must be unselected in settings to stop service</string>
     <string name="notification_reader_snack_cannot_start_service">Cannot start service</string>
-    <string name="notification_reader_dialog_key_import_error_message_format">Cannot read API key: \"%s\"</string>
-    <string name="notification_reader_dialog_key_import_error_message">Cannot read API key</string>
 </resources>
