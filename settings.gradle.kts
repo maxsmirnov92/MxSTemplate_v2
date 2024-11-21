@@ -25,7 +25,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MxSTemplate"
+rootProject.name = "Notification Reader"
 include(":app")
 
 //include(":lint")
@@ -38,18 +38,9 @@ include(":core:database")
 include(":core:ui")
 include(":core:utils")
 include(":core:di")
-include(":feature:address_sorter:data")
-include(":feature:address_sorter:ui")
-include(":feature:mobile_services")
 include(":feature:download:data")
-include(":feature:download:ui")
 include(":feature:preferences:data")
 include(":feature:preferences:ui")
-include(":feature:webview:data")
-include(":feature:webview:ui")
-include(":feature:rate")
-include(":feature:about")
-include(":feature:camera")
 include(":feature:demo")
 include(":feature:showcase:base")
 include(":feature:showcase:settings")

@@ -40,55 +40,32 @@ if (isHuaweiBuild() == true) {
 data class AppVersion(
     val code: Int,
     val name: String,
-    val type: String,
     val isDemo: Boolean,
 ) {
 
     constructor(
         code: Int,
-        type: String,
         isDemo: Boolean
-    ) : this(code, getVersionName(code, isDemo), type, isDemo)
+    ) : this(code, getVersionName(code, isDemo), isDemo)
 }
 
-val appVersion = AppVersion(1, "common", false)
+val appVersion = AppVersion(1, false)
 
 android {
-    namespace = "net.maxsmr.mxstemplate"
+    namespace = "net.maxsmr.notification_reader"
 
     defaultConfig {
-        applicationId = "net.maxsmr.mxstemplate"
+        applicationId = "net.maxsmr.notification_reader"
         versionCode = appVersion.code
         versionName = appVersion.name
-        project.ext.set("archivesBaseName", "${project.name}_${appVersion.name}_${appVersion.type}")
+        project.ext.set("archivesBaseName", "${project.name}_${appVersion.name}")
 
         buildConfigField("int", "PROTOCOL_VERSION", "1")
-
-        buildConfigField("String", "MOBILE_BUILD_TYPE", "\"${appVersion.type}\"")
 
         buildConfigField(
             "boolean",
             "IS_DEMO_BUILD",
             "${appVersion.isDemo}"
-        )
-
-        val donateProperties = Properties()
-        donateProperties.load(FileInputStream(File(rootDir, "app/donate.properties")))
-        val addressesMap = mutableMapOf<String, String>()
-        donateProperties.entries.forEach {
-            val key = it.key as String? ?: return@forEach
-            val value = it.value as String? ?: return@forEach
-            addressesMap[key] = value
-        }
-
-        var addressesHashMap = "new java.util.HashMap<String, String>()" + "{" + "{ "
-        addressesMap.forEach { (k, v) -> addressesHashMap += "put(\"${k}\"," + "\"${v}\"" + ");" }
-        val addressesString = "$addressesHashMap}}"
-
-        buildConfigField(
-            "java.util.Map<String, String>",
-            "DEV_PAYMENT_ADDRESSES",
-            addressesString
         )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -167,7 +144,7 @@ android {
                 val buildTypeName = variant.buildType.name
                 val versionName = variant.versionName
                 output.outputFileName =
-                    "${flavour}${buildTypeName.capitalize()}_${versionName}_${appVersion.type}.apk"
+                    "${flavour}${buildTypeName.capitalize()}_${versionName}.apk"
                 output.versionCodeOverride = appVersion.code
                 output.versionNameOverride = appVersion.name
             }
@@ -223,16 +200,9 @@ dependencies {
     implementation(project(":core:utils"))
     implementation(project(":core:ui"))
 
-    implementation(project(":feature:mobile_services"))
+    implementation(project(":feature:download:data"))
     implementation(project(":feature:preferences:ui"))
-    implementation(project(":feature:download:ui"))
-    implementation(project(":feature:address_sorter:ui"))
-    implementation(project(":feature:webview:ui"))
-    implementation(project(":feature:camera"))
     implementation(project(":feature:notification_reader:ui"))
-
-    implementation(project(":feature:rate"))
-    implementation(project(":feature:about"))
 
     implementation(project(":feature:showcase:settings"))
 
@@ -254,7 +224,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
 
-    implementation(libs.picasso)
     implementation(libs.decoro)
 
     implementation(libs.androidx.datastore.preferences)
@@ -339,40 +308,14 @@ fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
     )
     buildConfigField(
         "String",
-        "AUTHORIZATION_RADAR_IO",
-        "\"${appProperties.getPropertyNotNull("authorizationRadarIo")}\""
-    )
-    buildConfigField(
-        "String",
-        "API_KEY_YANDEX_SUGGEST",
-        "\"${appProperties.getPropertyNotNull("apiKeyYandexSuggest")}\""
-    )
-    buildConfigField(
-        "String",
-        "API_KEY_YANDEX_GEOCODE",
-        "\"${appProperties.getPropertyNotNull("apiKeyYandexGeocode")}\""
-    )
-    buildConfigField(
-        "String",
-        "API_KEY_HUAWEI_ML_ANALYZER",
-        "\"${appProperties.getPropertyNotNull("apiKeyHuaweiMlAnalyzer")}\""
-    )
-    buildConfigField(
-        "String",
         "API_KEY_NOTIFICATION_READER",
         "\"${appProperties.getPropertyNotNull("apiKeyNotificationReader")}\""
-    )
-    buildConfigField(
-        "String",
-        "URL_DEMO_KEY_DOUBLE_GIS_ROUTING",
-        "\"${appProperties.getPropertyNotNull("urlDemoKeyDoubleGisRouting")}\""
     )
     buildConfigField(
         "String",
         "URL_NOTIFICATION_READER",
         "\"${appProperties.getPropertyNotNull("urlNotificationReader")}\""
     )
-    buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getPropertyNotNull("devEmailAddress")}\"")
 }
 
 /**

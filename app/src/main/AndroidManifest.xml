@@ -21,13 +21,13 @@
         android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!--  по остальным пермишнам мёрж из других манифестов  -->
 
     <application
-        android:name=".App"
+        android:name="net.maxsmr.notification_reader.App"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -42,7 +42,7 @@
 
         <!--  при  adjustPan проблемы с пустым пространством при отсутствующей клавиатуре остаются   -->
         <activity
-            android:name=".ui.activity.MainBottomActivity"
+            android:name="net.maxsmr.notification_reader.ui.activity.MainBottomActivity"
             android:exported="true"
             android:launchMode="singleInstance"
             android:taskAffinity=""
@@ -91,13 +91,13 @@
             android:exported="false"
             tools:node="merge">
             <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.TimberInitializer"
+                android:name="net.maxsmr.notification_reader.initializers.TimberInitializer"
                 android:value="androidx.startup" />
             <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.RetrofitInitializer"
+                android:name="net.maxsmr.notification_reader.initializers.RetrofitInitializer"
                 android:value="androidx.startup" />
             <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.ModulesInitializer"
+                android:name="net.maxsmr.notification_reader.initializers.ModulesInitializer"
                 android:value="androidx.startup" />
         </provider>
         <provider

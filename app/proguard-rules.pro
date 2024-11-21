@@ -95,8 +95,8 @@
 -keep class **.R
 -keep class **.R$* { *; }
 
--keep class net.maxsmr.mxstemplate.R
--keep class net.maxsmr.mxstemplate.R$* { *; }
+-keep class net.maxsmr.notification_reader.R
+-keep class net.maxsmr.notification_reader.R$* { *; }
 
 # Сохранение всех ViewBinding классов
 -keep class **ViewBinding { *; }

@@ -102,6 +102,7 @@
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
     <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_500">#FF00bdbc</color>
     <color name="teal_700">#FF018786</color>
     <color name="gray_light">#F4F4F4</color>
     <color name="gray_medium">#b3b3b3</color>
@@ -110,19 +111,19 @@
     <color name="azure">#007AFF</color>
     <color name="yellow">#FFCB14</color>
 
-    <color name="colorPrimary">@color/purple_500</color>
+    <color name="colorPrimary">#e28700</color>
     <color name="colorPrimaryVariant">@color/colorPrimaryDark</color>
-    <color name="colorPrimaryDark">@color/purple_700</color>
-    <color name="colorSecondary">@color/teal_200</color>
+    <color name="colorPrimaryDark">#6e3800</color>
+    <color name="colorSecondary">#ff8100</color>
     <color name="colorSecondaryVariant">@color/teal_700</color>
     <color name="colorAccent">@color/colorPrimary</color>
     <color name="colorControlNormal">@color/black</color>
     <color name="colorControlActivated">@color/colorPrimary</color>
     <color name="colorControlHighlight">@color/colorControlActivated</color>
     <color name="colorControlDisabled">#cecdcd</color>
-    <color name="navigationBarColor">@color/windowBackground</color>
+    <color name="navigationBarColor">@color/black</color>
     <color name="bottomNavigationBackgroundColor">@color/navigationBarColor</color>
-    <color name="bottomNavigationForegroundColor">@color/textColorPrimary</color>
+    <color name="bottomNavigationForegroundColor">@color/white</color>
     <color name="bottomNavigationSelectedColor">@color/colorAccent</color>
 
 <!--    #96cbc6-->

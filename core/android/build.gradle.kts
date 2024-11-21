@@ -35,9 +35,6 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
 
-    // Picasso
-    implementation(libs.picasso)
-
     implementation(libs.decoro)
 
     api(libs.kittinunf.result)
