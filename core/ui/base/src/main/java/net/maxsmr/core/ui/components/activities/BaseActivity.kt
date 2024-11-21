@@ -76,10 +76,5 @@ open class BaseActivity : AppCompatActivity() {
         // все объявлять здесь
 
         const val REQUEST_CODE_PERMISSION_NOTIFICATIONS = 1
-        const val REQUEST_CODE_PERMISSION_GPS = 2
-        const val REQUEST_CODE_PERMISSION_WRITE_EXTERNAL_STORAGE = 3
-        const val REQUEST_CODE_PERMISSION_CAMERA = 4
-
-        const val REQUEST_CODE_IN_APP_UPDATES = 1001
     }
 }

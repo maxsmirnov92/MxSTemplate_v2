@@ -41,22 +41,6 @@ annotation class BaseJson
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
-annotation class RadarIoHostManager
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class YandexSuggestHostManager
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class YandexGeocodeHostManager
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class DoubleGisRoutingHostManager
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
 annotation class NotificationReaderHostManager
 
 @Qualifier
@@ -65,51 +49,11 @@ annotation class DownloaderOkHttpClient
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
-annotation class PicassoOkHttpClient
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class RadarIoOkHttpClient
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class YandexSuggestOkHttpClient
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class YandexGeocodeOkHttpClient
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class DoubleGisRoutingOkHttpClient
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
 annotation class NotificationReaderOkHttpClient
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DownloadHttpLoggingInterceptor
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class PicassoHttpLoggingInterceptor
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class RadarIoRetrofit
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class YandexSuggestRetrofit
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class YandexGeocodeRetrofit
-
-@Qualifier
-@Retention(AnnotationRetention.RUNTIME)
-annotation class DoubleGisRoutingRetrofit
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)

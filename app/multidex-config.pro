@@ -1,1 +1,1 @@
--keep class net.maxsmr.mxstemplate.App
+-keep class net.maxsmr.notification_reader.App

@@ -26,8 +26,7 @@ import javax.inject.Inject
  * Репо для хранения кэшированных значений в аппе
  */
 class CacheDataStoreRepository @Inject constructor(
-    @DataStores(DataStoreType.CACHE) private val dataStore: DataStore<Preferences>,
-    @BaseJson private val json: Json,
+    @DataStores(DataStoreType.CACHE) private val dataStore: DataStore<Preferences>
 ) {
 
     private val data: Flow<Preferences> = dataStore.data
@@ -81,91 +80,6 @@ class CacheDataStoreRepository @Inject constructor(
     suspend fun setLastQueueId(id: Int) {
         dataStore.edit { prefs ->
             prefs[FIELD_LAST_QUEUE_ID] = id
-        }
-    }
-
-    suspend fun hasDownloadParamsModelSample(): Boolean {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE]
-        }.firstOrNull() ?: false
-    }
-
-    suspend fun setHasDownloadParamsModelSample() {
-        dataStore.edit { prefs ->
-            prefs[FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE] = true
-        }
-    }
-
-    suspend fun getAppRateInfo(): RateAppInfo {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_RATE_APP_INFO]?.let {
-                json.decodeFromStringOrNull(it) as RateAppInfo?
-            }
-        }.firstOrNull() ?: RateAppInfo(false, notAskAgain = false).also {
-            setRateAppInfo(it)
-        }
-    }
-
-    suspend fun setAppRated() {
-        setRateAppInfo(RateAppInfo(true, notAskAgain = true))
-    }
-
-    suspend fun setAppNotRated(notAskAgain: Boolean) {
-        setRateAppInfo(RateAppInfo(false, notAskAgain))
-    }
-
-    private suspend fun setRateAppInfo(rateInfo: RateAppInfo) {
-        val result: String =
-            json.encodeToStringOrNull(rateInfo).orEmpty()
-        dataStore.edit { prefs ->
-            prefs[FIELD_RATE_APP_INFO] = result
-        }
-    }
-
-    suspend fun getSeenReleaseNotesVersionCodes(): List<Int> {
-        val jsonArray = dataStore.data.map { prefs ->
-            prefs[FIELD_SEEN_RELEASE_NOTES_VERSION_CODES]
-        }.firstOrNull()
-        return json.decodeFromStringOrNull<List<Int>>(jsonArray).orEmpty()
-    }
-
-    suspend fun setSeenReleaseNotesVersionCode(id: Int) {
-        val currentCodes = getSeenReleaseNotesVersionCodes().toMutableSet()
-        currentCodes.add(id)
-        dataStore.edit { prefs ->
-            prefs[FIELD_SEEN_RELEASE_NOTES_VERSION_CODES] = json.encodeToStringOrNull(currentCodes.toList()).orEmpty()
-        }
-    }
-
-    suspend fun getLastCheckInAppUpdate(): Long {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_LAST_CHECK_IN_APP_UPDATE]
-        }.firstOrNull() ?: 0L
-    }
-
-    suspend fun setCurrentLastCheckInAppUpdate() {
-        setLastCheckInAppUpdate(System.currentTimeMillis())
-    }
-
-    suspend fun clearLastCheckInAppUpdate() {
-        setLastCheckInAppUpdate(0)
-    }
-
-    private suspend fun setLastCheckInAppUpdate(timestamp: Long) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_LAST_CHECK_IN_APP_UPDATE] = timestamp
-        }
-    }
-
-    suspend fun getDoubleGisRoutingApiKey(): String {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY]
-        }.firstOrNull().orEmpty()
-    }
-
-    suspend fun setDoubleGisRoutingApiKey(key: String) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY] = key
         }
     }
 
@@ -240,11 +154,6 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
         private val FIELD_BATTERY_OPTIMIZATION_ASKED = booleanPreferencesKey("batteryOptimizationAsked")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
-        private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
-        private val FIELD_RATE_APP_INFO = stringPreferencesKey("rateAppInfo")
-        private val FIELD_SEEN_RELEASE_NOTES_VERSION_CODES = stringPreferencesKey("seenReleaseNotesVersionCodes")
-        private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")
-        private val FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY = stringPreferencesKey("keyDoubleGisRoutingApiKey")
         private val FIELD_KEY_NOTIFICATION_READER_API_KEY = stringPreferencesKey("keyNotificationReader")
         private val FIELD_KEY_PACKAGES_WHITE_LIST = stringSetPreferencesKey("keyPackagesWhiteList")
         private val FIELD_KEY_DEMO_PERIOD_EXPIRED = booleanPreferencesKey("demoPeriodExpired")

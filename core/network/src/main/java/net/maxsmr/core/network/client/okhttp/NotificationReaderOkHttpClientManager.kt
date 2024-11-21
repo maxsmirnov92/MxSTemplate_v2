@@ -13,7 +13,7 @@ import retrofit2.Retrofit
 
 class NotificationReaderOkHttpClientManager(
     private val apiKeyProvider: () -> String,
-    private val hostManagerProvider: () -> HostManager,
+    private val urlProvider: () -> String,
     connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
     retryOnConnectionFailure: Boolean,
     context: Context,
@@ -29,7 +29,7 @@ class NotificationReaderOkHttpClientManager(
         with(builder) {
             super.configureBuild(this)
             addInterceptor(NotificationReaderInterceptor())
-            addInterceptor(UrlChangeInterceptor { hostManagerProvider().baseUrl })
+            addInterceptor(UrlChangeInterceptor(urlProvider))
         }
     }
 

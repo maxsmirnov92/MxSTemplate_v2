@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="mobile_services_toast_update_download_not_started_message">Downloading app update was not started</string>
-    <string name="mobile_services_toast_update_failed_message">App update failed</string>
-    <string name="mobile_services_toast_update_cancelled_message">App update cancelled</string>
-    <string name="mobile_services_snackbar_update_downloading_message">App update is now downloading</string>
-    <string name="mobile_services_snackbar_update_downloaded_message">New app is ready to install</string>
-    <string name="mobile_services_snackbar_update_downloaded_action">Complete</string>
-</resources>
