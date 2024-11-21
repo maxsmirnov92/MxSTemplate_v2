@@ -46,6 +46,7 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
     private val fieldViewsMap: Map<Field<*>, View> by lazy {
         mutableMapOf<Field<*>, View>().apply {
             with(viewModel) {
+                put(notificationsUrlField, binding.tilNotificationsUrl)
                 put(whiteListPackagesField, binding.tilWhiteListPackagesUrl)
                 put(failedNotificationsWatcherIntervalField, binding.tilFailedNotificationsWatcherInterval)
                 put(connectTimeoutField, binding.tilConnectTimeout)
@@ -105,6 +106,7 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: SettingsViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
 
+        viewModel.notificationsUrlField.observeTextWithBind(binding.tilNotificationsUrl)
         viewModel.whiteBlackListPackagesUrlField.observeTextWithBind(binding.tilWhiteListPackagesUrl)
         viewModel.whiteListPackagesField.bindValue(viewLifecycleOwner, binding.switchWhiteListPackages)
 

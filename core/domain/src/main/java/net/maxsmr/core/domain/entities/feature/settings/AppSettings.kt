@@ -22,9 +22,10 @@ data class AppSettings(
     val sortPriority: SortPriority = SortPriority.DISTANCE,
     val routingApp: RoutingApp = RoutingApp.DOUBLEGIS,
     val routingAppFromCurrent: Boolean = true,
+    val notificationsUrl: String = "",
     val whiteBlackListPackagesUrl: String = "",
     val isWhiteListPackages: Boolean = true,
-    val failedNotificationsWatcherInterval: Long = 15000L
+    val failedNotificationsWatcherInterval: Long = 15L
 ) : Serializable {
 
     companion object {

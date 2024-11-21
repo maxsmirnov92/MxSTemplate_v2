@@ -14,6 +14,7 @@ import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.di.DoubleGisRoutingOkHttpClient
 import net.maxsmr.core.di.DownloadHttpLoggingInterceptor
 import net.maxsmr.core.di.DownloaderOkHttpClient
+import net.maxsmr.core.di.NotificationReaderHostManager
 import net.maxsmr.core.di.NotificationReaderOkHttpClient
 import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
 import net.maxsmr.core.di.PicassoOkHttpClient
@@ -26,14 +27,16 @@ import net.maxsmr.core.network.client.okhttp.NotificationReaderOkHttpClientManag
 import net.maxsmr.core.network.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.RadarIoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.YandexOkHttpClientManager
-import net.maxsmr.core.network.exceptions.handler.CombinedApiExceptionHandler
+import net.maxsmr.core.network.host.HostManager
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.CacheControl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import java.io.File
+import javax.inject.Provider
 import javax.inject.Singleton
 
 // Размер дискового кеша пикассо = 250 Мб
@@ -160,13 +163,18 @@ class OkHttpModule {
     fun provideNotificationReaderOkHttpClient(
         @ApplicationContext context: Context,
         cacheRepo: CacheDataStoreRepository,
+        settingsRepository: SettingsDataStoreRepository,
+        @NotificationReaderHostManager hostManager: Provider<HostManager>,
     ): OkHttpClient {
-        return NotificationReaderOkHttpClientManager(
-            context = context,
-            connectivityChecker = NetworkConnectivityChecker,
-            apiKeyProvider = {
-                runBlocking { cacheRepo.getNotificationReaderKey(BuildConfig.API_KEY_NOTIFICATION_READER) }
-            }
-        ).build()
+        return runBlocking {
+            NotificationReaderOkHttpClientManager(
+                context = context,
+                connectivityChecker = NetworkConnectivityChecker,
+                connectTimeout = settingsRepository.getSettings().connectTimeout,
+                retryOnConnectionFailure = settingsRepository.getSettings().retryOnConnectionFailure,
+                apiKeyProvider = { runBlocking { cacheRepo.getNotificationReaderKey(BuildConfig.API_KEY_NOTIFICATION_READER) } },
+                hostManagerProvider = { hostManager.get() }
+            ).build()
+        }
     }
 }

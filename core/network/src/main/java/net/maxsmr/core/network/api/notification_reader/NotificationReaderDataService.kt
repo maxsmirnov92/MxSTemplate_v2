@@ -8,6 +8,8 @@ import retrofit2.http.POST
 
 interface NotificationReaderDataService {
 
+    // @Url не используем,
+    // должен меняться динамически в Interceptor
     @Authorization
     @POST("/")
     @ResponseObjectType(NotificationReaderDataResponse::class)

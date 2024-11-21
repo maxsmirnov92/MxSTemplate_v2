@@ -148,6 +148,7 @@ class NotificationReaderListenerService: NotificationListenerService() {
             setOnlyAlertOnce(true)
             setSound(null)
             setSilent(true)
+            setOngoing(true)
 //            addAction(
 //                net.maxsmr.core.ui.R.drawable.ic_stop,
 //                getString(android.R.string.cancel),
@@ -223,12 +224,16 @@ class NotificationReaderListenerService: NotificationListenerService() {
         fun stop(context: Context = baseApplicationContext, isForeground: Boolean = true): Boolean {
             // у NotificationListenerService ни один из stop'ов не сработает
             return if (isForeground) {
-                startNoCheck(
-                    context,
-                    NotificationReaderListenerService::class.java,
-                    bundleOf(EXTRA_STOP_SELF to true),
-                    startForeground = false
-                )
+                if (isRunning(context)) {
+                    startNoCheck(
+                        context,
+                        NotificationReaderListenerService::class.java,
+                        bundleOf(EXTRA_STOP_SELF to true),
+                        startForeground = false
+                    )
+                } else {
+                    true
+                }
             } else {
                 stop(
                     context,

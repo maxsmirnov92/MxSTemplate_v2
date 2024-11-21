@@ -27,10 +27,18 @@ class SettingsViewModel @Inject constructor(
     state: SavedStateHandle,
 ) : BaseViewModel(state) {
 
+    val notificationsUrlField = state.urlField(
+        R.string.settings_field_notifications_url_hint,
+        isRequired = true,
+        isValidByBlank = false,
+        key = KEY_FIELD_URL_NOTIFICATIONS,
+    )
+
     val whiteBlackListPackagesUrlField = state.urlField(
         R.string.settings_field_white_black_list_packages_url_hint,
-        isRequired = false,
-        isValidByBlank = true
+        isRequired = true,
+        isValidByBlank = false,
+        key = KEY_FIELD_URL_WHITE_BLACK_LIST_PACKAGES
     )
 
     val whiteListPackagesField: Field<Boolean> = Field.Builder(false)
@@ -76,6 +84,7 @@ class SettingsViewModel @Inject constructor(
         .build()
 
     private val allFields = listOf<Field<*>>(
+        notificationsUrlField,
         whiteBlackListPackagesUrlField,
         whiteListPackagesField,
         failedNotificationsWatcherIntervalField,
@@ -103,6 +112,10 @@ class SettingsViewModel @Inject constructor(
             }
         }
 
+        notificationsUrlField.clearErrorOnChange(this) {
+            appSettings.value = currentAppSettings.copy(notificationsUrl = it)
+        }
+
         whiteBlackListPackagesUrlField.clearErrorOnChange(this) {
             appSettings.value = currentAppSettings.copy(whiteBlackListPackagesUrl = it)
         }
@@ -126,6 +139,7 @@ class SettingsViewModel @Inject constructor(
         retryOnConnectionFailureField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(retryOnConnectionFailure = it)
         }
+
         retryDownloadsField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(retryDownloads = it)
         }
@@ -197,6 +211,7 @@ class SettingsViewModel @Inject constructor(
 
     private fun restoreFields(settings: AppSettings) {
         // используется для того, чтобы выставить initial'ы в филды
+        notificationsUrlField.value = settings.notificationsUrl
         whiteBlackListPackagesUrlField.value = settings.whiteBlackListPackagesUrl
         whiteListPackagesField.value = settings.isWhiteListPackages
         failedNotificationsWatcherIntervalField.value = settings.failedNotificationsWatcherInterval
@@ -218,11 +233,13 @@ class SettingsViewModel @Inject constructor(
         const val DIALOG_TAG_CONFIRM_EXIT = "confirm_exit"
         const val DIALOG_TAG_IMPORT_FAILED = "import_failed"
 
-        const val KEY_FIELD_WHITE_LIST_PACKAGES = "white_list_packages"
-        const val KEY_FIELD_FAILED_NOTIFICATIONS_WATCHER_INTERVAL = "failed_notifications_watcher_interval"
-        const val KEY_FIELD_CONNECT_TIMEOUT = "connect_timeout"
-        const val KEY_FIELD_LOAD_BY_WI_FI_ONLY = "load_by_wi_fi_only"
-        const val KEY_FIELD_RETRY_ON_CONNECTION_FAILURE = "retry_on_connection_failure"
-        const val KEY_FIELD_RETRY_DOWNLOADS = "retry_downloads"
+        private const val KEY_FIELD_URL_NOTIFICATIONS = "url_notifications"
+        private const val KEY_FIELD_URL_WHITE_BLACK_LIST_PACKAGES = "url_white_black_list_packages"
+        private const val KEY_FIELD_WHITE_LIST_PACKAGES = "white_list_packages"
+        private const val KEY_FIELD_FAILED_NOTIFICATIONS_WATCHER_INTERVAL = "failed_notifications_watcher_interval"
+        private const val KEY_FIELD_CONNECT_TIMEOUT = "connect_timeout"
+        private const val KEY_FIELD_LOAD_BY_WI_FI_ONLY = "load_by_wi_fi_only"
+        private const val KEY_FIELD_RETRY_ON_CONNECTION_FAILURE = "retry_on_connection_failure"
+        private const val KEY_FIELD_RETRY_DOWNLOADS = "retry_downloads"
     }
 }
