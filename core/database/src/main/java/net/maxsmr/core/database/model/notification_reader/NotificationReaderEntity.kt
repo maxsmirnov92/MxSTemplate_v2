@@ -9,7 +9,7 @@ import java.lang.Exception
 data class NotificationReaderEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
-    val content: String,
+    val contentText: String,
     val packageName: String,
     val timestamp: Long,
     val status: Status
@@ -27,5 +27,10 @@ data class NotificationReaderEntity(
         private fun readResolve(): Any = Loading
     }
 
-    class Failed(val exception: Exception): Status
+    class Failed(val exception: Exception): Status {
+
+        override fun toString(): String {
+            return "Failed(exception=$exception)"
+        }
+    }
 }

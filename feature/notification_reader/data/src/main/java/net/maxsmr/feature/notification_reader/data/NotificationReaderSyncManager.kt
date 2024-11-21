@@ -48,7 +48,7 @@ class NotificationReaderSyncManager @Inject constructor(
     private val sendUseCase: NotificationsSendUseCase,
 ) {
 
-    private val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("NotificationReaderSyncManager")
+    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(NotificationReaderSyncManager::class.java)
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
@@ -188,6 +188,7 @@ class NotificationReaderSyncManager @Inject constructor(
         failedWatcherJob.set(tickerFlow(failedWatchInterval.seconds)
 //            .map { LocalDateTime.now() }
             .onEach {
+                logger.d("Watcher for failed is running...")
                 sendOrRemoveNotifications { status is NotificationReaderEntity.Failed }
             }
             .launchIn(scope))
