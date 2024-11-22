@@ -5,6 +5,8 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import net.maxsmr.core.di.DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD
+import net.maxsmr.core.di.DI_NAME_FOREGROUND_SERVICE_ID_NOTIFICATION_READER
 import net.maxsmr.core.di.DI_NAME_DEMO_PERIOD
 import net.maxsmr.core.di.DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD
 import net.maxsmr.core.di.DI_NAME_IS_DEMO_BUILD
@@ -33,6 +35,9 @@ class AppModule {
 
     @[Provides Singleton Named(DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD)]
     fun provideDownloadServiceForegroundId(): Int = -1
+
+    @[Provides Singleton Named(DI_NAME_FOREGROUND_SERVICE_ID_NOTIFICATION_READER)]
+    fun provideNotificationReaderServiceForegroundId(): Int = -2
 
     @[Provides Singleton Named(DI_NAME_IS_DEMO_BUILD)]
     fun provideIsDemoBuild(): Boolean = BuildConfig.IS_DEMO_BUILD

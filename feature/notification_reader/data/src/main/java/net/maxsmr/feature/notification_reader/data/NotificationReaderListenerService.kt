@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.NotificationWrapper
 import net.maxsmr.commonutils.isAtLeastOreo
+import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.commonutils.isAtLeastUpsideDownCake
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
@@ -29,11 +30,13 @@ import net.maxsmr.commonutils.service.StartResult
 import net.maxsmr.commonutils.service.createServicePendingIntent
 import net.maxsmr.commonutils.service.isServiceRunning
 import net.maxsmr.commonutils.service.start
+import net.maxsmr.commonutils.service.startForegroundCompat
 import net.maxsmr.commonutils.service.startNoCheck
 import net.maxsmr.commonutils.service.stop
 import net.maxsmr.commonutils.service.stopForegroundCompat
 import net.maxsmr.commonutils.service.withMutabilityFlag
 import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.di.DI_NAME_FOREGROUND_SERVICE_ID_NOTIFICATION_READER
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
 import net.maxsmr.core.di.EXTRA_CALLER_CLASS_NAME
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -67,16 +70,6 @@ class NotificationReaderListenerService: NotificationListenerService() {
         }
     }
 
-    @Inject
-    lateinit var notificationReaderRepo: NotificationReaderRepository
-
-    @Inject
-    lateinit var permissionsHelper: PermissionsHelper
-
-    @Inject
-    @Named(DI_NAME_MAIN_ACTIVITY_CLASS)
-    lateinit var mainActivityClassName: String
-
     private val mainActivityClass: Class<Activity>? by lazy {
         try {
             @Suppress("UNCHECKED_CAST")
@@ -91,25 +84,41 @@ class NotificationReaderListenerService: NotificationListenerService() {
         CoroutineScope(Dispatchers.IO)
     }
 
+    @Inject
+    lateinit var notificationReaderRepo: NotificationReaderRepository
+
+    @Inject
+    lateinit var permissionsHelper: PermissionsHelper
+
+    @Inject
+    @Named(DI_NAME_MAIN_ACTIVITY_CLASS)
+    lateinit var mainActivityClassName: String
+
+    @JvmField
+    @Inject
+    @Named(DI_NAME_FOREGROUND_SERVICE_ID_NOTIFICATION_READER)
+    var foregroundNotificationId: Int = -1
+
     override fun onCreate() {
         super.onCreate()
         logger.d("onCreate")
-        val notification = foregroundNotification()
-        if (isAtLeastUpsideDownCake()) {
-            startForeground(
-                NOTIFICATION_ID_FOREGROUND,
-                notification,
+        startForegroundCompat(
+            foregroundNotificationId,
+            foregroundNotification(),
+            if (isAtLeastUpsideDownCake()) {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            )
-        } else {
-            startForeground(NOTIFICATION_ID_FOREGROUND, notification)
-        }
+            } else {
+                null
+            }
+        )
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         logger.d("onStartCommand, intent: $intent, flags: $flags, startId: $startId")
         if (intent?.getBooleanExtra(EXTRA_STOP_SELF, false) == true) {
+            // нотификация уберётся
             stopForegroundCompat(true)
+            // для такого сервиса остановки не будет
             stopSelf()
             return Service.START_NOT_STICKY
         }
@@ -141,13 +150,15 @@ class NotificationReaderListenerService: NotificationListenerService() {
     }
 
     private fun foregroundNotification(): Notification {
-        return notificationWrapper.create(NOTIFICATION_ID_FOREGROUND, notificationChannel) {
+        return notificationWrapper.create(foregroundNotificationId, notificationChannel) {
             setDefaults(Notification.DEFAULT_ALL)
             setSmallIcon(net.maxsmr.core.ui.R.drawable.ic_info)
             setContentTitle(getString(R.string.notification_reader_notification_text))
             setOnlyAlertOnce(true)
             setSound(null)
             setSilent(true)
+            // Starting in Android 13 (API level 33),
+            // users can dismiss the notification associated with a foreground service by default.
             setOngoing(true)
 //            addAction(
 //                net.maxsmr.core.ui.R.drawable.ic_stop,
@@ -197,8 +208,6 @@ class NotificationReaderListenerService: NotificationListenerService() {
     }
 
     companion object {
-
-        private const val NOTIFICATION_ID_FOREGROUND = -1
 
         private const val EXTRA_STOP_SELF = "stop_self"
 
