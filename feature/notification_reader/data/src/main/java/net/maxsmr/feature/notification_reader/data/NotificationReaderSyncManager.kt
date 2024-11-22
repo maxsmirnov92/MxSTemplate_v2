@@ -94,7 +94,7 @@ class NotificationReaderSyncManager @Inject constructor(
     }
 
     @MainThread
-    fun doStop(context: Context): Boolean {
+    fun doStop(context: Context, navigateToSettings: Boolean = true): Boolean {
         logger.d("doStop")
         downloadJob.cancel()
         newWatcherJob.cancel()
@@ -104,8 +104,10 @@ class NotificationReaderSyncManager @Inject constructor(
         isPackageListReady.set(false)
         return if (NotificationReaderListenerService.isRunning(context)) {
             if (isNotificationAccessGranted(context)) {
-                // при наличии доступа сначала отправляем в настройки
-                navigateToNotificationListenerSettings(context)
+                if (navigateToSettings) {
+                    // при наличии доступа сначала отправляем в настройки
+                    navigateToNotificationListenerSettings(context)
+                }
                 true
             } else {
                 // если доступа уже нет - завершаем через stopService или отправив команду

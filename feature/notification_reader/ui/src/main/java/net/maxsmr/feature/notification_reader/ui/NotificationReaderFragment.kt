@@ -134,7 +134,7 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
         } else {
             // при возврате с экрана настроек, когда разрешение было отозвано,
             // можно попытаться остановить ещё раз
-            manager.doStop(requireContext())
+            manager.doStop(requireContext(), false)
         }
         refreshServiceStateMenuItem()
     }

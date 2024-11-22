@@ -9,6 +9,7 @@ const val DI_NAME_VERSION_CODE = "version_code"
 const val DI_NAME_VERSION_NAME = "version_name"
 const val DI_NAME_DATABASE_NAME = "database_name"
 const val DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD = "foreground_service_id_download"
+const val DI_NAME_FOREGROUND_SERVICE_ID_NOTIFICATION_READER = "foreground_service_id_notification_reader"
 
 /**
  * Опционально, передать эту экстру с именем класса для понимания, кто вызвал
