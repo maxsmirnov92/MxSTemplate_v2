@@ -11,6 +11,7 @@
     <string name="settings_field_load_by_wi_fi_only">Загружать только при наличии Wi-Fi</string>
     <string name="settings_field_retry_failed_downloads">Повторять неудавшиеся из-за сети загрузки при её появлении</string>
     <string name="settings_field_disable_notifications">Отключить уведомления сервисов</string>
+    <string name="settings_field_can_draw_overlays">Поверх других приложений</string>
 
     <string name="settings_dialog_confirm_message">Есть изменения</string>
     <string name="settings_dialog_confirm_yes_button">Сохранить</string>

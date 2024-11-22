@@ -7,6 +7,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.getManageOverlayPermissionIntent
 import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.openBatteryOptimizationSettings
@@ -46,7 +47,24 @@ fun CacheDataStoreRepository.doOnBatteryOptimizationAsk(
     }
 }
 
-fun <T>  CacheDataStoreRepository.doOnPostNotificationPermissionResult(
+fun CacheDataStoreRepository.doOnCanDrawOverlaysAsked(
+    viewModel: BaseViewModel,
+    context: Context,
+    targetAction: ((Boolean) -> Unit)? = null
+)  {
+    viewModel.doOnAnyAskOption(canDrawOverlaysAsked, {
+        viewModel.viewModelScope.launch {
+            this@doOnCanDrawOverlaysAsked.setCanDrawOverlaysAsked()
+        }
+    }) {
+        if (!it) {
+            context.startActivity(getManageOverlayPermissionIntent(context))
+        }
+        targetAction?.invoke(!it)
+    }
+}
+
+fun <T> CacheDataStoreRepository.doOnPostNotificationPermissionResult(
     host: T,
     onlyWhenGranted: Boolean,
     targetAction: () -> Unit,
