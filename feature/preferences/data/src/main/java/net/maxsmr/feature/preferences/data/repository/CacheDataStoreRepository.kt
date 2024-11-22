@@ -122,24 +122,24 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun isPackageInWhiteList(
+    suspend fun isPackageInList(
         context: Context,
         packageName: String,
         isWhiteList: Boolean,
-    ): Boolean = getPackagesWhiteList().let {
+    ): Boolean = getPackageList().let {
         context.packageName != packageName && (it.isEmpty()
                 || if (isWhiteList) it.contains(packageName) else !it.contains(packageName))
     }
 
-    suspend fun getPackagesWhiteList(): Set<String> {
+    suspend fun getPackageList(): Set<String> {
         return dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_PACKAGES_WHITE_LIST]
+            prefs[FIELD_KEY_PACKAGE_LIST]
         }.firstOrNull().orEmpty()
     }
 
-    suspend fun setPackagesWhiteList(packages: Set<String>) {
+    suspend fun setPackageList(packages: Set<String>) {
         dataStore.edit { prefs ->
-            prefs[FIELD_KEY_PACKAGES_WHITE_LIST] = packages
+            prefs[FIELD_KEY_PACKAGE_LIST] = packages
         }
     }
 
@@ -149,7 +149,7 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_BATTERY_OPTIMIZATION_ASKED = booleanPreferencesKey("batteryOptimizationAsked")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_KEY_NOTIFICATION_READER_API_KEY = stringPreferencesKey("keyNotificationReader")
-        private val FIELD_KEY_PACKAGES_WHITE_LIST = stringSetPreferencesKey("keyPackagesWhiteList")
+        private val FIELD_KEY_PACKAGE_LIST = stringSetPreferencesKey("keyPackageList")
         private val FIELD_KEY_DEMO_PERIOD_EXPIRED = booleanPreferencesKey("demoPeriodExpired")
         private val FIELD_KEY_TUTORIAL_COMPLETED = booleanPreferencesKey("tutorialCompleted")
     }

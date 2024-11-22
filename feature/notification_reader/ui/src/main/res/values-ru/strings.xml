@@ -3,9 +3,11 @@
     <string name="notification_reader_feature_title">Уведомления</string>
     <string name="notification_reader_menu_action_service_start">Запустить</string>
     <string name="notification_reader_menu_action_service_stop">Остановить</string>
+    <string name="notification_reader_menu_action_download_package_list">Загрузить файл со списком пакетов</string>
     <string name="notification_reader_toast_start_add_in_settings">Приложение должно быть выбрано в настройках для старта сервиса</string>
     <string name="notification_reader_toast_stop_remove_in_settings">Приложение должно быть убрано в настройках для завершения сервиса</string>
     <string name="notification_reader_snack_cannot_start_service">Не удалось запустить сервис</string>
+    <string name="notification_reader_snack_download_package_list_not_started">Список пакетов в настоящий момент загружается</string>
     <string name="notification_reader_package_name_unknown">Неизвестный пакет</string>
     <string name="notification_reader_content_empty">Нет содержимого</string>
     <string name="notification_reader_no_notifications">Нет уведомлений</string>

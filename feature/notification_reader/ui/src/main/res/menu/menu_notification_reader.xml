@@ -7,4 +7,9 @@
         android:title="@string/notification_reader_menu_action_service_start"
         app:iconTint="@color/white"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/actionDownloadPackageList"
+        android:title="@string/notification_reader_menu_action_download_package_list"
+        app:iconTint="@color/white" />
 </menu>

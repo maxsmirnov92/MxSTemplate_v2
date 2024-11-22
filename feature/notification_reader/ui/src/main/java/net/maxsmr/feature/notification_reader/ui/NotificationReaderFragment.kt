@@ -148,7 +148,11 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.actionServiceStartStop -> {
-                viewModel.toggleServiceTargetState()
+                viewModel.onToggleServiceTargetStateAction()
+                true
+            }
+            R.id.actionDownloadPackageList -> {
+                viewModel.onDownloadPackageListAction()
                 true
             }
 

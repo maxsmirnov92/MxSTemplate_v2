@@ -5,16 +5,18 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.map
 import dagger.hilt.android.lifecycle.HiltViewModel
-import net.maxsmr.core.android.base.BaseViewModel
 import kotlinx.datetime.Instant
+import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.feature.notification_reader.data.NotificationReaderListenerService
-
 import net.maxsmr.feature.notification_reader.data.NotificationReaderRepository
+import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData
 import javax.inject.Inject
 
 @HiltViewModel
 class NotificationReaderViewModel @Inject constructor(
+    private val syncManager: NotificationReaderSyncManager,
     repo: NotificationReaderRepository,
     state: SavedStateHandle,
 ) : BaseViewModel(state) {
@@ -33,11 +35,17 @@ class NotificationReaderViewModel @Inject constructor(
         }
     }
 
-    fun toggleServiceTargetState() {
+    fun onToggleServiceTargetStateAction() {
         serviceTargetState.value = !isServiceRunning()
     }
 
+    fun onDownloadPackageListAction() {
+        if (!syncManager.doLaunchMainJobIfNeeded()) {
+            showSnackbar(TextMessage(R.string.notification_reader_snack_download_package_list_not_started))
+        }
+    }
+
     fun isServiceRunning(): Boolean {
-        return NotificationReaderListenerService.isRunning() && serviceTargetState.value != false
+        return NotificationReaderListenerService.isRunning() /*&& serviceTargetState.value != false*/
     }
 }
