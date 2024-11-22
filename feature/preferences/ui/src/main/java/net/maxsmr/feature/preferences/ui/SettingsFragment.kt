@@ -43,7 +43,7 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
         mutableMapOf<Field<*>, View>().apply {
             with(viewModel) {
                 put(notificationsUrlField, binding.tilNotificationsUrl)
-                put(whiteListPackagesField, binding.tilWhiteListPackagesUrl)
+                put(packageListUrlField, binding.tilPackageListUrl)
                 put(failedNotificationsWatcherIntervalField, binding.tilFailedNotificationsWatcherInterval)
                 put(connectTimeoutField, binding.tilConnectTimeout)
             }
@@ -101,8 +101,8 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
         super.onViewCreated(view, savedInstanceState, viewModel)
 
         viewModel.notificationsUrlField.observeTextWithBind(binding.tilNotificationsUrl)
-        viewModel.whiteBlackListPackagesUrlField.observeTextWithBind(binding.tilWhiteListPackagesUrl)
-        viewModel.whiteListPackagesField.bindValue(viewLifecycleOwner, binding.switchWhiteListPackages)
+        viewModel.packageListUrlField.observeTextWithBind(binding.tilPackageListUrl)
+        viewModel.isWhitePackageListField.bindValue(viewLifecycleOwner, binding.switchWhitePackageList)
 
         viewModel.failedNotificationsWatcherIntervalField.observeLongWithBind(binding.tilFailedNotificationsWatcherInterval)
 

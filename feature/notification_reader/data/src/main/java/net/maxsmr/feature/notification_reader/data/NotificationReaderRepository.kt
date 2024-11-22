@@ -26,9 +26,9 @@ class NotificationReaderRepository @Inject constructor(
     }
 
     suspend fun insertNewNotification(content: String, packageName: String) {
-        if (cacheRepo.isPackageInWhiteList(baseApplicationContext,
+        if (cacheRepo.isPackageInList(baseApplicationContext,
                     packageName,
-                    settingsRepo.getSettings().isWhiteListPackages)) {
+                    settingsRepo.getSettings().isWhitePackageList)) {
             dao.upsert(
                 NotificationReaderEntity(
                     contentText = content,

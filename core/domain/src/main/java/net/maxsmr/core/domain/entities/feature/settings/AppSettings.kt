@@ -1,9 +1,5 @@
 package net.maxsmr.core.domain.entities.feature.settings
 
-import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
-import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
-import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingMode
-import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingType
 import java.io.Serializable
 
 @kotlinx.serialization.Serializable
@@ -16,8 +12,8 @@ data class AppSettings(
     val disableNotifications: Boolean = true,
     val updateNotificationInterval: Long = UPDATE_NOTIFICATION_INTERVAL_DEFAULT,
     val notificationsUrl: String = "",
-    val whiteBlackListPackagesUrl: String = "",
-    val isWhiteListPackages: Boolean = true,
+    val packageListUrl: String = "",
+    val isWhitePackageList: Boolean = true,
     val failedNotificationsWatcherInterval: Long = 15L
 ) : Serializable {
 

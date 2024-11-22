@@ -50,22 +50,22 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilWhiteListPackagesUrl"
+                android:id="@+id/tilPackageListUrl"
                 style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
                 android:layout_marginTop="@dimen/defaultPadding"
                 android:layout_height="wrap_content"
-                tools:hint="@string/settings_field_white_black_list_packages_url_hint">
+                tools:hint="@string/settings_field_package_list_url_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etWhiteListPackagesUrl"
+                    android:id="@+id/etPackageListUrl"
                     style="@style/SingleLineInputText"
                     android:inputType="textUri" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
             <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switchWhiteListPackages"
+                android:id="@+id/switchWhitePackageList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/defaultPadding"

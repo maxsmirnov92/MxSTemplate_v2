@@ -58,7 +58,7 @@ class NotificationReaderSyncManager @Inject constructor(
     private var failedWatcherJob = AtomicReference<Job>()
     private var networkStateJob = AtomicReference<Job>()
 
-    private val isWhiteListReady = AtomicBoolean(false)
+    private val isPackageListReady = AtomicBoolean(false)
     private val pendingStartService = AtomicBoolean(false)
 
     init {
@@ -71,7 +71,7 @@ class NotificationReaderSyncManager @Inject constructor(
         logger.d("doStart")
         if (ignoreBackground || context.isSelfAppInBackground() == false) {
             if (isNotificationAccessGranted(context)) {
-                if (isWhiteListReady.get()) {
+                if (isPackageListReady.get()) {
                     // начиная с Android 8 стартовать foreground сервис из бэкграунда нельзя
                     val result = NotificationReaderListenerService.start(context)
                     return if (result != StartResult.NOT_STARTED_FAILED) {
@@ -81,11 +81,8 @@ class NotificationReaderSyncManager @Inject constructor(
                     }
                 } else {
                     // белый список не актуализирован
-                    if (downloadJob.get()?.isCancelled != false) {
-                        // перезапускаем главную при необходимости
-                        launchMainJob()
-                    }
-                    pendingStartService.set(true)
+                    doLaunchMainJobIfNeeded()
+                    return ManagerStartResult.SUCCESS
                 }
             } else {
                 // начиная с Android 14 стартануть активити находясь в бэкграунде нельзя
@@ -104,7 +101,7 @@ class NotificationReaderSyncManager @Inject constructor(
         failedWatcherJob.cancel()
         networkStateJob.cancel()
         // при перезапуске манагера надо перезапросить список
-        isWhiteListReady.set(false)
+        isPackageListReady.set(false)
         return if (NotificationReaderListenerService.isRunning(context)) {
             if (isNotificationAccessGranted(context)) {
                 // при наличии доступа сначала отправляем в настройки
@@ -119,21 +116,33 @@ class NotificationReaderSyncManager @Inject constructor(
         }
     }
 
+    @MainThread
+    fun doLaunchMainJobIfNeeded(): Boolean {
+        if (downloadJob.get()?.isCancelled != false) {
+            // перезапускаем главную при необходимости
+            launchMainJob()
+            pendingStartService.set(true)
+            return true
+        }
+        return false
+    }
+
     private fun launchMainJob() {
-        // при инициализации забираем актуальный список пакетов
+        downloadJob.cancel()
+        // забираем актуальный список пакетов
         downloadJob.set(scope.launch {
-            downloadManager.observeDownloadByParams(enqueueDownloadWhiteList(), true).collect {
+            downloadManager.observeDownloadByParams(enqueueDownloadPackageList(), true).collect {
                 if (!it.isLoading) {
 
                     if (it.isSuccessWithData()) {
-                        val whiteList =
+                        val packageList =
                             it.data?.downloadInfo?.localUri?.readStrings(baseApplicationContext.contentResolver)
                                 .orEmpty()
-                        cacheRepo.setPackagesWhiteList(whiteList.filter { name ->
+                        cacheRepo.setPackageList(packageList.filter { name ->
                             isPackageNameValid(name) || name == "android"
                         }.toSet())
                     }
-                    isWhiteListReady.set(true)
+                    isPackageListReady.set(true)
 
                     // после успешной или неуспешной загрузки файла с разрешённым списком
                     // делаем следующее:
@@ -168,21 +177,26 @@ class NotificationReaderSyncManager @Inject constructor(
 
     private fun AtomicReference<Job>.cancel() {
         get()?.let {
-            it.cancel()
+            if (!it.isCancelled) {
+                it.cancel()
+            }
             set(null)
         }
     }
 
     private suspend fun launchWatcherForNew() {
-        newWatcherJob.set(scope.launch {
-            notificationReaderRepo.getNotifications { status is NotificationReaderEntity.New }
-                .collect { notifications ->
-                    notifications.send()
-                }
-        })
+        if (newWatcherJob.get()?.isCancelled != false) {
+            newWatcherJob.set(scope.launch {
+                notificationReaderRepo.getNotifications { status is NotificationReaderEntity.New }
+                    .collect { notifications ->
+                        notifications.send()
+                    }
+            })
+        }
     }
 
     private suspend fun launchWatcherForFailed() {
+        failedWatcherJob.cancel()
         val failedWatchInterval = settingsRepo.getSettings().failedNotificationsWatcherInterval
         require(failedWatchInterval >= 0) { "Incorrect failedWatchInterval: $failedWatchInterval" }
         if (failedWatchInterval == 0L) return
@@ -196,10 +210,11 @@ class NotificationReaderSyncManager @Inject constructor(
     }
 
     private suspend fun launchNetworkStateWatcher() {
-        networkStateJob.set(
-            scope.observeNetworkStateWithSettings(settingsRepo) {
-                if (!it.shouldRetry) return@observeNetworkStateWithSettings
-                val failedNetworkNotifications = notificationReaderRepo.getNotificationsRaw {
+        if (networkStateJob.get()?.isCancelled != false) {
+            networkStateJob.set(
+                scope.observeNetworkStateWithSettings(settingsRepo) {
+                    if (!it.shouldRetry) return@observeNetworkStateWithSettings
+                    val failedNetworkNotifications = notificationReaderRepo.getNotificationsRaw {
                         when (val reason = (status as? NotificationReaderEntity.Failed)?.exception) {
                             is NoConnectivityException, is SocketException, is SocketTimeoutException -> {
                                 if (it.loadByWiFiOnly && reason is NoPreferableConnectivityException) {
@@ -216,9 +231,10 @@ class NotificationReaderSyncManager @Inject constructor(
                             }
                         }
                     }
-                failedNetworkNotifications.sendOrRemove()
-            }
-        )
+                    failedNetworkNotifications.sendOrRemove()
+                }
+            )
+        }
     }
 
     private suspend fun sendOrRemoveNotifications(filterFunc: NotificationReaderEntity.() -> Boolean) {
@@ -231,10 +247,10 @@ class NotificationReaderSyncManager @Inject constructor(
         val newNotifications = mutableListOf<NotificationReaderEntity>()
         val removedNotifications = mutableListOf<NotificationReaderEntity>()
         this.forEach { n ->
-            if (cacheRepo.isPackageInWhiteList(
+            if (cacheRepo.isPackageInList(
                         baseApplicationContext,
                         n.packageName,
-                        settingsRepo.getSettings().isWhiteListPackages
+                        settingsRepo.getSettings().isWhitePackageList
                     )
             ) {
                 // есть в белом/чёрном списке - снова становится "Loading" и отправляется сразу
@@ -265,9 +281,9 @@ class NotificationReaderSyncManager @Inject constructor(
         )
     }
 
-    private suspend fun enqueueDownloadWhiteList(): DownloadService.Params {
-        val whiteBlackListPackagesUrl = settingsRepo.getSettings().whiteBlackListPackagesUrl
-        val params = DownloadParamsModel(whiteBlackListPackagesUrl).toParams()
+    private suspend fun enqueueDownloadPackageList(): DownloadService.Params {
+        val packageListUrl = settingsRepo.getSettings().packageListUrl
+        val params = DownloadParamsModel(packageListUrl).toParams()
         DownloadService.Params(
             params.requestParams,
             DownloadService.NotificationParams(

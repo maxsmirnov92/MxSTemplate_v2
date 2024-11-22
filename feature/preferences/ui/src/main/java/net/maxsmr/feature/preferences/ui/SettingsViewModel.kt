@@ -38,16 +38,16 @@ class SettingsViewModel @Inject constructor(
         key = KEY_FIELD_URL_NOTIFICATIONS,
     )
 
-    val whiteBlackListPackagesUrlField = state.urlField(
-        R.string.settings_field_white_black_list_packages_url_hint,
+    val packageListUrlField = state.urlField(
+        R.string.settings_field_package_list_url_hint,
         isRequired = true,
         isValidByBlank = false,
-        key = KEY_FIELD_URL_WHITE_BLACK_LIST_PACKAGES
+        key = KEY_FIELD_URL_PACKAGE_LIST
     )
 
-    val whiteListPackagesField: Field<Boolean> = Field.Builder(false)
+    val isWhitePackageListField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
-        .persist(state, KEY_FIELD_WHITE_LIST_PACKAGES)
+        .persist(state, KEY_FIELD_IS_WHITE_PACKAGE_LIST)
         .build()
 
     val failedNotificationsWatcherIntervalField: Field<Long> = Field.Builder(0L)
@@ -94,8 +94,8 @@ class SettingsViewModel @Inject constructor(
 
     private val allFields = listOf<Field<*>>(
         notificationsUrlField,
-        whiteBlackListPackagesUrlField,
-        whiteListPackagesField,
+        packageListUrlField,
+        isWhitePackageListField,
         failedNotificationsWatcherIntervalField,
         connectTimeoutField,
         loadByWiFiOnlyField,
@@ -126,12 +126,12 @@ class SettingsViewModel @Inject constructor(
             appSettings.value = currentAppSettings.copy(notificationsUrl = it)
         }
 
-        whiteBlackListPackagesUrlField.clearErrorOnChange(this) {
-            appSettings.value = currentAppSettings.copy(whiteBlackListPackagesUrl = it)
+        packageListUrlField.clearErrorOnChange(this) {
+            appSettings.value = currentAppSettings.copy(packageListUrl = it)
         }
 
-        whiteListPackagesField.valueLive.observe {
-            appSettings.value = currentAppSettings.copy(isWhiteListPackages = it)
+        isWhitePackageListField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(isWhitePackageList = it)
         }
 
         failedNotificationsWatcherIntervalField.clearErrorOnChange(this) {
@@ -238,8 +238,8 @@ class SettingsViewModel @Inject constructor(
     private fun restoreFields(settings: AppSettings) {
         // используется для того, чтобы выставить initial'ы в филды
         notificationsUrlField.value = settings.notificationsUrl
-        whiteBlackListPackagesUrlField.value = settings.whiteBlackListPackagesUrl
-        whiteListPackagesField.value = settings.isWhiteListPackages
+        packageListUrlField.value = settings.packageListUrl
+        isWhitePackageListField.value = settings.isWhitePackageList
         failedNotificationsWatcherIntervalField.value = settings.failedNotificationsWatcherInterval
         connectTimeoutField.value = settings.connectTimeout
         loadByWiFiOnlyField.value = settings.loadByWiFiOnly
@@ -261,8 +261,8 @@ class SettingsViewModel @Inject constructor(
         const val DIALOG_TAG_IMPORT_FAILED = "import_failed"
 
         private const val KEY_FIELD_URL_NOTIFICATIONS = "url_notifications"
-        private const val KEY_FIELD_URL_WHITE_BLACK_LIST_PACKAGES = "url_white_black_list_packages"
-        private const val KEY_FIELD_WHITE_LIST_PACKAGES = "white_list_packages"
+        private const val KEY_FIELD_URL_PACKAGE_LIST = "url_package_list"
+        private const val KEY_FIELD_IS_WHITE_PACKAGE_LIST = "is_white_package_list"
         private const val KEY_FIELD_FAILED_NOTIFICATIONS_WATCHER_INTERVAL = "failed_notifications_watcher_interval"
         private const val KEY_FIELD_CONNECT_TIMEOUT = "connect_timeout"
         private const val KEY_FIELD_LOAD_BY_WI_FI_ONLY = "load_by_wi_fi_only"

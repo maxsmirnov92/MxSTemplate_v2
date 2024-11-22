@@ -3,7 +3,7 @@
     <string name="settings_feature_title">Настройки</string>
 
     <string name="settings_field_notifications_url_hint">URL для отправки уведомлений</string>
-    <string name="settings_field_white_black_list_packages_url_hint">URL с белым/чёрным списком имён пакетов</string>
+    <string name="settings_field_package_list_url_hint">URL со списком имён пакетов</string>
     <string name="settings_field_white_list_packages">Белый список с именами пакетов</string>
     <string name="settings_field_failed_notifications_watcher_interval_hint">Интервал для повторных попыток отправки неудавшихся уведомлений (секунды, 0 - отключить)</string>
     <string name="settings_field_connect_timeout_hint">Таймаут соединения (секунды, 0 - без таймаута)</string>
