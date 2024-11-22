@@ -21,6 +21,9 @@ import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
 import net.maxsmr.feature.notification_reader.ui.databinding.FragmentNotificationReaderBinding
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
+import net.maxsmr.feature.preferences.ui.observePostNotificationPermissionAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -42,6 +45,12 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
 
     @Inject
     lateinit var manager: NotificationReaderSyncManager
+
+    @Inject
+    lateinit var cacheRepo: CacheDataStoreRepository
+
+    @Inject
+    lateinit var settingsRepo: SettingsDataStoreRepository
 
     private var toggleServiceStateMenuItem: MenuItem? = null
 
@@ -101,6 +110,13 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
             )
         }
 
+        settingsRepo.settingsFlow.collectSafely {
+            if (!it.disableNotifications) {
+                // post_notifications не является обязательным для работы сервиса,
+                // но спрашиваем чтобы нотификации от двух сервисов были
+                cacheRepo.observePostNotificationPermissionAsked(this)
+            }
+        }
         navigateToManageOverlay()
     }
 

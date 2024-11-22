@@ -9,6 +9,7 @@ android {
 
 dependencies {
     api(project(":feature:notification_reader:data"))
+    implementation(project(":feature:preferences:ui"))
     implementation(project(":core:di"))
 
     implementation(libs.kotlinx.datetime)

@@ -7,26 +7,20 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.json.Json
-import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.DataStoreType
 import net.maxsmr.core.di.DataStores
-import net.maxsmr.core.domain.entities.feature.rate.RateAppInfo
-import net.maxsmr.core.utils.kotlinx.serialization.decodeFromStringOrNull
-import net.maxsmr.core.utils.kotlinx.serialization.encodeToStringOrNull
 import javax.inject.Inject
 
 /**
  * Репо для хранения кэшированных значений в аппе
  */
 class CacheDataStoreRepository @Inject constructor(
-    @DataStores(DataStoreType.CACHE) private val dataStore: DataStore<Preferences>
+    @DataStores(DataStoreType.CACHE) private val dataStore: DataStore<Preferences>,
 ) {
 
     private val data: Flow<Preferences> = dataStore.data
@@ -131,7 +125,7 @@ class CacheDataStoreRepository @Inject constructor(
     suspend fun isPackageInWhiteList(
         context: Context,
         packageName: String,
-        isWhiteList: Boolean
+        isWhiteList: Boolean,
     ): Boolean = getPackagesWhiteList().let {
         context.packageName != packageName && (it.isEmpty()
                 || if (isWhiteList) it.contains(packageName) else !it.contains(packageName))

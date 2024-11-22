@@ -19,6 +19,7 @@ import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.fields.urlField
+import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import javax.inject.Inject
 
@@ -26,6 +27,7 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     private val repository: SettingsDataStoreRepository,
     private val keyImportUseCase: NotificationReaderKeyImportUseCase,
+    private val cacheRepository: CacheDataStoreRepository,
     state: SavedStateHandle,
 ) : BaseHandleableViewModel(state) {
 
@@ -85,6 +87,11 @@ class SettingsViewModel @Inject constructor(
         .persist(state, KEY_FIELD_RETRY_DOWNLOADS)
         .build()
 
+    val disableNotificationsField: Field<Boolean> = Field.Builder(false)
+        .emptyIf { false }
+        .persist(state, KEY_FIELD_DISABLE_NOTIFICATIONS)
+        .build()
+
     private val allFields = listOf<Field<*>>(
         notificationsUrlField,
         whiteBlackListPackagesUrlField,
@@ -94,6 +101,7 @@ class SettingsViewModel @Inject constructor(
         loadByWiFiOnlyField,
         retryOnConnectionFailureField,
         retryDownloadsField,
+        disableNotificationsField
     )
 
     private val appSettings by persistableLiveData<AppSettings>()
@@ -145,6 +153,10 @@ class SettingsViewModel @Inject constructor(
         retryDownloadsField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(retryDownloads = it)
         }
+
+        disableNotificationsField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(disableNotifications = it)
+        }
     }
 
     override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
@@ -166,6 +178,12 @@ class SettingsViewModel @Inject constructor(
             }
             if (hasChanges.value != true) {
                 return@launch
+            }
+            val disableNotifications = disableNotificationsField.value
+            if (!disableNotifications) {
+                viewModelScope.launch {
+                    cacheRepository.clearPostNotificationAsked()
+                }
             }
 
             repository.updateSettings(currentAppSettings)
@@ -227,6 +245,7 @@ class SettingsViewModel @Inject constructor(
         loadByWiFiOnlyField.value = settings.loadByWiFiOnly
         retryOnConnectionFailureField.value = settings.retryOnConnectionFailure
         retryDownloadsField.value = settings.retryDownloads
+        disableNotificationsField.value = settings.disableNotifications
     }
 
     private suspend fun updateSettings() {
@@ -249,5 +268,6 @@ class SettingsViewModel @Inject constructor(
         private const val KEY_FIELD_LOAD_BY_WI_FI_ONLY = "load_by_wi_fi_only"
         private const val KEY_FIELD_RETRY_ON_CONNECTION_FAILURE = "retry_on_connection_failure"
         private const val KEY_FIELD_RETRY_DOWNLOADS = "retry_downloads"
+        const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
     }
 }

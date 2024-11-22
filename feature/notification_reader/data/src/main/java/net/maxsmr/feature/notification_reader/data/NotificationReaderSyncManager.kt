@@ -24,6 +24,7 @@ import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.feature.download.data.DownloadService
+import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.data.DownloadsViewModel.Companion.toParams
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.data.manager.observeNetworkStateWithSettings
@@ -269,7 +270,10 @@ class NotificationReaderSyncManager @Inject constructor(
         val params = DownloadParamsModel(whiteBlackListPackagesUrl).toParams()
         DownloadService.Params(
             params.requestParams,
-            null,
+            DownloadService.NotificationParams(
+                retryActionIfFailed = false,
+                successActions = DownloadsViewModel.defaultSuccessNotificationActions(baseApplicationContext),
+            ),
             params.resourceName,
             DownloadServiceStorage.Type.INTERNAL,
             params.subDirPath,
