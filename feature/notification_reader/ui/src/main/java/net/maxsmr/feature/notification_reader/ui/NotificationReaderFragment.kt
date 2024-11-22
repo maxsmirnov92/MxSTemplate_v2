@@ -1,9 +1,6 @@
 package net.maxsmr.feature.notification_reader.ui
 
-import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -23,6 +20,7 @@ import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
 import net.maxsmr.feature.notification_reader.ui.databinding.FragmentNotificationReaderBinding
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
+import net.maxsmr.feature.preferences.ui.doOnCanDrawOverlaysAsked
 import net.maxsmr.feature.preferences.ui.observePostNotificationPermissionAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
@@ -117,7 +115,12 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
                 cacheRepo.observePostNotificationPermissionAsked(this)
             }
         }
-        navigateToManageOverlay()
+
+        viewModel.doOnCanDrawOverlaysAsked(this, cacheRepo, settingsRepo) {
+            if (it) {
+                viewModel.showToast(TextMessage(R.string.notification_reader_toast_can_draw_overlays_settings))
+            }
+        }
     }
 
     override fun onResume() {
@@ -154,16 +157,6 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
             else -> {
                 false
             }
-        }
-    }
-
-    private fun navigateToManageOverlay() {
-        val context = requireContext()
-        if (!Settings.canDrawOverlays(context)) {
-            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-            val uri = Uri.fromParts("package", context.packageName, null)
-            intent.setData(uri)
-            startActivity(intent)
         }
     }
 

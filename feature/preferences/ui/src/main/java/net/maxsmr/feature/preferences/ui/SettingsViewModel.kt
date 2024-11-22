@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.isAtLeastOreo
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
 import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
@@ -92,7 +93,16 @@ class SettingsViewModel @Inject constructor(
         .persist(state, KEY_FIELD_DISABLE_NOTIFICATIONS)
         .build()
 
-    private val allFields = listOf<Field<*>>(
+    val canDrawOverlaysField: Field<Boolean>? = if (isAtLeastOreo()) {
+        Field.Builder(false)
+            .emptyIf { false }
+            .persist(state, KEY_FIELD_CAN_DRAW_OVERLAYS)
+            .build()
+    } else {
+        null
+    }
+
+    private val allFields = mutableListOf<Field<*>>(
         notificationsUrlField,
         packageListUrlField,
         isWhitePackageListField,
@@ -101,8 +111,12 @@ class SettingsViewModel @Inject constructor(
         loadByWiFiOnlyField,
         retryOnConnectionFailureField,
         retryDownloadsField,
-        disableNotificationsField
-    )
+        disableNotificationsField,
+    ).apply {
+        canDrawOverlaysField?.let {
+            add(it)
+        }
+    }
 
     private val appSettings by persistableLiveData<AppSettings>()
 
@@ -157,6 +171,10 @@ class SettingsViewModel @Inject constructor(
         disableNotificationsField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(disableNotifications = it)
         }
+
+        canDrawOverlaysField?.valueLive?.observe {
+            appSettings.value = currentAppSettings.copy(canDrawOverlays = it)
+        }
     }
 
     override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
@@ -179,10 +197,16 @@ class SettingsViewModel @Inject constructor(
             if (hasChanges.value != true) {
                 return@launch
             }
-            val disableNotifications = disableNotificationsField.value
-            if (!disableNotifications) {
+            if (!disableNotificationsField.value) {
                 viewModelScope.launch {
                     cacheRepository.clearPostNotificationAsked()
+                }
+            }
+            canDrawOverlaysField?.let {
+                if (it.value) {
+                    viewModelScope.launch {
+                        cacheRepository.clearCanDrawOverlaysAsked()
+                    }
                 }
             }
 
@@ -246,6 +270,7 @@ class SettingsViewModel @Inject constructor(
         retryOnConnectionFailureField.value = settings.retryOnConnectionFailure
         retryDownloadsField.value = settings.retryDownloads
         disableNotificationsField.value = settings.disableNotifications
+        canDrawOverlaysField?.value = settings.canDrawOverlays
     }
 
     private suspend fun updateSettings() {
@@ -268,6 +293,7 @@ class SettingsViewModel @Inject constructor(
         private const val KEY_FIELD_LOAD_BY_WI_FI_ONLY = "load_by_wi_fi_only"
         private const val KEY_FIELD_RETRY_ON_CONNECTION_FAILURE = "retry_on_connection_failure"
         private const val KEY_FIELD_RETRY_DOWNLOADS = "retry_downloads"
-        const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
+        private const val KEY_FIELD_DISABLE_NOTIFICATIONS = "disable_notifications"
+        private const val KEY_FIELD_CAN_DRAW_OVERLAYS = "can_draw_overlays"
     }
 }

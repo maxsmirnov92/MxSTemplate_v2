@@ -6,6 +6,7 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.getManageOverlayPermissionIntent
 import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.openBatteryOptimizationSettings
@@ -42,6 +43,23 @@ fun CacheDataStoreRepository.doOnBatteryOptimizationAsk(
         } else {
             targetAction()
         }
+    }
+}
+
+fun CacheDataStoreRepository.doOnCanDrawOverlaysAsked(
+    fragment: BaseVmFragment<*>,
+    targetAction: ((Boolean) -> Unit)? = null
+) {
+    fragment.doOnAnyAskOption(canDrawOverlaysAsked, {
+        fragment.lifecycleScope.launch {
+            this@doOnCanDrawOverlaysAsked.setCanDrawOverlaysAsked()
+        }
+    }) {
+        if (!it) {
+            val context = fragment.requireContext()
+            context.startActivity(getManageOverlayPermissionIntent(context))
+        }
+        targetAction?.invoke(!it)
     }
 }
 

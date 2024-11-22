@@ -2,6 +2,7 @@ package net.maxsmr.feature.notification_reader.data
 
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import androidx.annotation.MainThread
 import androidx.core.app.NotificationManagerCompat
@@ -86,7 +87,7 @@ class NotificationReaderSyncManager @Inject constructor(
                 }
             } else {
                 // начиная с Android 14 стартануть активити находясь в бэкграунде нельзя
-                navigateToNotificationListenerSettings(context)
+                context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 return ManagerStartResult.SETTINGS_NEEDED
             }
         }
@@ -106,7 +107,7 @@ class NotificationReaderSyncManager @Inject constructor(
             if (isNotificationAccessGranted(context)) {
                 if (navigateToSettings) {
                     // при наличии доступа сначала отправляем в настройки
-                    navigateToNotificationListenerSettings(context)
+                    context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 }
                 true
             } else {
@@ -161,7 +162,7 @@ class NotificationReaderSyncManager @Inject constructor(
 
                     if (pendingStartService.get()) {
                         if (baseApplicationContext.isSelfAppInBackground() == false
-                                || Settings.canDrawOverlays(baseApplicationContext)
+                                || (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || Settings.canDrawOverlays(baseApplicationContext))
                         ) {
                             // отложенный запуск сервиса по готовности белого списка
                             if (isNotificationAccessGranted(baseApplicationContext)) {
@@ -314,13 +315,6 @@ class NotificationReaderSyncManager @Inject constructor(
         // но класс сервиса называется по-другому
         return NotificationManagerCompat.getEnabledListenerPackages(context)
             .contains(context.packageName)
-    }
-
-    /**
-     * Отправка пользователя в настройки для включения/отключения доступа
-     */
-    private fun navigateToNotificationListenerSettings(context: Context) {
-        context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
     }
 
     enum class ManagerStartResult {

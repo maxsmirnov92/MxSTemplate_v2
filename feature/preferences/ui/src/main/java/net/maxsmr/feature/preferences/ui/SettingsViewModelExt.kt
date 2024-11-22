@@ -1,5 +1,6 @@
 package net.maxsmr.feature.preferences.ui
 
+import android.provider.Settings
 import androidx.lifecycle.asLiveData
 import kotlinx.coroutines.flow.map
 import net.maxsmr.commonutils.live.observeOnce
@@ -25,6 +26,19 @@ fun BaseViewModel.doOnBatteryOptimizationWithPostNotificationsAsk(
             } else {
                 targetAction()
             }
+        }
+    }
+}
+
+fun BaseViewModel.doOnCanDrawOverlaysAsked(
+    fragment: BaseVmFragment<*>,
+    cacheRepo: CacheDataStoreRepository,
+    settingsRepo: SettingsDataStoreRepository,
+    targetAction: (Boolean) -> Unit
+) {
+    settingsRepo.settingsFlow.map { it.canDrawOverlays }.asLiveData().observeOnce(this) {
+        if (it && !Settings.canDrawOverlays(fragment.requireContext())) {
+            cacheRepo.doOnCanDrawOverlaysAsked(fragment, targetAction)
         }
     }
 }

@@ -11,6 +11,7 @@ data class AppSettings(
     val retryDownloads: Boolean = true,
     val disableNotifications: Boolean = true,
     val updateNotificationInterval: Long = UPDATE_NOTIFICATION_INTERVAL_DEFAULT,
+    val canDrawOverlays: Boolean = true,
     val notificationsUrl: String = "",
     val packageListUrl: String = "",
     val isWhitePackageList: Boolean = true,

@@ -30,6 +30,9 @@ class CacheDataStoreRepository @Inject constructor(
 
     val batteryOptimizationAsked: Flow<Boolean> = data.map { it[FIELD_BATTERY_OPTIMIZATION_ASKED] ?: false }
 
+    val canDrawOverlaysAsked: Flow<Boolean>? = data.map { it[FIELD_CAN_DRAW_OVERLAYS_ASKED] ?: false }
+        .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.O }
+
     val isDemoPeriodExpired: Flow<Boolean> = data.map { it[FIELD_KEY_DEMO_PERIOD_EXPIRED] ?: false }
 
     val isTutorialCompleted: Flow<Boolean> = data.map { it[FIELD_KEY_TUTORIAL_COMPLETED] ?: false }
@@ -61,6 +64,24 @@ class CacheDataStoreRepository @Inject constructor(
     suspend fun setBatteryOptimizationAsked() {
         dataStore.edit { prefs ->
             prefs[FIELD_BATTERY_OPTIMIZATION_ASKED] = true
+        }
+    }
+
+    suspend fun wasCanDrawOverlaysAsked() = canDrawOverlaysAsked?.firstOrNull() ?: false
+
+    suspend fun setCanDrawOverlaysAsked() {
+        setCanDrawOverlaysAsked(true)
+    }
+
+    suspend fun clearCanDrawOverlaysAsked() {
+        setCanDrawOverlaysAsked(false)
+    }
+
+    private suspend fun setCanDrawOverlaysAsked(toggle: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            dataStore.edit { prefs ->
+                prefs[FIELD_CAN_DRAW_OVERLAYS_ASKED] = toggle
+            }
         }
     }
 
@@ -147,6 +168,7 @@ class CacheDataStoreRepository @Inject constructor(
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
         private val FIELD_BATTERY_OPTIMIZATION_ASKED = booleanPreferencesKey("batteryOptimizationAsked")
+        private val FIELD_CAN_DRAW_OVERLAYS_ASKED = booleanPreferencesKey("canDrawOverlaysAsked")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_KEY_NOTIFICATION_READER_API_KEY = stringPreferencesKey("keyNotificationReader")
         private val FIELD_KEY_PACKAGE_LIST = stringSetPreferencesKey("keyPackageList")

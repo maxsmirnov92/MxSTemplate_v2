@@ -5,6 +5,7 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import com.google.android.material.textfield.TextInputLayout
 import net.maxsmr.commonutils.conversion.toIntNotNull
@@ -111,7 +112,10 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
         viewModel.loadByWiFiOnlyField.bindValue(viewLifecycleOwner, binding.switchLoadByWiFiOnly)
         viewModel.retryOnConnectionFailureField.bindValue(viewLifecycleOwner, binding.switchRetryOnConnectionFailure)
         viewModel.retryDownloadsField.bindValue(viewLifecycleOwner, binding.switchRetryDownloads)
+
         viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.switchDisableNotifications)
+        viewModel.canDrawOverlaysField?.bindValue(viewLifecycleOwner, binding.switchCanDrawOverlays)
+            ?: run { binding.switchCanDrawOverlays.isVisible = false }
 
         viewModel.hasChanges.observe {
             refreshSaveMenuItem(it)

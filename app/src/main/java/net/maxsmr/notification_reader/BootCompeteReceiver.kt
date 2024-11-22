@@ -19,7 +19,9 @@ class BootCompeteReceiver : BaseBootCompleteReceiver() {
     lateinit var manager: NotificationReaderSyncManager
 
     override fun doAction(context: Context, intent: Intent) {
-        manager.doStart(context, Settings.canDrawOverlays(context))
+        manager.doStart(context,
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.O
+                || Settings.canDrawOverlays(baseApplicationContext))
         super.doAction(context, intent)
     }
 }
