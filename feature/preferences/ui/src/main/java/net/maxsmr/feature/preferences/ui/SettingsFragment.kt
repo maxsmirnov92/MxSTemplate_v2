@@ -117,6 +117,7 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
         viewModel.loadByWiFiOnlyField.bindValue(viewLifecycleOwner, binding.switchLoadByWiFiOnly)
         viewModel.retryOnConnectionFailureField.bindValue(viewLifecycleOwner, binding.switchRetryOnConnectionFailure)
         viewModel.retryDownloadsField.bindValue(viewLifecycleOwner, binding.switchRetryDownloads)
+        viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.switchDisableNotifications)
 
         viewModel.hasChanges.observe {
             refreshSaveMenuItem(it)

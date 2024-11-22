@@ -134,6 +134,15 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
                 app:switchPadding="4dp" />
 
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchDisableNotifications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/defaultPadding"
+                android:text="@string/settings_field_disable_notifications"
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                app:switchPadding="4dp" />
+
         </LinearLayout>
 
     </androidx.core.widget.NestedScrollView>

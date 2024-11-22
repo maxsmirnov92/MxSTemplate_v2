@@ -10,6 +10,7 @@
     <string name="settings_field_retry_on_connection_failure">Auto retry requests if connection fails</string>
     <string name="settings_field_load_by_wi_fi_only">Try to load only when Wi-Fi is available</string>
     <string name="settings_field_retry_failed_downloads">Repeat loads that failed due to the network when it appears</string>
+    <string name="settings_field_disable_notifications">Disable notifications from services</string>
 
     <string name="settings_dialog_confirm_message">There are some changes</string>
     <string name="settings_dialog_confirm_yes_button">Save</string>
