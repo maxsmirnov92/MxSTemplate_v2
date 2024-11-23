@@ -30,7 +30,7 @@ import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
-import net.maxsmr.core.android.coroutines.collectFlowSafely
+import net.maxsmr.core.android.coroutines.repeatOnLifecycle
 import net.maxsmr.core.android.coroutines.collectWithOwner
 import net.maxsmr.core.android.permissions.formatDeniedPermissionsMessage
 import net.maxsmr.core.ui.R
@@ -227,25 +227,25 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         )
     }
 
-    protected inline fun <T : Any> Flow<T>.collect(
+    protected inline fun <T : Any> Flow<T>.collectSafely(
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
-        crossinline  action:  (value: T) -> Unit,
+        crossinline action: suspend (value: T) -> Unit,
     ) {
         collectWithOwner(viewLifecycleOwner, lifecycleState, action)
     }
 
     protected inline fun <T : Any> StateFlow<VmEvent<T>?>.collectEvent(
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
-        crossinline action: (value: T) -> Unit,
+        crossinline action: suspend (value: T) -> Unit,
     ) {
         collectEventsWithOwner(viewLifecycleOwner, lifecycleState, action)
     }
 
     protected inline fun <T : Any> Flow<PagingData<T>>.collectPaging(
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
-        crossinline action: (value: PagingData<T>) -> Unit,
+        crossinline action: suspend (value: PagingData<T>) -> Unit,
     ) {
-        collectFlowSafely(viewLifecycleOwner, lifecycleState) { this.collectLatest { action(it) } }
+        repeatOnLifecycle(viewLifecycleOwner, lifecycleState) { this.collectLatest { action(it) } }
     }
 
     private fun observeNetworkConnectionHandler() {

@@ -9,15 +9,18 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.android.asCoroutineDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.live.event.VmEvent
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration
 
 fun <T> Flow<T>.mutableStateIn(
     scope: CoroutineScope,
@@ -57,9 +60,9 @@ fun <T> MutableStateFlow<Set<T>>.appendToSet(newValue: T) {
 inline fun <T : Any> Flow<T>.collectWithOwner(
     owner: LifecycleOwner,
     lifecycleState: Lifecycle.State = Lifecycle.State.RESUMED,
-    crossinline action: (value: T) -> Unit,
+    crossinline action: suspend (value: T) -> Unit,
 ) {
-    collectFlowSafely(owner, lifecycleState) { this.collectLatest { action(it) } }
+    repeatOnLifecycle(owner, lifecycleState) { collectLatest { action(it) } }
 }
 
 /**
@@ -81,23 +84,23 @@ inline fun <T : Any> StateFlow<VmEvent<T>?>.collectEvents(
 inline fun <T : Any> StateFlow<VmEvent<T>?>.collectEventsWithOwner(
     owner: LifecycleOwner,
     lifecycleState: Lifecycle.State = Lifecycle.State.RESUMED,
-    crossinline action: (value: T) -> Unit,
+    crossinline action: suspend (value: T) -> Unit,
 ) {
-    collectFlowSafely(owner, lifecycleState) { this.collectLatest { event ->
+    repeatOnLifecycle(owner, lifecycleState) { collectLatest { event ->
         event?.get(true)?.let {
             action(it)
         }
     } }
 }
 
-inline fun collectFlowSafely(
+inline fun repeatOnLifecycle(
     owner: LifecycleOwner,
     lifecycleState: Lifecycle.State,
-    crossinline collect: suspend () -> Unit,
+    crossinline action: suspend () -> Unit,
 ) {
     owner.lifecycleScope.launch {
         owner.repeatOnLifecycle(lifecycleState) {
-            collect()
+            action()
         }
     }
 }
@@ -107,4 +110,16 @@ fun HandlerThread.asDispatcher(): CoroutineDispatcher {
         .apply { start() }
         .looper.let { Handler(it) }
         .asCoroutineDispatcher()
+}
+
+/**
+ * @return холодный flow с периодическими эмитами
+ * (задержка не фиксированная - меняется в зав-ти от времени, потраченного на обработку элемента)
+ */
+fun tickerFlow(period: Duration, initialDelay: Duration = Duration.ZERO) = flow {
+    delay(initialDelay)
+    while (true) {
+        emit(Unit)
+        delay(period)
+    }
 }
