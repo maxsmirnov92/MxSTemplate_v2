@@ -5,12 +5,16 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import net.maxsmr.core.di.DI_NAME_DEMO_PERIOD
+import net.maxsmr.core.di.DI_NAME_IS_DEMO_BUILD
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
 import net.maxsmr.core.di.Preferences
 import net.maxsmr.core.di.PreferencesType
+import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.manager.UUIDManager
 import net.maxsmr.permissionchecker.PermissionsHelper
 import net.maxsmr.permissionchecker.PrefsStorage
+import java.util.concurrent.TimeUnit
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -25,6 +29,12 @@ class AppModule {
 
     @[Provides Singleton Named(DI_NAME_MAIN_ACTIVITY_CLASS)]
     fun provideMainActivityClassName(): String = "net.maxsmr.mxstemplate.ui.activity.MainBottomActivity"
+
+    @[Provides Singleton Named(DI_NAME_IS_DEMO_BUILD)]
+    fun provideIsDemoBuild(): Boolean = BuildConfig.IS_DEMO_BUILD
+
+    @[Provides Singleton Named(DI_NAME_DEMO_PERIOD)]
+    fun provideDemoPeriod(): Long = TimeUnit.MINUTES.toMillis(5)
 
     @[Provides Singleton]
     fun providePermissionHelper(

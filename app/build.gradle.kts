@@ -40,12 +40,17 @@ data class AppVersion(
     val code: Int,
     val name: String,
     val type: String,
+    val isDemo: Boolean,
 ) {
 
-    constructor(code: Int, type: String) : this(code, getVersionName(code), type)
+    constructor(
+        code: Int,
+        type: String,
+        isDemo: Boolean
+    ) : this(code, getVersionName(code, isDemo), type, isDemo)
 }
 
-val appVersion = AppVersion(1, "common")
+val appVersion = AppVersion(1, "common", false)
 
 android {
     namespace = "net.maxsmr.mxstemplate"
@@ -108,6 +113,12 @@ android {
         )
 
         buildConfigField("String", "MOBILE_BUILD_TYPE", "\"${appVersion.type}\"")
+
+        buildConfigField(
+            "boolean",
+            "IS_DEMO_BUILD",
+            "${appVersion.isDemo}"
+        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -372,18 +383,21 @@ fun isDevBuild(): Boolean? {
     }
 }
 
-fun getVersionName(versionCode: Int): String {
+fun getVersionName(versionCode: Int, isDemo: Boolean): String {
     val postfix = if (isDevBuild() != false) {
         "dev"
     } else {
         "prod"
     }
     val buildType = getCurrentBuildType()
-    var result = "1.0$versionCode.${postfix}"
+    val result = StringBuilder("1.0$versionCode.${postfix}")
     if (buildType.isNotEmpty()) {
-        result += buildType.capitalize()
+        result.append(buildType.capitalize())
     }
-    return result
+    if (isDemo) {
+        result.append("Demo")
+    }
+    return result.toString()
 }
 
 fun getCurrentFlavorName(): String {

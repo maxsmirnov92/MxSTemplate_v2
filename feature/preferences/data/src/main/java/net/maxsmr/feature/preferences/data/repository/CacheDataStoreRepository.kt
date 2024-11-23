@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
@@ -28,10 +29,12 @@ class CacheDataStoreRepository @Inject constructor(
     @BaseJson private val json: Json,
 ) {
 
-    val postNotificationAsked = dataStore.data.map { it[FIELD_POST_NOTIFICATION_ASKED] ?: false }
+    val postNotificationAsked: Flow<Boolean>? = dataStore.data.map { it[FIELD_POST_NOTIFICATION_ASKED] ?: false }
         .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU }
 
-    suspend fun isPostNotificationAsked() = postNotificationAsked?.firstOrNull() ?: false
+    val isDemoPeriodExpired: Flow<Boolean> = dataStore.data.map { it[FIELD_KEY_DEMO_PERIOD_EXPIRED] ?: false }
+
+    suspend fun wasPostNotificationAsked() = postNotificationAsked?.firstOrNull() ?: false
 
     suspend fun setPostNotificationAsked() {
         setPostNotificationAsked(true)
@@ -159,6 +162,24 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
+    suspend fun isDemoPeriodExpired() = isDemoPeriodExpired.firstOrNull() ?: false
+
+    suspend fun setDemoPeriodExpired() {
+        setDemoPeriodExpired(true)
+    }
+
+    suspend fun clearDemoPeriodExpired() {
+        setDemoPeriodExpired(false)
+    }
+
+    private suspend fun setDemoPeriodExpired(toggle: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            dataStore.edit { prefs ->
+                prefs[FIELD_KEY_DEMO_PERIOD_EXPIRED] = toggle
+            }
+        }
+    }
+
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
@@ -169,5 +190,6 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_SEEN_RELEASE_NOTES_VERSION_CODES = stringPreferencesKey("seenReleaseNotesVersionCodes")
         private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")
         private val FIELD_KEY_DOUBLE_GIS_ROUTING = stringPreferencesKey("keyDoubleGisRouting")
+        private val FIELD_KEY_DEMO_PERIOD_EXPIRED = booleanPreferencesKey("demoPeriodExpired")
     }
 }

@@ -3,6 +3,8 @@ package net.maxsmr.core.di
 import javax.inject.Qualifier
 
 const val DI_NAME_MAIN_ACTIVITY_CLASS = "main_activity_class"
+const val DI_NAME_IS_DEMO_BUILD = "is_demo_build"
+const val DI_NAME_DEMO_PERIOD = "demo_period"
 const val DI_NAME_VERSION_CODE = "version_code"
 const val DI_NAME_VERSION_NAME = "version_name"
 const val DI_NAME_DATABASE_NAME = "database_name"

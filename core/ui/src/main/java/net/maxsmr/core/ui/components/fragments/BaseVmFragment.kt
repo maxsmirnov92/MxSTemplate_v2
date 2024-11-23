@@ -229,7 +229,7 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
 
     protected inline fun <T : Any> Flow<T>.collect(
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
-        crossinline action: (value: T) -> Unit,
+        crossinline  action:  (value: T) -> Unit,
     ) {
         collectWithOwner(viewLifecycleOwner, lifecycleState, action)
     }
