@@ -1,15 +1,12 @@
 package net.maxsmr.mxstemplate.manager.host
 
-import net.maxsmr.core.network.HostChangeListener
 import net.maxsmr.core.network.HostManager
 
 class YandexSuggestHostManager: HostManager {
 
-    override var hostChangeListener: HostChangeListener? = null
+    override val useHttps: Boolean = true
 
-    override fun useHttps(): Boolean = true
+    override val host: String = "suggest-maps.yandex.ru"
 
-    override fun getHost(): String = "suggest-maps.yandex.ru"
-
-    override fun getPort(): String? = null
+    override val port: Int? = null
 }

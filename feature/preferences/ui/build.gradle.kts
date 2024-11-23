@@ -10,7 +10,6 @@ android {
 
 dependencies {
     api(project(":feature:preferences:data"))
-    implementation(project(":feature:rate"))
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.datastore.preferences)

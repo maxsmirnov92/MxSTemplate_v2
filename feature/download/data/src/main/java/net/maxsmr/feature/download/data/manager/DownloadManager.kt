@@ -3,6 +3,7 @@ package net.maxsmr.feature.download.data.manager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -11,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.maxsmr.commonutils.GetMode
@@ -25,6 +27,9 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.openInputStream
 import net.maxsmr.commonutils.openOutputStream
+import net.maxsmr.commonutils.readObject
+import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.commonutils.writeObject
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.appendToSet
 import net.maxsmr.core.android.network.NetworkStateManager
@@ -32,16 +37,14 @@ import net.maxsmr.core.android.network.isUrlValid
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.domain.entities.feature.network.Method
-import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.MAX_DOWNLOADS_UNLIMITED
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
-import net.maxsmr.core.utils.readObject
-import net.maxsmr.core.utils.writeObject
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading.Type
 import net.maxsmr.feature.download.data.DownloadsRepo
+import net.maxsmr.feature.download.data.DownloadsViewModel.DownloadInfoWithParams
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.File
 import java.io.Serializable
@@ -112,6 +115,10 @@ class DownloadManager @Inject constructor(
 
     val failedAddedToQueueEvents: SharedFlow<Pair<DownloadService.Params, FailAddReason>> =
         _failedAddedToQueueEvents.asSharedFlow()
+
+    private val _failedStartParamsFlow = MutableStateFlow<List<DownloadService.Params>>(listOf())
+
+    val failedStartParamsFlow = _failedStartParamsFlow.asStateFlow()
 
     val downloadsPendingParams by lazy {
         downloadsPendingQueue.map {
@@ -361,16 +368,79 @@ class DownloadManager @Inject constructor(
             }
         }
 
+        scope.observeNetworkStateWithSettings(settingsRepo) {
+            retryFailedByNetwork(it.connectionInfo, it.shouldRetry, it.loadByWiFiOnly)
+        }
+
+        fun refreshFailed(params: DownloadService.Params) {
+            val currentFailed = _failedStartParamsFlow.value.toMutableList()
+            currentFailed.removeIf { p -> p.url == params.url }
+            currentFailed.add(params)
+            _failedStartParamsFlow.value = currentFailed
+        }
+
         scope.launch {
-            combine(
-                NetworkStateManager.asFlow(scope),
-                settingsRepo.settingsFlow
-            ) { connectionInfo: NetworkStateManager.ConnectionInfo, settings: AppSettings ->
-                Triple(connectionInfo, settings.retryDownloads, settings.loadByWiFiOnly)
-            }.collectLatest {
-                retryFailedByNetwork(it.first, it.second, it.third)
+            failedAddedToQueueEvents.collect {
+                refreshFailed(it.first)
             }
         }
+
+        scope.launch {
+            failedStartParamsEvents.collect {
+                refreshFailed(it)
+            }
+        }
+
+        scope.launch {
+            resultItems.collect { items ->
+                val currentFailed = _failedStartParamsFlow.value.toMutableList()
+                currentFailed.removeIf { failed -> items.any { it.params.url == failed.url } }
+                _failedStartParamsFlow.value = currentFailed
+            }
+        }
+    }
+
+    fun observeDownload(
+        params: DownloadService.Params,
+        removeWhenFinished: Boolean,
+    ): Flow<LoadState<DownloadInfoWithParams>> {
+        val url = params.url
+        return combine(resultItems, _failedStartParamsFlow) { items, failedParams ->
+            Pair(items, failedParams)
+        }.mapNotNull { pair ->
+            pair.second.find { it.url == url }?.let {
+                return@mapNotNull Pair(it, null)
+            }
+            pair.first.find { it.params.url == url }?.let {
+                return@mapNotNull Pair(it.params, it.downloadInfo)
+            }
+        }.map {
+            val info = it.second
+            if (info != null) {
+                when (info.status) {
+                    is DownloadInfo.Status.Loading -> LoadState.loading(DownloadInfoWithParams(it.first, info))
+
+                    is DownloadInfo.Status.Error -> LoadState.error(
+                        info.statusAsError?.reason ?: RuntimeException(),
+                        DownloadInfoWithParams(it.first, info)
+                    )
+
+                    is DownloadInfo.Status.Success -> LoadState.success(DownloadInfoWithParams(it.first, info))
+                }
+            } else {
+                // DownloadInfo не было, т.к. был зафиксирован еррор добавления в очередь / старта сервиса
+                LoadState.error(RuntimeException())
+            }.also { state ->
+                if (removeWhenFinished && !state.isLoading) {
+                    state.data?.downloadInfo?.id?.let { id ->
+                        removeFinishedSuspended(id)
+                    }
+                    val currentFailed = _failedStartParamsFlow.value.toMutableList()
+                    currentFailed.removeIf { failed -> it.first.url == failed.url  }
+                    _failedStartParamsFlow.value = currentFailed
+                }
+            }
+        }// .takeWhile { it.isLoading }
     }
 
     /**

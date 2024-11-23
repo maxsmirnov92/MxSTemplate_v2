@@ -27,6 +27,7 @@ import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.io.File
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @[Module
@@ -37,71 +38,76 @@ class RetrofitModule {
     fun provideRadarIoRetrofit(
         @ApplicationContext context: Context,
         @RadarIoHostManager hostManager: HostManager,
-        @RadarIoOkHttpClient okHttpClient: OkHttpClient,
+        @RadarIoOkHttpClient okHttpClient: Provider<OkHttpClient>,
         @BaseJson json: Json,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.getBaseUrl().toHttpUrl(),
-            okHttpClient,
             json,
             File(context.cacheDir, "OkHttpCache").path,
             BuildConfig.PROTOCOL_VERSION,
             false
             // cacheManager.getDisableCache()
-        )
+        ) {
+            okHttpClient.get()
+        }
     }
 
     @[Provides Singleton YandexSuggestRetrofit]
     fun provideYandexSuggestRetrofit(
         @ApplicationContext context: Context,
         @YandexSuggestHostManager hostManager: HostManager,
-        @YandexSuggestOkHttpClient okHttpClient: OkHttpClient,
+        @YandexSuggestOkHttpClient okHttpClient: Provider<OkHttpClient>,
         @BaseJson json: Json,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.getBaseUrl().toHttpUrl(),
-            okHttpClient,
             json,
             File(context.cacheDir, "OkHttpCache").path,
             BuildConfig.PROTOCOL_VERSION,
             false
             // cacheManager.getDisableCache()
-        )
+        ) {
+            okHttpClient.get()
+        }
     }
 
     @[Provides Singleton YandexGeocodeRetrofit]
     fun provideYandexGeocodeRetrofit(
         @ApplicationContext context: Context,
         @YandexGeocodeHostManager hostManager: HostManager,
-        @YandexGeocodeOkHttpClient okHttpClient: OkHttpClient,
+        @YandexGeocodeOkHttpClient okHttpClient: Provider<OkHttpClient>,
         @BaseJson json: Json,
     ): YandexGeocodeRetrofitClient {
         return YandexGeocodeRetrofitClient(
             hostManager.getBaseUrl().toHttpUrl(),
-            okHttpClient,
+
             json,
             File(context.cacheDir, "OkHttpCache").path,
             BuildConfig.PROTOCOL_VERSION,
             false
             // cacheManager.getDisableCache()
-        )
+        ) {
+            okHttpClient.get()
+        }
     }
 
     @[Provides Singleton DoubleGisRoutingRetrofit]
     fun provideDoubleGisRoutingRetrofit(
         @ApplicationContext context: Context,
         @DoubleGisRoutingHostManager hostManager: HostManager,
-        @DoubleGisRoutingOkHttpClient okHttpClient: OkHttpClient,
+        @DoubleGisRoutingOkHttpClient okHttpClient: Provider<OkHttpClient>,
         @BaseJson json: Json,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.getBaseUrl().toHttpUrl(),
-            okHttpClient,
             json,
             File(context.cacheDir, "OkHttpCache").path,
             BuildConfig.PROTOCOL_VERSION,
             false
             // cacheManager.getDisableCache()
-        )
+        ) {
+            okHttpClient.get()
+        }
     }
 }

@@ -1,33 +1,28 @@
 package net.maxsmr.core.network
 
+import java.util.Locale
+
 interface HostManager {
 
-    var hostChangeListener: HostChangeListener?
+    val useHttps: Boolean
 
-    fun useHttps(): Boolean
+    val host: String
 
-    fun getHost(): String
-
-    fun getPort(): String?
+    val port: Int?
 
     fun getBaseUrl(): String {
-        val port = getPort()
+        val port = port
         return if (port != null) {
             String.format(
-                "%s://%s:%s",
-                if (useHttps()) "https" else "http", getHost(), port
+                Locale.getDefault(),
+                "%s://%s:%d",
+                if (useHttps) "https" else "http", host, port
             )
         } else {
             String.format(
                 "%s://%s",
-                if (useHttps()) "https" else "http", getHost()
+                if (useHttps) "https" else "http", host
             )
         }
     }
-
-}
-
-interface HostChangeListener {
-
-    fun onHostChanged(url: String)
 }

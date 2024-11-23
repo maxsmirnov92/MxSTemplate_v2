@@ -17,6 +17,7 @@ fun SavedStateHandle.urlField(
     isValidByBlank: Boolean = false,
     isNonResource: Boolean = true,
     schemeIfEmpty: String = EMPTY_STRING,
+    key: String = KEY_FIELD_URL,
 ): Field<String> = object : Field.Builder<String>(initialValue) {
     override fun valueGetter(fieldValue: MutableLiveData<String>): () -> String = {
         fieldValue.value.orEmpty().trim()
@@ -30,7 +31,7 @@ fun SavedStateHandle.urlField(
         )
     })
     .hint(hintResId, withAsterisk = withAsterisk)
-    .persist(this, KEY_FIELD_URL)
+    .persist(this, key)
     .apply {
         if (isRequired) {
             setRequired(R.string.field_url_empty_error)

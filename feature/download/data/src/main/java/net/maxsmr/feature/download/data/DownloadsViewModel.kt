@@ -16,10 +16,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.ALGORITHM_SHA1
@@ -43,6 +39,7 @@ import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultGETServiceParamsFor
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultPOSTServiceParamsFor
+import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.data.manager.DownloadManager.FailAddReason
 import net.maxsmr.feature.download.data.model.IntentSenderParams
@@ -65,6 +62,8 @@ class DownloadsViewModel @Inject constructor(
 
     val downloadsInfos: LiveData<List<DownloadInfo>> = downloadRepo.get().asLiveData()
 
+    val downloadItems: LiveData<List<DownloadInfoResultData>> = downloadManager.resultItems.asLiveData()
+
     /**
      * Эмитит [IntentSenderParams], содержащие [android.content.IntentSender]
      * в случае возникновения ошибки доступа при записи/чтении "чужих" файлов в MediaStore. В этом
@@ -74,19 +73,11 @@ class DownloadsViewModel @Inject constructor(
         downloadRepo.getIntentSenderListFiltered(list.map { it.name }).asLiveData()
     }
 
-    private val failedStartParamsFlow = MutableStateFlow<List<DownloadService.Params>>(listOf())
-
-    val failedStartParams = failedStartParamsFlow.asLiveData()
+    val failedStartParams = downloadManager.failedStartParamsFlow.asLiveData()
 
     override fun onInitialized() {
         super.onInitialized()
 
-        fun refreshFailed(params: DownloadService.Params) {
-            val currentFailed = failedStartParamsFlow.value.toMutableList()
-            currentFailed.removeIf { p -> p.url == params.url }
-            currentFailed.add(params)
-            failedStartParamsFlow.value = currentFailed
-        }
 
         viewModelScope.launch {
             downloadManager.successAddedToQueueEvents.collect {
@@ -100,10 +91,9 @@ class DownloadsViewModel @Inject constructor(
                 }
             }
         }
+
         viewModelScope.launch {
             downloadManager.failedAddedToQueueEvents.collect {
-                refreshFailed(it.first)
-
                 val name = it.first.targetResourceName
                 val reason = TextMessage.ResArg(
                     when (it.second) {
@@ -135,9 +125,9 @@ class DownloadsViewModel @Inject constructor(
                 }
             }
         }
+
         viewModelScope.launch {
             downloadManager.failedStartParamsEvents.collect {
-                refreshFailed(it)
                 showOkDialog(
                     DIALOG_TAG_FAILED_START,
                     TextMessage(
@@ -148,13 +138,7 @@ class DownloadsViewModel @Inject constructor(
                 )
             }
         }
-        viewModelScope.launch {
-            downloadManager.resultItems.collect { items ->
-                val currentFailed = failedStartParamsFlow.value.toMutableList()
-                currentFailed.removeIf { failed -> items.any { it.params.url == failed.url } }
-                failedStartParamsFlow.value = currentFailed
-            }
-        }
+
     }
 
     override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
@@ -207,35 +191,8 @@ class DownloadsViewModel @Inject constructor(
         downloadManager.enqueueDownload(params)
     }
 
-    fun observeDownload(params: DownloadService.Params): LiveData<LoadState<DownloadInfoWithParams>> {
-        val url = params.url
-        return combine(downloadManager.resultItems, failedStartParamsFlow) { items, failedParams ->
-            Pair(items, failedParams)
-        }.mapNotNull { pair ->
-            pair.second.find { it.url == url }?.let {
-                return@mapNotNull Pair(it, null)
-            }
-            pair.first.find { it.params.url == url }?.let {
-                return@mapNotNull Pair(it.params, it.downloadInfo)
-            }
-        }.map {
-            val info = it.second
-            if (info != null) {
-                when (info.status) {
-                    is DownloadInfo.Status.Loading -> LoadState.loading(DownloadInfoWithParams(it.first, info))
-
-                    is DownloadInfo.Status.Error -> LoadState.error(
-                        info.statusAsError?.reason ?: RuntimeException(),
-                        DownloadInfoWithParams(it.first, info)
-                    )
-
-                    is DownloadInfo.Status.Success -> LoadState.success(DownloadInfoWithParams(it.first, info))
-                }
-            } else {
-                // DownloadInfo не было, т.к. был зафиксирован еррор добавления в очередь / старта сервиса
-                LoadState.error(RuntimeException())
-            }
-        }.asLiveData().unsubscribeIf { !it.isLoading }
+    fun observeDownload(params: DownloadService.Params, removeWhenFinished: Boolean = true): LiveData<LoadState<DownloadInfoWithParams>> {
+        return downloadManager.observeDownload(params, removeWhenFinished).asLiveData().unsubscribeIf { !it.isLoading }
     }
 
     fun observeOnce(

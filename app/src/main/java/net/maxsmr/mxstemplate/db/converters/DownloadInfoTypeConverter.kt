@@ -1,10 +1,10 @@
 package net.maxsmr.mxstemplate.db.converters;
 
 import androidx.room.TypeConverter
+import net.maxsmr.commonutils.asByteArray
+import net.maxsmr.commonutils.asObject
 
 import net.maxsmr.core.database.model.download.DownloadInfo
-import net.maxsmr.core.utils.asByteArray
-import net.maxsmr.core.utils.asObject
 
 class DownloadInfoTypeConverter {
 

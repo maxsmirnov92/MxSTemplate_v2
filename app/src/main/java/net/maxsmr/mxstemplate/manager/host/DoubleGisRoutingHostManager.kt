@@ -1,15 +1,12 @@
 package net.maxsmr.mxstemplate.manager.host
 
-import net.maxsmr.core.network.HostChangeListener
 import net.maxsmr.core.network.HostManager
 
 class DoubleGisRoutingHostManager: HostManager {
 
-    override var hostChangeListener: HostChangeListener? = null
+    override val useHttps: Boolean = true
 
-    override fun useHttps(): Boolean = true
+    override val host: String = "routing.api.2gis.com"
 
-    override fun getHost(): String = "routing.api.2gis.com"
-
-    override fun getPort(): String? = null
+    override val port: Int? = null
 }

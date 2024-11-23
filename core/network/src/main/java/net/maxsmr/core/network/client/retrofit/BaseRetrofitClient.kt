@@ -10,11 +10,11 @@ import retrofit2.Retrofit
 
 abstract class BaseRetrofitClient(
     protected val baseUrl: HttpUrl?,
-    protected val client: OkHttpClient,
     protected val json: Json,
     protected val cachePath: String,
     protected val protocolVersion: Int,
     protected val disableCache: Boolean,
+    protected val clientProvider: () -> OkHttpClient,
 ) {
 
     @Volatile
@@ -50,7 +50,7 @@ abstract class BaseRetrofitClient(
 
     private fun build() = Retrofit.Builder().apply {
         baseUrl?.let { baseUrl(it) }
-        client(client)
+        callFactory { clientProvider().newCall(it) }
         configureBuild(json)
     }.build()
 }

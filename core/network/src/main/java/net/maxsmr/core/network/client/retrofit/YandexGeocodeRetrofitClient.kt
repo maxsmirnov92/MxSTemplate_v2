@@ -12,12 +12,12 @@ import retrofit2.Retrofit
 
 class YandexGeocodeRetrofitClient(
     baseUrl: HttpUrl?,
-    client: OkHttpClient,
     json: Json,
     cachePath: String,
     protocolVersion: Int,
     disableCache: Boolean,
-) : BaseRetrofitClient(baseUrl, client, json, cachePath, protocolVersion, disableCache) {
+    clientProvider: () -> OkHttpClient,
+) : BaseRetrofitClient(baseUrl, json, cachePath, protocolVersion, disableCache, clientProvider) {
 
     override fun Retrofit.Builder.configureBuild(json: Json) {
         addConverterFactory(

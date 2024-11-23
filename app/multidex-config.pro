@@ -1,1 +1,1 @@
--keep class net.maxsmr.justupdownloadit.App
+-keep class net.maxsmr.mxstemplate.App

@@ -1,15 +1,12 @@
 package net.maxsmr.mxstemplate.manager.host
 
-import net.maxsmr.core.network.HostChangeListener
 import net.maxsmr.core.network.HostManager
 
 class RadarIoHostManager: HostManager {
 
-    override var hostChangeListener: HostChangeListener? = null
+    override val useHttps: Boolean = true
 
-    override fun useHttps(): Boolean = true
+    override val host: String = "api.radar.io"
 
-    override fun getHost(): String = "api.radar.io"
-
-    override fun getPort(): String? = null
+    override val port: Int? = null
 }

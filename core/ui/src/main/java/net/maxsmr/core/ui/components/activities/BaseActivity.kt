@@ -6,6 +6,7 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
 import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.di.EXTRA_CALLER_CLASS_NAME
 import net.maxsmr.core.ui.components.BaseApplication
 import net.maxsmr.permissionchecker.PermissionsCallbacks
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -80,10 +81,5 @@ open class BaseActivity : AppCompatActivity() {
         const val REQUEST_CODE_PERMISSION_CAMERA = 4
 
         const val REQUEST_CODE_IN_APP_UPDATES = 1001
-
-        /**
-         * Опционально, передать эту экстру с именем класса для понимания, кто вызвал
-         */
-        const val EXTRA_CALLER_CLASS_NAME = "caller_class_name"
     }
 }

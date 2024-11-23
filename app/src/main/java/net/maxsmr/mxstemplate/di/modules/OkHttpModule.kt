@@ -161,18 +161,16 @@ class OkHttpModule {
         @ApplicationContext context: Context,
         cacheRepo: CacheDataStoreRepository,
     ): OkHttpClient {
-        return DoubleGisOkHttpClientManager(
-            context = context,
-            connectivityChecker = NetworkConnectivityChecker,
-            callTimeout = NETWORK_TIMEOUT,
-            apiKeyProvider = {
-                runBlocking {
-                    cacheRepo.getDoubleGisRoutingKey()
-                }
-            }
-        ) {
-            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
-                .doubleGisRoutingRetrofit().instance
-        }.build()
+        return runBlocking {
+            DoubleGisOkHttpClientManager(
+                context = context,
+                connectivityChecker = NetworkConnectivityChecker,
+                callTimeout = NETWORK_TIMEOUT,
+                apiKey = cacheRepo.getDoubleGisRoutingKey()
+            ) {
+                EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
+                    .doubleGisRoutingRetrofit().instance
+            }.build()
+        }
     }
 }

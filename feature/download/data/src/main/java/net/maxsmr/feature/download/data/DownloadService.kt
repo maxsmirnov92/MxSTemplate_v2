@@ -38,7 +38,9 @@ import net.maxsmr.commonutils.media.lengthOrThrow
 import net.maxsmr.commonutils.media.mimeTypeOrThrow
 import net.maxsmr.commonutils.media.openInputStreamOrThrow
 import net.maxsmr.commonutils.service.createServicePendingIntent
+import net.maxsmr.commonutils.service.startForegroundCompat
 import net.maxsmr.commonutils.service.startNoCheck
+import net.maxsmr.commonutils.service.stopForegroundCompat
 import net.maxsmr.commonutils.service.withMutabilityFlag
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.toFile
@@ -50,14 +52,15 @@ import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
-import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.network.isAnyResourceScheme
 import net.maxsmr.core.android.network.toValidUri
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.di.ApplicationScope
+import net.maxsmr.core.di.DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
 import net.maxsmr.core.di.DownloaderOkHttpClient
+import net.maxsmr.core.di.EXTRA_CALLER_CLASS_NAME
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
@@ -69,7 +72,6 @@ import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.C
 import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.RETRY_ON_CONNECTION_FAILURE_DEFAULT
 import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.withTimeouts
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
-import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType
 import net.maxsmr.core.network.getContentTypeHeader
 import net.maxsmr.core.network.getFileNameFromAttachmentHeader
@@ -77,12 +79,12 @@ import net.maxsmr.core.network.hasBytesAcceptRanges
 import net.maxsmr.core.network.hasContentDisposition
 import net.maxsmr.core.network.newCallSuspended
 import net.maxsmr.core.network.writeBufferedOrThrow
-import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
 import net.maxsmr.feature.download.data.DownloadService.NotificationParams
 import net.maxsmr.feature.download.data.DownloadService.Params
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading
 import net.maxsmr.feature.download.data.manager.DownloadsHashManager
+import net.maxsmr.feature.download.data.manager.checkPreferableConnection
 import net.maxsmr.feature.download.data.model.BaseDownloadParams
 import net.maxsmr.feature.download.data.model.IntentSenderParams
 import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
@@ -220,20 +222,23 @@ class DownloadService : Service() {
     @Named(DI_NAME_MAIN_ACTIVITY_CLASS)
     lateinit var mainActivityClassName: String
 
+    @JvmField
+    @Inject
+    @Named(DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD)
+    var foregroundNotificationId: Int = -1
+
     override fun onCreate() {
         super.onCreate()
         logger.d("onCreate")
-        val notification =
-            foregroundNotification(getString(R.string.download_notification_initial_text), null)
-        if (isAtLeastUpsideDownCake()) {
-            startForeground(
-                NOTIFICATION_ID_FOREGROUND,
-                notification,
+        startForegroundCompat(
+            foregroundNotificationId,
+            foregroundNotification(getString(R.string.download_notification_initial_text)),
+            if (isAtLeastUpsideDownCake()) {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-            )
-        } else {
-            startForeground(NOTIFICATION_ID_FOREGROUND, notification)
-        }
+            } else {
+                null
+            }
+        )
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -243,9 +248,9 @@ class DownloadService : Service() {
             // отмена всех загрузок через родительскую Job
             if (currentJobs.isNotEmpty()) {
                 contextJob.cancel()
-            } else {
-                stopSelf()
+                currentJobs.clear()
             }
+            stopIfAllLoaded()
             return START_NOT_STICKY
         }
         val cancelDownloadId = intent?.getLongExtra(EXTRA_CANCEL_DOWNLOAD_ID, 0L) ?: 0L
@@ -253,6 +258,8 @@ class DownloadService : Service() {
             currentJobs.remove(cancelDownloadId)?.let {
                 logger.i("Cancel download with id: $cancelDownloadId by user")
                 it.cancel()
+                // по id в currentDownloads найти нельзя, а url неизвестно
+                stopIfAllLoaded()
                 return START_NOT_STICKY
             }
         }
@@ -344,7 +351,7 @@ class DownloadService : Service() {
             onDownloadStarting(downloadInfo, params)
 
             coroutineContext[Job]?.let {
-                // запоминаем Job этой загрузки по актуальному id
+                // запоминаем Job этой загрузке по актуальному id
                 currentJobs[downloadInfo.id] = it
             }
 
@@ -389,30 +396,7 @@ class DownloadService : Service() {
             }
 
             try {
-                var hasPreferableConnection = true
-                val connectionInfo = NetworkStateManager.getConnectionInfo()
-                val types = params.requestParams.preferredConnectionTypes
-                if (connectionInfo.has &&
-                        (connectionInfo.hasWiFi != null || connectionInfo.hasCellular != null)
-                        && types.isNotEmpty()
-                ) {
-                    // предпочтительные типы указаны и в API информация возвращается
-                    hasPreferableConnection = false
-                    types.forEach {
-                        when (it) {
-                            PreferableType.CELLULAR -> if (connectionInfo.hasCellular == true) {
-                                hasPreferableConnection = true
-                            }
-
-                            PreferableType.WIFI -> if (connectionInfo.hasWiFi == true) {
-                                hasPreferableConnection = true
-                            }
-                        }
-                    }
-                }
-                if (!hasPreferableConnection) {
-                    throw NoPreferableConnectivityException(types, this@DownloadService.context)
-                }
+                context.checkPreferableConnection(params.requestParams.preferredConnectionTypes)
 
                 val client = okHttpClient.newBuilder().apply {
                     withTimeouts(params.requestParams.connectTimeout.takeIf { it >= 0 } ?: CONNECT_TIMEOUT_DEFAULT)
@@ -428,7 +412,7 @@ class DownloadService : Service() {
                         .build()
                 }.build()
 
-                logger.i("Requesting for $params...")
+                logger.i("Requesting with $params...")
                 val response = client.newCallSuspended(
                     params.createRequest(ServiceProgressListener(Loading.Type.UPLOADING)),
                     !params.requestParams.storeErrorBody
@@ -594,9 +578,10 @@ class DownloadService : Service() {
     }
 
     private fun stopIfAllLoaded(): Boolean {
-        val empty = currentDownloads.isEmpty()
+        val empty = currentDownloads.isEmpty() || currentJobs.isEmpty()
         if (empty) {
             logger.d("Stop service: no more download tasks")
+            stopForegroundCompat(true)
             stopSelf()
         }
         return empty
@@ -710,6 +695,8 @@ class DownloadService : Service() {
         updateForegroundNotification()
 
         notifier.onDownloadSuccess(downloadInfo, params, oldParams)
+
+        stopIfAllLoaded()
     }
 
     private suspend fun onDownloadFailed(
@@ -745,6 +732,8 @@ class DownloadService : Service() {
         updateForegroundNotification()
 
         notifier.onDownloadFailed(downloadInfo, params, oldParams, e)
+
+        stopIfAllLoaded()
     }
 
     private suspend fun onDownloadCancelled(downloadInfo: DownloadInfo, params: Params, oldParams: Params) {
@@ -773,6 +762,8 @@ class DownloadService : Service() {
         updateForegroundNotification()
 
         notifier.onDownloadCancelled(downloadInfo, params, oldParams)
+
+        stopIfAllLoaded()
     }
 
     private fun NotificationCompat.Builder.addRetryAction(downloadId: Long, params: Params) {
@@ -791,18 +782,24 @@ class DownloadService : Service() {
     }
 
     private fun updateForegroundNotification() {
-        if (stopIfAllLoaded()) return
-        val (message, size) = currentDownloads.values.joinToString { it.targetResourceName } to currentDownloads.size
-
-        val title = context.resources.getQuantityString(R.plurals.download_files, size, size)
+        val title: String
+        val message: String?
+        if (currentDownloads.isNotEmpty()) {
+            val size = currentDownloads.size
+            title = context.resources.getQuantityString(R.plurals.download_files, size, size)
+            message = currentDownloads.values.joinToString { it.targetResourceName }
+        } else {
+            title = getString(R.string.download_notification_initial_text)
+            message = null
+        }
         notificationWrapper.show(
-            NOTIFICATION_ID_FOREGROUND,
+            foregroundNotificationId,
             foregroundNotification(title, message)
         )
     }
 
-    private fun foregroundNotification(title: String, message: String?): Notification {
-        return notificationWrapper.create(NOTIFICATION_ID_FOREGROUND, notificationChannel) {
+    private fun foregroundNotification(title: String, message: String? = null): Notification {
+        return notificationWrapper.create(foregroundNotificationId, notificationChannel) {
             setDefaults(Notification.DEFAULT_ALL)
             setSmallIcon(R.drawable.ic_download)
             setContentTitle(title)
@@ -813,6 +810,9 @@ class DownloadService : Service() {
             setSortKey(SORT_KEY_LOADING_ALL)
             setSound(null)
             setSilent(true)
+            // Starting in Android 13 (API level 33),
+            // users can dismiss the notification associated with a foreground service by default.
+            setOngoing(true)
             addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
                 getString(R.string.download_notification_cancel_button),
@@ -855,7 +855,7 @@ class DownloadService : Service() {
                     context,
                     0,
                     Intent(context, it)
-                        .putExtra(BaseActivity.EXTRA_CALLER_CLASS_NAME, DownloadService::class.java.canonicalName),
+                        .putExtra(EXTRA_CALLER_CLASS_NAME, DownloadService::class.java.canonicalName),
                     withMutabilityFlag(FLAG_UPDATE_CURRENT, false)
                 )
             )
@@ -1342,15 +1342,10 @@ class DownloadService : Service() {
 
     companion object {
 
-        const val EXTRA_NOTIFICATION_ID_RETRY = "download_service_notification_id_retry"
-        const val EXTRA_DOWNLOAD_SERVICE_PARAMS = "download_service_params"
-        const val EXTRA_CANCEL_ALL = "download_service_cancel_all"
-        const val EXTRA_CANCEL_DOWNLOAD_ID = "download_service_cancel_download_id"
-
-        /**
-         * Ид главного уведомления. Для корректной работы не должен пересекаться с ид отдельных нотификаций по загрузкам
-         */
-        private const val NOTIFICATION_ID_FOREGROUND = -1
+        private const val EXTRA_NOTIFICATION_ID_RETRY = "download_service_notification_id_retry"
+        private const val EXTRA_DOWNLOAD_SERVICE_PARAMS = "download_service_params"
+        private const val EXTRA_CANCEL_ALL = "download_service_cancel_all"
+        private const val EXTRA_CANCEL_DOWNLOAD_ID = "download_service_cancel_download_id"
 
         //лексиграфическая сортировка нотификаций - уведомление текущей загрузки всегда сверху
         private const val SORT_KEY_LOADING_ALL = "A"
