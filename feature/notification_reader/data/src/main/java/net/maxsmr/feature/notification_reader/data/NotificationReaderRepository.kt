@@ -2,6 +2,8 @@ package net.maxsmr.feature.notification_reader.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import net.maxsmr.commonutils.logger.BaseLogger
+import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.database.dao.notification_reader.NotificationReaderDao
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
@@ -16,6 +18,8 @@ class NotificationReaderRepository @Inject constructor(
     private val settingsRepo: SettingsDataStoreRepository,
     private val cacheRepo: CacheDataStoreRepository,
 ) {
+
+    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(NotificationReaderRepository::class.java)
 
     fun getNotifications(filterFunc: NotificationReaderEntity.() -> Boolean = { true }): Flow<List<NotificationReaderEntity>> {
         return dao.getAll().map { it.filter(filterFunc) }
@@ -49,6 +53,7 @@ class NotificationReaderRepository @Inject constructor(
     }
 
     suspend fun removeNotificationsByIds(ids: List<Long>) {
+        logger.d("Removing ids $ids...")
         dao.removeByIds(ids)
     }
 }

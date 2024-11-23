@@ -19,7 +19,7 @@ class NotificationsSendUseCase @Inject constructor(
     override suspend fun execute(parameters: Parameters) {
         val notifications = parameters.notifications
         if (notifications.isEmpty()) return
-        logger.d("execute, parameters: $parameters")
+        logger.d("Execute sending notifications, parameters: $parameters")
 
         readerRepo.upsertNotifications(notifications.map {
             if (it.status != NotificationReaderEntity.Loading) {
@@ -40,7 +40,7 @@ class NotificationsSendUseCase @Inject constructor(
                 )
             })
             val ids = notifications.map { it.id }
-            logger.d("data sent successfully, removing ids $ids...")
+            logger.d("Notifications were sent successfully, ids: $ids")
             readerRepo.removeNotificationsByIds(ids)
             logger.d("ids after delete: ${readerRepo.getNotificationsRaw().map { it.id }}")
 

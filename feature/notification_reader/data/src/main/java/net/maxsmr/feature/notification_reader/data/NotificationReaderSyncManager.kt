@@ -6,6 +6,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.annotation.MainThread
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,8 +21,10 @@ import net.maxsmr.commonutils.media.readStrings
 import net.maxsmr.commonutils.service.StartResult
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.tickerFlow
+import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
+import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.feature.download.data.DownloadService
@@ -58,6 +61,9 @@ class NotificationReaderSyncManager @Inject constructor(
     private var newWatcherJob = AtomicReference<Job>()
     private var failedWatcherJob = AtomicReference<Job>()
     private var networkStateJob = AtomicReference<Job>()
+    private var observeSettingsJob = AtomicReference<Job>()
+
+    private var lastSettings: AppSettings? = null
 
     private val isPackageListReady = AtomicBoolean(false)
     private val pendingStartService = AtomicBoolean(false)
@@ -69,7 +75,7 @@ class NotificationReaderSyncManager @Inject constructor(
 
     @MainThread
     fun doStart(context: Context, ignoreBackground: Boolean = false): ManagerStartResult {
-        logger.d("doStart")
+        logger.d("doStart, ignoreBackground: $ignoreBackground")
         if (ignoreBackground || context.isSelfAppInBackground() == false) {
             if (isNotificationAccessGranted(context)) {
                 if (isPackageListReady.get()) {
@@ -96,11 +102,12 @@ class NotificationReaderSyncManager @Inject constructor(
 
     @MainThread
     fun doStop(context: Context, navigateToSettings: Boolean = true): Boolean {
-        logger.d("doStop")
+        logger.d("doStop, navigateToSettings: $navigateToSettings")
         downloadJob.cancel()
         newWatcherJob.cancel()
         failedWatcherJob.cancel()
         networkStateJob.cancel()
+        observeSettingsJob.cancel()
         // при перезапуске манагера надо перезапросить список
         isPackageListReady.set(false)
         return if (NotificationReaderListenerService.isRunning(context)) {
@@ -119,12 +126,14 @@ class NotificationReaderSyncManager @Inject constructor(
         }
     }
 
-    @MainThread
-    fun doLaunchMainJobIfNeeded(): Boolean {
+    @JvmOverloads
+    fun doLaunchMainJobIfNeeded(shouldStartService: Boolean = true): Boolean {
         if (downloadJob.get()?.isCancelled != false) {
             // перезапускаем главную при необходимости
             launchMainJob()
-            pendingStartService.set(true)
+            if (shouldStartService) {
+                pendingStartService.set(true)
+            }
             return true
         }
         return false
@@ -132,6 +141,7 @@ class NotificationReaderSyncManager @Inject constructor(
 
     private fun launchMainJob() {
         downloadJob.cancel()
+        logger.d("launching downloadJob...")
         // забираем актуальный список пакетов
         downloadJob.set(scope.launch {
             downloadManager.observeDownloadByParams(enqueueDownloadPackageList(), true).collect {
@@ -159,6 +169,8 @@ class NotificationReaderSyncManager @Inject constructor(
                     launchWatcherForFailed()
                     // 4. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
                     launchNetworkStateWatcher()
+                    // 5. реагирование на изменение некоторых настроек
+                    launchObserveSettingsJob()
 
                     if (pendingStartService.get()) {
                         if (baseApplicationContext.isSelfAppInBackground() == false
@@ -178,17 +190,31 @@ class NotificationReaderSyncManager @Inject constructor(
         })
     }
 
-    private fun AtomicReference<Job>.cancel() {
-        get()?.let {
-            if (!it.isCancelled) {
-                it.cancel()
-            }
-            set(null)
+    private fun launchObserveSettingsJob() {
+        if (observeSettingsJob.get()?.isCancelled != false) {
+            logger.d("launching observeSettingsJob...")
+            observeSettingsJob.set(scope.launch {
+                settingsRepo.settingsFlow.collect {
+                    if (lastSettings == null) {
+                        lastSettings = it
+                    }
+                    if (lastSettings?.isWhitePackageList != it.isWhitePackageList) {
+                        logger.d("setting 'isWhitePackageList' changed to ${it.isWhitePackageList}, refreshing notifications...")
+                        sendOrRemoveNotifications { status is NotificationReaderEntity.Failed }
+                    }
+                    if (lastSettings?.packageListUrl?.toUri()?.equalsIgnoreSubDomain(it.packageListUrl.toUri()) != true) {
+                        logger.d("setting 'packageListUrl' changed to ${it.packageListUrl}")
+                        doLaunchMainJobIfNeeded(false)
+                    }
+                    lastSettings = it
+                }
+            })
         }
     }
 
     private suspend fun launchWatcherForNew() {
         if (newWatcherJob.get()?.isCancelled != false) {
+            logger.d("launching newWatcherJob...")
             newWatcherJob.set(scope.launch {
                 notificationReaderRepo.getNotifications { status is NotificationReaderEntity.New }
                     .collect { notifications ->
@@ -203,6 +229,7 @@ class NotificationReaderSyncManager @Inject constructor(
         val failedWatchInterval = settingsRepo.getSettings().failedNotificationsWatcherInterval
         require(failedWatchInterval >= 0) { "Incorrect failedWatchInterval: $failedWatchInterval" }
         if (failedWatchInterval == 0L) return
+        logger.d("launching failedWatcherJob...")
         failedWatcherJob.set(tickerFlow(failedWatchInterval.seconds)
 //            .map { LocalDateTime.now() }
             .onEach {
@@ -214,6 +241,7 @@ class NotificationReaderSyncManager @Inject constructor(
 
     private suspend fun launchNetworkStateWatcher() {
         if (networkStateJob.get()?.isCancelled != false) {
+            logger.d("launching networkStateJob...")
             networkStateJob.set(
                 scope.observeNetworkStateWithSettings(settingsRepo) {
                     if (!it.shouldRetry) return@observeNetworkStateWithSettings
@@ -237,6 +265,15 @@ class NotificationReaderSyncManager @Inject constructor(
                     failedNetworkNotifications.sendOrRemove()
                 }
             )
+        }
+    }
+
+    private fun AtomicReference<Job>.cancel() {
+        get()?.let {
+            if (!it.isCancelled) {
+                it.cancel()
+            }
+            set(null)
         }
     }
 
