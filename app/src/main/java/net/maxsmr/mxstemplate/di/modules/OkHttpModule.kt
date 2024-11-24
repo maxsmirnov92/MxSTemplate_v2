@@ -166,7 +166,7 @@ class OkHttpModule {
                 context = context,
                 connectivityChecker = NetworkConnectivityChecker,
                 callTimeout = NETWORK_TIMEOUT,
-                apiKey = cacheRepo.getDoubleGisRoutingKey()
+                apiKey = cacheRepo.getDoubleGisRoutingApiKey()
             ) {
                 EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
                     .doubleGisRoutingRetrofit().instance

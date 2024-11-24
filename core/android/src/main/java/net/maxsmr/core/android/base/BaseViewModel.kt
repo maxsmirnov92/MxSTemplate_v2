@@ -5,12 +5,15 @@ import android.os.Looper
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
 import androidx.lifecycle.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.isAtLeastR
 import net.maxsmr.commonutils.live.doOnNext
 import net.maxsmr.commonutils.live.event.VmEvent
+import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.states.ILoadState
@@ -32,7 +35,6 @@ import net.maxsmr.core.android.content.pick.PickResult
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.NetworkException
-import net.maxsmr.core.network.exceptions.NoConnectivityException
 import kotlin.reflect.KProperty
 
 /**
@@ -251,7 +253,7 @@ abstract class BaseViewModel(
         answer: Alert.Answer? = null,
         uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None,
         priority: AlertQueueItem.Priority = AlertQueueItem.Priority.NORMAL,
-        putInQueueHead: Boolean = false
+        putInQueueHead: Boolean = false,
     ) {
         AlertSnackbarBuilder(SNACKBAR_TAG_QUEUE)
             .setMessage(message)
@@ -303,6 +305,23 @@ abstract class BaseViewModel(
             TextMessage(R.string.pick_result_error_format, error.reason)
         )
     }
+
+    fun doOnAnyAskOption(
+        flow: Flow<Boolean>?,
+        setAskedFunc: suspend () -> Unit,
+        targetAction: (Boolean) -> Unit,
+    ) {
+        flow?.asLiveData()?.observeOnce(this) {
+            if (!it) {
+                this.viewModelScope.launch {
+                    setAskedFunc()
+                }
+            }
+            targetAction(it)
+        }
+    }
+
+
 
     /**
      * Добавляет, либо удаляет диалог с тегом [tag] из очереди в зависимости от параметра [add]
@@ -381,6 +400,7 @@ abstract class BaseViewModel(
         const val DIALOG_TAG_PROGRESS = "progress"
         const val DIALOG_TAG_PERMISSION_YES_NO = "permission_yes_no"
         const val DIALOG_TAG_PICKER_ERROR = "content_picker_error"
+        const val DIALOG_TAG_BATTERY_OPTIMIZATION = "battery_optimization"
 
         const val SNACKBAR_TAG_QUEUE = "snackbar_queue"
         const val TOAST_TAG_QUEUE = "toast_queue"

@@ -11,19 +11,15 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.REG_EX_ALGORITHM_SHA1
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
 import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
 import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStreamOrThrow
-import net.maxsmr.commonutils.openBatteryOptimizationSettings
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.actions.SnackbarExtraData.SnackbarLength
@@ -33,7 +29,6 @@ import net.maxsmr.core.android.baseAppName
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.ContentStorage
-import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
@@ -47,12 +42,15 @@ import net.maxsmr.core.ui.fields.urlField
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
+import net.maxsmr.feature.preferences.ui.doOnBatteryOptimizationWithPostNotificationsAsk
 import java.io.Serializable
 
 class DownloadsParamsViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val viewModel: DownloadsViewModel,
-    val cacheRepo: CacheDataStoreRepository,
+    private val cacheRepo: CacheDataStoreRepository,
+    private val settingsRepo: SettingsDataStoreRepository
 ) : BaseHandleableViewModel(state) {
 
     val urlField: Field<String> = state.urlField(
@@ -112,10 +110,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
      * Готовые итемы для отображения в адаптере
      */
     val headerItems by persistableLiveDataInitial<List<HeaderInfoAdapterData>>(arrayListOf())
-
-    private val _navigateAppDetailsEvent = MutableStateFlow<VmEvent<Unit>?>(null)
-
-    val navigateAppDetailsEvent = _navigateAppDetailsEvent.asStateFlow()
 
     private val headerFields = mutableListOf<HeaderInfoFields>()
 
@@ -193,15 +187,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
         super.handleAlerts(delegate)
-        delegate.bindAlertDialog(DIALOG_TAG_NAVIGATE_TO_BATTERY_OPTIMIZATION) {
+        delegate.bindAlertDialog(DIALOG_TAG_BATTERY_OPTIMIZATION) {
             it.asOkDialog(delegate.context)
-        }
-    }
-
-    override fun handleEvents(fragment: BaseVmFragment<*>) {
-        super.handleEvents(fragment)
-        navigateAppDetailsEvent.collectEventsWithOwner(fragment.viewLifecycleOwner) {
-            fragment.requireContext().openBatteryOptimizationSettings()
         }
     }
 
@@ -381,63 +368,56 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     /**
      * @param errorFieldResult с первым ошибочным [Field]
      */
-    fun onStartDownloadClick(errorFieldResult: (Field<*>?) -> Unit) {
-        viewModelScope.launch {
-            if (!cacheRepo.askedAppDetails()) {
-                showOkDialog(
-                    DIALOG_TAG_NAVIGATE_TO_BATTERY_OPTIMIZATION,
-                    net.maxsmr.core.ui.R.string.dialog_battery_optimization_message
-                ) {
-                    viewModelScope.launch {
-                        cacheRepo.setAskedAppDetails()
-                        _navigateAppDetailsEvent.emit(VmEvent(Unit))
-                    }
-                }
-            } else {
-                val result = allFields.validateAndSetByRequiredFields()
-                if (result.isNotEmpty()) {
-                    errorFieldResult(result.first())
-                    return@launch
-                }
-                val url = urlField.value
-                val method = methodField.value
-                val bodyUri = bodyField.value.bodyUri
+    fun onStartDownloadClick(fragment: BaseVmFragment<*>, errorFieldResult: (Field<*>?) -> Unit) {
 
-                val fileName = fileNameField.value
-                val subDirName = subDirNameField.value
-                val ignoreFileName = !fileNameChangeStateField.value.value
-
-                val headers = hashMapOf<String, String>()
-                headerFields.forEach {
-                    val key = it.header.first.field.value
-                    val value = it.header.second.field.value
-                    headers[key] = value
-                }
-
-                val targetHash = targetHashField.value
-
-                val ignoreServerErrors = ignoreServerErrorsField.value
-                val ignoreAttachment = ignoreAttachmentStateField.value.value
-                val replaceFile = replaceFileField.value
-                val deleteUnfinished = deleteUnfinishedField.value
-
-                viewModel.enqueueDownload(
-                    DownloadParamsModel(
-                        url,
-                        method,
-                        bodyUri,
-                        fileName,
-                        ignoreFileName,
-                        subDirName,
-                        targetHash,
-                        ignoreServerErrors,
-                        ignoreAttachment,
-                        replaceFile,
-                        deleteUnfinished,
-                        headers
-                    )
-                )
+        fun startDownload() {
+            val result = allFields.validateAndSetByRequiredFields()
+            if (result.isNotEmpty()) {
+                errorFieldResult(result.first())
+                return
             }
+            val url = urlField.value
+            val method = methodField.value
+            val bodyUri = bodyField.value.bodyUri
+
+            val fileName = fileNameField.value
+            val subDirName = subDirNameField.value
+            val ignoreFileName = !fileNameChangeStateField.value.value
+
+            val headers = hashMapOf<String, String>()
+            headerFields.forEach {
+                val key = it.header.first.field.value
+                val value = it.header.second.field.value
+                headers[key] = value
+            }
+
+            val targetHash = targetHashField.value
+
+            val ignoreServerErrors = ignoreServerErrorsField.value
+            val ignoreAttachment = ignoreAttachmentStateField.value.value
+            val replaceFile = replaceFileField.value
+            val deleteUnfinished = deleteUnfinishedField.value
+
+            viewModel.enqueueDownload(
+                DownloadParamsModel(
+                    url,
+                    method,
+                    bodyUri,
+                    fileName,
+                    ignoreFileName,
+                    subDirName,
+                    targetHash,
+                    ignoreServerErrors,
+                    ignoreAttachment,
+                    replaceFile,
+                    deleteUnfinished,
+                    headers
+                )
+            )
+        }
+
+        doOnBatteryOptimizationWithPostNotificationsAsk(fragment, cacheRepo, settingsRepo) {
+            startDownload()
         }
     }
 
@@ -518,7 +498,5 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         private const val KEY_FIELD_DELETE_UNFINISHED = "delete_unfinished"
 
         private const val RESOURCE_NAME_DOWNLOAD_PARAMS_MODEL = "download_params_model_sample.json"
-
-        private const val DIALOG_TAG_NAVIGATE_TO_BATTERY_OPTIMIZATION = "navigate_to_battery_optimization"
     }
 }

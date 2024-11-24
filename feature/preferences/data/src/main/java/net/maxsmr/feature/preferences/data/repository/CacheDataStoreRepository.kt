@@ -15,7 +15,6 @@ import kotlinx.serialization.json.Json
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.DataStoreType
 import net.maxsmr.core.di.DataStores
-import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.rate.RateAppInfo
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.core.utils.encodeToStringOrNull
@@ -29,10 +28,15 @@ class CacheDataStoreRepository @Inject constructor(
     @BaseJson private val json: Json,
 ) {
 
-    val postNotificationAsked: Flow<Boolean>? = dataStore.data.map { it[FIELD_POST_NOTIFICATION_ASKED] ?: false }
+    private val data: Flow<Preferences> = dataStore.data
+
+    val postNotificationAsked: Flow<Boolean>? = data.map { it[FIELD_POST_NOTIFICATION_ASKED] ?: false }
         .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU }
 
-    val isDemoPeriodExpired: Flow<Boolean> = dataStore.data.map { it[FIELD_KEY_DEMO_PERIOD_EXPIRED] ?: false }
+    val batteryOptimizationAsked: Flow<Boolean>? = data.map { it[FIELD_ASKED_BATTERY_OPTIMIZATION] ?: false }
+        .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.M }
+
+    val isDemoPeriodExpired: Flow<Boolean> = data.map { it[FIELD_KEY_DEMO_PERIOD_EXPIRED] ?: false }
 
     suspend fun wasPostNotificationAsked() = postNotificationAsked?.firstOrNull() ?: false
 
@@ -77,15 +81,15 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun askedAppDetails(): Boolean {
+    suspend fun askedBatteryOptmization(): Boolean {
         return dataStore.data.map { prefs ->
-            prefs[FIELD_ASKED_APP_DETAILS]
+            prefs[FIELD_ASKED_BATTERY_OPTIMIZATION]
         }.firstOrNull() ?: false
     }
 
-    suspend fun setAskedAppDetails() {
+    suspend fun setAskedBatteryOptimization() {
         dataStore.edit { prefs ->
-            prefs[FIELD_ASKED_APP_DETAILS] = true
+            prefs[FIELD_ASKED_BATTERY_OPTIMIZATION] = true
         }
     }
 
@@ -150,15 +154,15 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun getDoubleGisRoutingKey(): String {
+    suspend fun getDoubleGisRoutingApiKey(): String {
         return dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_DOUBLE_GIS_ROUTING]
+            prefs[FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY]
         }.firstOrNull().orEmpty()
     }
 
-    suspend fun setDoubleGisRoutingKey(key: String) {
+    suspend fun setDoubleGisRoutingApiKey(key: String) {
         dataStore.edit { prefs ->
-            prefs[FIELD_KEY_DOUBLE_GIS_ROUTING] = key
+            prefs[FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY] = key
         }
     }
 
@@ -185,11 +189,11 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
-        private val FIELD_ASKED_APP_DETAILS = booleanPreferencesKey("askedAppDetails")
+        private val FIELD_ASKED_BATTERY_OPTIMIZATION = booleanPreferencesKey("askedBatteryOptimization")
         private val FIELD_RATE_APP_INFO = stringPreferencesKey("rateAppInfo")
         private val FIELD_SEEN_RELEASE_NOTES_VERSION_CODES = stringPreferencesKey("seenReleaseNotesVersionCodes")
         private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")
-        private val FIELD_KEY_DOUBLE_GIS_ROUTING = stringPreferencesKey("keyDoubleGisRouting")
+        private val FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY = stringPreferencesKey("keyDoubleGisRoutingApiKey")
         private val FIELD_KEY_DEMO_PERIOD_EXPIRED = booleanPreferencesKey("demoPeriodExpired")
     }
 }

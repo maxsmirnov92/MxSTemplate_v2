@@ -244,7 +244,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                                     }
                                     if (key.isNotEmpty()) {
                                         wasKeyDownloaded = true
-                                        cacheRepo.setDoubleGisRoutingKey(key)
+                                        cacheRepo.setDoubleGisRoutingApiKey(key)
                                         // повтор юзкейса с актуализированным ключом
                                         doAddressSort()
                                     } else {
@@ -538,7 +538,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                                         if (key.isNotEmpty()) {
                                             wasKeyDownloaded = true
                                             isHandled = true
-                                            cacheRepo.setDoubleGisRoutingKey(key)
+                                            cacheRepo.setDoubleGisRoutingApiKey(key)
                                             // повтор юзкейса с актуализированным ключом
                                             doAddressRouting()
                                         } else {
