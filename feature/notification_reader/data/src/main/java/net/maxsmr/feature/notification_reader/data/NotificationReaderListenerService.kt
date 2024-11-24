@@ -39,6 +39,8 @@ import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.di.DI_NAME_FOREGROUND_SERVICE_ID_NOTIFICATION_READER
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
 import net.maxsmr.core.di.EXTRA_CALLER_CLASS_NAME
+import net.maxsmr.feature.demo.DemoChecker
+import net.maxsmr.feature.demo.strategies.ToastDemoExpiredStrategy
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 import javax.inject.Named
@@ -91,6 +93,9 @@ class NotificationReaderListenerService: NotificationListenerService() {
     lateinit var permissionsHelper: PermissionsHelper
 
     @Inject
+    lateinit var demoChecker: DemoChecker
+
+    @Inject
     @Named(DI_NAME_MAIN_ACTIVITY_CLASS)
     lateinit var mainActivityClassName: String
 
@@ -133,9 +138,15 @@ class NotificationReaderListenerService: NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
         val summaryText = sbn.notification.getSummaryText()
-        logger.d("onNotificationPosted: $sbn, text: $summaryText") // ${sbn.notification.extras.getString(EXTRA_TITLE)}
+        logger.d("onNotificationPosted: $sbn, text: $summaryText")
         coroutineScope.launch {
-            notificationReaderRepo.insertNewNotification(summaryText.toString(), sbn.packageName)
+            if (demoChecker.check(ToastDemoExpiredStrategy(this@NotificationReaderListenerService,
+                        getString(R.string.notification_reader_notification_handle_error)))) {
+                notificationReaderRepo.insertNewNotification(summaryText.toString(), sbn.packageName)
+            } else {
+                stopForegroundCompat(true)
+                stopSelf()
+            }
         }
     }
 
