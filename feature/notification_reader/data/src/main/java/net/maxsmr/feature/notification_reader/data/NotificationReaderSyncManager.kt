@@ -130,8 +130,8 @@ class NotificationReaderSyncManager @Inject constructor(
      * @return true, если работа была запущена; false - при наличии текущей неотменённой
      */
     fun doLaunchDownloadJobIfNeeded(mode: StartMode): Boolean {
+        pendingStartMode.set(mode)
         if (downloadJob.get()?.isCancelled != false) {
-            pendingStartMode.set(mode)
             launchDownloadJob()
             return true
         }

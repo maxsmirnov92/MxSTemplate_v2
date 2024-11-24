@@ -15,13 +15,11 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
-import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
 import net.maxsmr.feature.notification_reader.ui.databinding.FragmentNotificationReaderBinding
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.preferences.ui.doOnCanDrawOverlaysAsked
-import net.maxsmr.feature.preferences.ui.observePostNotificationPermissionAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -57,32 +55,12 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
 
         viewModel.serviceTargetState.observe {
             if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                // не спрашиваем battery optimization и post_notifications
                 val context = requireContext()
                 val result = if (it) {
-                    val startResult = manager.doStart(context)
-                    when (startResult) {
-                        ManagerStartResult.SERVICE_START_FAILED -> {
-                            viewModel.showSnackbar(TextMessage(R.string.notification_reader_snack_cannot_start_service))
-                            false
-                        }
-
-                        ManagerStartResult.SETTINGS_NEEDED -> {
-                            viewModel.showToast(TextMessage(R.string.notification_reader_toast_start_add_in_settings))
-                            false
-                        }
-
-                        ManagerStartResult.NOT_IN_FOREGROUND -> {
-                            false
-                        }
-
-                        ManagerStartResult.SUCCESS, ManagerStartResult.SUCCESS_PENDING -> true
-                    }
+                    viewModel.doStartWithHandleResult(context)
                 } else {
-                    manager.doStop(context).also { isRunning ->
-                        if (isRunning) {
-                            viewModel.showToast(TextMessage(R.string.notification_reader_toast_stop_remove_in_settings))
-                        }
-                    }
+                    viewModel.doStopWithHandleResult(context, true)
                 }
                 refreshServiceStateMenuItem(result)
             }
@@ -108,14 +86,6 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
             )
         }
 
-        settingsRepo.settingsFlow.collectSafely {
-            if (!it.disableNotifications) {
-                // post_notifications не является обязательным для работы сервиса,
-                // но спрашиваем чтобы нотификации от двух сервисов были
-                cacheRepo.observePostNotificationPermissionAsked(this)
-            }
-        }
-
         viewModel.doOnCanDrawOverlaysAsked(this, cacheRepo, settingsRepo) {
             if (it) {
                 viewModel.showToast(TextMessage(R.string.notification_reader_toast_can_draw_overlays_settings))
@@ -125,15 +95,7 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
 
     override fun onResume() {
         super.onResume()
-        if (viewModel.serviceTargetState.value == true) {
-            if (manager.doStart(requireContext()) == ManagerStartResult.SETTINGS_NEEDED) {
-                viewModel.showToast(TextMessage(R.string.notification_reader_toast_start_add_in_settings))
-            }
-        } else {
-            // при возврате с экрана настроек, когда разрешение было отозвано,
-            // можно попытаться остановить ещё раз
-            manager.doStop(requireContext(), false)
-        }
+        viewModel.doStartOrStop(this)
         refreshServiceStateMenuItem()
     }
 
