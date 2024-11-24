@@ -318,10 +318,8 @@ abstract class BaseViewModel(
                 }
             }
             targetAction(it)
-        }
+        } ?: targetAction.invoke(true)
     }
-
-
 
     /**
      * Добавляет, либо удаляет диалог с тегом [tag] из очереди в зависимости от параметра [add]

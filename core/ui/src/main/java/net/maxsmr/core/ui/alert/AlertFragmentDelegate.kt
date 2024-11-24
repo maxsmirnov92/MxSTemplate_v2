@@ -1,9 +1,10 @@
 package net.maxsmr.core.ui.alert
 
-import android.content.Context
+
 import android.view.View
 import androidx.fragment.app.Fragment
 import net.maxsmr.core.android.base.BaseViewModel
+import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_BATTERY_OPTIMIZATION
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_NO_INTERNET
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_PERMISSION_YES_NO
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_PICKER_ERROR
@@ -102,6 +103,9 @@ class AlertFragmentDelegate<VM: BaseViewModel>(
             it.asYesNoDialog(context)
         }
         bindAlertDialog(DIALOG_TAG_PICKER_ERROR) {
+            it.asOkDialog(context)
+        }
+        bindAlertDialog(DIALOG_TAG_BATTERY_OPTIMIZATION) {
             it.asOkDialog(context)
         }
     }

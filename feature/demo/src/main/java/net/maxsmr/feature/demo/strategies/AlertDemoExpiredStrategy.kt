@@ -5,16 +5,19 @@ import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.demo.R
+import kotlin.system.exitProcess
 
 class AlertDemoExpiredStrategy(
     private val viewModel: BaseViewModel,
     private val fragment: BaseVmFragment<*>,
     private val messageArg: String? = null,
-    private val navigateBackOnDismiss: Boolean = true,
+    private val confirmAction: ConfirmAction? = ConfirmAction.FINISH_ACTIVITY,
 ): IDemoExpiredStrategy {
 
     init {
-        fragment.bindAlertDialog(DIALOG_TAG_DEMO_EXPIRED) { it.asOkDialog(fragment.requireContext()) }
+        fragment.bindAlertDialog(DIALOG_TAG_DEMO_EXPIRED) {
+            it.asOkDialog(fragment.requireContext(), cancelable = false)
+        }
     }
 
     override fun doAction() {
@@ -25,10 +28,23 @@ class AlertDemoExpiredStrategy(
                 TextMessage(R.string.demo_period_expired_message)
             }
         ) {
-            if (navigateBackOnDismiss) {
-                viewModel.navigateBack()
+            when(confirmAction) {
+                ConfirmAction.FINISH_ACTIVITY -> {
+                    fragment.requireActivity().finish()
+                }
+                ConfirmAction.EXIT_PROCESS -> {
+                    exitProcess(0)
+                }
+                else -> {
+
+                }
             }
         }
+    }
+
+    enum class ConfirmAction {
+        FINISH_ACTIVITY,
+        EXIT_PROCESS,
     }
 
     companion object {

@@ -10,6 +10,7 @@ import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.openBatteryOptimizationSettings
 import net.maxsmr.core.android.base.BaseViewModel
+import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -23,15 +24,18 @@ fun CacheDataStoreRepository.doOnBatteryOptimizationAsk(
 ) {
     viewModel.doOnAnyAskOption(
         batteryOptimizationAsked, {
-            setAskedBatteryOptimization()
+            setBatteryOptimizationAsked()
         }) {
         if (!it) {
             viewModel.showOkDialog(
                 dialogTag,
-                net.maxsmr.core.ui.R.string.dialog_battery_optimization_message
+                net.maxsmr.core.ui.R.string.dialog_battery_optimization_message,
+                configBlock = {
+                    this.setUniqueStrategy(AlertQueueItem.UniqueStrategy.Ignore)
+                }
             ) {
                 viewModel.viewModelScope.launch {
-                    setAskedBatteryOptimization()
+                    setBatteryOptimizationAsked()
                     context.openBatteryOptimizationSettings()
                 }
             }
@@ -98,7 +102,7 @@ fun CacheDataStoreRepository.observeOncePostNotificationPermissionAsked(
                 )
             }
         }
-    }
+    } ?: onPostNotificationGranted?.invoke()
 }
 
 @JvmOverloads
@@ -106,6 +110,7 @@ fun CacheDataStoreRepository.observePostNotificationPermissionAsked(
     fragment: BaseVmFragment<*>,
     onPostNotificationGranted: (() -> Unit)? = null,
     onPostNotificationDenied: (() -> Unit)? = null,
+    onPostNotificationAlreadyAsked: (() -> Unit)? = null
 ) {
     /**
      * после получения разрешения или отказа пользователя получать уведомления - не показывать этот запрос снова
@@ -128,6 +133,8 @@ fun CacheDataStoreRepository.observePostNotificationPermissionAsked(
                 setPostNotificationAsked()
                 onPostNotificationDenied?.invoke()
             }
+        } else {
+            onPostNotificationAlreadyAsked?.invoke()
         }
-    }
+    } ?: onPostNotificationGranted?.invoke()
 }

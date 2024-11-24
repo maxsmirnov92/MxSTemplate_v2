@@ -33,7 +33,7 @@ class CacheDataStoreRepository @Inject constructor(
     val postNotificationAsked: Flow<Boolean>? = data.map { it[FIELD_POST_NOTIFICATION_ASKED] ?: false }
         .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU }
 
-    val batteryOptimizationAsked: Flow<Boolean>? = data.map { it[FIELD_ASKED_BATTERY_OPTIMIZATION] ?: false }
+    val batteryOptimizationAsked: Flow<Boolean>? = data.map { it[FIELD_BATTERY_OPTIMIZATION_ASKED] ?: false }
         .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.M }
 
     val isDemoPeriodExpired: Flow<Boolean> = data.map { it[FIELD_KEY_DEMO_PERIOD_EXPIRED] ?: false }
@@ -53,6 +53,18 @@ class CacheDataStoreRepository @Inject constructor(
             dataStore.edit { prefs ->
                 prefs[FIELD_POST_NOTIFICATION_ASKED] = toggle
             }
+        }
+    }
+
+    suspend fun wasBatteryOptimizationAsked(): Boolean {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_BATTERY_OPTIMIZATION_ASKED]
+        }.firstOrNull() ?: false
+    }
+
+    suspend fun setBatteryOptimizationAsked() {
+        dataStore.edit { prefs ->
+            prefs[FIELD_BATTERY_OPTIMIZATION_ASKED] = true
         }
     }
 
@@ -78,18 +90,6 @@ class CacheDataStoreRepository @Inject constructor(
     suspend fun setHasDownloadParamsModelSample() {
         dataStore.edit { prefs ->
             prefs[FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE] = true
-        }
-    }
-
-    suspend fun askedBatteryOptmization(): Boolean {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_ASKED_BATTERY_OPTIMIZATION]
-        }.firstOrNull() ?: false
-    }
-
-    suspend fun setAskedBatteryOptimization() {
-        dataStore.edit { prefs ->
-            prefs[FIELD_ASKED_BATTERY_OPTIMIZATION] = true
         }
     }
 
@@ -187,9 +187,9 @@ class CacheDataStoreRepository @Inject constructor(
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
+        private val FIELD_BATTERY_OPTIMIZATION_ASKED = booleanPreferencesKey("batteryOptimizationAsked")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
-        private val FIELD_ASKED_BATTERY_OPTIMIZATION = booleanPreferencesKey("askedBatteryOptimization")
         private val FIELD_RATE_APP_INFO = stringPreferencesKey("rateAppInfo")
         private val FIELD_SEEN_RELEASE_NOTES_VERSION_CODES = stringPreferencesKey("seenReleaseNotesVersionCodes")
         private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")

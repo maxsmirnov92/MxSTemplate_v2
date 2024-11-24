@@ -12,13 +12,17 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.getAppSettingsIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
+import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.base.BaseViewModel
@@ -225,6 +229,21 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
             permissions.toSet(),
             handler,
         )
+    }
+
+    fun doOnAnyAskOption(
+        flow: Flow<Boolean>?,
+        setAskedFunc: suspend () -> Unit,
+        targetAction: (Boolean) -> Unit,
+    ) {
+        flow?.asLiveData()?.observeOnce(this) {
+            if (!it) {
+                this.lifecycleScope.launch {
+                    setAskedFunc()
+                }
+            }
+            targetAction(it)
+        } ?: targetAction.invoke(true)
     }
 
     protected inline fun <T : Any> Flow<T>.collectSafely(

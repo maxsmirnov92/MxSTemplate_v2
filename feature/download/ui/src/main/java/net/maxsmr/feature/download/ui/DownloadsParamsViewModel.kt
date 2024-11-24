@@ -185,13 +185,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
     }
 
-    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(delegate)
-        delegate.bindAlertDialog(DIALOG_TAG_BATTERY_OPTIMIZATION) {
-            it.asOkDialog(delegate.context)
-        }
-    }
-
     fun onBodyUriSelected(uri: Uri) {
         val body = bodyField.value
         if (!body.isEnabled) return
