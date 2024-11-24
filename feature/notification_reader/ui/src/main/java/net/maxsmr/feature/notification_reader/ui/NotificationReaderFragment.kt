@@ -80,7 +80,7 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
                             false
                         }
 
-                        ManagerStartResult.SUCCESS -> true
+                        ManagerStartResult.SUCCESS, ManagerStartResult.SUCCESS_PENDING -> true
                     }
                 } else {
                     manager.doStop(context).also { isRunning ->
