@@ -11,6 +11,7 @@ import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.feature.notification_reader.data.NotificationReaderListenerService
 import net.maxsmr.feature.notification_reader.data.NotificationReaderRepository
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
+import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.StartMode
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData
 import javax.inject.Inject
 
@@ -40,7 +41,14 @@ class NotificationReaderViewModel @Inject constructor(
     }
 
     fun onDownloadPackageListAction() {
-        if (!syncManager.doLaunchMainJobIfNeeded()) {
+        if (!syncManager.doLaunchDownloadJobIfNeeded(
+                    if (serviceTargetState.value == true) {
+                        StartMode.JOBS_AND_SERVICE
+                    } else {
+                        StartMode.NONE
+                    }
+                )
+        ) {
             showSnackbar(TextMessage(R.string.notification_reader_snack_download_package_list_not_started))
         }
     }

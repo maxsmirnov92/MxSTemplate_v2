@@ -21,10 +21,10 @@ import net.maxsmr.commonutils.media.readStrings
 import net.maxsmr.commonutils.service.StartResult
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.tickerFlow
-import net.maxsmr.core.android.network.equalsIgnoreSubDomain
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
+import net.maxsmr.core.network.equalsIgnoreSubDomain
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.feature.download.data.DownloadService
@@ -66,11 +66,11 @@ class NotificationReaderSyncManager @Inject constructor(
     private var lastSettings: AppSettings? = null
 
     private val isPackageListReady = AtomicBoolean(false)
-    private val pendingStartService = AtomicBoolean(false)
+    private val pendingStartMode = AtomicReference(StartMode.JOBS)
 
     init {
         // запуск основной работы без сервиса
-        launchMainJob()
+        launchDownloadJob()
     }
 
     @MainThread
@@ -88,8 +88,8 @@ class NotificationReaderSyncManager @Inject constructor(
                     }
                 } else {
                     // белый список не актуализирован
-                    doLaunchMainJobIfNeeded()
-                    return ManagerStartResult.SUCCESS
+                    doLaunchDownloadJobIfNeeded(StartMode.JOBS_AND_SERVICE)
+                    return ManagerStartResult.SUCCESS_PENDING
                 }
             } else {
                 // начиная с Android 14 стартануть активити находясь в бэкграунде нельзя
@@ -126,20 +126,19 @@ class NotificationReaderSyncManager @Inject constructor(
         }
     }
 
-    @JvmOverloads
-    fun doLaunchMainJobIfNeeded(shouldStartService: Boolean = true): Boolean {
+    /**
+     * @return true, если работа была запущена; false - при наличии текущей неотменённой
+     */
+    fun doLaunchDownloadJobIfNeeded(mode: StartMode): Boolean {
         if (downloadJob.get()?.isCancelled != false) {
-            // перезапускаем главную при необходимости
-            launchMainJob()
-            if (shouldStartService) {
-                pendingStartService.set(true)
-            }
+            pendingStartMode.set(mode)
+            launchDownloadJob()
             return true
         }
         return false
     }
 
-    private fun launchMainJob() {
+    private fun launchDownloadJob() {
         downloadJob.cancel()
         logger.d("launching downloadJob...")
         // забираем актуальный список пакетов
@@ -163,25 +162,29 @@ class NotificationReaderSyncManager @Inject constructor(
                     // 1. сбрасываем статусы у зафейленных или подвешенных и пытаемся их отправить
                     sendOrRemoveNotifications { status is NotificationReaderEntity.Failed || status is NotificationReaderEntity.Loading }
 
-                    // 2. мониторим появляющиеся со статусом "New" для выполнения запроса
-                    launchWatcherForNew()
-                    // 3. запуск периодического повтора любых зафейленных
-                    launchWatcherForFailed()
-                    // 4. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
-                    launchNetworkStateWatcher()
-                    // 5. реагирование на изменение некоторых настроек
-                    launchObserveSettingsJob()
+                    val mode = pendingStartMode.get()
+                    if (mode in arrayOf(StartMode.JOBS_AND_SERVICE, StartMode.JOBS)) {
+                        // 2. мониторим появляющиеся со статусом "New" для выполнения запроса
+                        launchWatcherForNew()
+                        // 3. запуск периодического повтора любых зафейленных
+                        launchWatcherForFailed()
+                        // 4. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
+                        launchNetworkStateWatcher()
+                        // 5. реагирование на изменение некоторых настроек
+                        launchObserveSettingsJob()
 
-                    if (pendingStartService.get()) {
-                        if (baseApplicationContext.isSelfAppInBackground() == false
-                                || (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || Settings.canDrawOverlays(baseApplicationContext))
-                        ) {
-                            // отложенный запуск сервиса по готовности белого списка
-                            if (isNotificationAccessGranted(baseApplicationContext)) {
-                                NotificationReaderListenerService.start(baseApplicationContext)
+                        if (mode == StartMode.JOBS_AND_SERVICE) {
+                            if (baseApplicationContext.isSelfAppInBackground() == false
+                                    || (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || Settings.canDrawOverlays(baseApplicationContext))
+                            ) {
+                                // отложенный запуск сервиса по готовности белого списка
+                                if (isNotificationAccessGranted(baseApplicationContext)) {
+                                    NotificationReaderListenerService.start(baseApplicationContext)
+                                }
                             }
                         }
-                        pendingStartService.set(false)
+
+                        pendingStartMode.set(StartMode.NONE)
                     }
 
                     downloadJob.cancel()
@@ -204,7 +207,7 @@ class NotificationReaderSyncManager @Inject constructor(
                     }
                     if (lastSettings?.packageListUrl?.toUri()?.equalsIgnoreSubDomain(it.packageListUrl.toUri()) != true) {
                         logger.d("setting 'packageListUrl' changed to ${it.packageListUrl}")
-                        doLaunchMainJobIfNeeded(false)
+                        doLaunchDownloadJobIfNeeded(StartMode.JOBS)
                     }
                     lastSettings = it
                 }
@@ -356,8 +359,16 @@ class NotificationReaderSyncManager @Inject constructor(
 
     enum class ManagerStartResult {
         SUCCESS,
+        SUCCESS_PENDING,
         SERVICE_START_FAILED,
         SETTINGS_NEEDED,
         NOT_IN_FOREGROUND
+    }
+
+    enum class StartMode {
+
+        JOBS_AND_SERVICE,
+        JOBS,
+        NONE
     }
 }
