@@ -45,6 +45,8 @@ class NotificationsSendUseCase @Inject constructor(
             logger.d("ids after delete: ${readerRepo.getNotificationsRaw().map { it.id }}")
 
         } catch (e: Exception) {
+            // здесь можно не добавлять зафейленные, которые перестали попадать в список,
+            // но для индикации лучше оставить
             readerRepo.upsertNotifications(notifications.map {
                 it.copy(status = NotificationReaderEntity.Failed(e))
             })

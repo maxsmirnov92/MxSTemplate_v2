@@ -7,7 +7,6 @@ import android.view.MenuItem
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Lifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
@@ -49,20 +48,18 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
     lateinit var settingsRepo: SettingsDataStoreRepository
 
     private var toggleServiceStateMenuItem: MenuItem? = null
+    private var downloadPackageListMenuItem: MenuItem? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: NotificationReaderViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
 
         viewModel.serviceTargetState.observe {
-            if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-                // не спрашиваем battery optimization и post_notifications
-                val context = requireContext()
-                val result = if (it) {
-                    viewModel.doStartWithHandleResult(context)
-                } else {
-                    viewModel.doStopWithHandleResult(context, true)
+            if (it != null) {
+                viewModel.doStartOrStop(this, it.changedFromView) { result ->
+                    // рефреш меню в зав-ти от результата старт/стоп,
+                    // а не текущего состояния сервиса (ещё не успело измениться)
+                    refreshMenuItemsByRunning(result)
                 }
-                refreshServiceStateMenuItem(result)
             }
         }
 
@@ -95,14 +92,15 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
 
     override fun onResume() {
         super.onResume()
-        viewModel.doStartOrStop(this)
-        refreshServiceStateMenuItem()
+        viewModel.doStartOrStop(this, false)
+        refreshMenuItemsByRunning()
     }
 
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
         toggleServiceStateMenuItem = menu.findItem(R.id.actionServiceStartStop)
-        refreshServiceStateMenuItem()
+        downloadPackageListMenuItem = menu.findItem(R.id.actionDownloadPackageList)
+        refreshMenuItemsByRunning()
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -122,16 +120,21 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
         }
     }
 
-    private fun refreshServiceStateMenuItem(
-        isRunning: Boolean = viewModel.isServiceRunning()
+    private fun refreshMenuItemsByRunning(
+        isRunning: Boolean = viewModel.isServiceRunning(),
     ) {
         toggleServiceStateMenuItem?.let { item ->
             item.setIcon(if (isRunning) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play)
-            item.setTitle((if (isRunning) {
-                R.string.notification_reader_menu_action_service_stop
-            } else {
-                R.string.notification_reader_menu_action_service_start
-            }))
+            item.setTitle(
+                (if (isRunning) {
+                    R.string.notification_reader_menu_action_service_stop
+                } else {
+                    R.string.notification_reader_menu_action_service_start
+                })
+            )
+        }
+        downloadPackageListMenuItem?.let { item ->
+            item.isVisible = isRunning
         }
     }
 }

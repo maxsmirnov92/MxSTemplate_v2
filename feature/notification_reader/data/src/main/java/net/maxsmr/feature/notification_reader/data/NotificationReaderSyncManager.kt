@@ -10,6 +10,8 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -57,16 +59,19 @@ class NotificationReaderSyncManager @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
-    private var downloadJob = AtomicReference<Job>()
-    private var newWatcherJob = AtomicReference<Job>()
-    private var failedWatcherJob = AtomicReference<Job>()
-    private var networkStateJob = AtomicReference<Job>()
-    private var observeSettingsJob = AtomicReference<Job>()
+    private val downloadJob = AtomicReference<Job>()
+    private val newWatcherJob = AtomicReference<Job>()
+    private val failedWatcherJob = AtomicReference<Job>()
+    private val networkStateJob = AtomicReference<Job>()
+    private val observeSettingsJob = AtomicReference<Job>()
 
-    private var lastSettings: AppSettings? = null
-
-    private val isPackageListReady = AtomicBoolean(false)
     private val pendingStartMode = AtomicReference(StartMode.JOBS)
+    private val isPackageListReady = AtomicBoolean(false)
+
+    private val lastSettings = MutableStateFlow<AppSettings?>(null)
+
+    private val _isRunning = MutableStateFlow(false)
+    val isRunning = _isRunning.asStateFlow()
 
     init {
         // запуск основной работы без сервиса
@@ -82,11 +87,13 @@ class NotificationReaderSyncManager @Inject constructor(
                     // начиная с Android 8 стартовать foreground сервис из бэкграунда нельзя
                     val result = NotificationReaderListenerService.start(context)
                     return if (result != StartResult.NOT_STARTED_FAILED) {
+                        _isRunning.value = true
                         ManagerStartResult.SUCCESS
                     } else {
                         ManagerStartResult.SERVICE_START_FAILED
                     }
                 } else {
+                    _isRunning.value = true
                     // белый список не актуализирован
                     doLaunchDownloadJobIfNeeded(StartMode.JOBS_AND_SERVICE)
                     return ManagerStartResult.SUCCESS_PENDING
@@ -100,23 +107,30 @@ class NotificationReaderSyncManager @Inject constructor(
         return ManagerStartResult.NOT_IN_FOREGROUND
     }
 
+    /**
+     * @return true если сервис попытался успешно остановиться или уже не выполняется,
+     * false - в противном случае
+     */
     @MainThread
     fun doStop(context: Context, navigateToSettings: Boolean = true): Boolean {
         logger.d("doStop, navigateToSettings: $navigateToSettings")
+        _isRunning.value = false
         downloadJob.cancel()
         newWatcherJob.cancel()
         failedWatcherJob.cancel()
         networkStateJob.cancel()
         observeSettingsJob.cancel()
+        lastSettings.value = null
         // при перезапуске манагера надо перезапросить список
         isPackageListReady.set(false)
+        pendingStartMode.set(StartMode.NONE)
         return if (NotificationReaderListenerService.isRunning(context)) {
             if (isNotificationAccessGranted(context)) {
                 if (navigateToSettings) {
                     // при наличии доступа сначала отправляем в настройки
                     context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 }
-                true
+                false
             } else {
                 // если доступа уже нет - завершаем через stopService или отправив команду
                 NotificationReaderListenerService.stop(context)
@@ -130,6 +144,7 @@ class NotificationReaderSyncManager @Inject constructor(
      * @return true, если работа была запущена; false - при наличии текущей неотменённой
      */
     fun doLaunchDownloadJobIfNeeded(mode: StartMode): Boolean {
+        if (!isRunning.value) return false
         pendingStartMode.set(mode)
         if (downloadJob.get()?.isCancelled != false) {
             launchDownloadJob()
@@ -198,18 +213,27 @@ class NotificationReaderSyncManager @Inject constructor(
             logger.d("launching observeSettingsJob...")
             observeSettingsJob.set(scope.launch {
                 settingsRepo.settingsFlow.collect {
+                    if (!isRunning.value) {
+                        // observeSettingsJob не должна быть запущена при таком состоянии
+                        return@collect
+                    }
+                    var lastSettings = lastSettings.value
                     if (lastSettings == null) {
                         lastSettings = it
                     }
-                    if (lastSettings?.isWhitePackageList != it.isWhitePackageList) {
+                    if (lastSettings.isWhitePackageList != it.isWhitePackageList) {
                         logger.d("setting 'isWhitePackageList' changed to ${it.isWhitePackageList}, refreshing notifications...")
-                        sendOrRemoveNotifications { status is NotificationReaderEntity.Failed }
+                        sendOrRemoveNotifications { status is NotificationReaderEntity.Failed || status is NotificationReaderEntity.New }
                     }
-                    if (lastSettings?.packageListUrl?.toUri()?.equalsIgnoreSubDomain(it.packageListUrl.toUri()) != true) {
+                    if (!lastSettings.packageListUrl.toUri().equalsIgnoreSubDomain(it.packageListUrl.toUri())) {
                         logger.d("setting 'packageListUrl' changed to ${it.packageListUrl}")
                         doLaunchDownloadJobIfNeeded(StartMode.JOBS)
                     }
-                    lastSettings = it
+                    if (lastSettings.failedNotificationsWatcherInterval != it.failedNotificationsWatcherInterval) {
+                        logger.d("setting 'failedNotificationsWatcherInterval' changed to ${it.failedNotificationsWatcherInterval}")
+                        launchWatcherForFailed()
+                    }
+                    this@NotificationReaderSyncManager.lastSettings.value = it
                 }
             })
         }
@@ -366,7 +390,6 @@ class NotificationReaderSyncManager @Inject constructor(
     }
 
     enum class StartMode {
-
         JOBS_AND_SERVICE,
         JOBS,
         NONE
