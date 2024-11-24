@@ -12,6 +12,7 @@ android {
 dependencies {
     implementation(project(":feature:preferences:data"))
     implementation(project(":feature:download:data"))
+    implementation(project(":feature:demo"))
     implementation(project(":core:android"))
     implementation(project(":core:database"))
     implementation(project(":core:utils"))

@@ -3,4 +3,5 @@
     <string name="notification_reader_service_label">Notification reader service</string>
     <string name="notification_reader_notification_channel_name">Reader channel</string>
     <string name="notification_reader_notification_text">Чтение нотификаций…</string>
+    <string name="notification_reader_notification_handle_error">Невозможно обработать уведомление</string>
 </resources>

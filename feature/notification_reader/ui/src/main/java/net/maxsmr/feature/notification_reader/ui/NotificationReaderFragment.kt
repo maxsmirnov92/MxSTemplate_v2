@@ -7,7 +7,9 @@ import android.view.MenuItem
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.message.TextMessage
@@ -15,6 +17,9 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.view.alert.delegate.CombinedViewFragmentAlertDelegate
+import net.maxsmr.feature.demo.DemoChecker
+import net.maxsmr.feature.demo.strategies.AlertDemoExpiredStrategy
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
 import net.maxsmr.feature.notification_reader.ui.databinding.FragmentNotificationReaderBinding
@@ -37,6 +42,14 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
 
     private val adapter = NotificationsAdapter()
 
+    private val strategy: AlertDemoExpiredStrategy by lazy {
+        AlertDemoExpiredStrategy(
+            viewModel,
+            requireActivity(),
+            confirmAction = AlertDemoExpiredStrategy.ConfirmAction.EXIT_PROCESS
+        )
+    }
+
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
 
@@ -49,11 +62,21 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
     @Inject
     lateinit var settingsRepo: SettingsDataStoreRepository
 
+    @Inject
+    lateinit var demoChecker: DemoChecker
+
     private var toggleServiceStateMenuItem: MenuItem? = null
     private var downloadPackageListMenuItem: MenuItem? = null
 
     override fun createAlertDelegate(): BaseAlertDelegate<NotificationReaderViewModel, StandardAlertRepresentation> =
-        NotificationReaderFragmentAlertDelegate(this, viewModel)
+        CombinedViewFragmentAlertDelegate(
+            listOf(
+                NotificationReaderFragmentAlertDelegate(this, viewModel),
+                AlertDemoExpiredStrategy.DemoViewFragmentAlertDelegate(this, viewModel)
+            ),
+            this,
+            viewModel
+        )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: NotificationReaderViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
@@ -99,6 +122,9 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
         super.onResume()
         viewModel.doStartOrStop(this, false)
         refreshMenuItemsByRunning()
+        lifecycleScope.launch {
+            demoChecker.check(strategy)
+        }
     }
 
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
