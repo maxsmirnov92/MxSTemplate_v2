@@ -260,6 +260,8 @@ dependencies {
     implementation(project(":feature:rate"))
     implementation(project(":feature:about"))
 
+    implementation(project(":feature:showcase:settings"))
+
     implementation(libs.jodaTime)
 
     //android

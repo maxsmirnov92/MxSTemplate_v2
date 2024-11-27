@@ -3,17 +3,12 @@ package net.maxsmr.mxstemplate.ui.fragment
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.ui.components.IFragmentDelegate
-import net.maxsmr.feature.preferences.ui.BaseSettingsFragment
+import net.maxsmr.feature.preferences.ui.SettingsFragment
 import net.maxsmr.feature.rate.RateAppReminderFragmentDelegate
 import net.maxsmr.mxstemplate.RATE_APP_ASK_INTERVAL
-import net.maxsmr.permissionchecker.PermissionsHelper
-import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainSettingsFragment: BaseSettingsFragment() {
-
-    @Inject
-    override lateinit var permissionsHelper: PermissionsHelper
+class MainSettingsFragment: SettingsFragment() {
 
     private val rateDelegate by lazy {
         RateAppReminderFragmentDelegate(

@@ -23,9 +23,9 @@ fun CacheDataStoreRepository.doOnBatteryOptimizationAsk(
     targetAction: () -> Unit,
 ) {
     viewModel.doOnAnyAskOption(
-        batteryOptimizationAsked, {
-            setBatteryOptimizationAsked()
-        }) {
+        batteryOptimizationAsked,
+        {}
+    ) {
         if (!it) {
             viewModel.showOkDialog(
                 dialogTag,
@@ -110,7 +110,7 @@ fun CacheDataStoreRepository.observePostNotificationPermissionAsked(
     fragment: BaseVmFragment<*>,
     onPostNotificationGranted: (() -> Unit)? = null,
     onPostNotificationDenied: (() -> Unit)? = null,
-    onPostNotificationAlreadyAsked: (() -> Unit)? = null
+    onPostNotificationAlreadyAsked: (() -> Unit)? = null,
 ) {
     /**
      * после получения разрешения или отказа пользователя получать уведомления - не показывать этот запрос снова

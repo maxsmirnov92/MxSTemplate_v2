@@ -25,8 +25,10 @@ import net.maxsmr.core.ui.fields.bindValue
 import net.maxsmr.core.ui.fields.bindValueWithState
 import net.maxsmr.core.ui.fields.setFieldValueIfEnabled
 import net.maxsmr.feature.preferences.ui.databinding.FragmentSettingsBinding
+import net.maxsmr.permissionchecker.PermissionsHelper
+import javax.inject.Inject
 
-abstract class BaseSettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
+open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_settings
 
@@ -34,7 +36,10 @@ abstract class BaseSettingsFragment : BaseNavigationFragment<SettingsViewModel>(
 
     override val menuResId: Int = R.menu.menu_settings
 
-    private val binding by viewBinding(FragmentSettingsBinding::bind)
+    @Inject
+    override lateinit var permissionsHelper: PermissionsHelper
+
+    protected val binding by viewBinding(FragmentSettingsBinding::bind)
 
     private val fieldViewsMap: Map<Field<*>, View> by lazy {
         mutableMapOf<Field<*>, View>().apply {

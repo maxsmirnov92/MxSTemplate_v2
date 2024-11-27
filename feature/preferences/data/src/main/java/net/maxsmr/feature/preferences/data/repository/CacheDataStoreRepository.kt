@@ -38,6 +38,8 @@ class CacheDataStoreRepository @Inject constructor(
 
     val isDemoPeriodExpired: Flow<Boolean> = data.map { it[FIELD_KEY_DEMO_PERIOD_EXPIRED] ?: false }
 
+    val isTutorialCompleted: Flow<Boolean> = data.map { it[FIELD_KEY_TUTORIAL_COMPLETED] ?: false }
+
     suspend fun wasPostNotificationAsked() = postNotificationAsked?.firstOrNull() ?: false
 
     suspend fun setPostNotificationAsked() {
@@ -184,6 +186,18 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
+    suspend fun isTutorialCompeted(): Boolean {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_KEY_TUTORIAL_COMPLETED]
+        }.firstOrNull() ?: false
+    }
+
+    suspend fun setTutorialCompleted(toggle: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[FIELD_KEY_TUTORIAL_COMPLETED] = toggle
+        }
+    }
+
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
@@ -195,5 +209,6 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_LAST_CHECK_IN_APP_UPDATE = longPreferencesKey("lastCheckInAppUpdate")
         private val FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY = stringPreferencesKey("keyDoubleGisRoutingApiKey")
         private val FIELD_KEY_DEMO_PERIOD_EXPIRED = booleanPreferencesKey("demoPeriodExpired")
+        private val FIELD_KEY_TUTORIAL_COMPLETED = booleanPreferencesKey("tutorialCompleted")
     }
 }

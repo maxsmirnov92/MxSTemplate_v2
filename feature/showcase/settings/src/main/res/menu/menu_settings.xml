@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/actionSave"
+        android:icon="@drawable/ic_save"
+        android:title="@string/settings_menu_action_save"
+        app:iconTint="@drawable/selector_color_control"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/actionStartGuide"
+        android:title="@string/settings_menu_action_restart_guide" />
+</menu>

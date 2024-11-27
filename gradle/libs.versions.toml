@@ -89,6 +89,7 @@ leakCanary = "2.14"
 googlePlayReview = "2.0.2"
 googlePlayAppUpdates = "2.1.0"
 ruStoreSdkBom = "6.0.0"
+showcaseView = "1.4.1"
 
 cameraX = "1.3.4"
 googleMlKit = "19.0.1"
@@ -204,6 +205,7 @@ hannesdorfmann-adapterdelegates4Kotlin = { group = "com.hannesdorfmann", name = 
 socket-ioClient = { group = "io.socket", name = "socket.io-client", version.ref = "ioClient" }
 kittinunf-result = { group = "com.github.kittinunf.result", name = "result", version.ref = "kittinunfResult" }
 leakCanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakCanary" }
+showcaseView = { group = "com.github.mreram", name = "showcaseview", version.ref = "showcaseView" }
 
 androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidxEspresso" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidxTestRules" }
