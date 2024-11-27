@@ -203,6 +203,7 @@ dependencies {
     implementation(project(":feature:download:data"))
     implementation(project(":feature:preferences:ui"))
     implementation(project(":feature:notification_reader:ui"))
+    implementation(project(":feature:showcase:settings"))
 
     implementation(project(":feature:showcase:settings"))
 
