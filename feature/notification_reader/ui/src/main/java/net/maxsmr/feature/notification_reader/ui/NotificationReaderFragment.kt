@@ -29,8 +29,7 @@ import net.maxsmr.feature.preferences.ui.doOnCanDrawOverlaysAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
-@AndroidEntryPoint
-class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderViewModel, StandardAlertRepresentation>() {
+open class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderViewModel, StandardAlertRepresentation>() {
 
     override val layoutId: Int = R.layout.fragment_notification_reader
 
@@ -38,7 +37,7 @@ class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderView
 
     override val menuResId: Int = R.menu.menu_notification_reader
 
-    private val binding by viewBinding(FragmentNotificationReaderBinding::bind)
+    protected val binding by viewBinding(FragmentNotificationReaderBinding::bind)
 
     private val adapter = NotificationsAdapter()
 

@@ -8,9 +8,18 @@
 
     <fragment
         android:id="@+id/navigationNotificationReader"
-        android:name="net.maxsmr.feature.notification_reader.ui.NotificationReaderFragment"
+        android:name="net.maxsmr.notification_reader.ui.fragment.GuideNotificationReaderFragment"
         android:label="@string/notification_reader_feature_title"
-        tools:layout="@layout/fragment_notification_reader" />
+        tools:layout="@layout/fragment_notification_reader">
+
+        <action
+            android:id="@+id/actionToSettings"
+            app:destination="@id/navigationSettings"
+            app:enterAnim="@anim/slide_in"
+            app:exitAnim="@anim/slide_out"
+            app:popEnterAnim="@anim/slide_in"
+            app:popExitAnim="@anim/slide_out" />
+    </fragment>
 
 
     <fragment
