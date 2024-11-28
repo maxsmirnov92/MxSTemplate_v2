@@ -87,7 +87,7 @@ class NotificationReaderListenerService: NotificationListenerService() {
     }
 
     @Inject
-    lateinit var notificationReaderRepo: NotificationReaderRepository
+    lateinit var manager : NotificationReaderSyncManager
 
     @Inject
     lateinit var permissionsHelper: PermissionsHelper
@@ -142,7 +142,7 @@ class NotificationReaderListenerService: NotificationListenerService() {
         coroutineScope.launch {
             if (demoChecker.check(ToastDemoExpiredStrategy(this@NotificationReaderListenerService,
                         getString(R.string.notification_reader_notification_handle_error)))) {
-                notificationReaderRepo.insertNewNotification(summaryText.toString(), sbn.packageName)
+                manager.onNewNotification(summaryText.toString(), sbn.packageName)
             } else {
                 stopForegroundCompat(true)
                 stopSelf()

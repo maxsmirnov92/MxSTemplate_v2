@@ -74,8 +74,12 @@ class NotificationReaderSyncManager @Inject constructor(
     val isRunning = _isRunning.asStateFlow()
 
     init {
-        // запуск основной работы без сервиса
-        launchDownloadJob()
+        scope.launch {
+            if (cacheRepo.shouldNotificationReaderRun()) {
+                // запуск основной работы без сервиса
+                launchDownloadJob()
+            }
+        }
     }
 
     @MainThread
@@ -88,7 +92,11 @@ class NotificationReaderSyncManager @Inject constructor(
                     val result = NotificationReaderListenerService.start(context)
                     return if (result != StartResult.NOT_STARTED_FAILED) {
                         _isRunning.value = true
-                        ManagerStartResult.SUCCESS
+                        if (result == StartResult.NOT_STARTED_ALREADY_RUNNING) {
+                            ManagerStartResult.SERVICE_ALREADY_RUNNING
+                        } else {
+                            ManagerStartResult.SUCCESS
+                        }
                     } else {
                         ManagerStartResult.SERVICE_START_FAILED
                     }
@@ -112,7 +120,7 @@ class NotificationReaderSyncManager @Inject constructor(
      * false - в противном случае
      */
     @MainThread
-    fun doStop(context: Context, navigateToSettings: Boolean = true): Boolean {
+    fun doStop(context: Context, navigateToSettings: Boolean = true): ManagerStopResult {
         logger.d("doStop, navigateToSettings: $navigateToSettings")
         _isRunning.value = false
         downloadJob.cancel()
@@ -130,13 +138,17 @@ class NotificationReaderSyncManager @Inject constructor(
                     // при наличии доступа сначала отправляем в настройки
                     context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                 }
-                false
+                ManagerStopResult.SETTINGS_NEEDED
             } else {
                 // если доступа уже нет - завершаем через stopService или отправив команду
-                NotificationReaderListenerService.stop(context)
+                if (NotificationReaderListenerService.stop(context)) {
+                    ManagerStopResult.SUCCESS
+                } else {
+                    ManagerStopResult.SERVICE_STOP_FAILED
+                }
             }
         } else {
-            true
+            ManagerStopResult.SERVICE_ALREADY_NOT_RUNNING
         }
     }
 
@@ -151,6 +163,12 @@ class NotificationReaderSyncManager @Inject constructor(
             return true
         }
         return false
+    }
+
+    suspend fun onNewNotification(text: String, packageName: String): Boolean {
+        if (!isRunning.value) return false
+        notificationReaderRepo.insertNewNotification(text, packageName)
+        return true
     }
 
     private fun launchDownloadJob() {
@@ -255,7 +273,10 @@ class NotificationReaderSyncManager @Inject constructor(
         failedWatcherJob.cancel()
         val failedWatchInterval = settingsRepo.getSettings().failedNotificationsWatcherInterval
         require(failedWatchInterval >= 0) { "Incorrect failedWatchInterval: $failedWatchInterval" }
-        if (failedWatchInterval == 0L) return
+        if (failedWatchInterval == 0L) {
+            logger.d("failedWatchInterval is 0 -> not launching failedWatcherJob")
+            return
+        }
         logger.d("launching failedWatcherJob...")
         failedWatcherJob.set(tickerFlow(failedWatchInterval.seconds)
 //            .map { LocalDateTime.now() }
@@ -383,10 +404,25 @@ class NotificationReaderSyncManager @Inject constructor(
 
     enum class ManagerStartResult {
         SUCCESS,
+        /**
+         * Сервис будет стартован только по готовности списка
+         */
         SUCCESS_PENDING,
+        SERVICE_ALREADY_RUNNING,
         SERVICE_START_FAILED,
         SETTINGS_NEEDED,
-        NOT_IN_FOREGROUND
+        NOT_IN_FOREGROUND;
+
+        val isSuccess: Boolean get() = this in listOf(SUCCESS, SUCCESS_PENDING, SERVICE_ALREADY_RUNNING)
+    }
+
+    enum class ManagerStopResult {
+        SUCCESS,
+        SERVICE_ALREADY_NOT_RUNNING,
+        SERVICE_STOP_FAILED,
+        SETTINGS_NEEDED;
+
+        val isSuccess: Boolean get() = this in listOf(SUCCESS, SERVICE_ALREADY_NOT_RUNNING)
     }
 
     enum class StartMode {
