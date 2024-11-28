@@ -2,14 +2,13 @@ package net.maxsmr.feature.showcase.settings
 
 import android.view.MenuItem
 import android.view.View
-import androidx.annotation.IdRes
 import androidx.annotation.StringRes
-import androidx.appcompat.widget.ActionMenuView
-import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import net.maxsmr.commonutils.gui.isFullyVisible
+import net.maxsmr.commonutils.gui.scrollToView
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.ui.SettingsFragment
@@ -17,17 +16,30 @@ import net.maxsmr.feature.showcase.GuideFragmentDelegate
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType
 import javax.inject.Inject
 
+
 @AndroidEntryPoint
 class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChecker {
 
     override val menuResId: Int = R.menu.menu_settings
 
     private val guideDelegate: GuideFragmentDelegate by lazy {
-            GuideFragmentDelegate(
-                this@GuideSettingsFragment,
-                viewModel,
-                this@GuideSettingsFragment,
-            )
+        GuideFragmentDelegate(
+            this@GuideSettingsFragment,
+            viewModel,
+            this@GuideSettingsFragment,
+            onNextListener = { item, _ ->
+                if (!item.view.isFullyVisible()) {
+                    binding.svSettings.scrollToView(
+                        item.view,
+                        isVertically = true,
+                        // целевая view внизу
+                        alignToBottomOrRight = true,
+                        // не использовать smooth, т.к. GuideView возьмёт неправильные координаты
+                        smoothScroll = false
+                    )
+                }
+            }
+        )
     }
 
     override var isCompleted: Boolean
@@ -73,40 +85,5 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
         }
         setContentText(getString(textRes))
         setDismissType(DismissType.selfView)
-    }
-
-    companion object {
-
-        // TODO move
-        private fun Toolbar.findOverflowButton(): View? {
-            for (i in 0 until childCount) {
-                val child: View = getChildAt(i)
-                if (child is ActionMenuView) {
-                    for (j in 0 until child.childCount) {
-                        val innerChild: View = child.getChildAt(j)
-                        if (innerChild.javaClass.simpleName == "OverflowMenuButton") {
-                            // Это кнопка с тремя точками
-                            return innerChild
-                        }
-                    }
-                }
-            }
-            return null
-        }
-
-        private fun Toolbar.findActionMenuItemView(@IdRes actionId: Int): View? {
-            for (i in 0 until childCount) {
-                val child: View = getChildAt(i)
-                if (child is ActionMenuView) {
-                    for (j in 0 until child.childCount) {
-                        val innerChild: View = child.getChildAt(j)
-                        if (innerChild.id == actionId) {
-                            return innerChild
-                        }
-                    }
-                }
-            }
-            return null
-        }
     }
 }

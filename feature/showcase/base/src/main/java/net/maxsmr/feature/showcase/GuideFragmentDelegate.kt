@@ -14,6 +14,8 @@ class GuideFragmentDelegate @JvmOverloads constructor(
     override val fragment: BaseVmFragment<*>,
     override val viewModel: BaseViewModel,
     private val checker: GuideChecker,
+    private val shouldAutoStart: Boolean = true,
+    private val onNextListener: ((GuideItem, Int) -> Unit)? = null,
     items: List<GuideItem> = emptyList(),
 ) : IFragmentDelegate {
 
@@ -34,12 +36,16 @@ class GuideFragmentDelegate @JvmOverloads constructor(
 
     override fun onViewCreated(delegate: AlertFragmentDelegate<*>) {
         super.onViewCreated(delegate)
-        doStart()
+        if (shouldAutoStart) {
+            doStart()
+        }
     }
 
     override fun onViewDestroyed() {
         super.onViewDestroyed()
-        doStop()
+        if (wasStarted) {
+            doStop()
+        }
     }
 
     fun doStart(): Boolean {
@@ -82,10 +88,12 @@ class GuideFragmentDelegate @JvmOverloads constructor(
         if (isShowing) {
             return
         }
-        val item = nextItem() ?: run {
+        val (item, index) = nextItem() ?: run {
             checker.isCompleted = true
             return
         }
+
+        onNextListener?.invoke(item, index)
 
         val context = fragment.requireActivity()
         with(GuideView.Builder(context)) {
@@ -110,9 +118,15 @@ class GuideFragmentDelegate @JvmOverloads constructor(
 
     private fun hasNextItem() = nextItem() != null
 
-    private fun nextItem() = items.find {
-        !shownItems.map { item -> item.key }.contains(it.key)
-                && !checker.isChecked(it.key)
+    private fun nextItem(): Pair<GuideItem, Int>? {
+        var index = -1
+        return items.find {
+            index++
+            !shownItems.map { item -> item.key }.contains(it.key)
+                    && !checker.isChecked(it.key)
+        }?.let {
+            it to index
+        }
     }
 
     interface GuideChecker {
