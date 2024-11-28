@@ -33,7 +33,8 @@ class CacheDataStoreRepository @Inject constructor(
     val canDrawOverlaysAsked: Flow<Boolean>? = data.map { it[FIELD_CAN_DRAW_OVERLAYS_ASKED] ?: false }
         .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.O }
 
-    val notificationReaderServiceState: Flow<Boolean> = data.map { it[FIELD_KEY_NOTIFICATION_READER_SERVICE_STATE] ?: false }
+    val shouldNotificationReaderManagerRun: Flow<Boolean> =
+        data.map { it[FIELD_KEY_SHOULD_NOTIFICATION_READER_RUN] ?: false }
 
     val isDemoPeriodExpired: Flow<Boolean> = data.map { it[FIELD_KEY_DEMO_PERIOD_EXPIRED] ?: false }
 
@@ -100,34 +101,6 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun isDemoPeriodExpired() = isDemoPeriodExpired.firstOrNull() ?: false
-
-    suspend fun setDemoPeriodExpired() {
-        setDemoPeriodExpired(true)
-    }
-
-    suspend fun clearDemoPeriodExpired() {
-        setDemoPeriodExpired(false)
-    }
-
-    private suspend fun setDemoPeriodExpired(toggle: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_KEY_DEMO_PERIOD_EXPIRED] = toggle
-        }
-    }
-
-    suspend fun isTutorialCompeted(): Boolean {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_TUTORIAL_COMPLETED]
-        }.firstOrNull() ?: false
-    }
-
-    suspend fun setTutorialCompleted(toggle: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_KEY_TUTORIAL_COMPLETED] = toggle
-        }
-    }
-
     suspend fun getNotificationReaderKey(defaultKey: String): String {
         var result = dataStore.data.map { prefs ->
             prefs[FIELD_KEY_NOTIFICATION_READER_API_KEY]
@@ -166,9 +139,43 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun setNotificationReaderServiceState(state: Boolean) {
+    suspend fun shouldNotificationReaderRun(): Boolean {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_KEY_SHOULD_NOTIFICATION_READER_RUN]
+        }.firstOrNull() ?: false
+    }
+
+    suspend fun setShouldNotificationReaderRun(toggle: Boolean) {
         dataStore.edit { prefs ->
-            prefs[FIELD_KEY_NOTIFICATION_READER_SERVICE_STATE] = state
+            prefs[FIELD_KEY_SHOULD_NOTIFICATION_READER_RUN] = toggle
+        }
+    }
+
+    suspend fun isDemoPeriodExpired() = isDemoPeriodExpired.firstOrNull() ?: false
+
+    suspend fun setDemoPeriodExpired() {
+        setDemoPeriodExpired(true)
+    }
+
+    suspend fun clearDemoPeriodExpired() {
+        setDemoPeriodExpired(false)
+    }
+
+    private suspend fun setDemoPeriodExpired(toggle: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[FIELD_KEY_DEMO_PERIOD_EXPIRED] = toggle
+        }
+    }
+
+    suspend fun isTutorialCompeted(): Boolean {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_KEY_TUTORIAL_COMPLETED]
+        }.firstOrNull() ?: false
+    }
+
+    suspend fun setTutorialCompleted(toggle: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[FIELD_KEY_TUTORIAL_COMPLETED] = toggle
         }
     }
 
@@ -180,7 +187,8 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_KEY_NOTIFICATION_READER_API_KEY = stringPreferencesKey("keyNotificationReader")
         private val FIELD_KEY_PACKAGE_LIST = stringSetPreferencesKey("keyPackageList")
-        private val FIELD_KEY_NOTIFICATION_READER_SERVICE_STATE = booleanPreferencesKey("notificationReaderServiceState")
+        private val FIELD_KEY_SHOULD_NOTIFICATION_READER_RUN =
+            booleanPreferencesKey("shouldNotificationReaderRun")
         private val FIELD_KEY_DEMO_PERIOD_EXPIRED = booleanPreferencesKey("demoPeriodExpired")
         private val FIELD_KEY_TUTORIAL_COMPLETED = booleanPreferencesKey("tutorialCompleted")
     }

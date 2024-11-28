@@ -8,7 +8,6 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
@@ -18,6 +17,8 @@ import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.demo.DemoChecker
 import net.maxsmr.feature.demo.strategies.AlertDemoExpiredStrategy
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
+import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
+import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStopResult
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
 import net.maxsmr.feature.notification_reader.ui.databinding.FragmentNotificationReaderBinding
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -39,9 +40,11 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
     private val adapter = NotificationsAdapter()
 
     private val strategy: AlertDemoExpiredStrategy by lazy {
-        AlertDemoExpiredStrategy(viewModel,
+        AlertDemoExpiredStrategy(
+            viewModel,
             this,
-            confirmAction = AlertDemoExpiredStrategy.ConfirmAction.EXIT_PROCESS)
+            confirmAction = AlertDemoExpiredStrategy.ConfirmAction.EXIT_PROCESS
+        )
     }
 
     @Inject
@@ -67,11 +70,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
         viewModel.serviceTargetState.observe {
             if (it != null) {
-                viewModel.doStartOrStop(this, it.changedFromView) { result ->
-                    // рефреш меню в зав-ти от результата старт/стоп,
-                    // а не текущего состояния сервиса (ещё не успело измениться)
-                    refreshMenuItemsByRunning(result)
-                }
+                doStartOrStop(it.changedFromView)
             }
         }
 
@@ -104,7 +103,13 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
     override fun onResume() {
         super.onResume()
-        viewModel.doStartOrStop(this, false)
+        if (viewModel.lastStartResult == ManagerStartResult.SETTINGS_NEEDED
+                || viewModel.lastStopResult == ManagerStopResult.SETTINGS_NEEDED
+        ) {
+            // продолжить после возврата с настроек
+            // и не переходить в настройки для стопа
+            doStartOrStop(false)
+        }
         refreshMenuItemsByRunning()
         lifecycleScope.launch {
             demoChecker.check(strategy)
@@ -124,6 +129,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                 viewModel.onToggleServiceTargetStateAction()
                 true
             }
+
             R.id.actionDownloadPackageList -> {
                 viewModel.onDownloadPackageListAction()
                 true
@@ -132,6 +138,14 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
             else -> {
                 false
             }
+        }
+    }
+
+    private fun doStartOrStop(navigateToSettingsForStop: Boolean) {
+        viewModel.doStartOrStop(this, navigateToSettingsForStop) { (isStarted, startResult, stopResult) ->
+            // рефреш меню сразу в зав-ти от результата старт/стоп,
+            // а не текущего состояния сервиса (ещё не успело измениться)
+            refreshMenuItemsByRunning(isStarted)
         }
     }
 

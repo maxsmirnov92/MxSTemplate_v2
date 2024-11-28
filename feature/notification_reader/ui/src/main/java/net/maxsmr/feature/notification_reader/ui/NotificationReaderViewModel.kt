@@ -13,12 +13,14 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.core.android.base.delegates.persistableLiveData
+import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.notification_reader.data.NotificationReaderListenerService
 import net.maxsmr.feature.notification_reader.data.NotificationReaderRepository
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
+import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStopResult
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.StartMode
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -52,10 +54,16 @@ class NotificationReaderViewModel @Inject constructor(
         }
     }
 
+    var lastStartResult by persistableValueInitial<ManagerStartResult?>(null)
+        private set
+
+    var lastStopResult by persistableValueInitial<ManagerStopResult?>(null)
+        private set
+
     override fun onInitialized() {
         super.onInitialized()
         if (_serviceTargetState.value == null) {
-            cacheRepo.notificationReaderServiceState.asLiveData().observeOnce(this) {
+            cacheRepo.shouldNotificationReaderManagerRun.asLiveData().observeOnce(this) {
                 _serviceTargetState.setValueIfNew(ServiceTargetState(it, false))
             }
         }
@@ -65,62 +73,69 @@ class NotificationReaderViewModel @Inject constructor(
             // + не вызывается onCleared -> нужно актуализировать всегда
             viewModelScope.launch {
                 if (it != null) {
-                    cacheRepo.setNotificationReaderServiceState(it.state)
+                    cacheRepo.setShouldNotificationReaderRun(it.state)
                 }
             }
         }
     }
 
     /**
-     * @param resultFunc передаётся флаг о том, выполняется ли сервис
+     * @param resultFunc передаётся состояние с флагом о том, выполняется ли сервис
+     * + результаты запуска и/или остановки
      */
     fun doStartOrStop(
         fragment: BaseVmFragment<*>,
-        navigateToSettingsWhenStop: Boolean,
-        resultFunc: ((Boolean) -> Unit)? = null,
+        navigateToSettingsForStop: Boolean,
+        resultFunc: ((Triple<Boolean, ManagerStartResult?, ManagerStopResult?>) -> Unit)? = null,
     ) {
         // post_notifications не является обязательным для работы сервиса,
         // но спрашиваем (при включённой настройке) чтобы нотификации от двух сервисов были
         doOnBatteryOptimizationWithPostNotificationsAsk(fragment, cacheRepo, settingsRepo) {
             with(fragment.requireContext()) {
-                val result = if (_serviceTargetState.value?.state == true) {
-                    doStartWithHandleResult(this)
+                val isStarted: Boolean
+                val startResult: ManagerStartResult?
+                val stopResult: ManagerStopResult?
+                if (_serviceTargetState.value?.state == true) {
+                    startResult = doStartWithHandleResult(this)
+                    stopResult = null
+                    isStarted = startResult.isSuccess
                 } else {
-                    !doStopWithHandleResult(this, navigateToSettingsWhenStop)
+                    stopResult = doStopWithHandleResult(this, navigateToSettingsForStop)
+                    startResult = null
+                    isStarted = !stopResult.isSuccess && stopResult != ManagerStopResult.SETTINGS_NEEDED
                 }
-                resultFunc?.invoke(result)
+                lastStartResult = startResult
+                lastStopResult = stopResult
+                resultFunc?.invoke(Triple(isStarted, startResult, stopResult))
             }
         }
     }
 
-    fun doStartWithHandleResult(context: Context): Boolean {
-        return when (manager.doStart(context)) {
-            ManagerStartResult.SERVICE_START_FAILED -> {
-                showSnackbar(TextMessage(R.string.notification_reader_snack_cannot_start_service))
-                false
-            }
+    private fun doStartWithHandleResult(context: Context): ManagerStartResult {
+        return manager.doStart(context).also {
+            when (it) {
+                ManagerStartResult.SERVICE_START_FAILED -> {
+                    showSnackbar(TextMessage(R.string.notification_reader_snack_cannot_start_service))
+                }
 
-            ManagerStartResult.SETTINGS_NEEDED -> {
-                showToast(TextMessage(R.string.notification_reader_toast_start_add_in_settings))
-                false
-            }
+                ManagerStartResult.SETTINGS_NEEDED -> {
+                    showToast(TextMessage(R.string.notification_reader_toast_start_add_in_settings))
+                }
 
-            ManagerStartResult.NOT_IN_FOREGROUND -> {
-                false
+                else -> {
+                }
             }
-
-            ManagerStartResult.SUCCESS, ManagerStartResult.SUCCESS_PENDING -> true
         }
     }
 
     /**
      * @param navigateToSettings false если вернулись с экрана настроек (или в onResume)
      */
-    fun doStopWithHandleResult(context: Context, navigateToSettings: Boolean): Boolean {
+    private fun doStopWithHandleResult(context: Context, navigateToSettings: Boolean): ManagerStopResult {
         // при возврате с экрана настроек, когда разрешение было отозвано,
         // можно попытаться остановить ещё раз
-        return manager.doStop(context, navigateToSettings).also { wasStopped ->
-            if (!wasStopped && navigateToSettings) {
+        return manager.doStop(context, navigateToSettings).also {
+            if (it == ManagerStopResult.SETTINGS_NEEDED && navigateToSettings) {
                 showToast(TextMessage(R.string.notification_reader_toast_stop_remove_in_settings))
             }
         }
@@ -131,6 +146,7 @@ class NotificationReaderViewModel @Inject constructor(
     }
 
     fun onDownloadPackageListAction() {
+        if (!manager.isRunning.value) return
         if (!manager.doLaunchDownloadJobIfNeeded(
                     if (_serviceTargetState.value?.state == true) {
                         StartMode.JOBS_AND_SERVICE
