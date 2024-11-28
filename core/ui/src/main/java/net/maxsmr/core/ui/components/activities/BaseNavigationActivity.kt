@@ -108,6 +108,13 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
     }
 
     override fun onBackPressed() {
+
+        fun doActionWithCheck(targetAction: () -> Unit) {
+            if (currentNavFragment?.canNavigate(targetAction) != false) {
+                targetAction.invoke()
+            }
+        }
+
         var handled = false
         val mode = backPressedOverrideMode
         if (mode != BackPressedMode.NO_CHANGE) {
@@ -124,14 +131,14 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
                             Toast.LENGTH_SHORT
                         ).show()
                     } else {
-                        finish()
+                        doActionWithCheck { finish() }
                     }
                     handled = true
                 }
             }
         }
         if (!handled) {
-            super.onBackPressed()
+            doActionWithCheck { super.onBackPressed() }
         }
     }
 
