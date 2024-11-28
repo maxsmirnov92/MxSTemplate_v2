@@ -2,4 +2,6 @@
 <resources>
     <color name="textColorNotificationNew">#0006cf</color>
     <color name="textColorNotificationLoading">#6dc100</color>
+    <color name="textColorNotificationFailed">@color/textColorError</color>
+    <color name="textColorNotificationCancelled">@color/yellow</color>
 </resources>

@@ -193,7 +193,11 @@ class NotificationReaderSyncManager @Inject constructor(
                     // делаем следующее:
 
                     // 1. сбрасываем статусы у зафейленных или подвешенных и пытаемся их отправить
-                    sendOrRemoveNotifications { status is NotificationReaderEntity.Failed || status is NotificationReaderEntity.Loading }
+                    sendOrRemoveNotifications {
+                        status is NotificationReaderEntity.Failed
+                                || status is NotificationReaderEntity.Cancelled
+                                || status is NotificationReaderEntity.Loading
+                    }
 
                     val mode = pendingStartMode.get()
                     if (mode in arrayOf(StartMode.JOBS_AND_SERVICE, StartMode.JOBS)) {
@@ -241,7 +245,11 @@ class NotificationReaderSyncManager @Inject constructor(
                     }
                     if (lastSettings.isWhitePackageList != it.isWhitePackageList) {
                         logger.d("setting 'isWhitePackageList' changed to ${it.isWhitePackageList}, refreshing notifications...")
-                        sendOrRemoveNotifications { status is NotificationReaderEntity.Failed || status is NotificationReaderEntity.New }
+                        sendOrRemoveNotifications {
+                            status is NotificationReaderEntity.Failed
+                                    || status is NotificationReaderEntity.Cancelled
+                                    || status is NotificationReaderEntity.New
+                        }
                     }
                     if (!lastSettings.packageListUrl.toUri().equalsIgnoreSubDomain(it.packageListUrl.toUri())) {
                         logger.d("setting 'packageListUrl' changed to ${it.packageListUrl}")
@@ -282,7 +290,8 @@ class NotificationReaderSyncManager @Inject constructor(
 //            .map { LocalDateTime.now() }
             .onEach {
                 logger.d("Watcher for failed is running...")
-                sendOrRemoveNotifications { status is NotificationReaderEntity.Failed }
+                sendOrRemoveNotifications { status is NotificationReaderEntity.Failed
+                        || status is NotificationReaderEntity.Cancelled }
             }
             .launchIn(scope))
     }
@@ -404,6 +413,7 @@ class NotificationReaderSyncManager @Inject constructor(
 
     enum class ManagerStartResult {
         SUCCESS,
+
         /**
          * Сервис будет стартован только по готовности списка
          */

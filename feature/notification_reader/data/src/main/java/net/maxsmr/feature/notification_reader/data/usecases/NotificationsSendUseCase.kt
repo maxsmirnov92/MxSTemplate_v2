@@ -1,8 +1,11 @@
 package net.maxsmr.feature.notification_reader.data.usecases
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.UseCase
+import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.network.api.BaseNotificationReaderDataSource
 import net.maxsmr.core.network.api.notification_reader.NotificationReaderDataRequest
@@ -45,17 +48,23 @@ class NotificationsSendUseCase @Inject constructor(
             logger.d("ids after delete: ${readerRepo.getNotificationsRaw().map { it.id }}")
 
         } catch (e: Exception) {
-            // здесь можно не добавлять зафейленные, которые перестали попадать в список,
-            // но для индикации лучше оставить
-            readerRepo.upsertNotifications(notifications.map {
-                it.copy(status = NotificationReaderEntity.Failed(e))
-            })
+            withContext(NonCancellable) {
+                // здесь можно не добавлять зафейленные, которые перестали попадать в список,
+                // но для индикации лучше оставить
+                readerRepo.upsertNotifications(notifications.map {
+                    it.copy(status = if (e.isCancelled()) {
+                        NotificationReaderEntity.Cancelled
+                    } else {
+                        NotificationReaderEntity.Failed(e)
+                    })
+                })
+            }
             throw e
         }
     }
 
     data class Parameters(
         val notifications: List<NotificationReaderEntity>,
-        val preferredConnectionTypes: Set<PreferableType> = setOf()
+        val preferredConnectionTypes: Set<PreferableType> = setOf(),
     )
 }

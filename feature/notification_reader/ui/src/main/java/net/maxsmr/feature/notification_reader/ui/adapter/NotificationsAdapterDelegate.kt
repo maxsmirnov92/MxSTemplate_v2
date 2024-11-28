@@ -31,7 +31,10 @@ fun notificationsAdapterDelegate() = adapterDelegate<NotificationsAdapterData, B
                     R.color.textColorNotificationLoading
                 }
                 is NotificationReaderEntity.Failed -> {
-                    net.maxsmr.core.ui.R.color.textColorError
+                    R.color.textColorNotificationFailed
+                }
+                is NotificationReaderEntity.Cancelled -> {
+                    R.color.textColorNotificationCancelled
                 }
             }))
             if (status is NotificationReaderEntity.Failed) {
@@ -59,6 +62,7 @@ data class NotificationsAdapterData(
         is NotificationReaderEntity.New -> R.string.notification_reader_status_new
         is NotificationReaderEntity.Loading -> R.string.notification_reader_status_loading
         is NotificationReaderEntity.Failed -> R.string.notification_reader_status_failed
+        is NotificationReaderEntity.Cancelled -> R.string.notification_reader_status_cancelled
     }
 
     override fun isSame(other: BaseAdapterData): Boolean = id == (other as? NotificationsAdapterData)?.id
