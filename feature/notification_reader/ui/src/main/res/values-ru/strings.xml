@@ -15,4 +15,5 @@
     <string name="notification_reader_status_new">Новое</string>
     <string name="notification_reader_status_loading">Загрузка…</string>
     <string name="notification_reader_status_failed">Ошибка</string>
+    <string name="notification_reader_status_cancelled">Отменено</string>
 </resources>

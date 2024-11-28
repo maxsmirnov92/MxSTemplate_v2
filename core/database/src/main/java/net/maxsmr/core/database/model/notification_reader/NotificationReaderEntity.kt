@@ -27,6 +27,11 @@ data class NotificationReaderEntity(
         private fun readResolve(): Any = Loading
     }
 
+    data object Cancelled: Status {
+
+        private fun readResolve(): Any = Cancelled
+    }
+
     class Failed(val exception: Exception): Status {
 
         override fun toString(): String {
