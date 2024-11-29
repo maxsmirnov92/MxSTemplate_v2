@@ -7,8 +7,8 @@ import okhttp3.logging.HttpLoggingInterceptor
 class PicassoOkHttpClientManager(
     private val forceCacheInterceptor: Interceptor,
     private val httpLoggingInterceptor: HttpLoggingInterceptor,
-    timeout: Long,
-) : BaseOkHttpClientManager(0, timeout, timeout, timeout) {
+    connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
+) : BaseOkHttpClientManager(connectTimeout) {
 
     override fun configureBuild(builder: OkHttpClient.Builder) {
         with(builder) {

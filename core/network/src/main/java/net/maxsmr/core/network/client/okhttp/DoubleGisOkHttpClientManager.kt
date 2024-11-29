@@ -13,13 +13,13 @@ import retrofit2.Retrofit
 
 class DoubleGisOkHttpClientManager(
     private val version: String = "2.0",
-    private val apiKey: String,
+    private val apiKeyProvider: () -> String,
+    connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
     context: Context,
     connectivityChecker: ConnectivityChecker,
-    callTimeout: Long,
     retrofitProvider: () -> Retrofit,
 ) : BaseRestOkHttpClientManager(
-    callTimeout,
+    connectTimeout,
     context = context,
     connectivityChecker = connectivityChecker,
     responseAnnotation = ResponseObjectType(BaseDoubleGisRoutingResponse::class),
@@ -44,7 +44,7 @@ class DoubleGisOkHttpClientManager(
             if (invocation != null) {
                 val needAuthorization = invocation.method().getAnnotation(Authorization::class.java) != null
                 if (needAuthorization) {
-                    apiKey.takeIf { it.isNotEmpty() }?.let {
+                    apiKeyProvider.invoke().takeIf { it.isNotEmpty() }?.let {
                         url.addQueryParameter("key", it)
                     }
                 }

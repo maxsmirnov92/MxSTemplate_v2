@@ -10,10 +10,10 @@ import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 
 abstract class BaseOkHttpClientManager(
-    private val callTimeout: Long,
-    private val readTimeout: Long = 0L,
-    private val writeTimeout: Long = 0L,
     private val connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
+    private val readTimeout: Long = connectTimeout,
+    private val writeTimeout: Long = connectTimeout,
+    private val callTimeout: Long = 0L,
     private val retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
 ) {
 
@@ -43,12 +43,12 @@ abstract class BaseOkHttpClientManager(
             connectTimeout: Long,
             readTimeout: Long = connectTimeout,
             writeTimeout: Long = connectTimeout,
-            callTimeout: Long = 0,
+            callTimeout: Long = 0L,
         ) {
-            this.callTimeout(callTimeout, TimeUnit.SECONDS)
+            this.connectTimeout(connectTimeout, TimeUnit.SECONDS)
                 .readTimeout(readTimeout, TimeUnit.SECONDS)
                 .writeTimeout(writeTimeout, TimeUnit.SECONDS)
-                .connectTimeout(connectTimeout, TimeUnit.SECONDS)
+                .callTimeout(callTimeout, TimeUnit.SECONDS)
         }
     }
 }

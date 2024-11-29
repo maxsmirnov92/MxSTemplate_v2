@@ -38,10 +38,8 @@ import okhttp3.logging.HttpLoggingInterceptor
 import java.io.File
 import javax.inject.Singleton
 
-private const val NETWORK_TIMEOUT = 30L //sec
-
 // Размер дискового кеша пикассо = 250 Мб
-private const val PICASSO_DISK_CACHE_SIZE = (1024 * 1024 * 250).toLong()
+//private const val PICASSO_DISK_CACHE_SIZE = (1024 * 1024 * 250).toLong()
 private const val PICASSO_CACHE = "picasso-cache"
 
 @[Module
@@ -95,7 +93,6 @@ class OkHttpModule {
         return PicassoOkHttpClientManager(
             forceCacheInterceptor,
             httpLoggingInterceptor,
-            NETWORK_TIMEOUT
         ).build()
     }
 
@@ -108,7 +105,6 @@ class OkHttpModule {
         context,
         NetworkConnectivityChecker,
         httpLoggingInterceptor,
-        NETWORK_TIMEOUT
     ).build()
 
     @[Provides Singleton RadarIoOkHttpClient]
@@ -117,7 +113,6 @@ class OkHttpModule {
             BuildConfig.AUTHORIZATION_RADAR_IO,
             context = context,
             connectivityChecker = NetworkConnectivityChecker,
-            callTimeout = NETWORK_TIMEOUT
         ) {
             EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
                 .radarIoRetrofit().instance
@@ -130,9 +125,8 @@ class OkHttpModule {
             BuildConfig.API_KEY_YANDEX_SUGGEST,
             YandexOkHttpClientManager.LocalizationField.LANG,
             "ru",
-            context,
-            NetworkConnectivityChecker,
-            NETWORK_TIMEOUT,
+            context = context,
+            connectivityChecker = NetworkConnectivityChecker,
             responseAnnotation = ResponseObjectType(BaseYandexSuggestResponse::class),
         ) {
             EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
@@ -146,9 +140,8 @@ class OkHttpModule {
             BuildConfig.API_KEY_YANDEX_GEOCODE,
             YandexOkHttpClientManager.LocalizationField.LOCALE,
             "ru_RU",
-            context,
-            NetworkConnectivityChecker,
-            NETWORK_TIMEOUT,
+            context = context,
+            connectivityChecker = NetworkConnectivityChecker,
             responseAnnotation = null // ситуативный BaseEnvelopeWithObject подставить нельзя, а BaseEnvelope не требуется
         ) {
             EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
@@ -161,16 +154,15 @@ class OkHttpModule {
         @ApplicationContext context: Context,
         cacheRepo: CacheDataStoreRepository,
     ): OkHttpClient {
-        return runBlocking {
-            DoubleGisOkHttpClientManager(
-                context = context,
-                connectivityChecker = NetworkConnectivityChecker,
-                callTimeout = NETWORK_TIMEOUT,
-                apiKey = cacheRepo.getDoubleGisRoutingApiKey()
-            ) {
-                EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
-                    .doubleGisRoutingRetrofit().instance
-            }.build()
-        }
+        return DoubleGisOkHttpClientManager(
+            context = context,
+            connectivityChecker = NetworkConnectivityChecker,
+            apiKeyProvider = {
+                runBlocking { cacheRepo.getDoubleGisRoutingApiKey() }
+            }
+        ) {
+            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
+                .doubleGisRoutingRetrofit().instance
+        }.build()
     }
 }

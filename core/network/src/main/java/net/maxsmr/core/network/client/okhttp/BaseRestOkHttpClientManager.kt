@@ -13,16 +13,16 @@ import retrofit2.Retrofit
  * @param [retrofitProvider] при наличии [Retrofit] будет задейстоваться [ResponseErrorMessageInterceptor]
  */
 abstract class BaseRestOkHttpClientManager(
-    callTimeout: Long,
-    readTimeout: Long = 0L,
-    writeTimeout: Long = 0L,
     connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
+    readTimeout: Long = connectTimeout,
+    writeTimeout: Long = connectTimeout,
+    callTimeout: Long = 0L,
     retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
     private val context: Context,
     private val connectivityChecker: ConnectivityChecker,
     private val responseAnnotation: Annotation? = null,
     private val retrofitProvider: (() -> Retrofit)? = null,
-) : BaseOkHttpClientManager(callTimeout, readTimeout, writeTimeout, connectTimeout, retryOnConnectionFailure) {
+) : BaseOkHttpClientManager(connectTimeout, readTimeout, writeTimeout, callTimeout, retryOnConnectionFailure) {
 
     @CallSuper
     override fun configureBuild(builder: OkHttpClient.Builder) {

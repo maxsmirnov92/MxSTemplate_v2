@@ -15,12 +15,12 @@ import java.util.Locale
 class RadarIoOkHttpClientManager(
     private val authorization: String,
     private val defaultCountry: String = "RU",
+    connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
     context: Context,
     connectivityChecker: ConnectivityChecker,
-    callTimeout: Long,
     retrofitProvider: (() -> Retrofit),
 ) : BaseRestOkHttpClientManager(
-    callTimeout,
+    connectTimeout,
     context = context,
     connectivityChecker = connectivityChecker,
     responseAnnotation = ResponseObjectType(BaseRadarIoResponse::class),

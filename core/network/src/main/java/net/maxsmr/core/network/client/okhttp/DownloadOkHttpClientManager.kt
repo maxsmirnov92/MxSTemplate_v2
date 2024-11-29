@@ -10,9 +10,9 @@ class DownloadOkHttpClientManager(
     private val context: Context,
     private val connectivityChecker: ConnectivityChecker,
     private val httpLoggingInterceptor: HttpLoggingInterceptor,
-    timeout: Long,
+    connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
     retryOnConnectionFailure: Boolean = true,
-) : BaseOkHttpClientManager(0, timeout, timeout, timeout, retryOnConnectionFailure) {
+) : BaseOkHttpClientManager(connectTimeout, retryOnConnectionFailure = retryOnConnectionFailure) {
 
     override fun configureBuild(builder: OkHttpClient.Builder) {
         with(builder) {
