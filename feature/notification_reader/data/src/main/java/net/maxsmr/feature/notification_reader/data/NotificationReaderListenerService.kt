@@ -137,12 +137,13 @@ class NotificationReaderListenerService: NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
+        val timestamp = sbn.postTime.takeIf { it > 0 } ?: System.currentTimeMillis()
         val summaryText = sbn.notification.getSummaryText()
         logger.d("onNotificationPosted: $sbn, text: $summaryText")
         coroutineScope.launch {
             if (demoChecker.check(ToastDemoExpiredStrategy(this@NotificationReaderListenerService,
                         getString(R.string.notification_reader_notification_handle_error)))) {
-                manager.onNewNotification(summaryText.toString(), sbn.packageName)
+                manager.onNewNotification(summaryText.toString(), sbn.packageName, timestamp)
             } else {
                 stopForegroundCompat(true)
                 stopSelf()
