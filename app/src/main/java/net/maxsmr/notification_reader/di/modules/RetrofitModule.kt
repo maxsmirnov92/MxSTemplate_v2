@@ -13,10 +13,10 @@ import net.maxsmr.core.di.NotificationReaderOkHttpClient
 import net.maxsmr.core.di.NotificationReaderRetrofit
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
 import net.maxsmr.core.network.exceptions.handler.CombinedApiExceptionHandler
-import net.maxsmr.core.network.host.HostManager
 import net.maxsmr.notification_reader.BuildConfig
+import net.maxsmr.notification_reader.di.holder.NotificationReaderHostManagerHolder
+import net.maxsmr.notification_reader.di.holder.NotificationReaderOkHttpClientHolder
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import java.io.File
 import javax.inject.Singleton
 
@@ -24,26 +24,25 @@ import javax.inject.Singleton
 InstallIn(SingletonComponent::class)]
 class RetrofitModule {
 
-
     @[Provides Singleton NotificationReaderRetrofit]
     fun provideNotificationReaderRetrofit(
         @ApplicationContext context: Context,
         exceptionHandler: CombinedApiExceptionHandler,
-        @NotificationReaderHostManager hostManager: HostManager,
-        @NotificationReaderOkHttpClient okHttpClient: OkHttpClient,
+        @NotificationReaderHostManager hostManager: NotificationReaderHostManagerHolder,
+        @NotificationReaderOkHttpClient okHttpClient: NotificationReaderOkHttpClientHolder,
         @BaseJson json: Json,
-    ): CommonRetrofitClient {
-        return CommonRetrofitClient(
-            hostManager.baseUrl.toHttpUrl(),
-            json,
-            File(context.cacheDir, CACHE_DIR_NAME).path,
-            BuildConfig.PROTOCOL_VERSION,
-            false,
-            exceptionHandler
-            // cacheManager.getDisableCache()
-        ) {
-            okHttpClient
-        }
+    ): CommonRetrofitClient = CommonRetrofitClient(
+        // Меняется в самом OkHttpClient на каждый intercept,
+        // но в самом Retrofit зафиксируется только при инициализации
+        hostManager.get().baseUrl.toHttpUrl(),
+        json,
+        File(context.cacheDir, CACHE_DIR_NAME).path,
+        BuildConfig.PROTOCOL_VERSION,
+        false,
+        exceptionHandler,
+        // cacheManager.getDisableCache()
+    ) {
+        okHttpClient.get()
     }
 
     @[Provides Singleton]

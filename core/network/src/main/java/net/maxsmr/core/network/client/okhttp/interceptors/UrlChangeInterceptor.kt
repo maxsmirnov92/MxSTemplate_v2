@@ -5,7 +5,7 @@ import okhttp3.Response
 
 /**
  * Подменяет в цепочке url на предоставленный из [urlProvider].
- * Не рекомендуется использовать с retrofit, т.к. в логах будет неактуальный url
+ * Регистрировать первым для корректных логов.
  */
 class UrlChangeInterceptor(private val urlProvider: () -> String): Interceptor {
 

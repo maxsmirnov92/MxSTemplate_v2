@@ -6,7 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import net.maxsmr.core.di.NotificationReaderRetrofit
 import net.maxsmr.core.network.api.BaseNotificationReaderDataSource
-import net.maxsmr.core.network.api.MockNotificationReaderDataSource
+import net.maxsmr.core.network.api.NotificationReaderDataSource
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
 import javax.inject.Singleton
 
@@ -18,5 +18,5 @@ class DataSourceModule {
     @Singleton
     fun provideNotificationReaderDataSource(
         @NotificationReaderRetrofit retrofit: CommonRetrofitClient,
-    ): BaseNotificationReaderDataSource = MockNotificationReaderDataSource()
+    ): BaseNotificationReaderDataSource = NotificationReaderDataSource(retrofit)
 }
