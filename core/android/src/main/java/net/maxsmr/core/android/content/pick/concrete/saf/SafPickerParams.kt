@@ -50,7 +50,9 @@ class SafPickerParams @JvmOverloads constructor(
             "image/png",
         )
 
-        private val MIME_TYPE_JSON = "application/json"
+        private const val MIME_TYPE_JSON = "application/json"
+
+        private const val MIME_TYPE_TEXT = "text/plain"
 
         @JvmStatic
         fun documents() = SafPickerParams(intentType = MIME_TYPE_ANY, mimeTypes = DOCUMENT_MIME_TYPES)
@@ -70,6 +72,12 @@ class SafPickerParams @JvmOverloads constructor(
         }
 
         @JvmStatic
+        fun text() = SafPickerParams(intentType = MIME_TYPE_TEXT)
+
+        @JvmStatic
         fun any() = SafPickerParams(intentType = MIME_TYPE_ANY)
+
+        @JvmStatic
+        fun custom(mimeType: String) = SafPickerParams(intentType = mimeType)
     }
 }
