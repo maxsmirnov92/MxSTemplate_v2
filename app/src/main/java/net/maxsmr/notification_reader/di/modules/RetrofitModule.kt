@@ -14,10 +14,10 @@ import net.maxsmr.core.di.NotificationReaderRetrofit
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
 import net.maxsmr.core.network.host.HostManager
 import net.maxsmr.notification_reader.BuildConfig
+import net.maxsmr.notification_reader.di.holder.NotificationReaderHostManagerHolder
+import net.maxsmr.notification_reader.di.holder.NotificationReaderOkHttpClientHolder
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.OkHttpClient
 import java.io.File
-import javax.inject.Provider
 import javax.inject.Singleton
 
 @[Module
@@ -27,19 +27,19 @@ class RetrofitModule {
     @[Provides Singleton NotificationReaderRetrofit]
     fun provideNotificationReaderRetrofit(
         @ApplicationContext context: Context,
-        @NotificationReaderHostManager hostManager: Provider<HostManager>,
-        @NotificationReaderOkHttpClient okHttpClient: Provider<OkHttpClient>,
+        @NotificationReaderHostManager hostManager: NotificationReaderHostManagerHolder,
+        @NotificationReaderOkHttpClient okHttpClient: NotificationReaderOkHttpClientHolder,
         @BaseJson json: Json,
-    ): CommonRetrofitClient {
-        return CommonRetrofitClient(
-            hostManager.get().baseUrl.toHttpUrl(),
-            json,
-            File(context.cacheDir, "OkHttpCache").path,
-            BuildConfig.PROTOCOL_VERSION,
-            false
-            // cacheManager.getDisableCache()
-        ) {
-            okHttpClient.get()
-        }
+    ): CommonRetrofitClient = CommonRetrofitClient(
+        // Меняется в самом OkHttpClient на каждый intercept,
+        // но в самом Retrofit зафиксируется только при инициализации
+        hostManager.get().baseUrl.toHttpUrl(),
+        json,
+        File(context.cacheDir, "OkHttpCache").path,
+        BuildConfig.PROTOCOL_VERSION,
+        false
+        // cacheManager.getDisableCache()
+    ) {
+        okHttpClient.get()
     }
 }

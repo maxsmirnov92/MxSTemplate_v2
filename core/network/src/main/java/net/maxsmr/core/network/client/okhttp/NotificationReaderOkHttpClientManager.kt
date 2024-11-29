@@ -31,9 +31,9 @@ class NotificationReaderOkHttpClientManager(
 
     override fun configureBuild(builder: OkHttpClient.Builder) {
         with(builder) {
+            addInterceptor(UrlChangeInterceptor(urlProvider))
             super.configureBuild(this)
             addInterceptor(NotificationReaderInterceptor())
-            addInterceptor(UrlChangeInterceptor(urlProvider))
         }
     }
 
