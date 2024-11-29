@@ -29,7 +29,11 @@ class NotificationReaderRepository @Inject constructor(
         return dao.getAllRaw().filter { filterFunc.invoke(it) }
     }
 
-    suspend fun insertNewNotification(content: String, packageName: String) {
+    suspend fun insertNewNotification(
+        content: String,
+        packageName: String,
+        timestamp: Long
+    ) {
         if (cacheRepo.isPackageInList(baseApplicationContext,
                     packageName,
                     settingsRepo.getSettings().isWhitePackageList)) {
@@ -37,7 +41,7 @@ class NotificationReaderRepository @Inject constructor(
                 NotificationReaderEntity(
                     contentText = content,
                     packageName = packageName,
-                    timestamp = System.currentTimeMillis(),
+                    timestamp = timestamp.takeIf { it > 0 } ?: System.currentTimeMillis(),
                     status = NotificationReaderEntity.New
                 )
             )

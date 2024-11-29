@@ -165,9 +165,13 @@ class NotificationReaderSyncManager @Inject constructor(
         return false
     }
 
-    suspend fun onNewNotification(text: String, packageName: String): Boolean {
+    suspend fun onNewNotification(
+        text: String,
+        packageName: String,
+        timestamp: Long,
+    ): Boolean {
         if (!isRunning.value) return false
-        notificationReaderRepo.insertNewNotification(text, packageName)
+        notificationReaderRepo.insertNewNotification(text, packageName, timestamp)
         return true
     }
 
@@ -290,8 +294,10 @@ class NotificationReaderSyncManager @Inject constructor(
 //            .map { LocalDateTime.now() }
             .onEach {
                 logger.d("Watcher for failed is running...")
-                sendOrRemoveNotifications { status is NotificationReaderEntity.Failed
-                        || status is NotificationReaderEntity.Cancelled }
+                sendOrRemoveNotifications {
+                    status is NotificationReaderEntity.Failed
+                            || status is NotificationReaderEntity.Cancelled
+                }
             }
             .launchIn(scope))
     }
