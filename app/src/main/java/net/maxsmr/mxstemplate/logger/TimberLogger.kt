@@ -32,7 +32,7 @@ class TimberLogger(tag: String): BaseLogger(tag) {
 
     override fun _e(exception: Throwable) {
         Timber.tag(tag)
-        Timber.d(exception)
+        Timber.e(exception)
     }
 
     override fun _i(message: String) {

@@ -1,20 +1,18 @@
 package net.maxsmr.core.network.client.okhttp.interceptors
 
-import net.maxsmr.core.network.HostManager
 import okhttp3.Interceptor
 import okhttp3.Response
 
-class UrlChangeInterceptor(private val hostManagerProvider: () -> HostManager): Interceptor {
+/**
+ * Подменяет в цепочке url на предоставленный из [urlProvider].
+ * Не рекомендуется использовать с retrofit, т.к. в логах будет неактуальный url
+ */
+class UrlChangeInterceptor(private val urlProvider: () -> String): Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
         var request = chain.request()
-
-        val manager = hostManagerProvider.invoke()
-
-        request = request.newBuilder().url(
-            manager.getBaseUrl()
-        ).build()
-
+        val url = urlProvider.invoke()
+        request = request.newBuilder().url(url).build()
         return chain.proceed(request)
     }
 }
