@@ -9,6 +9,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.viewModels
+import com.google.android.material.textfield.TextInputLayout
 import net.maxsmr.commonutils.conversion.toIntNotNull
 import net.maxsmr.commonutils.conversion.toLongNotNull
 import net.maxsmr.commonutils.gui.bindTo
@@ -78,21 +79,9 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: SettingsViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
 
-        binding.etMaxDownloads.bindTo(viewModel.maxDownloadsField) {
-            it.toIntNotNull()
-        }
-        viewModel.maxDownloadsField.observeFrom(binding.etMaxDownloads, viewLifecycleOwner) {
-            it.toString()
-        }
-        viewModel.maxDownloadsField.bindHintError(viewLifecycleOwner, binding.tilMaxDownloads)
+        viewModel.maxDownloadsField.observeIntWithBind(binding.tilMaxDownloads)
 
-        binding.etConnectTimeout.bindTo(viewModel.connectTimeoutField) {
-            it.toLongNotNull()
-        }
-        viewModel.connectTimeoutField.observeFrom(binding.etConnectTimeout, viewLifecycleOwner) {
-            it.toString()
-        }
-        viewModel.connectTimeoutField.bindHintError(viewLifecycleOwner, binding.tilConnectTimeout)
+        viewModel.connectTimeoutField.observeLongWithBind(binding.tilConnectTimeout)
 
         viewModel.loadByWiFiOnlyField.bindValue(viewLifecycleOwner, binding.switchLoadByWiFiOnly)
         viewModel.retryOnConnectionFailureField.bindValue(viewLifecycleOwner, binding.switchRetryOnConnectionFailure)
@@ -116,9 +105,7 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
 
         viewModel.openLinksInExternalAppsField.bindValueWithState(viewLifecycleOwner, binding.switchOpenLinksInExternalApps, true)
 
-        binding.etStartPageUrl.bindToTextNotNull(viewModel.startPageUrlField)
-        viewModel.startPageUrlField.observeFromText(binding.etStartPageUrl, viewLifecycleOwner)
-        viewModel.startPageUrlField.bindHintError(viewLifecycleOwner, binding.tilStartPageUrl)
+        viewModel.startPageUrlField.observeTextWithBind(binding.tilStartPageUrl)
 
         binding.spinnerRoutingApp.adapter = ArrayAdapter(
             requireContext(),
@@ -168,4 +155,35 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
     private fun refreshSaveMenuItem(isEnabled: Boolean) {
         saveMenuItem?.isEnabled = isEnabled
     }
+
+    private fun Field<String>.observeTextWithBind(til: TextInputLayout) {
+        val editText = til.editText ?: return
+        editText.bindToTextNotNull(this)
+        observeFromText(editText, viewLifecycleOwner)
+        bindHintError(viewLifecycleOwner, til)
+    }
+
+    private fun Field<Long>.observeLongWithBind(til: TextInputLayout) {
+        observeWithBind(til,
+            { it.toLongNotNull() },
+            { it.toString() })
+    }
+
+    private fun Field<Int>.observeIntWithBind(til: TextInputLayout) {
+        observeWithBind(til,
+            { it.toIntNotNull() },
+            { it.toString() })
+    }
+
+    private fun <D> Field<D>.observeWithBind(
+        til: TextInputLayout,
+        toFieldValue: ((CharSequence?) -> D),
+        formatFunc: (D) -> CharSequence?,
+    ) {
+        val editText = til.editText ?: return
+        editText.bindTo(this, toFieldValue)
+        observeFrom(editText, viewLifecycleOwner, formatFunc = formatFunc)
+        bindHintError(viewLifecycleOwner, til)
+    }
+
 }
