@@ -29,7 +29,7 @@ class NotificationReaderOkHttpClientHolder(
                 cacheRepo.getNotificationReaderKey(BuildConfig.API_KEY_NOTIFICATION_READER)
             }
         },
-        urlProvider = { hostManager.get().baseUrl }
+        urlProvider = { hostManager.get().uri.toString() }
     ) {
         EntryPointAccessors.fromApplication(context, ModuleAppEntryPoint::class.java)
             .notificationReaderRetrofit().instance
