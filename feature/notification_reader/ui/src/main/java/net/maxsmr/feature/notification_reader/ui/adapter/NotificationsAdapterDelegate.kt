@@ -3,16 +3,18 @@ package net.maxsmr.feature.notification_reader.ui.adapter
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import kotlinx.datetime.Instant
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter.DragAndDropViewHolder.Companion.createWithDraggable
+import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity.Status
 import net.maxsmr.feature.notification_reader.ui.R
+import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData.Companion.NOTIFICATION_DATETIME_FORMAT
 import net.maxsmr.feature.notification_reader.ui.databinding.ItemNotificationBinding
 import java.io.Serializable
+import java.util.Date
 
 fun notificationsAdapterDelegate() = com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate<
         NotificationsAdapterData, NotificationsAdapterData, BaseDraggableDelegationAdapter.DragAndDropViewHolder<NotificationsAdapterData>
@@ -64,11 +66,11 @@ fun notificationsAdapterDelegate() = com.hannesdorfmann.adapterdelegates4.dsl.v2
             tvNotificationShownTime.setTextOrGone(item.formattedTime)
 
             if (status is NotificationReaderEntity.Success && status.timestamp > 0) {
-                tvNotificationSentTime.text = Instant.fromEpochMilliseconds(status.timestamp).toString()
-                containerNotificationSent.isVisible = true
+                tvNotificationSentTime.setTextOrGone(formatDate(Date(status.timestamp), NOTIFICATION_DATETIME_FORMAT))
             } else {
-                containerNotificationSent.isVisible = false
+                tvNotificationSentTime.isVisible = false
             }
+            containerNotificationSent.isVisible = tvNotificationSentTime.isVisible
         }
     }
 }
@@ -91,4 +93,9 @@ data class NotificationsAdapterData(
     }
 
     override fun isSame(other: BaseAdapterData): Boolean = id == (other as? NotificationsAdapterData)?.id
+
+    companion object {
+
+        const val NOTIFICATION_DATETIME_FORMAT: String = "dd-MM-yyyy HH:mm:ss.SSS"
+    }
 }
