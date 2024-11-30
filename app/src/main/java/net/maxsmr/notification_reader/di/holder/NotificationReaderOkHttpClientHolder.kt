@@ -1,7 +1,6 @@
 package net.maxsmr.notification_reader.di.holder
 
 import android.content.Context
-import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.runBlocking
 import net.maxsmr.core.BaseKeyInstanceHolder
 import net.maxsmr.core.android.network.NetworkConnectivityChecker
@@ -9,7 +8,6 @@ import net.maxsmr.core.network.client.okhttp.NotificationReaderOkHttpClientManag
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.notification_reader.BuildConfig
-import net.maxsmr.notification_reader.di.ModuleAppEntryPoint
 import okhttp3.OkHttpClient
 
 class NotificationReaderOkHttpClientHolder(
@@ -23,8 +21,13 @@ class NotificationReaderOkHttpClientHolder(
         connectivityChecker = NetworkConnectivityChecker,
         connectTimeout = it.timeout,
         retryOnConnectionFailure = it.retryOnConnectionFailure,
-        apiKeyProvider = { runBlocking { cacheRepo.getNotificationReaderKey(BuildConfig.API_KEY_NOTIFICATION_READER) } },
-        urlProvider = { hostManager.get().baseUrl }
+        apiKeyProvider = {
+            // не пересоздавать OkHttpClient при смене ключа - подставлять в Interceptor
+            runBlocking {
+                cacheRepo.getNotificationReaderKey(BuildConfig.API_KEY_NOTIFICATION_READER)
+            }
+        },
+        urlProvider = { hostManager.get().uri.toString() }
     ).build()
 }) {
 
