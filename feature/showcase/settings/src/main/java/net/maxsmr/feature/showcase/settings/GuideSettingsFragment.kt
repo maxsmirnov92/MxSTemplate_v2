@@ -91,6 +91,10 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
                             "failedNotificationsWatcherInterval",
                             R.string.showcase_settings_description_failed_notifications_watcher_interval
                         ),
+                        tilSuccessNotificationsLifeTime.settingsGuideItem(
+                            "successNotificationsLifeTime",
+                            R.string.showcase_settings_description_success_notifications_life_time
+                        ),
                         tilConnectTimeout.settingsGuideItem(
                             "connectTimeout",
                             R.string.showcase_settings_description_connect_timeout

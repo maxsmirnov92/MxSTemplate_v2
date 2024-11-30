@@ -32,6 +32,13 @@ data class NotificationReaderEntity(
         private fun readResolve(): Any = Cancelled
     }
 
+    data class Success(val timestamp: Long): Status {
+
+        override fun toString(): String {
+            return "Success(timestamp=$timestamp)"
+        }
+    }
+
     class Failed(val exception: Exception): Status {
 
         override fun toString(): String {

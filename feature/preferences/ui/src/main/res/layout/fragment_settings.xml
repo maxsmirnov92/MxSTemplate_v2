@@ -91,6 +91,23 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilSuccessNotificationsLifeTime"
+                style="@style/TextInputOutlinedWithCorners"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/defaultPadding"
+                tools:hint="@string/settings_field_success_notifications_life_time_hint">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etSuccessNotificationsLifeTime"
+                    style="@style/SingleLineInputText"
+                    android:inputType="numberDecimal"
+                    android:maxLength="10"
+                    tools:hint="@string/settings_field_success_notifications_life_time_hint" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilConnectTimeout"
                 style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"

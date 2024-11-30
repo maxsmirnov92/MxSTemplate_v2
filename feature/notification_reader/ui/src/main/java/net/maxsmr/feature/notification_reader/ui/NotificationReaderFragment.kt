@@ -8,7 +8,11 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import kotlinx.coroutines.launch
+import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
+import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
+import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
 import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.message.TextMessage
@@ -20,6 +24,7 @@ import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStopResult
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
+import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData
 import net.maxsmr.feature.notification_reader.ui.databinding.FragmentNotificationReaderBinding
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
@@ -27,7 +32,8 @@ import net.maxsmr.feature.preferences.ui.doOnCanDrawOverlaysAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
-open class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderViewModel>() {
+open class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderViewModel>(),
+        BaseDraggableDelegationAdapter.ItemsEventsListener<NotificationsAdapterData> {
 
     override val layoutId: Int = R.layout.fragment_notification_reader
 
@@ -38,6 +44,10 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
     protected val binding by viewBinding(FragmentNotificationReaderBinding::bind)
 
     private val adapter = NotificationsAdapter()
+
+    private val touchHelper: ItemTouchHelper = ItemTouchHelper(DragAndDropTouchHelperCallback(adapter)).also {
+        adapter.startDragListener = OnStartDragHelperListener(it)
+    }
 
     private val strategy: AlertDemoExpiredStrategy by lazy {
         AlertDemoExpiredStrategy(
@@ -87,6 +97,8 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
             }
 
             rvNotifications.adapter = adapter
+            touchHelper.attachToRecyclerView(rvNotifications)
+            adapter.registerItemsEventsListener(this@NotificationReaderFragment)
             rvNotifications.addItemDecoration(
                 DividerItemDecoration.Builder(requireContext())
                     .setDivider(Divider.Space(8), DividerItemDecoration.Mode.ALL)
@@ -139,6 +151,19 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                 false
             }
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        adapter.unregisterItemsEventsListener(this)
+    }
+
+    override fun onItemRemoved(position: Int, item: NotificationsAdapterData) {
+        viewModel.onRemoveSuccessNotification(item)
+    }
+
+    override fun onItemMoved(fromPosition: Int, toPosition: Int, item: NotificationsAdapterData) {
+        throw UnsupportedOperationException("Move NotificationsAdapterData not supported")
     }
 
     private fun doStartOrStop(navigateToSettingsForStop: Boolean) {

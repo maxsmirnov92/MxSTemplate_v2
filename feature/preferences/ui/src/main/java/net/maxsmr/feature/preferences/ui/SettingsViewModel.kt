@@ -62,6 +62,17 @@ class SettingsViewModel @Inject constructor(
         .persist(state, KEY_FIELD_FAILED_NOTIFICATIONS_WATCHER_INTERVAL)
         .build()
 
+    val successNotificationsLifeTimeField: Field<Long> = Field.Builder(0L)
+        .emptyIf { false }
+        .validators(Field.Validator({
+            return@Validator TextMessage(net.maxsmr.core.ui.R.string.field_error_value_negative)
+        }) {
+            it >= 0
+        })
+        .hint(R.string.settings_field_success_notifications_life_time_hint)
+        .persist(state, KEY_FIELD_SUCCESS_NOTIFICATIONS_LIFE_TIME)
+        .build()
+
     val connectTimeoutField: Field<Long> = Field.Builder(0L)
         .emptyIf { false }
         .validators(Field.Validator({
@@ -107,6 +118,7 @@ class SettingsViewModel @Inject constructor(
         packageListUrlField,
         isWhitePackageListField,
         failedNotificationsWatcherIntervalField,
+        successNotificationsLifeTimeField,
         connectTimeoutField,
         loadByWiFiOnlyField,
         retryOnConnectionFailureField,
@@ -150,6 +162,10 @@ class SettingsViewModel @Inject constructor(
 
         failedNotificationsWatcherIntervalField.clearErrorOnChange(this) {
             appSettings.value = currentAppSettings.copy(failedNotificationsWatcherInterval = it)
+        }
+
+        successNotificationsLifeTimeField.clearErrorOnChange(this) {
+            appSettings.value = currentAppSettings.copy(successNotificationsLifeTime = it)
         }
 
         connectTimeoutField.clearErrorOnChange(this) {
@@ -265,6 +281,7 @@ class SettingsViewModel @Inject constructor(
         packageListUrlField.value = settings.packageListUrl
         isWhitePackageListField.value = settings.isWhitePackageList
         failedNotificationsWatcherIntervalField.value = settings.failedNotificationsWatcherInterval
+        successNotificationsLifeTimeField.value = settings.successNotificationsLifeTime
         connectTimeoutField.value = settings.connectTimeout
         loadByWiFiOnlyField.value = settings.loadByWiFiOnly
         retryOnConnectionFailureField.value = settings.retryOnConnectionFailure
@@ -289,6 +306,7 @@ class SettingsViewModel @Inject constructor(
         private const val KEY_FIELD_URL_PACKAGE_LIST = "url_package_list"
         private const val KEY_FIELD_IS_WHITE_PACKAGE_LIST = "is_white_package_list"
         private const val KEY_FIELD_FAILED_NOTIFICATIONS_WATCHER_INTERVAL = "failed_notifications_watcher_interval"
+        private const val KEY_FIELD_SUCCESS_NOTIFICATIONS_LIFE_TIME = "success_notifications_life_time"
         private const val KEY_FIELD_CONNECT_TIMEOUT = "connect_timeout"
         private const val KEY_FIELD_LOAD_BY_WI_FI_ONLY = "load_by_wi_fi_only"
         private const val KEY_FIELD_RETRY_ON_CONNECTION_FAILURE = "retry_on_connection_failure"

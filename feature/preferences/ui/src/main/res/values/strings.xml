@@ -6,6 +6,7 @@
     <string name="settings_field_package_list_url_hint">URL with package names list</string>
     <string name="settings_field_white_list_packages">White list package names</string>
     <string name="settings_field_failed_notifications_watcher_interval_hint">Watcher interval for failed notifications (seconds, 0 - disable)</string>
+    <string name="settings_field_success_notifications_life_time_hint">Keep success notifications for period (seconds, 0 - unlimited)</string>
     <string name="settings_field_connect_timeout_hint">Connect timeout (seconds, 0 - no timeout)</string>
     <string name="settings_field_retry_on_connection_failure">Auto retry requests if connection fails</string>
     <string name="settings_field_load_by_wi_fi_only">Try to load only when Wi-Fi is available</string>

@@ -44,8 +44,12 @@ class NotificationsSendUseCase @Inject constructor(
             })
             val ids = notifications.map { it.id }
             logger.d("Notifications were sent successfully, ids: $ids")
-            readerRepo.removeNotificationsByIds(ids)
-            logger.d("ids after delete: ${readerRepo.getNotificationsRaw().map { it.id }}")
+            if (parameters.shouldRemoveIfSuccess) {
+                readerRepo.removeNotificationsByIds(ids)
+                logger.d("ids after delete: ${readerRepo.getNotificationsRaw().map { it.id }}")
+            } else {
+                readerRepo.updateNotificationsWithSuccess(ids)
+            }
 
         } catch (e: Exception) {
             withContext(NonCancellable) {
@@ -66,5 +70,6 @@ class NotificationsSendUseCase @Inject constructor(
     data class Parameters(
         val notifications: List<NotificationReaderEntity>,
         val preferredConnectionTypes: Set<PreferableType> = setOf(),
+        val shouldRemoveIfSuccess: Boolean = false
     )
 }

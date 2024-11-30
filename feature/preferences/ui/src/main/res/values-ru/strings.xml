@@ -6,6 +6,7 @@
     <string name="settings_field_package_list_url_hint">URL со списком имён пакетов</string>
     <string name="settings_field_white_list_packages">Белый список с именами пакетов</string>
     <string name="settings_field_failed_notifications_watcher_interval_hint">Интервал для повторных попыток отправки неудавшихся уведомлений (секунды, 0 - отключить)</string>
+    <string name="settings_field_success_notifications_life_time_hint">Оставлять успешно отправленные уведомления в течение (секунды, 0 - бессрочно)</string>
     <string name="settings_field_connect_timeout_hint">Таймаут соединения (секунды, 0 - без таймаута)</string>
     <string name="settings_field_retry_on_connection_failure">Автоматически делать перезапросы при сбоях соединения</string>
     <string name="settings_field_load_by_wi_fi_only">Загружать только при наличии Wi-Fi</string>

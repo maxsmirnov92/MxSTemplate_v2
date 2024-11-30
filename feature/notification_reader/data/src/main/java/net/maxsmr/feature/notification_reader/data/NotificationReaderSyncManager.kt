@@ -29,6 +29,7 @@ import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import net.maxsmr.core.network.equalsIgnoreSubDomain
 import net.maxsmr.core.network.exceptions.NoConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
+import net.maxsmr.core.utils.hasTimePassed
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.data.DownloadsViewModel.Companion.toParams
@@ -40,10 +41,12 @@ import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.net.SocketException
 import java.net.SocketTimeoutException
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Singleton
@@ -62,6 +65,7 @@ class NotificationReaderSyncManager @Inject constructor(
     private val downloadJob = AtomicReference<Job>()
     private val newWatcherJob = AtomicReference<Job>()
     private val failedWatcherJob = AtomicReference<Job>()
+    private val successWatcherJob = AtomicReference<Job>()
     private val networkStateJob = AtomicReference<Job>()
     private val observeSettingsJob = AtomicReference<Job>()
 
@@ -126,6 +130,7 @@ class NotificationReaderSyncManager @Inject constructor(
         downloadJob.cancel()
         newWatcherJob.cancel()
         failedWatcherJob.cancel()
+        successWatcherJob.cancel()
         networkStateJob.cancel()
         observeSettingsJob.cancel()
         lastSettings.value = null
@@ -209,9 +214,11 @@ class NotificationReaderSyncManager @Inject constructor(
                         launchWatcherForNew()
                         // 3. запуск периодического повтора любых зафейленных
                         launchWatcherForFailed()
-                        // 4. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
+                        // 4. запуск периодического удаления успешных, срок по котороым прошёл
+                        launchWatcherForSuccess()
+                        // 5. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
                         launchNetworkStateWatcher()
-                        // 5. реагирование на изменение некоторых настроек
+                        // 6. реагирование на изменение некоторых настроек
                         launchObserveSettingsJob()
 
                         if (mode == StartMode.JOBS_AND_SERVICE) {
@@ -259,6 +266,10 @@ class NotificationReaderSyncManager @Inject constructor(
                         logger.d("setting 'packageListUrl' changed to ${it.packageListUrl}")
                         doLaunchDownloadJobIfNeeded(StartMode.JOBS)
                     }
+                    if (lastSettings.successNotificationsLifeTime != it.successNotificationsLifeTime) {
+                        logger.d("setting 'successNotificationsLifeTime' changed to ${it.successNotificationsLifeTime}")
+                        launchWatcherForSuccess()
+                    }
                     if (lastSettings.failedNotificationsWatcherInterval != it.failedNotificationsWatcherInterval) {
                         logger.d("setting 'failedNotificationsWatcherInterval' changed to ${it.failedNotificationsWatcherInterval}")
                         launchWatcherForFailed()
@@ -291,12 +302,33 @@ class NotificationReaderSyncManager @Inject constructor(
         }
         logger.d("launching failedWatcherJob...")
         failedWatcherJob.set(tickerFlow(failedWatchInterval.seconds)
-//            .map { LocalDateTime.now() }
             .onEach {
                 logger.d("Watcher for failed is running...")
                 sendOrRemoveNotifications {
                     status is NotificationReaderEntity.Failed
                             || status is NotificationReaderEntity.Cancelled
+                }
+            }
+            .launchIn(scope))
+    }
+
+    private suspend fun launchWatcherForSuccess() {
+        successWatcherJob.cancel()
+        val lifeTime = TimeUnit.SECONDS.toMillis(settingsRepo.getSettings().successNotificationsLifeTime)
+        require(lifeTime >= 0) { "Incorrect lifeTime for success notifications: $lifeTime" }
+        if (lifeTime == 0L) {
+            logger.d("lifeTime for success notifications is 0 -> not launching successWatcherJob")
+            return
+        }
+        logger.d("launching successWatcherJob...")
+        successWatcherJob.set(tickerFlow(lifeTime.milliseconds)
+//            .map { LocalDateTime.now() }
+            .onEach {
+                logger.d("Watcher for success is running...")
+                removeNotifications {
+                    val status = status
+                    status is NotificationReaderEntity.Success
+                            && hasTimePassed(status.timestamp, lifeTime)
                 }
             }
             .launchIn(scope))
@@ -340,9 +372,13 @@ class NotificationReaderSyncManager @Inject constructor(
         }
     }
 
+    private suspend fun removeNotifications(filterFunc: NotificationReaderEntity.() -> Boolean) {
+        notificationReaderRepo.removeNotifications(notificationReaderRepo.getNotificationsRaw(filterFunc = filterFunc))
+    }
+
     private suspend fun sendOrRemoveNotifications(filterFunc: NotificationReaderEntity.() -> Boolean) {
         val currentNotifications =
-            notificationReaderRepo.getNotificationsRaw(filterFunc)
+            notificationReaderRepo.getNotificationsRaw(filterFunc = filterFunc)
         currentNotifications.sendOrRemove()
     }
 

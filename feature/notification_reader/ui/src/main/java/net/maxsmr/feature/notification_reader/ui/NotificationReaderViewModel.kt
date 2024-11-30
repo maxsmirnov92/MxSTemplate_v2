@@ -14,6 +14,7 @@ import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
+import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.notification_reader.data.NotificationReaderListenerService
@@ -34,7 +35,7 @@ class NotificationReaderViewModel @Inject constructor(
     private val manager: NotificationReaderSyncManager,
     private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
-    repo: NotificationReaderRepository,
+    private val readerRepo: NotificationReaderRepository,
     state: SavedStateHandle,
 ) : BaseHandleableViewModel(state) {
 
@@ -42,7 +43,7 @@ class NotificationReaderViewModel @Inject constructor(
 
     val serviceTargetState = _serviceTargetState as LiveData<ServiceTargetState?>
 
-    val notificationsItems = repo.getNotifications().asLiveData().map { list ->
+    val notificationsItems = readerRepo.getNotifications().asLiveData().map { list ->
         list.map {
             NotificationsAdapterData(
                 it.id,
@@ -111,6 +112,37 @@ class NotificationReaderViewModel @Inject constructor(
         }
     }
 
+    fun onRemoveSuccessNotification(item: NotificationsAdapterData) {
+        if (item.status !is NotificationReaderEntity.Success) return
+        viewModelScope.launch {
+            readerRepo.removeNotificationsByIds(listOf(item.id))
+        }
+    }
+
+    fun onToggleServiceTargetStateAction() {
+        _serviceTargetState.value = ServiceTargetState(!isServiceRunning(), true)
+    }
+
+    fun onDownloadPackageListAction() {
+        if (!manager.isRunning.value) return
+        if (!manager.doLaunchDownloadJobIfNeeded(
+                    if (_serviceTargetState.value?.state == true) {
+                        StartMode.JOBS_AND_SERVICE
+                    } else {
+                        StartMode.NONE
+                    }
+                )
+        ) {
+            showSnackbar(TextMessage(R.string.notification_reader_snack_download_package_list_not_started))
+        }
+    }
+
+    fun isServiceRunning(): Boolean {
+        // сервис может продолжать числитmся как выполняющийся
+        // несмотря на убирание из настроек и stopService
+        return NotificationReaderListenerService.isRunning() && manager.isRunning.value /*&& serviceTargetState.value != false*/
+    }
+
     private fun doStartWithHandleResult(context: Context): ManagerStartResult {
         return manager.doStart(context).also {
             when (it) {
@@ -139,30 +171,6 @@ class NotificationReaderViewModel @Inject constructor(
                 showToast(TextMessage(R.string.notification_reader_toast_stop_remove_in_settings))
             }
         }
-    }
-
-    fun onToggleServiceTargetStateAction() {
-        _serviceTargetState.value = ServiceTargetState(!isServiceRunning(), true)
-    }
-
-    fun onDownloadPackageListAction() {
-        if (!manager.isRunning.value) return
-        if (!manager.doLaunchDownloadJobIfNeeded(
-                    if (_serviceTargetState.value?.state == true) {
-                        StartMode.JOBS_AND_SERVICE
-                    } else {
-                        StartMode.NONE
-                    }
-                )
-        ) {
-            showSnackbar(TextMessage(R.string.notification_reader_snack_download_package_list_not_started))
-        }
-    }
-
-    fun isServiceRunning(): Boolean {
-        // сервис может продолжать числитmся как выполняющийся
-        // несмотря на убирание из настроек и stopService
-        return NotificationReaderListenerService.isRunning() && manager.isRunning.value /*&& serviceTargetState.value != false*/
     }
 
     data class ServiceTargetState(
