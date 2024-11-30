@@ -32,7 +32,7 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logExcept
 import net.maxsmr.commonutils.media.getMimeTypeFromUrl
 import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.core.android.content.FileFormat
-import net.maxsmr.core.android.network.isUrlValid
+import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.network.asStringCloned
 import net.maxsmr.core.network.exceptions.HttpProtocolException

@@ -33,7 +33,7 @@ import net.maxsmr.commonutils.writeObject
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.appendToSet
 import net.maxsmr.core.android.network.NetworkStateManager
-import net.maxsmr.core.android.network.isUrlValid
+import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.domain.entities.feature.network.Method

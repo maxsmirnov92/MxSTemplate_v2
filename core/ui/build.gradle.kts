@@ -15,6 +15,7 @@ dependencies {
 
     implementation(project(":core:di"))
     implementation(project(":core:android"))
+    implementation(project(":core:network"))
     implementation(project(":designsystem:shared_res"))
 
     api(libs.google.material)

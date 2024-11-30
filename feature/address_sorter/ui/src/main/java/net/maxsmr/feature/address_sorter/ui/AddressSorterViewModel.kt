@@ -38,7 +38,7 @@ import net.maxsmr.core.android.coroutines.usecase.data
 import net.maxsmr.core.android.coroutines.usecase.mapData
 import net.maxsmr.core.android.coroutines.usecase.succeeded
 import net.maxsmr.core.android.exceptions.EmptyResultException
-import net.maxsmr.core.android.network.isUrlValid
+import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority

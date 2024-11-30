@@ -33,8 +33,7 @@ class CacheDataStoreRepository @Inject constructor(
     val postNotificationAsked: Flow<Boolean>? = data.map { it[FIELD_POST_NOTIFICATION_ASKED] ?: false }
         .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU }
 
-    val batteryOptimizationAsked: Flow<Boolean>? = data.map { it[FIELD_BATTERY_OPTIMIZATION_ASKED] ?: false }
-        .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.M }
+    val batteryOptimizationAsked: Flow<Boolean> = data.map { it[FIELD_BATTERY_OPTIMIZATION_ASKED] ?: false }
 
     val isDemoPeriodExpired: Flow<Boolean> = data.map { it[FIELD_KEY_DEMO_PERIOD_EXPIRED] ?: false }
 
@@ -179,10 +178,8 @@ class CacheDataStoreRepository @Inject constructor(
     }
 
     private suspend fun setDemoPeriodExpired(toggle: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            dataStore.edit { prefs ->
-                prefs[FIELD_KEY_DEMO_PERIOD_EXPIRED] = toggle
-            }
+        dataStore.edit { prefs ->
+            prefs[FIELD_KEY_DEMO_PERIOD_EXPIRED] = toggle
         }
     }
 

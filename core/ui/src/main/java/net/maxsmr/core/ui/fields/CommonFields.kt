@@ -6,7 +6,7 @@ import androidx.lifecycle.SavedStateHandle
 import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.network.isUrlValid
+import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.core.ui.R
 
 fun SavedStateHandle.urlField(

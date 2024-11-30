@@ -4,9 +4,9 @@ import android.net.Uri
 import androidx.annotation.Keep
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.content.FileFormat
-import net.maxsmr.core.android.network.URL_PAGE_BLANK
-import net.maxsmr.core.android.network.equalsIgnoreSubDomain
-import net.maxsmr.core.android.network.isUrlValid
+import net.maxsmr.core.network.URL_PAGE_BLANK
+import net.maxsmr.core.network.equalsIgnoreSubDomain
+import net.maxsmr.core.network.isUrlValid
 import java.io.Serializable
 import java.nio.charset.Charset
 

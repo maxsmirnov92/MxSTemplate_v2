@@ -1,8 +1,7 @@
-package net.maxsmr.core.android.network
+package net.maxsmr.core.network
 
 import android.content.ContentResolver
 import android.net.Uri
-import androidx.core.net.toUri
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import okhttp3.internal.publicsuffix.PublicSuffixDatabase
 import java.net.URL
@@ -19,14 +18,14 @@ fun String?.toValidUri(
         return null
     }
     if (orBlank && this.equals(URL_PAGE_BLANK, true)) {
-        return toUri()
+        return Uri.parse(this)
     } else {
-        var uri = this.toUri()
+        var uri = Uri.parse(this)
 
         if (!schemeIfEmpty.isNullOrEmpty() && uri.scheme.isNullOrEmpty()) {
             // у урлы нет схемы - подставляем непустой префикс и получаем урлу с возможным хостом
             val uriString = uri.toString()
-            uri = "$schemeIfEmpty://$uriString".toUri()
+            uri = Uri.parse("$schemeIfEmpty://$uriString")
         }
 
         if (uri.scheme.isAnyResourceScheme()) {

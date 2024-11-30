@@ -30,7 +30,7 @@ import net.maxsmr.commonutils.text.charsetForNameOrNull
 import net.maxsmr.commonutils.text.isEmpty
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.FileFormat
-import net.maxsmr.core.android.network.isAnyResourceScheme
+import net.maxsmr.core.network.isAnyResourceScheme
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.DialogRepresentation
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient

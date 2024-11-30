@@ -12,10 +12,10 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.network.URL_SCHEME_HTTPS
-import net.maxsmr.core.android.network.equalsIgnoreSubDomain
-import net.maxsmr.core.android.network.isUrlValid
-import net.maxsmr.core.android.network.toValidUri
+import net.maxsmr.core.network.URL_SCHEME_HTTPS
+import net.maxsmr.core.network.equalsIgnoreSubDomain
+import net.maxsmr.core.network.isUrlValid
+import net.maxsmr.core.network.toValidUri
 import net.maxsmr.core.ui.fields.urlField
 
 abstract class BaseCustomizableWebViewModel(

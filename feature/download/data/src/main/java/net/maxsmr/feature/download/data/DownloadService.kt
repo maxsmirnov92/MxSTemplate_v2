@@ -52,8 +52,8 @@ import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
-import net.maxsmr.core.android.network.isAnyResourceScheme
-import net.maxsmr.core.android.network.toValidUri
+import net.maxsmr.core.network.isAnyResourceScheme
+import net.maxsmr.core.network.toValidUri
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.di.ApplicationScope

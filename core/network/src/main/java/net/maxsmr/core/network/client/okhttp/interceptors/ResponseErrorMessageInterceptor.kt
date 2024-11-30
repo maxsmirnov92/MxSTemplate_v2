@@ -40,11 +40,16 @@ class ResponseErrorMessageInterceptor(
                     // если в API не подразумеваются внутренние коды или он оказался 0
                     throw ApiException(response.code, baseResponse.errorMessage)
                 }
-            } catch (e: ApiException) {
-                logger.w(e)
-                e.message?.takeIf { it.isNotEmpty() }?.let {
-                    // при наличии errorMessage - продолжаем цепочку с изменённым response
-                    return response.newBuilder().message(it).build()
+            } catch (e: Exception) {
+                // convert может выкинуть что-то отличное от ApiException
+                // (например, если в теле не json),
+                // мессадж меняем только для ApiException
+                if (e is ApiException) {
+                    logger.w(e)
+                    e.message?.takeIf { it.isNotEmpty() }?.let {
+                        // при наличии errorMessage - продолжаем цепочку с изменённым response
+                        return response.newBuilder().message(it).build()
+                    }
                 }
             }
         }
