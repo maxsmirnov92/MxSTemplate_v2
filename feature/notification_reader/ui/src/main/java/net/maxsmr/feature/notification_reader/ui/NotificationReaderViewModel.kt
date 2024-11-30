@@ -8,7 +8,7 @@ import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
+import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.live.setValueIfNew
@@ -24,10 +24,12 @@ import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStopResult
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.StartMode
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData
+import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData.Companion.NOTIFICATION_DATETIME_FORMAT
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.preferences.ui.doOnBatteryOptimizationWithPostNotificationsAsk
 import java.io.Serializable
+import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
@@ -49,7 +51,7 @@ class NotificationReaderViewModel @Inject constructor(
                 it.id,
                 it.contentText,
                 it.packageName,
-                Instant.fromEpochMilliseconds(it.timestamp).toString(),
+                formatDate(Date(it.timestamp), NOTIFICATION_DATETIME_FORMAT),
                 it.status
             )
         }
