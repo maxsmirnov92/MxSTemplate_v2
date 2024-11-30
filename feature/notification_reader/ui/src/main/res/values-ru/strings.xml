@@ -13,7 +13,10 @@
     <string name="notification_reader_content_empty">Нет содержимого</string>
     <string name="notification_reader_no_notifications">Нет уведомлений</string>
     <string name="notification_reader_status_new">Новое</string>
-    <string name="notification_reader_status_loading">Загрузка…</string>
+    <string name="notification_reader_status_loading">Отправка…</string>
+    <string name="notification_reader_status_success">Готово</string>
     <string name="notification_reader_status_failed">Ошибка</string>
     <string name="notification_reader_status_cancelled">Отменено</string>
+    <string name="notification_reader_time_shown">Показано:</string>
+    <string name="notification_reader_time_sent">Отправлено:</string>
 </resources>

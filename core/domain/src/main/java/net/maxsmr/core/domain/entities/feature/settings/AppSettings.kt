@@ -5,7 +5,7 @@ import java.io.Serializable
 @kotlinx.serialization.Serializable
 data class AppSettings(
     val maxDownloads: Int = 3,
-    val connectTimeout: Long = 15,
+    val connectTimeout: Long = 15L,
     val loadByWiFiOnly: Boolean = false,
     val retryOnConnectionFailure: Boolean = true,
     val retryDownloads: Boolean = true,
@@ -15,7 +15,8 @@ data class AppSettings(
     val notificationsUrl: String = "",
     val packageListUrl: String = "",
     val isWhitePackageList: Boolean = true,
-    val failedNotificationsWatcherInterval: Long = 15L
+    val failedNotificationsWatcherInterval: Long = 15L,
+    val successNotificationsLifeTime: Long = 60L
 ) : Serializable {
 
     companion object {

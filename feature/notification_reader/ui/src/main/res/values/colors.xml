@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="textColorNotificationNew">#0006cf</color>
-    <color name="textColorNotificationLoading">#6dc100</color>
+    <color name="textColorNotificationLoading">@color/gray_medium</color>
+    <color name="textColorNotificationSuccess">#6dc100</color>
     <color name="textColorNotificationFailed">@color/textColorError</color>
     <color name="textColorNotificationCancelled">@color/yellow</color>
 </resources>

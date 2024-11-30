@@ -19,14 +19,21 @@ class NotificationReaderRepository @Inject constructor(
     private val cacheRepo: CacheDataStoreRepository,
 ) {
 
-    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(NotificationReaderRepository::class.java)
+    fun getNotifications(sortAsc: Boolean = true, filterFunc: NotificationReaderEntity.() -> Boolean = { true }): Flow<List<NotificationReaderEntity>> {
+        return if (sortAsc) {
+            dao.getAll()
+        } else {
+            dao.getAllDesc()
+        }.map { it.filter(filterFunc) }
 
-    fun getNotifications(filterFunc: NotificationReaderEntity.() -> Boolean = { true }): Flow<List<NotificationReaderEntity>> {
-        return dao.getAll().map { it.filter(filterFunc) }
     }
 
-    suspend fun getNotificationsRaw(filterFunc: NotificationReaderEntity.() -> Boolean = { true }): List<NotificationReaderEntity> {
-        return dao.getAllRaw().filter { filterFunc.invoke(it) }
+    suspend fun getNotificationsRaw(sortAsc: Boolean = true, filterFunc: NotificationReaderEntity.() -> Boolean = { true }): List<NotificationReaderEntity> {
+        return if (sortAsc) {
+            dao.getAllRaw()
+        } else {
+            dao.getAllDescRaw()
+        }.filter { filterFunc.invoke(it) }
     }
 
     suspend fun insertNewNotification(
@@ -57,7 +64,10 @@ class NotificationReaderRepository @Inject constructor(
     }
 
     suspend fun removeNotificationsByIds(ids: List<Long>) {
-        logger.d("Removing ids $ids...")
         dao.removeByIds(ids)
+    }
+
+    suspend fun updateNotificationsWithSuccess(ids: List<Long>) {
+        dao.update(ids, NotificationReaderEntity.Success(System.currentTimeMillis()))
     }
 }
