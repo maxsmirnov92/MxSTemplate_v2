@@ -67,7 +67,7 @@ class NotificationReaderRepository @Inject constructor(
         dao.removeByIds(ids)
     }
 
-    suspend fun updateNotificationsWithSuccess(ids: List<Long>) {
-        dao.update(ids, NotificationReaderEntity.Success(System.currentTimeMillis()))
+    suspend fun updateNotificationsWithSuccess(ids: List<Long>, timestamp: Long) {
+        dao.update(ids, NotificationReaderEntity.Success(timestamp))
     }
 }

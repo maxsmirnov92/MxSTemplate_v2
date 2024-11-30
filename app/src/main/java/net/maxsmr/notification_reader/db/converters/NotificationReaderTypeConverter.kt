@@ -16,6 +16,6 @@ class NotificationReaderTypeConverter {
 
     @TypeConverter
     fun convertNotificationReaderStatus(array: ByteArray): NotificationReaderEntity.Status {
-        return array.asObject() ?: NotificationReaderEntity.Failed(SerializationException())
+        return array.asObject() ?: NotificationReaderEntity.Failed(System.currentTimeMillis(), SerializationException())
     }
 }

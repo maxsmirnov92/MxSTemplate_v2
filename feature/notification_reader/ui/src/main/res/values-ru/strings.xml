@@ -18,5 +18,7 @@
     <string name="notification_reader_status_failed">Ошибка</string>
     <string name="notification_reader_status_cancelled">Отменено</string>
     <string name="notification_reader_time_shown">Показано:</string>
-    <string name="notification_reader_time_sent">Отправлено:</string>
+    <string name="notification_reader_time_started">Начато:</string>
+    <string name="notification_reader_time_finished">Завершено:</string>
+    <string name="notification_reader_time_cancelled">Отменено:</string>
 </resources>

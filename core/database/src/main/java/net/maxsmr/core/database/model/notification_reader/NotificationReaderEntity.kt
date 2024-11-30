@@ -13,36 +13,49 @@ data class NotificationReaderEntity(
     val packageName: String,
     val timestamp: Long,
     val status: Status
-) {
+): Serializable {
 
     sealed interface Status: Serializable
 
+    sealed class BaseTimeStatus : Status {
+        abstract val timestamp: Long
+    }
+
+    // время добавления нотификации в базу
+    // почти не будет отличаться от времени показа
     data object New : Status {
 
         private fun readResolve(): Any = New
     }
 
-    data object Loading: Status {
+    data class Loading(override val timestamp: Long): BaseTimeStatus() {
 
-        private fun readResolve(): Any = Loading
+        override fun toString(): String {
+            return "Loading(timestamp=$timestamp)"
+        }
     }
 
-    data object Cancelled: Status {
+    data class Cancelled(override val timestamp: Long): BaseTimeStatus() {
 
-        private fun readResolve(): Any = Cancelled
+        override fun toString(): String {
+            return "Cancelled(timestamp=$timestamp)"
+        }
     }
 
-    data class Success(val timestamp: Long): Status {
+    data class Success(override val timestamp: Long): BaseTimeStatus() {
 
         override fun toString(): String {
             return "Success(timestamp=$timestamp)"
         }
     }
 
-    class Failed(val exception: Exception): Status {
+    class Failed(
+        override val timestamp: Long,
+        val exception: Exception
+    ): BaseTimeStatus() {
 
         override fun toString(): String {
-            return "Failed(exception=$exception)"
+            return "Failed(timestamp=$timestamp, exception=$exception)"
         }
     }
 }

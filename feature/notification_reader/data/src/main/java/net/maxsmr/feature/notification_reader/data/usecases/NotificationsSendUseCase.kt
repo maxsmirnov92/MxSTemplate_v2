@@ -24,12 +24,10 @@ class NotificationsSendUseCase @Inject constructor(
         if (notifications.isEmpty()) return
         logger.d("Execute sending notifications, parameters: $parameters")
 
+        val startTimestamp = System.currentTimeMillis()
+
         readerRepo.upsertNotifications(notifications.map {
-            if (it.status != NotificationReaderEntity.Loading) {
-                it.copy(status = NotificationReaderEntity.Loading)
-            } else {
-                it
-            }
+            it.copy(status = NotificationReaderEntity.Loading(startTimestamp))
         })
 
         try {
@@ -42,25 +40,33 @@ class NotificationsSendUseCase @Inject constructor(
                     it.timestamp
                 )
             })
+            val successTimestamp = if (!parameters.shouldRemoveIfSuccess) {
+                System.currentTimeMillis()
+            } else {
+                0
+            }
             val ids = notifications.map { it.id }
             logger.d("Notifications were sent successfully, ids: $ids")
             if (parameters.shouldRemoveIfSuccess) {
                 readerRepo.removeNotificationsByIds(ids)
                 logger.d("ids after delete: ${readerRepo.getNotificationsRaw().map { it.id }}")
             } else {
-                readerRepo.updateNotificationsWithSuccess(ids)
+                readerRepo.updateNotificationsWithSuccess(ids, successTimestamp)
             }
 
         } catch (e: Exception) {
             withContext(NonCancellable) {
                 // здесь можно не добавлять зафейленные, которые перестали попадать в список,
                 // но для индикации лучше оставить
+                val failTimestamp = System.currentTimeMillis()
                 readerRepo.upsertNotifications(notifications.map {
-                    it.copy(status = if (e.isCancelled()) {
-                        NotificationReaderEntity.Cancelled
-                    } else {
-                        NotificationReaderEntity.Failed(e)
-                    })
+                    it.copy(
+                        status = if (e.isCancelled()) {
+                            NotificationReaderEntity.Cancelled(failTimestamp)
+                        } else {
+                            NotificationReaderEntity.Failed(failTimestamp, e)
+                        }
+                    )
                 })
             }
             throw e
@@ -70,6 +76,6 @@ class NotificationsSendUseCase @Inject constructor(
     data class Parameters(
         val notifications: List<NotificationReaderEntity>,
         val preferredConnectionTypes: Set<PreferableType> = setOf(),
-        val shouldRemoveIfSuccess: Boolean = false
+        val shouldRemoveIfSuccess: Boolean = false,
     )
 }
