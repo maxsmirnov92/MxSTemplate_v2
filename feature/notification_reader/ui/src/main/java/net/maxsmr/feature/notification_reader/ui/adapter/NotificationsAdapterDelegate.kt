@@ -65,12 +65,40 @@ fun notificationsAdapterDelegate() = com.hannesdorfmann.adapterdelegates4.dsl.v2
                 item.contentText.takeIf { it.isNotEmpty() } ?: getString(R.string.notification_reader_content_empty)
             tvNotificationShownTime.setTextOrGone(item.formattedTime)
 
-            if (status is NotificationReaderEntity.Success && status.timestamp > 0) {
-                tvNotificationSentTime.setTextOrGone(formatDate(Date(status.timestamp), NOTIFICATION_DATETIME_FORMAT))
+            if (status is NotificationReaderEntity.BaseTimeStatus && status.timestamp > 0) {
+                val textColorResId = when (status) {
+                    is NotificationReaderEntity.Loading -> {
+                        tvNotificationTimeName.setText(R.string.notification_reader_time_started)
+                        R.color.textColorNotificationLoading
+                    }
+
+                    is NotificationReaderEntity.Success -> {
+                        tvNotificationTimeName.setText(R.string.notification_reader_time_finished)
+                        R.color.textColorNotificationSuccess
+                    }
+
+                    is NotificationReaderEntity.Failed -> {
+                        tvNotificationTimeName.setText(R.string.notification_reader_time_finished)
+                        R.color.textColorNotificationFailed
+                    }
+
+                    is NotificationReaderEntity.Cancelled -> {
+                        tvNotificationTimeName.setText(R.string.notification_reader_time_cancelled)
+                        R.color.textColorNotificationCancelled
+                    }
+                }
+                tvNotificationTimeName.setTextColor(ContextCompat.getColor(context, textColorResId))
+                tvNotificationTimeValue.setTextColor(ContextCompat.getColor(context, textColorResId))
+                tvNotificationTimeValue.setTextOrGone(
+                    formatDate(
+                        Date(status.timestamp),
+                        NOTIFICATION_DATETIME_FORMAT
+                    )
+                )
             } else {
-                tvNotificationSentTime.isVisible = false
+                tvNotificationTimeValue.isVisible = false
             }
-            containerNotificationSent.isVisible = tvNotificationSentTime.isVisible
+            containerNotificationTime.isVisible = tvNotificationTimeValue.isVisible
         }
     }
 }

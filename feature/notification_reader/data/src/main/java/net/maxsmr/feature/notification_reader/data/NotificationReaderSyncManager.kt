@@ -392,8 +392,8 @@ class NotificationReaderSyncManager @Inject constructor(
                         settingsRepo.getSettings().isWhitePackageList
                     )
             ) {
-                // есть в белом/чёрном списке - снова становится "Loading" и отправляется сразу
-                newNotifications.add(n.copy(status = NotificationReaderEntity.Loading))
+                // есть в белом/чёрном списке - снова становится "New" и отправляется сразу
+                newNotifications.add(n.copy(status = NotificationReaderEntity.New))
             } else {
                 // нет в белом списке - подлежит удалению из таблицы
                 removedNotifications.add(n)

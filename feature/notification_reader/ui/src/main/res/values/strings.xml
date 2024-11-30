@@ -18,5 +18,7 @@
     <string name="notification_reader_status_failed">Failed</string>
     <string name="notification_reader_status_cancelled">Cancelled</string>
     <string name="notification_reader_time_shown">Shown:</string>
-    <string name="notification_reader_time_sent">Sent:</string>
+    <string name="notification_reader_time_started">Started:</string>
+    <string name="notification_reader_time_finished">Finished:</string>
+    <string name="notification_reader_time_cancelled">Cancelled:</string>
 </resources>

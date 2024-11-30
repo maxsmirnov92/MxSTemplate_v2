@@ -112,7 +112,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:layout_marginTop="@dimen/halfOfDefaultPadding"
+        android:layout_marginTop="@dimen/defaultPadding"
         android:orientation="horizontal">
 
         <TextView
@@ -136,7 +136,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/containerNotificationSent"
+        android:id="@+id/containerNotificationTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
@@ -144,21 +144,20 @@
         android:orientation="horizontal">
 
         <TextView
+            android:id="@+id/tvNotificationTimeName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/notification_reader_time_sent"
+            tools:text="@string/notification_reader_time_started"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            android:textColor="@color/textColorNotificationSuccess"
             android:typeface="monospace" />
 
         <TextView
-            android:id="@+id/tvNotificationSentTime"
+            android:id="@+id/tvNotificationTimeValue"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/quarterOfDefaultPadding"
             android:maxLines="6"
             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            android:textColor="@color/textColorNotificationSuccess"
             android:textStyle="bold"
             android:typeface="monospace"
             tools:text="2024-11-22" />
