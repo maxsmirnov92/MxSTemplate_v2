@@ -10,6 +10,7 @@ import net.maxsmr.core.database.model.notification_reader.NotificationReaderEnti
 import net.maxsmr.core.network.api.BaseNotificationReaderDataSource
 import net.maxsmr.core.network.api.notification_reader.NotificationReaderDataRequest
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType
+import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
 import net.maxsmr.feature.download.data.manager.checkPreferableConnection
 import net.maxsmr.feature.notification_reader.data.NotificationReaderRepository
 import javax.inject.Inject
@@ -64,7 +65,7 @@ class NotificationsSendUseCase @Inject constructor(
                         status = if (e.isCancelled()) {
                             NotificationReaderEntity.Cancelled(failTimestamp)
                         } else {
-                            NotificationReaderEntity.Failed(failTimestamp, e)
+                            NotificationReaderEntity.Failed(failTimestamp, e.orNetworkCause())
                         }
                     )
                 })
