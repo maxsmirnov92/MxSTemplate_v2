@@ -73,6 +73,7 @@ import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.R
 import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.withTimeouts
 import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType
+import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
 import net.maxsmr.core.network.getContentTypeHeader
 import net.maxsmr.core.network.getFileNameFromAttachmentHeader
 import net.maxsmr.core.network.hasBytesAcceptRanges
@@ -366,7 +367,7 @@ class DownloadService : Service() {
                     if (e.isCancelled()) {
                         onDownloadCancelled(info, params, oldParams)
                     } else {
-                        onDownloadFailed(info, params, oldParams, e)
+                        onDownloadFailed(info, params, oldParams, e.orNetworkCause())
                     }
                 }
             }
@@ -703,7 +704,7 @@ class DownloadService : Service() {
         downloadInfo: DownloadInfo,
         params: Params,
         oldParams: Params,
-        e: Exception?,
+        e: Exception,
     ) {
         logger.e("Download failed: $downloadInfo, params: $params, oldParams: $oldParams", e)
 

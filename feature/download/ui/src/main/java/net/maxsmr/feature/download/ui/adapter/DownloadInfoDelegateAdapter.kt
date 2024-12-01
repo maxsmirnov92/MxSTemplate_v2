@@ -241,7 +241,7 @@ fun downloadInfoAdapterDelegate(listener: DownloadListener) =
                         is DownloadState.Failed -> {
                             statusColorResId = R.color.textColorDownloadFailed
 
-                            state.e?.message?.takeIf { it.isNotEmpty() }?.let {
+                            state.e.message?.takeIf { it.isNotEmpty() }?.let {
                                 context.getString(R.string.download_status_failed_format, it)
                             } ?: context.getString(R.string.download_status_failed_unknown)
                         }

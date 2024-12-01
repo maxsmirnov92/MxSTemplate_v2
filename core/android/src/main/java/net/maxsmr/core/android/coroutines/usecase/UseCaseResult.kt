@@ -10,16 +10,9 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.network.NO_ERROR_API
-import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.NetworkException
-import net.maxsmr.core.network.exceptions.NoConnectivityException
-import net.maxsmr.core.network.exceptions.OkHttpException
+import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
 import net.maxsmr.core.network.getErrorCode
-import java.io.IOException
-import java.net.SocketException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
-import javax.net.ssl.SSLException
 
 sealed class UseCaseResult<out R> {
 
@@ -129,10 +122,5 @@ fun <T> Flow<T>.asUseCaseResult(): Flow<UseCaseResult<T>> {
 }
 
 fun <T> Throwable.asUseCaseResult(): UseCaseResult<T> {
-    val cause = if (this is OkHttpException) {
-        this.cause ?: RuntimeException("Request failed")
-    } else {
-        this
-    }
-    return UseCaseResult.Error(cause)
+    return UseCaseResult.Error(orNetworkCause())
 }

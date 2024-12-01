@@ -75,7 +75,7 @@ class DownloadStateNotifier @Inject constructor() {
         downloadInfo: DownloadInfo,
         params: DownloadService.Params,
         oldParams: DownloadService.Params,
-        e: Exception?,
+        e: Exception,
     ) {
         scope.launch {
             _downloadStateEvents.emit(DownloadState.Failed(e, downloadInfo, params, oldParams))
@@ -169,7 +169,7 @@ class DownloadStateNotifier @Inject constructor() {
         }
 
         class Failed(
-            val e: Exception?,
+            val e: Exception,
             downloadInfo: DownloadInfo,
             params: DownloadService.Params,
             oldParams: DownloadService.Params,
@@ -185,7 +185,7 @@ class DownloadStateNotifier @Inject constructor() {
 
             override fun hashCode(): Int {
                 var result = super.hashCode()
-                result = 31 * result + (e?.hashCode() ?: 0)
+                result = 31 * result + e.hashCode()
                 return result
             }
 

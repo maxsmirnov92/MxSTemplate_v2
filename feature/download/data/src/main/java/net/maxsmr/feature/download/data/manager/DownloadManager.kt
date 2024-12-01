@@ -148,8 +148,8 @@ class DownloadManager @Inject constructor(
                             }
 
                             is DownloadInfo.Status.Error -> {
-                                val reason = info.statusAsError?.reason
-                                if (reason?.isCancelled() == true) {
+                                val reason = info.statusAsError?.reason ?: return
+                                if (reason.isCancelled()) {
                                     DownloadStateNotifier.DownloadState.Cancelled(info, params, params)
                                 } else {
                                     DownloadStateNotifier.DownloadState.Failed(reason, info, params, params)
@@ -368,8 +368,21 @@ class DownloadManager @Inject constructor(
             }
         }
 
-        scope.observeNetworkStateWithSettings(settingsRepo) {
-            retryFailedByNetwork(it.connectionInfo, it.shouldRetry, it.loadByWiFiOnly)
+        scope.observeNetworkStateWithSettings(settingsRepo) { stateWithSettings ->
+            if (!stateWithSettings.shouldRetry) return@observeNetworkStateWithSettings
+
+            val retryDownloads = downloadsRepo.getRaw().filter {
+                stateWithSettings.shouldReload(it.statusAsError?.reason)
+            }
+            if (retryDownloads.isNotEmpty()) {
+                logger.i("Has connection, retrying previous failed by connectivity...")
+                val finishedItems = downloadsFinishedQueue.value
+                retryDownloads.forEach {
+                    finishedItems.find { item -> item.downloadId == it.id }?.let {
+                        retryDownloadSuspended(it.downloadId, it.params)
+                    }
+                }
+            }
         }
 
         fun refreshFailed(params: DownloadService.Params) {
@@ -557,41 +570,6 @@ class DownloadManager @Inject constructor(
             removeFinishedSuspended(it, true)
         }
         enqueueDownloadSuspended(params)
-    }
-
-    private suspend fun retryFailedByNetwork(
-        connectionInfo: NetworkStateManager.ConnectionInfo,
-        shouldRetry: Boolean,
-        loadByWiFiOnly: Boolean,
-    ) {
-        if (!shouldRetry) return
-        val retryDownloads = downloadsRepo.getRaw().filter {
-            when (val reason = it.statusAsError?.reason) {
-                is NoConnectivityException, is SocketException, is SocketTimeoutException -> {
-                    if (loadByWiFiOnly && reason is NoPreferableConnectivityException) {
-                        // поиск зафейленных загрузок по причине отсутствия WiFi, если это соединение появилось
-                        connectionInfo.hasWiFi == true
-                    } else {
-                        // или по причине любой сети, если она появилась
-                        connectionInfo.has
-                    }
-                }
-
-                else -> {
-                    false
-                }
-            }
-        }
-
-        if (retryDownloads.isNotEmpty()) {
-            logger.i("Has connection, retrying previous failed by connectivity...")
-            val finishedItems = downloadsFinishedQueue.value
-            retryDownloads.forEach {
-                finishedItems.find { item -> item.downloadId == it.id }?.let {
-                    retryDownloadSuspended(it.downloadId, it.params)
-                }
-            }
-        }
     }
 
     private suspend fun removeFinishedSuspended(
