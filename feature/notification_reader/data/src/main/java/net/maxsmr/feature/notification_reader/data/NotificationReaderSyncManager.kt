@@ -21,13 +21,14 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.media.readStrings
 import net.maxsmr.commonutils.service.StartResult
+import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.tickerFlow
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import net.maxsmr.core.network.equalsIgnoreSubDomain
-import net.maxsmr.core.network.exceptions.NoConnectivityException
+import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.core.utils.hasTimePassed
 import net.maxsmr.feature.download.data.DownloadService
@@ -39,10 +40,7 @@ import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
 import net.maxsmr.feature.notification_reader.data.usecases.NotificationsSendUseCase
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import java.net.SocketException
-import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -70,8 +68,8 @@ class NotificationReaderSyncManager @Inject constructor(
     private val observeSettingsJob = AtomicReference<Job>()
 
     private val pendingStartMode = AtomicReference(StartMode.JOBS)
-    private val isPackageListReady = AtomicBoolean(false)
 
+    private val lastPackageListState = MutableStateFlow<LoadState<Set<String>>?>(null)
     private val lastSettings = MutableStateFlow<AppSettings?>(null)
 
     private val _isRunning = MutableStateFlow(false)
@@ -91,7 +89,8 @@ class NotificationReaderSyncManager @Inject constructor(
         logger.d("doStart, ignoreBackground: $ignoreBackground")
         if (ignoreBackground || context.isSelfAppInBackground() == false) {
             if (isNotificationAccessGranted(context)) {
-                if (isPackageListReady.get()) {
+                val state = lastPackageListState.value
+                if (state != null && !state.isLoading) {
                     // начиная с Android 8 стартовать foreground сервис из бэкграунда нельзя
                     val result = NotificationReaderListenerService.start(context)
                     return if (result != StartResult.NOT_STARTED_FAILED) {
@@ -135,7 +134,7 @@ class NotificationReaderSyncManager @Inject constructor(
         observeSettingsJob.cancel()
         lastSettings.value = null
         // при перезапуске манагера надо перезапросить список
-        isPackageListReady.set(false)
+        lastPackageListState.value = null
         pendingStartMode.set(StartMode.NONE)
         return if (NotificationReaderListenerService.isRunning(context)) {
             if (isNotificationAccessGranted(context)) {
@@ -188,15 +187,18 @@ class NotificationReaderSyncManager @Inject constructor(
             downloadManager.observeDownloadByParams(enqueueDownloadPackageList(), true).collect {
                 if (!it.isLoading) {
 
-                    if (it.isSuccessWithData()) {
+                    lastPackageListState.value = if (it.isSuccessWithData()) {
                         val packageList =
                             it.data?.downloadInfo?.localUri?.readStrings(baseApplicationContext.contentResolver)
                                 .orEmpty()
-                        cacheRepo.setPackageList(packageList.filter { name ->
+                        val result = packageList.filter { name ->
                             isPackageNameValid(name) || name == "android"
-                        }.toSet())
+                        }.toSet()
+                        cacheRepo.setPackageList(result)
+                        LoadState.success(result)
+                    } else {
+                        LoadState.error(it.error ?: NetworkException())
                     }
-                    isPackageListReady.set(true)
 
                     // после успешной или неуспешной загрузки файла с разрешённым списком
                     // делаем следующее:
@@ -223,7 +225,8 @@ class NotificationReaderSyncManager @Inject constructor(
 
                         if (mode == StartMode.JOBS_AND_SERVICE) {
                             if (baseApplicationContext.isSelfAppInBackground() == false
-                                    || (Build.VERSION.SDK_INT < Build.VERSION_CODES.O || Settings.canDrawOverlays(baseApplicationContext))
+                                    || (Build.VERSION.SDK_INT < Build.VERSION_CODES.O
+                                            || Settings.canDrawOverlays(baseApplicationContext))
                             ) {
                                 // отложенный запуск сервиса по готовности белого списка
                                 if (isNotificationAccessGranted(baseApplicationContext)) {
@@ -236,6 +239,8 @@ class NotificationReaderSyncManager @Inject constructor(
                     }
 
                     downloadJob.cancel()
+                } else {
+                    lastPackageListState.value = LoadState.loading()
                 }
             }
         })
@@ -286,7 +291,9 @@ class NotificationReaderSyncManager @Inject constructor(
             newWatcherJob.set(scope.launch {
                 notificationReaderRepo.getNotifications { status is NotificationReaderEntity.New }
                     .collect { notifications ->
-                        notifications.send()
+                        if (notifications.isNotEmpty()) {
+                            notifications.send()
+                        }
                     }
             })
         }
@@ -338,26 +345,23 @@ class NotificationReaderSyncManager @Inject constructor(
         if (networkStateJob.get()?.isCancelled != false) {
             logger.d("launching networkStateJob...")
             networkStateJob.set(
-                scope.observeNetworkStateWithSettings(settingsRepo) {
-                    if (!it.shouldRetry) return@observeNetworkStateWithSettings
-                    val failedNetworkNotifications = notificationReaderRepo.getNotificationsRaw {
-                        when (val reason = (status as? NotificationReaderEntity.Failed)?.exception) {
-                            is NoConnectivityException, is SocketException, is SocketTimeoutException -> {
-                                if (it.loadByWiFiOnly && reason is NoPreferableConnectivityException) {
-                                    // поиск зафейленных загрузок по причине отсутствия WiFi, если это соединение появилось
-                                    it.connectionInfo.hasWiFi == true
-                                } else {
-                                    // или по причине любой сети, если она появилась
-                                    it.connectionInfo.has
-                                }
+                scope.launch {
+                    settingsRepo.observeNetworkStateWithSettings().collect {
+                        logger.d("Network state or settings changed: '$it'")
+                        if (!it.shouldRetry) return@collect
+                        val state = lastPackageListState.value
+                        if (it.shouldReload(state?.error)) {
+                            // DownloadManager подхватит это изменение, но ранее были отписаны от observeDownload
+                            launchDownloadJob()
+                        } else {
+                            // если перезапускать главную Job не нужно,
+                            // проверка и выгрузка зафейленных сетевых нотификаций как обычно
+                            val failedNetworkNotifications = notificationReaderRepo.getNotificationsRaw {
+                                it.shouldReload((this.status as? NotificationReaderEntity.Failed)?.exception)
                             }
-
-                            else -> {
-                                false
-                            }
+                            failedNetworkNotifications.sendOrRemove()
                         }
                     }
-                    failedNetworkNotifications.sendOrRemove()
                 }
             )
         }
