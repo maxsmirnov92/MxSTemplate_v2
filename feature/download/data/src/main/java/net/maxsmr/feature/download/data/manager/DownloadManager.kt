@@ -368,18 +368,20 @@ class DownloadManager @Inject constructor(
             }
         }
 
-        scope.observeNetworkStateWithSettings(settingsRepo) { stateWithSettings ->
-            if (!stateWithSettings.shouldRetry) return@observeNetworkStateWithSettings
+        scope.launch {
+            settingsRepo.observeNetworkStateWithSettings().collect { stateWithSettings ->
+                if (!stateWithSettings.shouldRetry) return@collect
 
-            val retryDownloads = downloadsRepo.getRaw().filter {
-                stateWithSettings.shouldReload(it.statusAsError?.reason)
-            }
-            if (retryDownloads.isNotEmpty()) {
-                logger.i("Has connection, retrying previous failed by connectivity...")
-                val finishedItems = downloadsFinishedQueue.value
-                retryDownloads.forEach {
-                    finishedItems.find { item -> item.downloadId == it.id }?.let {
-                        retryDownloadSuspended(it.downloadId, it.params)
+                val retryDownloads = downloadsRepo.getRaw().filter {
+                    stateWithSettings.shouldReload(it.statusAsError?.reason)
+                }
+                if (retryDownloads.isNotEmpty()) {
+                    logger.i("Has connection, retrying previous failed by connectivity...")
+                    val finishedItems = downloadsFinishedQueue.value
+                    retryDownloads.forEach {
+                        finishedItems.find { item -> item.downloadId == it.id }?.let {
+                            retryDownloadSuspended(it.downloadId, it.params)
+                        }
                     }
                 }
             }
@@ -449,7 +451,7 @@ class DownloadManager @Inject constructor(
                         removeFinishedSuspended(id)
                     }
                     val currentFailed = _failedStartParamsFlow.value.toMutableList()
-                    currentFailed.removeIf { failed -> it.first.url == failed.url  }
+                    currentFailed.removeIf { failed -> it.first.url == failed.url }
                     _failedStartParamsFlow.value = currentFailed
                 }
             }

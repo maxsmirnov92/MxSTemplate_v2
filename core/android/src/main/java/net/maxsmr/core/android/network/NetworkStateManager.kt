@@ -8,15 +8,10 @@ import android.net.NetworkRequest
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import net.maxsmr.commonutils.live.postValueIfNew
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.baseApplicationContext
@@ -41,16 +36,12 @@ object NetworkStateManager {
 
     fun asStateLiveData() = connectionLiveData.map { it.has }
 
-    fun asFlow(scope: CoroutineScope): StateFlow<ConnectionInfo> = callbackFlow {
+    fun asFlow(): Flow<ConnectionInfo> = callbackFlow {
 
         val callback = object : BaseNetworkCallback() {
 
-            override fun onConnectivityChanged(newState: Boolean) {
-                trySend(if (newState) {
-                    getConnectionInfo()
-                } else {
-                    ConnectionInfo()
-                })
+            override fun onConnectivityChanged(newInfo: ConnectionInfo) {
+                trySend(newInfo)
             }
         }
 
@@ -59,12 +50,18 @@ object NetworkStateManager {
             build()
         }, callback)
 
+        if (callback.activeNetworks.isEmpty()) {
+            trySend(getConnectionInfo())
+        }
+        logger.d("NetworkCallback registered")
+
         awaitClose {
             connectivityManager.unregisterNetworkCallback(callback)
+            logger.d("NetworkCallback unregistered")
         }
-    }.stateIn(scope, SharingStarted.WhileSubscribed(5_000), getConnectionInfo())
+    }/*.stateIn(scope, SharingStarted.WhileSubscribed(5_000), getConnectionInfo())*/
 
-    fun asStateFlow(scope: CoroutineScope): Flow<Boolean> = asFlow(scope).map { it.has }
+    fun asStateFlow(): Flow<Boolean> = asFlow().map { it.has }
 
     /**
      * Принудительно обновить LD. **Не использовать** - см. описание класса.
@@ -105,15 +102,9 @@ object NetworkStateManager {
 
         private val callback = object : BaseNetworkCallback() {
 
-            override fun onConnectivityChanged(newState: Boolean) {
+            override fun onConnectivityChanged(newInfo: ConnectionInfo) {
                 //Методы могут вызываться не в Main потоке, поэтому post
-                this@ConnectionLiveData.postValueIfNew(
-                    if (newState) {
-                        getConnectionInfo()
-                    } else {
-                        ConnectionInfo()
-                    }
-                )
+                this@ConnectionLiveData.postValue(newInfo)
             }
         }
 
@@ -134,16 +125,16 @@ object NetworkStateManager {
                 //3. Отключили сеть
                 //4. Переоткрыли апп
                 //ФР: LD стала активна, но не пересоздается (остается в памяти), initial не влияет, коллбек не срабатывает
-                postValueIfNew(getConnectionInfo())
+                postValue(getConnectionInfo())
             }
-            logger.d("registerNetworkCallback")
+            logger.d("NetworkCallback registered")
         }
 
         override fun onInactive() {
             super.onInactive()
             connectivityManager.unregisterNetworkCallbackSafe(callback)
             callback.activeNetworks.clear()
-            logger.d("unregisterNetworkCallback")
+            logger.d("NetworkCallback unregistered")
         }
 
         override fun getValue(): ConnectionInfo {
@@ -157,12 +148,14 @@ object NetworkStateManager {
 
         val hasActiveNetworks: Boolean get() = activeNetworks.isNotEmpty()
 
+        private var lastInfo: ConnectionInfo? = null
+
         final override fun onAvailable(network: Network) {
             super.onAvailable(network)
             synchronized(activeNetworks) {
                 activeNetworks.add(network)
                 logger.d("Connection $network available. Active: ${activeNetworks.joinToString()}")
-                onConnectivityChanged(hasActiveNetworks)
+                onNewConnectivity()
             }
         }
 
@@ -171,10 +164,27 @@ object NetworkStateManager {
             synchronized(activeNetworks) {
                 activeNetworks.remove(network)
                 logger.d("Connection $network lost. Active: ${activeNetworks.joinToString()}")
-                onConnectivityChanged(hasActiveNetworks)
+                onNewConnectivity()
             }
         }
 
-        abstract fun onConnectivityChanged(newState: Boolean)
+        // не главный поток
+        abstract fun onConnectivityChanged(newInfo: ConnectionInfo)
+
+        private fun onNewConnectivity() {
+            val newInfo = if (hasActiveNetworks) {
+                // значение отсюда может быть с опозданием:
+                // например, включен Wi-Fi поверх мобильной сети -
+                // нужно ждать более поздний onLost
+                getConnectionInfo()
+            } else {
+                ConnectionInfo(false)
+            }
+            if (lastInfo != newInfo) {
+                logger.d("Connectivity changed from '$lastInfo to '$newInfo'")
+                this.lastInfo = newInfo
+                onConnectivityChanged(newInfo)
+            }
+        }
     }
 }

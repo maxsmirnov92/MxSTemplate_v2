@@ -1,11 +1,8 @@
 package net.maxsmr.feature.download.data.manager
 
 import android.content.Context
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import net.maxsmr.core.network.exceptions.NoConnectivityException
@@ -14,21 +11,13 @@ import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.Pref
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.net.SocketException
 import java.net.SocketTimeoutException
-import kotlin.jvm.Throws
 
-fun CoroutineScope.observeNetworkStateWithSettings(
-    repo: SettingsDataStoreRepository,
-    collectFunc: suspend (NetworkStateWithSettings) -> Unit,
-): Job {
-    return launch {
-        combine(
-            NetworkStateManager.asFlow(this),
-            repo.settingsFlow
-        ) { connectionInfo: NetworkStateManager.ConnectionInfo, settings: AppSettings ->
-            NetworkStateWithSettings(connectionInfo, settings.retryDownloads, settings.loadByWiFiOnly)
-        }.collectLatest {
-            collectFunc(it)
-        }
+fun SettingsDataStoreRepository.observeNetworkStateWithSettings(): Flow<NetworkStateWithSettings> {
+    return combine(
+        NetworkStateManager.asFlow(),
+        settingsFlow
+    ) { connectionInfo: NetworkStateManager.ConnectionInfo, settings: AppSettings ->
+        NetworkStateWithSettings(connectionInfo, settings.retryDownloads, settings.loadByWiFiOnly)
     }
 }
 
@@ -63,7 +52,6 @@ fun Context.checkPreferableConnection(preferredConnectionTypes: Set<PreferableTy
     }
 }
 
-
 data class NetworkStateWithSettings(
     val connectionInfo: NetworkStateManager.ConnectionInfo,
     val shouldRetry: Boolean,
@@ -87,5 +75,11 @@ data class NetworkStateWithSettings(
                 false
             }
         }
+    }
+
+    override fun toString(): String {
+        return "NetworkStateWithSettings(connectionInfo=$connectionInfo, " +
+                "shouldRetry=$shouldRetry, " +
+                "loadByWiFiOnly=$loadByWiFiOnly)"
     }
 }
