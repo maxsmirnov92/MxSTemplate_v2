@@ -17,6 +17,7 @@ import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.delegates.viewBinding
+import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
@@ -77,6 +78,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
     private var toggleServiceStateMenuItem: MenuItem? = null
     private var downloadPackageListMenuItem: MenuItem? = null
+    private var clearSuccessMenuItem: MenuItem? = null
 
     override fun createAlertDelegate(): BaseAlertDelegate<NotificationReaderViewModel, StandardAlertRepresentation> =
         CombinedViewFragmentAlertDelegate(
@@ -107,6 +109,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                     rvNotifications.isVisible = false
                     tvNotificationsEmpty.isVisible = true
                 }
+                refreshClearSuccessMenuItem()
             }
 
             rvNotifications.adapter = adapter
@@ -145,7 +148,9 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
         super.onCreateMenu(menu, inflater)
         toggleServiceStateMenuItem = menu.findItem(R.id.actionServiceStartStop)
         downloadPackageListMenuItem = menu.findItem(R.id.actionDownloadPackageList)
+        clearSuccessMenuItem = menu.findItem(R.id.actionClearSuccess)
         refreshMenuItemsByRunning()
+        refreshClearSuccessMenuItem()
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -157,6 +162,11 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
             R.id.actionDownloadPackageList -> {
                 viewModel.onDownloadPackageListAction()
+                true
+            }
+
+            R.id.actionClearSuccess -> {
+                viewModel.onClearSuccessAction()
                 true
             }
 
@@ -203,5 +213,10 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
         downloadPackageListMenuItem?.let { item ->
             item.isVisible = isRunning
         }
+    }
+
+    private fun refreshClearSuccessMenuItem() {
+        clearSuccessMenuItem?.isVisible = viewModel.notificationsItems.value
+            ?.any { it.status is NotificationReaderEntity.Success } == true
     }
 }
