@@ -17,14 +17,14 @@
         <TextView
             android:id="@+id/tvNotificationId"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Headline"
             android:textSize="@dimen/textSizeMini"
             android:typeface="monospace"
+            app:layout_constrainedHeight="true"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/tvNotificationPackageName"
-            app:layout_constraintHeight_default="spread"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintWidth_default="wrap"
@@ -37,28 +37,27 @@
         <TextView
             android:id="@+id/tvNotificationPackageName"
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginStart="@dimen/defaultPadding"
-            android:layout_marginEnd="@dimen/quarterOfDefaultPadding"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="@dimen/defaultPadding"
             android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
             android:textStyle="italic|bold"
             android:typeface="monospace"
+            app:layout_constrainedHeight="true"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/containerNotificationStatus"
-            app:layout_constraintHeight_default="spread"
             app:layout_constraintStart_toEndOf="@id/tvNotificationId"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="net.maxsmr.notification_rrrrrrrrrredsfghsdghsdgsdasdfgsdgfsdgsdgader" />
+            tools:text="net.maxsmr.notification_readerrrr" />
 
         <LinearLayout
             android:id="@+id/containerNotificationStatus"
             android:layout_width="0dp"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:gravity="end|center_vertical"
             android:orientation="vertical"
+            app:layout_constrainedHeight="true"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHeight_default="wrap"
             app:layout_constraintStart_toEndOf="@id/tvNotificationPackageName"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintWidth_default="wrap"
@@ -92,7 +91,7 @@
                 android:textStyle="bold"
                 android:typeface="monospace"
                 tools:text="Exceptionsdgj,nslkdngklsdgklsdsdgsdgs dgsddfhdfhdfhdfhdfhdfhsdgsdgngs dklgnlk"
-                tools:visibility="visible" />
+                tools:visibility="gone" />
 
         </LinearLayout>
 
@@ -147,9 +146,9 @@
             android:id="@+id/tvNotificationTimeName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            tools:text="@string/notification_reader_time_started"
             android:textAppearance="@style/TextAppearance.AppCompat.Small"
-            android:typeface="monospace" />
+            android:typeface="monospace"
+            tools:text="@string/notification_reader_time_started" />
 
         <TextView
             android:id="@+id/tvNotificationTimeValue"

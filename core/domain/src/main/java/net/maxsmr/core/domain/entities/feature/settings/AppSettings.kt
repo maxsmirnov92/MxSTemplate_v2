@@ -9,7 +9,7 @@ data class AppSettings(
     val loadByWiFiOnly: Boolean = false,
     val retryOnConnectionFailure: Boolean = true,
     val retryDownloads: Boolean = true,
-    val disableNotifications: Boolean = true,
+    val disableNotifications: Boolean = false,
     val updateNotificationInterval: Long = UPDATE_NOTIFICATION_INTERVAL_DEFAULT,
     val canDrawOverlays: Boolean = true,
     val notificationsUrl: String = "",

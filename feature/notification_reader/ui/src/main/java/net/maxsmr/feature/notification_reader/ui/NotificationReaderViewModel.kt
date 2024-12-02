@@ -147,6 +147,7 @@ class NotificationReaderViewModel @Inject constructor(
 
     private fun doStartWithHandleResult(context: Context): ManagerStartResult {
         return manager.doStart(context).also {
+            logger.d("doStart result: $it")
             when (it) {
                 ManagerStartResult.SERVICE_START_FAILED -> {
                     showSnackbar(TextMessage(R.string.notification_reader_snack_cannot_start_service))
@@ -169,6 +170,7 @@ class NotificationReaderViewModel @Inject constructor(
         // при возврате с экрана настроек, когда разрешение было отозвано,
         // можно попытаться остановить ещё раз
         return manager.doStop(context, navigateToSettings).also {
+            logger.d("doStop result: $it")
             if (it == ManagerStopResult.SETTINGS_NEEDED && navigateToSettings) {
                 showToast(TextMessage(R.string.notification_reader_toast_stop_remove_in_settings))
             }
