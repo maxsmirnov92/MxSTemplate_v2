@@ -21,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.NotificationWrapper
 import net.maxsmr.commonutils.isAtLeastOreo
-import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.commonutils.isAtLeastUpsideDownCake
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
@@ -46,7 +45,7 @@ import javax.inject.Inject
 import javax.inject.Named
 
 @AndroidEntryPoint
-class NotificationReaderListenerService: NotificationListenerService() {
+class NotificationReaderListenerService : NotificationListenerService() {
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("NotificationReaderListenerService")
 
@@ -87,7 +86,7 @@ class NotificationReaderListenerService: NotificationListenerService() {
     }
 
     @Inject
-    lateinit var manager : NotificationReaderSyncManager
+    lateinit var manager: NotificationReaderSyncManager
 
     @Inject
     lateinit var permissionsHelper: PermissionsHelper
@@ -138,12 +137,21 @@ class NotificationReaderListenerService: NotificationListenerService() {
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
         val timestamp = sbn.postTime.takeIf { it > 0 } ?: System.currentTimeMillis()
-        val summaryText = sbn.notification.getSummaryText()
-        logger.d("onNotificationPosted: $sbn, text: $summaryText")
+        val text = sbn.notification.getText()
+        logger.d("onNotificationPosted: $sbn, text: '$text'")
+        if (text.isEmpty()) {
+            logger.w("Notification $sbn has empty text, ignoring")
+            return
+        }
         coroutineScope.launch {
-            if (demoChecker.check(ToastDemoExpiredStrategy(this@NotificationReaderListenerService,
-                        getString(R.string.notification_reader_notification_handle_error)))) {
-                manager.onNewNotification(summaryText.toString(), sbn.packageName, timestamp)
+            if (demoChecker.check(
+                        ToastDemoExpiredStrategy(
+                            this@NotificationReaderListenerService,
+                            getString(R.string.notification_reader_notification_handle_error)
+                        )
+                    )
+            ) {
+                manager.onNewNotification(text.toString(), sbn.packageName, timestamp)
             } else {
                 stopForegroundCompat(true)
                 stopSelf()
@@ -192,31 +200,68 @@ class NotificationReaderListenerService: NotificationListenerService() {
                     context,
                     0,
                     Intent(context, it)
-                        .putExtra(EXTRA_CALLER_CLASS_NAME, NotificationReaderListenerService::class.java.canonicalName),
+                        .putExtra(
+                            EXTRA_CALLER_CLASS_NAME,
+                            NotificationReaderListenerService::class.java.canonicalName
+                        ),
                     withMutabilityFlag(FLAG_UPDATE_CURRENT, false)
                 )
             )
         }
     }
 
-    private fun Notification.getSummaryText(): CharSequence {
-        var titleText: CharSequence? = extras.getCharSequence(EXTRA_TITLE)
-        val summary = SpannableStringBuilder()
-        if (titleText == null) {
+    private fun Notification.getText(): CharSequence {
+        val result = SpannableStringBuilder()
+
+        var titleText = extras.getCharSequence(EXTRA_TITLE)
+        if (titleText.isNullOrEmpty()) {
             titleText = extras.getCharSequence(Notification.EXTRA_TITLE_BIG)
         }
+        if (!titleText.isNullOrEmpty()) {
+            result.append(titleText)
+        }
 
-        if (titleText != null) {
-            summary.append(titleText)
+        val contentText = extras.getCharSequence(Notification.EXTRA_TEXT)
+        if (!contentText.isNullOrEmpty()) {
+            if (result.isNotEmpty()) {
+                result.append(" • ")
+            }
+            result.append(contentText)
         }
-        val contentText: CharSequence? = extras.getCharSequence(Notification.EXTRA_TEXT)
-        if (titleText != null && contentText != null) {
-            summary.append(" • ")
+
+        var hasLineSeparator = false
+
+        fun addLineSeparator() {
+            repeat(if (hasLineSeparator) 1 else 2) {
+                result.append(System.lineSeparator())
+            }
+            hasLineSeparator = true
         }
-        if (contentText != null) {
-            summary.append(contentText)
+
+        fun CharSequence?.addIfNotEmpty() {
+            if (!isNullOrEmpty()) {
+                if (result.isNotEmpty()) {
+                    addLineSeparator()
+                }
+                result.append(this)
+            }
         }
-        return summary
+
+        val subText = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)
+        subText.addIfNotEmpty()
+
+        val bigText = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)
+        bigText.addIfNotEmpty()
+
+        val linesText = try {
+            extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+                ?.joinToString(System.lineSeparator())
+        } catch (e: ClassCastException) {
+            extras.getCharSequence(Notification.EXTRA_TEXT_LINES)
+        }
+        linesText.addIfNotEmpty()
+
+        return result
     }
 
     companion object {

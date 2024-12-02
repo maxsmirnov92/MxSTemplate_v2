@@ -36,6 +36,7 @@ class NotificationsSendUseCase @Inject constructor(
 
             dataSource.notifyData(notifications.map {
                 NotificationReaderDataRequest(
+                    it.id,
                     it.contentText,
                     it.packageName,
                     it.timestamp
