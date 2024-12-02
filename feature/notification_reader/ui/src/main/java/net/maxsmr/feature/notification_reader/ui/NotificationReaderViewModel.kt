@@ -139,6 +139,14 @@ class NotificationReaderViewModel @Inject constructor(
         }
     }
 
+    fun onClearSuccessAction() {
+        viewModelScope.launch {
+            readerRepo.removeNotifications(
+                readerRepo.getNotificationsRaw { status is NotificationReaderEntity.Success }
+            )
+        }
+    }
+
     fun isServiceRunning(): Boolean {
         // сервис может продолжать числитmся как выполняющийся
         // несмотря на убирание из настроек и stopService

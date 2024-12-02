@@ -4,6 +4,7 @@
     <string name="notification_reader_menu_action_service_start">Запустить</string>
     <string name="notification_reader_menu_action_service_stop">Остановить</string>
     <string name="notification_reader_menu_action_download_package_list">Загрузить файл со списком пакетов</string>
+    <string name="notification_reader_menu_action_clear_success">Очистить все готовые уведомления</string>
     <string name="notification_reader_toast_start_add_in_settings">Приложение должно быть выбрано в настройках для старта сервиса</string>
     <string name="notification_reader_toast_stop_remove_in_settings">Приложение должно быть убрано в настройках для завершения сервиса</string>
     <string name="notification_reader_toast_can_draw_overlays_settings">Приложение должно быть отмечено в списке, чтобы запускать сервис в фоне</string>
