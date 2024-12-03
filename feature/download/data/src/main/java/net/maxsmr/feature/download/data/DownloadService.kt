@@ -768,18 +768,20 @@ class DownloadService : Service() {
     }
 
     private fun NotificationCompat.Builder.addRetryAction(downloadId: Long, params: Params) {
-        addAction(
-            android.R.drawable.stat_notify_sync,
-            getString(R.string.download_notification_error_retry_button),
-            createPendingIntent(
-                context,
-                downloadsRepo.nextNotificationRequestCode(),
-                bundleOf(
-                    EXTRA_DOWNLOAD_SERVICE_PARAMS to params,
-                    EXTRA_NOTIFICATION_ID_RETRY to downloadId
+        if (params.notificationParams?.retryActionIfFailed == true) {
+            addAction(
+                android.R.drawable.stat_notify_sync,
+                getString(R.string.download_notification_error_retry_button),
+                createPendingIntent(
+                    context,
+                    downloadsRepo.nextNotificationRequestCode(),
+                    bundleOf(
+                        EXTRA_DOWNLOAD_SERVICE_PARAMS to params,
+                        EXTRA_NOTIFICATION_ID_RETRY to downloadId
+                    )
                 )
             )
-        )
+        }
     }
 
     private fun updateForegroundNotification(isFinished: Boolean) {
@@ -1241,6 +1243,7 @@ class DownloadService : Service() {
         val cancelTitle: String = EMPTY_STRING,
         val contentText: String = EMPTY_STRING,
         val updateNotificationInterval: Long = UPDATE_NOTIFICATION_INTERVAL_DEFAULT,
+        val retryActionIfFailed: Boolean = true,
         val successActions: MutableSet<SuccessAction> = mutableSetOf(),
     ) : Serializable {
 

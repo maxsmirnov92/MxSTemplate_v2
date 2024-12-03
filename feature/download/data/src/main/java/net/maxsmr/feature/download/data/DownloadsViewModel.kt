@@ -269,7 +269,7 @@ class DownloadsViewModel @Inject constructor(
 
         @JvmStatic
         @JvmOverloads
-        fun defaultNotificationActions(
+        fun defaultSuccessNotificationActions(
             context: Context,
             @StringRes shareChooseClientTitle: Int = net.maxsmr.core.ui.R.string.chooser_title_send,
             @StringRes viewChooseClientTitle: Int = net.maxsmr.core.ui.R.string.chooser_title_view,
@@ -303,7 +303,7 @@ class DownloadsViewModel @Inject constructor(
             } ?: HashInfo(ALGORITHM_SHA1, EMPTY_STRING) // если не указан - считаем в итоге по тому же алгоритму
 
             val notificationParams = DownloadService.NotificationParams(
-                successActions = defaultNotificationActions(baseApplicationContext)
+                successActions = defaultSuccessNotificationActions(baseApplicationContext)
             )
 
             // не спрашивать из ответа тип, если он известен заранее
