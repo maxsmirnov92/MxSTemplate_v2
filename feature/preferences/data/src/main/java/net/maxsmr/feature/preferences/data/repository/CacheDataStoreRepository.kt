@@ -101,23 +101,6 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun getNotificationReaderKey(defaultKey: String): String {
-        var result = dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_NOTIFICATION_READER_API_KEY]
-        }.firstOrNull().orEmpty()
-        if (result.isEmpty()) {
-            setNotificationReaderKey(defaultKey)
-            result = defaultKey
-        }
-        return result
-    }
-
-    suspend fun setNotificationReaderKey(key: String) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_KEY_NOTIFICATION_READER_API_KEY] = key
-        }
-    }
-
     suspend fun isPackageInList(
         context: Context,
         packageName: String,
@@ -185,7 +168,6 @@ class CacheDataStoreRepository @Inject constructor(
         private val FIELD_BATTERY_OPTIMIZATION_ASKED = booleanPreferencesKey("batteryOptimizationAsked")
         private val FIELD_CAN_DRAW_OVERLAYS_ASKED = booleanPreferencesKey("canDrawOverlaysAsked")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
-        private val FIELD_KEY_NOTIFICATION_READER_API_KEY = stringPreferencesKey("keyNotificationReader")
         private val FIELD_KEY_PACKAGE_LIST = stringSetPreferencesKey("keyPackageList")
         private val FIELD_KEY_SHOULD_NOTIFICATION_READER_RUN =
             booleanPreferencesKey("shouldNotificationReaderRun")

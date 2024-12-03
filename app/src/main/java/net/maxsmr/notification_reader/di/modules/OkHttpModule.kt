@@ -50,10 +50,9 @@ class OkHttpModule {
     fun provideNotificationReaderOkHttpClient(
         @ApplicationContext context: Context,
         settingsRepository: SettingsDataStoreRepository,
-        cacheRepo: CacheDataStoreRepository,
         @NotificationReaderHostManager
         hostManager: NotificationReaderHostManagerHolder,
     ): NotificationReaderOkHttpClientHolder {
-        return NotificationReaderOkHttpClientHolder(settingsRepository, cacheRepo, hostManager, context)
+        return NotificationReaderOkHttpClientHolder(settingsRepository, hostManager, context)
     }
 }

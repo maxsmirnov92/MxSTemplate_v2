@@ -45,6 +45,7 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
             with(viewModel) {
                 put(notificationsUrlField, binding.tilNotificationsUrl)
                 put(packageListUrlField, binding.tilPackageListUrl)
+                put(notificationsApiKeyField, binding.tilNotificationsApiKey)
                 put(failedNotificationsWatcherIntervalField, binding.tilFailedNotificationsWatcherInterval)
                 put(successNotificationsLifeTimeField, binding.tilSuccessNotificationsLifeTime)
                 put(connectTimeoutField, binding.tilConnectTimeout)
@@ -105,6 +106,8 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
         viewModel.notificationsUrlField.observeTextWithBind(binding.tilNotificationsUrl)
         viewModel.packageListUrlField.observeTextWithBind(binding.tilPackageListUrl)
         viewModel.isWhitePackageListField.bindValue(viewLifecycleOwner, binding.switchWhitePackageList)
+
+        viewModel.notificationsApiKeyField.observeTextWithBind(binding.tilNotificationsApiKey)
 
         viewModel.failedNotificationsWatcherIntervalField.observeLongWithBind(binding.tilFailedNotificationsWatcherInterval)
         viewModel.successNotificationsLifeTimeField.observeLongWithBind(binding.tilSuccessNotificationsLifeTime)

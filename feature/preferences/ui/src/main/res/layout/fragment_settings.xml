@@ -74,6 +74,22 @@
                 app:switchPadding="4dp" />
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilNotificationsApiKey"
+                style="@style/TextInputOutlinedWithCorners"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/defaultPadding"
+                tools:hint="@string/settings_field_notifications_api_key_hint">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etNotificationsApiKey"
+                style="@style/SingleLineInputText"
+                android:inputType="text|textNoSuggestions"
+                tools:hint="@string/settings_field_notifications_api_key_hint" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilFailedNotificationsWatcherInterval"
                 style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"

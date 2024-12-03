@@ -14,7 +14,6 @@ import okhttp3.OkHttpClient
 
 class NotificationReaderOkHttpClientHolder(
     private val settingsRepository: SettingsDataStoreRepository,
-    private val cacheRepo: CacheDataStoreRepository,
     hostManager: NotificationReaderHostManagerHolder,
     context: Context,
 ) : BaseKeyInstanceHolder<NotificationReaderOkHttpClientHolder.Key, OkHttpClient>({
@@ -26,7 +25,13 @@ class NotificationReaderOkHttpClientHolder(
         apiKeyProvider = {
             // не пересоздавать OkHttpClient при смене ключа - подставлять в Interceptor
             runBlocking {
-                cacheRepo.getNotificationReaderKey(BuildConfig.API_KEY_NOTIFICATION_READER)
+                val settings = settingsRepository.getSettings()
+                var key = settings.notificationsApiKey
+                if (key.isEmpty()) {
+                    key = BuildConfig.API_KEY_NOTIFICATION_READER
+                    settingsRepository.updateSettings(settings.copy(notificationsApiKey = key))
+                }
+                key
             }
         },
         urlProvider = { hostManager.get().uri.toString() }

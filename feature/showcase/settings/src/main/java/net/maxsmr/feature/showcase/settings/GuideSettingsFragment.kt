@@ -1,5 +1,6 @@
 package net.maxsmr.feature.showcase.settings
 
+import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -16,6 +17,7 @@ import net.maxsmr.commonutils.gui.scrollToView
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.ui.SettingsFragment
+import net.maxsmr.feature.preferences.ui.SettingsViewModel
 import net.maxsmr.feature.showcase.GuideFragmentDelegate
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType
 import javax.inject.Inject
@@ -62,9 +64,12 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
 
     private var isGuidePendingStart = false
 
+    private var importKeyMenuItem: MenuItem? = null
+
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
         // срабатывает 2 раза...
+        importKeyMenuItem = menu.findItem(R.id.actionImportKey)
         with(binding) {
             requireView().post {
                 if (!guideDelegate.wasStarted) {
@@ -86,6 +91,10 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
                         switchWhitePackageList.settingsGuideItem(
                             "isWhitePackageList",
                             R.string.showcase_settings_description_is_white_package_list
+                        ),
+                        tilNotificationsApiKey.settingsGuideItem(
+                            "notificationsApiKey",
+                            R.string.showcase_settings_description_notifications_api_key
                         ),
                         tilFailedNotificationsWatcherInterval.settingsGuideItem(
                             "failedNotificationsWatcherInterval",
@@ -124,12 +133,14 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
                                 )
                             )
                         }
-                        add(
-                            (toolbar.findOverflowButton() ?: toolbar).settingsGuideItem(
-                                "importApiKey",
-                                R.string.showcase_settings_description_import_api_key
+                        if (importKeyMenuItem?.isVisible == true) {
+                            add(
+                                (toolbar.findOverflowButton() ?: toolbar).settingsGuideItem(
+                                    "importNotificationsApiKey",
+                                    R.string.showcase_settings_description_notifications_api_key_import
+                                )
                             )
-                        )
+                        }
                     }
                 }
             }
@@ -143,6 +154,15 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
             true
         } else {
             super.onMenuItemSelected(menuItem)
+        }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: SettingsViewModel) {
+        super.onViewCreated(view, savedInstanceState, viewModel)
+        cacheRepo.isTutorialCompleted.collectSafely {
+            if (!it) {
+                saveChanges()
+            }
         }
     }
 

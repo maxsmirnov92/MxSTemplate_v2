@@ -9,7 +9,8 @@
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/actionImportKey"
-        android:title="@string/settings_menu_action_import_key" />
+        android:title="@string/settings_menu_action_import_key"
+        android:visible="false" />
     <item
         android:id="@+id/actionStartGuide"
         android:title="@string/settings_menu_action_restart_guide" />

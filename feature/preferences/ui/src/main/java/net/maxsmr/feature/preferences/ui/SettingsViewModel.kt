@@ -11,6 +11,7 @@ import net.maxsmr.commonutils.isAtLeastOreo
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
 import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableValue
@@ -49,6 +50,16 @@ class SettingsViewModel @Inject constructor(
     val isWhitePackageListField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
         .persist(state, KEY_FIELD_IS_WHITE_PACKAGE_LIST)
+        .build()
+
+    val notificationsApiKeyField: Field<String> = Field.Builder(EMPTY_STRING)
+        .emptyIf { it.isEmpty() }
+        .setRequired(R.string.settings_field_notifications_api_key_empty_error)
+//        .validators(Field.Validator({
+//            return@Validator TextMessage(R.string.settings_field_api_key_error)
+//        })
+        .hint(R.string.settings_field_notifications_api_key_hint)
+        .persist(state, KEY_FIELD_API_KEY_NOTIFICATIONS)
         .build()
 
     val failedNotificationsWatcherIntervalField: Field<Long> = Field.Builder(0L)
@@ -117,6 +128,7 @@ class SettingsViewModel @Inject constructor(
         notificationsUrlField,
         packageListUrlField,
         isWhitePackageListField,
+        notificationsApiKeyField,
         failedNotificationsWatcherIntervalField,
         successNotificationsLifeTimeField,
         connectTimeoutField,
@@ -158,6 +170,10 @@ class SettingsViewModel @Inject constructor(
 
         isWhitePackageListField.valueLive.observe {
             appSettings.value = currentAppSettings.copy(isWhitePackageList = it)
+        }
+
+        notificationsApiKeyField.clearErrorOnChange(this) {
+            appSettings.value = currentAppSettings.copy(notificationsApiKey = it)
         }
 
         failedNotificationsWatcherIntervalField.clearErrorOnChange(this) {
@@ -279,6 +295,7 @@ class SettingsViewModel @Inject constructor(
         // используется для того, чтобы выставить initial'ы в филды
         notificationsUrlField.value = settings.notificationsUrl
         packageListUrlField.value = settings.packageListUrl
+        notificationsApiKeyField.value = settings.notificationsApiKey
         isWhitePackageListField.value = settings.isWhitePackageList
         failedNotificationsWatcherIntervalField.value = settings.failedNotificationsWatcherInterval
         successNotificationsLifeTimeField.value = settings.successNotificationsLifeTime
@@ -305,6 +322,7 @@ class SettingsViewModel @Inject constructor(
         private const val KEY_FIELD_URL_NOTIFICATIONS = "url_notifications"
         private const val KEY_FIELD_URL_PACKAGE_LIST = "url_package_list"
         private const val KEY_FIELD_IS_WHITE_PACKAGE_LIST = "is_white_package_list"
+        private const val KEY_FIELD_API_KEY_NOTIFICATIONS = "api_key_notifications"
         private const val KEY_FIELD_FAILED_NOTIFICATIONS_WATCHER_INTERVAL = "failed_notifications_watcher_interval"
         private const val KEY_FIELD_SUCCESS_NOTIFICATIONS_LIFE_TIME = "success_notifications_life_time"
         private const val KEY_FIELD_CONNECT_TIMEOUT = "connect_timeout"
