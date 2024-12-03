@@ -12,7 +12,8 @@
     <string name="showcase_settings_description_notifications_url">URL сервера для выгрузки данных по уведомлениям.\nНовое значение будет задействовано при следующей отправке.</string>
     <string name="showcase_settings_description_package_list_url">Прямой URL для загрузки текстового файла со списком разрешённых или запрещённых имён пакетов, по которому производится фильтрация уведомлений.\nПри изменении значения производится автоматическая загрузка (если сервис ранее был запущен).</string>
     <string name="showcase_settings_description_is_white_package_list">Отметьте данную опцию, если загружаемый список должен содержать разрешённые имена. И выключите, если запрещённые.\nПрименяется сразу после изменения.</string>
+    <string name="showcase_settings_description_notifications_api_key">Ключ, с которым будет производиться запрос с уведомлениями на сервер.\nИспользуется при очередной отправке.</string>
     <string name="showcase_settings_description_failed_notifications_watcher_interval">Интервал, через который будут осуществляться периодические попытки выгрузки неудавшихся уведомлений (в секундах или 0, если запуск этой задачи не требуется).\nПрименяется сразу после изменения.</string>
     <string name="showcase_settings_description_success_notifications_life_time">Время, в течение которого успешно отправленные уведомления должны оставаться (в секундах или 0, если бессрочно). Также такие уведомления можно смахивать.\nПрименяется сразу после изменения.</string>
-    <string name="showcase_settings_description_import_api_key">Здесь находится опция для импорта ключа, с которым будет производиться запрос с уведомлениями на сервер, из файла.</string>
+    <string name="showcase_settings_description_notifications_api_key_import">Здесь находится опция для импорта ключа, с которым будет производиться запрос с уведомлениями на сервер, из файла.\nИспользуется при очередной отправке.</string>
 </resources>

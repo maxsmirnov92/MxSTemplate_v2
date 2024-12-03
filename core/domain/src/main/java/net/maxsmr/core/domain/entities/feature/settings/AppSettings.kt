@@ -15,6 +15,7 @@ data class AppSettings(
     val notificationsUrl: String = "",
     val packageListUrl: String = "",
     val isWhitePackageList: Boolean = true,
+    val notificationsApiKey: String = "",
     val failedNotificationsWatcherInterval: Long = 15L,
     val successNotificationsLifeTime: Long = 60L
 ) : Serializable {
