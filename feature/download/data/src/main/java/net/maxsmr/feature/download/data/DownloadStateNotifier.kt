@@ -96,7 +96,12 @@ class DownloadStateNotifier @Inject constructor() {
         val params: DownloadService.Params,
         val isStarted: Boolean,
         val downloadInfo: DownloadInfo? = null,
-    )
+    ): Serializable {
+
+        override fun toString(): String {
+            return "DownloadStartInfo(params=$params, isStarted=$isStarted, downloadInfo=$downloadInfo)"
+        }
+    }
 
     sealed class DownloadState(
         val downloadInfo: DownloadInfo,

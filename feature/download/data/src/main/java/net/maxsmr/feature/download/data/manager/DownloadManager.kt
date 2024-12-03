@@ -1,8 +1,10 @@
 package net.maxsmr.feature.download.data.manager
 
+import androidx.core.net.toUri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -267,6 +269,7 @@ class DownloadManager @Inject constructor(
         }
         scope.launch {
             notifier.downloadStateEvents.collect { state ->
+                logger.d("downloadStateEvents: $state")
                 if (state !is DownloadStateNotifier.DownloadState.Loading) {
                     logger.d("Finished downloadStateEvent: $state")
                     val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
@@ -448,10 +451,25 @@ class DownloadManager @Inject constructor(
                     is DownloadInfo.Status.Success -> LoadState.success(DownloadInfoWithParams(it.first, info))
                 }
             } else {
-                // DownloadInfo не было, т.к. был зафиксирован еррор добавления в очередь / старта сервиса
-                LoadState.error(RuntimeException())
+                // DownloadInfo не было, т.к. был зафиксирован еррор добавления в очередь / старта сервиса;
+                // но не возвращать еррор, если загрузка, проходящая по isSameFunc, уже где-то есть
+                resultItems.value.find { r -> r.params.isSameFunc(params) }?.let { r ->
+                    logger.w("observeDownload info is null, but params '$params' found in resultItems")
+                    LoadState.loading(DownloadInfoWithParams(r.params, r.downloadInfo))
+                } ?: run {
+                    // или можно поймать момент, когда оно сейчас в downloadsPendingQueue/downloadsLaunchedQueue
+                    (downloadsPendingQueue.value + downloadsLaunchedQueue.value).find { q -> q.params.isSameFunc(params) }?.let { q ->
+                        logger.w("observeDownload info is null, but params '$params' found in downloadsPendingQueue/downloadsLaunchedQueue")
+                        LoadState.loading(DownloadInfoWithParams(q.params, null))
+                    } ?: run {
+                        logger.w("observeDownload info is null and params '$params' not found")
+                        LoadState.error(RuntimeException())
+                    }
+                }
             }.also { state ->
                 if (removeWhenFinished && !state.isLoading) {
+                    // TODO костыль с задержкой перед удалением, чтобы остальные успели прочитать из Flow
+                    delay(100)
                     state.data?.downloadInfo?.id?.let { id ->
                         removeFinishedSuspended(id)
                     }
@@ -628,6 +646,7 @@ class DownloadManager @Inject constructor(
         withDb: Boolean = true,
         withUri: Boolean = false,
     ) {
+        logger.d("removeFinishedSuspended, downloadId: $downloadId")
         // поиск только в завершённых
         val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
         val iterator = newFinishedSet.iterator()
@@ -774,7 +793,7 @@ class DownloadManager @Inject constructor(
     }
 
     private fun DownloadService.Params.isSame(otherParams: DownloadService.Params, checkResourceName: Boolean = false): Boolean {
-        return url.equalsIgnoreSubDomain(otherParams.url)
+        return url.toUri().equalsIgnoreSubDomain(otherParams.url.toUri())
                 && tag == otherParams.tag
                 && (!checkResourceName || targetResourceName == otherParams.targetResourceName)
     }

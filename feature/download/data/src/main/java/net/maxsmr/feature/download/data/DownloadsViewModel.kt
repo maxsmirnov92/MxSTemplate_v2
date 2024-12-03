@@ -265,7 +265,7 @@ class DownloadsViewModel @Inject constructor(
      */
     data class DownloadInfoWithParams(
         val params: DownloadService.Params,
-        val downloadInfo: DownloadInfo,
+        val downloadInfo: DownloadInfo?,
     )
 
     companion object {
