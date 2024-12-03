@@ -39,6 +39,7 @@ import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.utils.decodeFromStringOrNull
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultGETServiceParamsFor
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultPOSTServiceParamsFor
+import net.maxsmr.feature.download.data.DownloadService.RequestParams.MimeTypeMatchRule
 import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.data.manager.DownloadManager.FailAddReason
@@ -177,8 +178,12 @@ class DownloadsViewModel @Inject constructor(
      * @param mimeType заранее известный тип из ответа, если есть
      */
     @JvmOverloads
-    fun enqueueDownload(paramsModel: DownloadParamsModel, mimeType: String? = null): DownloadService.Params {
-        val params = paramsModel.toParams(mimeType)
+    fun enqueueDownload(
+        paramsModel: DownloadParamsModel,
+        mimeType: String? = null,
+        mimeTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
+    ): DownloadService.Params {
+        val params = paramsModel.toParams(mimeType, mimeTypeRule)
         enqueueDownload(params)
         return params
     }
@@ -233,7 +238,8 @@ class DownloadsViewModel @Inject constructor(
         removeWhenFinished: Boolean,
         isSameFunc: (DownloadService.Params.(P) -> Boolean),
     ): LiveData<LoadState<DownloadInfoWithParams>> {
-        return downloadManager.observeDownload(params, removeWhenFinished, isSameFunc).asLiveData().distinctUntilChanged()
+        return downloadManager.observeDownload(params, removeWhenFinished, isSameFunc).asLiveData()
+            .distinctUntilChanged()
     }
 
     fun observeOnceDownloadByInfo(
@@ -295,7 +301,10 @@ class DownloadsViewModel @Inject constructor(
         )
 
         @JvmStatic
-        fun DownloadParamsModel.toParams(mimeType: String? = null): DownloadService.Params = with(this) {
+        fun DownloadParamsModel.toParams(
+            mimeType: String? = null,
+            mimeTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
+        ): DownloadService.Params = with(this) {
             val url = url.trim()
             val bodyUri = bodyUri?.trim()
             val targetHashInfo = targetSha1Hash?.takeIf { it.isNotEmpty() }?.let {
@@ -316,10 +325,10 @@ class DownloadsViewModel @Inject constructor(
                     DownloadService.RequestParams.Body(
                         DownloadService.RequestParams.Body.Uri(bodyUri),
                     ),
-                    ignoreContentType = hasMimeType,
                     ignoreAttachment = ignoreAttachment,
                     ignoreFileName = ignoreFileName,
                     storeErrorBody = ignoreServerErrors,
+                    contentTypeRule = if (hasMimeType) null else mimeTypeRule,
                     headers = headers,
                     subDir = subDirName,
                     targetHashInfo = targetHashInfo,
@@ -331,10 +340,10 @@ class DownloadsViewModel @Inject constructor(
                 defaultGETServiceParamsFor(
                     url,
                     fileName,
-                    ignoreContentType = hasMimeType,
                     ignoreAttachment = ignoreAttachment,
                     ignoreFileName = ignoreFileName,
                     storeErrorBody = ignoreServerErrors,
+                    contentTypeRule = if (hasMimeType) null else mimeTypeRule,
                     headers = headers,
                     subDir = subDirName,
                     targetHashInfo = targetHashInfo,

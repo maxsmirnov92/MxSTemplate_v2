@@ -69,7 +69,8 @@ import net.maxsmr.core.network.ProgressResponseBody
 import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.CONNECT_TIMEOUT_DEFAULT
 import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.RETRY_ON_CONNECTION_FAILURE_DEFAULT
 import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.withTimeouts
-import net.maxsmr.core.network.exceptions.HttpProtocolException.Companion.toHttpProtocolException
+import net.maxsmr.core.network.exceptions.IncorrectAttachmentException
+import net.maxsmr.core.network.exceptions.IncorrectContentTypeException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType
 import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
 import net.maxsmr.core.network.getContentTypeHeader
@@ -83,6 +84,7 @@ import net.maxsmr.core.network.writeBufferedOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
 import net.maxsmr.feature.download.data.DownloadService.NotificationParams
 import net.maxsmr.feature.download.data.DownloadService.Params
+import net.maxsmr.feature.download.data.DownloadService.RequestParams.MimeTypeMatchRule
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading
 import net.maxsmr.feature.download.data.manager.DownloadsHashManager
 import net.maxsmr.feature.download.data.manager.checkPreferableConnection
@@ -420,26 +422,19 @@ class DownloadService : Service() {
                 )
                 logger.i("Response finished with code ${response.code}, message \"${response.message}\" for $params")
 
-                if (!params.requestParams.storeErrorBody
-                        && !params.requestParams.ignoreAttachment
-                        && !response.hasContentDisposition(ContentDispositionType.ATTACHMENT)
-                        && !response.hasBytesAcceptRanges()
-                ) {
-                    throw response.toHttpProtocolException("No valid attachment")
-                }
-
                 var wasParamsChanged = false
 
                 if (params.resourceMimeType.isEmpty() || !params.requestParams.ignoreContentType) {
                     // при пустом исходном типе или если игнорить заголовок не надо
-                    response.getContentTypeHeader().takeIf { it.isNotEmpty() }?.let {
-                        if (params.resourceMimeType != it) {
+                    response.getContentTypeHeader().takeIf { it.isNotEmpty() }?.let { contentType ->
+                        if (params.resourceMimeType != contentType) {
                             // актуализируем из заголовка, если есть - влияет на целевое имя
-                            params.resourceMimeType = it
+                            params.resourceMimeType = contentType
                             wasParamsChanged = true
                         }
                     }
                 }
+
                 if (!params.requestParams.ignoreFileName) {
                     response.getFileNameFromAttachmentHeader().takeIf { it.isNotEmpty() }?.let {
                         if (params.targetResourceName != it) {
@@ -460,6 +455,21 @@ class DownloadService : Service() {
                         extension = params.extension,
                     )
 //                    downloadsRepo.upsert(downloadInfo)
+                }
+
+                if (!params.requestParams.storeErrorBody
+                        && !params.requestParams.ignoreAttachment
+                        && !response.hasContentDisposition(ContentDispositionType.ATTACHMENT)
+                        && !response.hasBytesAcceptRanges()
+                ) {
+                    throw IncorrectAttachmentException(this@DownloadService)
+                }
+
+                params.requestParams.contentTypeRule?.let {
+                    val type = params.resourceMimeType
+                    if (!it.match(type)) {
+                        throw IncorrectContentTypeException(this@DownloadService, type)
+                    }
                 }
 
                 val previousLocalUri = prevDownload?.statusAsError?.localUri
@@ -899,7 +909,7 @@ class DownloadService : Service() {
         val replaceFile: Boolean = false,
         val deleteUnfinished: Boolean = true,
         val retryWithNotifier: Boolean = true,
-        val tag: String? = null
+        val tag: String? = null,
     ) : BaseDownloadParams(requestParams.url, resourceName, !requestParams.ignoreFileName) {
 
         constructor(params: Params) : this(
@@ -959,12 +969,12 @@ class DownloadService : Service() {
                 uri: String,
                 preferredFileName: String?,
                 body: RequestParams.Body,
-                ignoreContentType: Boolean = false,
                 ignoreAttachment: Boolean = false,
                 ignoreFileName: Boolean = true,
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
                 retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
+                contentTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
                 subDir: String? = null,
@@ -990,12 +1000,12 @@ class DownloadService : Service() {
                         uri,
                         body,
                         headers = headers,
-                        ignoreContentType = ignoreContentType,
                         ignoreAttachment = ignoreAttachment,
                         ignoreFileName = targetIgnoreFileName,
                         storeErrorBody = storeErrorBody,
                         connectTimeout = connectTimeout,
-                        retryOnConnectionFailure = retryOnConnectionFailure
+                        retryOnConnectionFailure = retryOnConnectionFailure,
+                        contentTypeRule = contentTypeRule
                     ),
                     notificationParams,
                     fileName,
@@ -1018,12 +1028,12 @@ class DownloadService : Service() {
             fun defaultGETServiceParamsFor(
                 uri: String,
                 preferredFileName: String?,
-                ignoreContentType: Boolean = false,
                 ignoreAttachment: Boolean = false,
                 ignoreFileName: Boolean = true,
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
                 retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
+                contentTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
                 subDir: String? = null,
@@ -1048,12 +1058,12 @@ class DownloadService : Service() {
                     RequestParams.newGet(
                         uri,
                         headers = headers,
-                        ignoreContentType = ignoreContentType,
                         ignoreAttachment = ignoreAttachment,
                         ignoreFileName = targetIgnoreFileName,
                         storeErrorBody = storeErrorBody,
                         connectTimeout = connectTimeout,
-                        retryOnConnectionFailure = retryOnConnectionFailure
+                        retryOnConnectionFailure = retryOnConnectionFailure,
+                        contentTypeRule = contentTypeRule
                     ),
                     notificationParams,
                     fileName,
@@ -1080,14 +1090,16 @@ class DownloadService : Service() {
         val method: String,
         val headers: HashMap<String, String>,
         val body: Body?,
-        val ignoreContentType: Boolean,
         val ignoreAttachment: Boolean,
         val ignoreFileName: Boolean,
         val storeErrorBody: Boolean,
         val connectTimeout: Long,
         val retryOnConnectionFailure: Boolean,
         val preferredConnectionTypes: Set<PreferableType> = setOf(),
+        val contentTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
     ) : Serializable {
+
+        val ignoreContentType = contentTypeRule == null
 
         fun createRequest(listener: ProgressListener): Request = Request.Builder()
             .url(url)
@@ -1161,6 +1173,49 @@ class DownloadService : Service() {
             }
         }
 
+        sealed interface MimeTypeMatchRule : Serializable {
+
+            val mimeTypes: Set<String>
+
+            fun match(type: String?): Boolean
+
+            data object None : MimeTypeMatchRule {
+
+                override val mimeTypes: Set<String> = emptySet()
+
+                override fun match(type: String?): Boolean = true
+
+                private fun readResolve(): Any = None
+            }
+
+            data class Include(override val mimeTypes: Set<String>) : MimeTypeMatchRule {
+
+                constructor(vararg mimeTypes: String) : this(mimeTypes.toSet())
+
+                override fun match(type: String?): Boolean =
+                    if (type.isNullOrEmpty()) false else mimeTypes.any { it == type }
+
+                override fun toString(): String {
+                    return "Include(mimeTypes=$mimeTypes)"
+                }
+            }
+
+            data class Exclude(
+                private val isEmptyValid: Boolean,
+                override val mimeTypes: Set<String>,
+            ) : MimeTypeMatchRule {
+
+                constructor(isEmptyValid: Boolean, vararg mimeTypes: String) : this(isEmptyValid, mimeTypes.toSet())
+
+                override fun match(type: String?): Boolean =
+                    if (type.isNullOrEmpty()) isEmptyValid else mimeTypes.none { it == type }
+
+                override fun toString(): String {
+                    return "Exclude(isEmptyValid=$isEmptyValid, mimeTypes=$mimeTypes)"
+                }
+            }
+        }
+
         companion object {
 
             @JvmStatic
@@ -1169,26 +1224,26 @@ class DownloadService : Service() {
                 url: String,
                 body: Body,
                 headers: HashMap<String, String> = HashMap(),
-                ignoreContentType: Boolean = true,
                 ignoreAttachment: Boolean = false,
                 ignoreFileName: Boolean = false,
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
                 retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
                 preferredConnectionTypes: Set<PreferableType> = setOf(),
+                contentTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
             ): RequestParams {
                 return RequestParams(
                     url,
                     Method.POST.value,
                     headers,
                     body,
-                    ignoreContentType,
                     ignoreAttachment,
                     ignoreFileName,
                     storeErrorBody,
                     connectTimeout,
                     retryOnConnectionFailure,
-                    preferredConnectionTypes
+                    preferredConnectionTypes,
+                    contentTypeRule
                 )
             }
 
@@ -1197,13 +1252,13 @@ class DownloadService : Service() {
             fun newGet(
                 url: String,
                 headers: HashMap<String, String> = HashMap(),
-                ignoreContentType: Boolean = true,
                 ignoreAttachment: Boolean = false,
                 ignoreFileName: Boolean = false,
                 storeErrorBody: Boolean = false,
                 connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
                 retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
                 preferredConnectionTypes: Set<PreferableType> = setOf(),
+                contentTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
                 appendGetParams: ((Uri) -> Uri)? = null,
             ): RequestParams {
                 val targetUrl = if (appendGetParams != null) {
@@ -1221,13 +1276,13 @@ class DownloadService : Service() {
                     Method.GET.value,
                     headers,
                     null,
-                    ignoreContentType,
                     ignoreAttachment,
                     ignoreFileName,
                     storeErrorBody,
                     connectTimeout,
                     retryOnConnectionFailure,
-                    preferredConnectionTypes
+                    preferredConnectionTypes,
+                    contentTypeRule
                 )
             }
         }

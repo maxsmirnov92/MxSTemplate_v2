@@ -6,6 +6,9 @@
     <string name="error_server_unavailable">Server not responding</string>
     <string name="error_unexpected_try_again">An unexpected error occurred, please try again later</string>
     <string name="error_bad_gateway">Request timeout is expired. Try again later</string>
+    <string name="error_http_incorrect_attachment">No valid attachment</string>
+    <string name="error_http_incorrect_content_type">Content type does not match expected</string>
+    <string name="error_http_incorrect_content_type_format">Content type \"%s\" does not match expected</string>
 
     <string name="network_type_cellular">Cellular</string>
     <string name="network_type_wifi" translatable="false">Wi-Fi</string>

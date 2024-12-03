@@ -6,6 +6,9 @@
     <string name="error_server_unavailable">Сервер не отвечает</string>
     <string name="error_unexpected_try_again">Произошла непредвиденная ошибка, попробуйте повторить операцию позже</string>
     <string name="error_bad_gateway">Время ожидания ответа истекло. Попробуйте повторить запрос позже</string>
+    <string name="error_http_incorrect_attachment">Отсутствует корректное вложение</string>
+    <string name="error_http_incorrect_content_type">Тип контента не соответствует ожидаемому</string>
+    <string name="error_http_incorrect_content_type_format">Тип контента \"%s\" не соответствует ожидаемому</string>
 
     <string name="network_type_cellular">Мобильная</string>
 

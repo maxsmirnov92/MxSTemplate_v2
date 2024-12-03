@@ -8,7 +8,8 @@ import net.maxsmr.core.network.toPairs
 import okhttp3.Response
 
 /**
- * Базовая ошибка при получении ответа не 2xx с разобранными полями ответа
+ * Базовая ошибка при получении ответа не 2xx с разобранными полями ответа;
+ * или при несоответствии Response иным критериям
  */
 open class HttpProtocolException(
     val url: String,
@@ -34,6 +35,22 @@ open class HttpProtocolException(
         source.message.orEmpty()
     )
 
+    constructor(
+        response: Response?,
+        exceptionMessage: String? = null,
+        withBody: Boolean = false,
+    ) : this(
+        response?.request?.url?.toString().orEmpty(),
+        response?.request?.method.orEmpty(),
+        ArrayList(response?.request?.headers.toPairs()),
+        if (withBody) response?.request.asString().orEmpty() else EMPTY_STRING,
+        response?.code ?: UNKNOWN_ERROR,
+        response?.message.orEmpty(),
+            if (withBody) response.asStringCloned()?.first.orEmpty() else EMPTY_STRING,
+        ArrayList(response?.headers.toPairs()),
+        exceptionMessage?.takeIf { it.isNotEmpty() } ?: response?.defaultMessage().orEmpty()
+    )
+
     override fun toString(): String {
         return "HttpProtocolException(url='$url', " +
                 "method='$method', " +
@@ -48,36 +65,16 @@ open class HttpProtocolException(
 
     companion object {
 
-        @JvmStatic
-        fun Response?.toHttpProtocolException(
-            exceptionMessage: String? = null,
-            withBody: Boolean = false
-        ): HttpProtocolException {
-            val request = this?.request
-            val url = request?.url?.toString().orEmpty()
-            val method = request?.method.orEmpty()
-            val code = this?.code ?: UNKNOWN_ERROR
-            val message = this?.message.orEmpty()
-            val responseBody =  if (withBody) this.asStringCloned()?.first.orEmpty() else EMPTY_STRING
-            return HttpProtocolException(
-                url,
-                method,
-                ArrayList(request?.headers.toPairs()),
-                if (withBody) request.asString().orEmpty() else EMPTY_STRING,
-                code,
-                message,
-                responseBody,
-                ArrayList(this?.headers.toPairs()),
-                exceptionMessage?.takeIf { it.isNotEmpty() }
-                    ?: prepareMessage(
-                        url,
-                        method,
-                        code.toString(),
-                        message
-                    ))
+        private fun Response.defaultMessage(): String {
+            return buildMessage(
+                request.url.toString(),
+                request.method,
+                code.toString(),
+                message
+            )
         }
 
-        private fun prepareMessage(vararg parts: String): String {
+        private fun buildMessage(vararg parts: String): String {
             val partsList = mutableListOf<String>()
             partsList.addAll(parts)
             return partsList.filter {
