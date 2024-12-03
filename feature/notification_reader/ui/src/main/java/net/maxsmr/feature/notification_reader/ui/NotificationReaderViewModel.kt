@@ -2,24 +2,30 @@ package net.maxsmr.feature.notification_reader.ui
 
 import android.content.Context
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.live.setValueIfNew
+import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.notification_reader.data.NotificationReaderListenerService
 import net.maxsmr.feature.notification_reader.data.NotificationReaderRepository
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
+import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.Companion.DOWNLOAD_TAG_PACKAGE_LIST
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStopResult
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.StartMode
@@ -30,20 +36,23 @@ import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepositor
 import net.maxsmr.feature.preferences.ui.doOnBatteryOptimizationWithPostNotificationsAsk
 import java.io.Serializable
 import java.util.Date
-import javax.inject.Inject
 
-@HiltViewModel
-class NotificationReaderViewModel @Inject constructor(
+class NotificationReaderViewModel @AssistedInject constructor(
+    @Assisted state: SavedStateHandle,
+    @Assisted private val downloadsViewModel: DownloadsViewModel,
     private val manager: NotificationReaderSyncManager,
     private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
     private val readerRepo: NotificationReaderRepository,
-    state: SavedStateHandle,
 ) : BaseHandleableViewModel(state) {
 
     private val _serviceTargetState by persistableLiveData<ServiceTargetState?>()
 
     val serviceTargetState = _serviceTargetState as LiveData<ServiceTargetState?>
+
+    private val _packageListLoadState = MutableLiveData<LoadState<DownloadsViewModel.DownloadInfoWithParams>?>(null)
+
+    val packageListLoadState = _packageListLoadState as LiveData<LoadState<DownloadsViewModel.DownloadInfoWithParams>?>
 
     val notificationsItems = readerRepo.getNotifications().asLiveData().map { list ->
         list.map {
@@ -57,11 +66,23 @@ class NotificationReaderViewModel @Inject constructor(
         }
     }
 
+    val isRunning = manager.isRunning.asLiveData()
+
     var lastStartResult by persistableValueInitial<ManagerStartResult?>(null)
         private set
 
     var lastStopResult by persistableValueInitial<ManagerStopResult?>(null)
         private set
+
+    init {
+        // обозревание на постоянной основе загрузки с тегом (целевой url может меняться);
+        // при этом может появляться и пропадать в resultItems манагера
+        downloadsViewModel.observeDownload(DOWNLOAD_TAG_PACKAGE_LIST) {
+            tag == it
+        }.observe {
+            _packageListLoadState.postValue(it)
+        }
+    }
 
     override fun onInitialized() {
         super.onInitialized()
@@ -189,4 +210,13 @@ class NotificationReaderViewModel @Inject constructor(
         val state: Boolean,
         val changedFromView: Boolean,
     ) : Serializable
+
+    @AssistedFactory
+    interface Factory {
+
+        fun create(
+            state: SavedStateHandle,
+            downloadsViewModel: DownloadsViewModel,
+        ): NotificationReaderViewModel
+    }
 }

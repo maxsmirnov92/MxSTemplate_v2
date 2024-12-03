@@ -4,7 +4,7 @@ import java.io.Serializable
 
 @kotlinx.serialization.Serializable
 data class AppSettings(
-    val maxDownloads: Int = 3,
+    val maxDownloads: Int = 1,
     val connectTimeout: Long = 15L,
     val loadByWiFiOnly: Boolean = false,
     val retryOnConnectionFailure: Boolean = true,

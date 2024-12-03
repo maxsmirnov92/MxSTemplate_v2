@@ -11,9 +11,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.isPackageNameValid
 import net.maxsmr.commonutils.isSelfAppInBackground
@@ -23,6 +25,7 @@ import net.maxsmr.commonutils.media.readStrings
 import net.maxsmr.commonutils.service.StartResult
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.coroutines.tickerFlow
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
@@ -32,6 +35,7 @@ import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.core.utils.hasTimePassed
 import net.maxsmr.feature.download.data.DownloadService
+import net.maxsmr.feature.download.data.DownloadService.RequestParams.MimeTypeMatchRule.Include
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.data.DownloadsViewModel.Companion.toParams
 import net.maxsmr.feature.download.data.manager.DownloadManager
@@ -126,16 +130,29 @@ class NotificationReaderSyncManager @Inject constructor(
     fun doStop(context: Context, navigateToSettings: Boolean = true): ManagerStopResult {
         logger.d("doStop, navigateToSettings: $navigateToSettings")
         _isRunning.value = false
-        downloadJob.cancel()
+
+        val isPending = downloadManager.isPending(DOWNLOAD_TAG_PACKAGE_LIST)
+        val isDownloading = downloadManager.isDownloading(DOWNLOAD_TAG_PACKAGE_LIST)
+        if (isPending || isDownloading) {
+            downloadManager.cancelDownload(DOWNLOAD_TAG_PACKAGE_LIST)
+        }
+        if (!isDownloading) {
+            // если файл сейчас по факту грузится,
+            // после отмены загрузки надо дождаться
+            // убирания загрузки из finished в observeDownload,
+            downloadJob.cancel()
+            // при перезапуске манагера надо перезапросить список
+            lastPackageListState.value = null
+        }
+
         newWatcherJob.cancel()
         failedWatcherJob.cancel()
         successWatcherJob.cancel()
         networkStateJob.cancel()
         observeSettingsJob.cancel()
         lastSettings.value = null
-        // при перезапуске манагера надо перезапросить список
-        lastPackageListState.value = null
         pendingStartMode.set(StartMode.NONE)
+
         return if (NotificationReaderListenerService.isRunning(context)) {
             if (isNotificationAccessGranted(context)) {
                 if (navigateToSettings) {
@@ -157,12 +174,14 @@ class NotificationReaderSyncManager @Inject constructor(
     }
 
     /**
-     * @return true, если работа была запущена; false - при наличии текущей неотменённой
+     * @return true, если работа была запущена; false - если файл сейчас грузится
      */
     fun doLaunchDownloadJobIfNeeded(mode: StartMode): Boolean {
         if (!isRunning.value) return false
         pendingStartMode.set(mode)
-        if (downloadJob.get()?.isCancelled != false) {
+        if (lastPackageListState.value?.isLoading != true) {
+            // если в настоящее время файл не грузится,
+            // то можно запустить (или перезапустить с отменой) Job
             launchDownloadJob()
             return true
         }
@@ -184,65 +203,74 @@ class NotificationReaderSyncManager @Inject constructor(
         logger.d("launching downloadJob...")
         // забираем актуальный список пакетов
         downloadJob.set(scope.launch {
-            downloadManager.observeDownloadByParams(enqueueDownloadPackageList(), true).collect {
-                if (!it.isLoading) {
+            downloadManager.observeDownloadByParams(enqueueDownloadPackageList(), true)
+                .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+                .collect {
 
-                    lastPackageListState.value = if (it.isSuccessWithData()) {
-                        val packageList =
-                            it.data?.downloadInfo?.localUri?.readStrings(baseApplicationContext.contentResolver)
-                                .orEmpty()
-                        val result = packageList.filter { name ->
-                            isPackageNameValid(name) || name == "android"
-                        }.toSet()
-                        cacheRepo.setPackageList(result)
-                        LoadState.success(result)
-                    } else {
-                        LoadState.error(it.error ?: NetworkException())
+                    if (!isRunning.value) {
+                        lastPackageListState.value = null
+                        downloadJob.cancel()
                     }
 
-                    // после успешной или неуспешной загрузки файла с разрешённым списком
-                    // делаем следующее:
+                    if (it == null) return@collect
+                    if (!it.isLoading) {
 
-                    // 1. сбрасываем статусы у зафейленных или подвешенных и пытаемся их отправить
-                    sendOrRemoveNotifications {
-                        status is NotificationReaderEntity.Failed
-                                || status is NotificationReaderEntity.Cancelled
-                                || status is NotificationReaderEntity.Loading
-                    }
-
-                    val mode = pendingStartMode.get()
-                    if (mode in arrayOf(StartMode.JOBS_AND_SERVICE, StartMode.JOBS)) {
-                        // 2. мониторим появляющиеся со статусом "New" для выполнения запроса
-                        launchWatcherForNew()
-                        // 3. запуск периодического повтора любых зафейленных
-                        launchWatcherForFailed()
-                        // 4. запуск периодического удаления успешных, срок по котороым прошёл
-                        launchWatcherForSuccess()
-                        // 5. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
-                        launchNetworkStateWatcher()
-                        // 6. реагирование на изменение некоторых настроек
-                        launchObserveSettingsJob()
-
-                        if (mode == StartMode.JOBS_AND_SERVICE) {
-                            if (baseApplicationContext.isSelfAppInBackground() == false
-                                    || (Build.VERSION.SDK_INT < Build.VERSION_CODES.O
-                                            || Settings.canDrawOverlays(baseApplicationContext))
-                            ) {
-                                // отложенный запуск сервиса по готовности белого списка
-                                if (isNotificationAccessGranted(baseApplicationContext)) {
-                                    NotificationReaderListenerService.start(baseApplicationContext)
-                                }
-                            }
+                        lastPackageListState.value = if (it.isSuccessWithData()) {
+                            val packageList =
+                                it.data?.downloadInfo?.localUri?.readStrings(baseApplicationContext.contentResolver)
+                                    .orEmpty()
+                            val result = packageList.filter { name ->
+                                isPackageNameValid(name) || name == "android"
+                            }.toSet()
+                            cacheRepo.setPackageList(result)
+                            LoadState.success(result)
+                        } else {
+                            LoadState.error(it.error ?: NetworkException())
                         }
 
-                        pendingStartMode.set(StartMode.NONE)
-                    }
+                        // после успешной или неуспешной загрузки файла с разрешённым списком
+                        // делаем следующее:
 
-                    downloadJob.cancel()
-                } else {
-                    lastPackageListState.value = LoadState.loading()
+                        // 1. сбрасываем статусы у зафейленных или подвешенных и пытаемся их отправить
+                        sendOrRemoveNotifications {
+                            status is NotificationReaderEntity.Failed
+                                    || status is NotificationReaderEntity.Cancelled
+                                    || status is NotificationReaderEntity.Loading
+                        }
+
+                        val mode = pendingStartMode.get()
+                        if (mode in arrayOf(StartMode.JOBS_AND_SERVICE, StartMode.JOBS)) {
+                            // 2. мониторим появляющиеся со статусом "New" для выполнения запроса
+                            launchWatcherForNew()
+                            // 3. запуск периодического повтора любых зафейленных
+                            launchWatcherForFailed()
+                            // 4. запуск периодического удаления успешных, срок по котороым прошёл
+                            launchWatcherForSuccess()
+                            // 5. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
+                            launchNetworkStateWatcher()
+                            // 6. реагирование на изменение некоторых настроек
+                            launchObserveSettingsJob()
+
+                            if (mode == StartMode.JOBS_AND_SERVICE) {
+                                if (baseApplicationContext.isSelfAppInBackground() == false
+                                        || (Build.VERSION.SDK_INT < Build.VERSION_CODES.O
+                                                || Settings.canDrawOverlays(baseApplicationContext))
+                                ) {
+                                    // отложенный запуск сервиса по готовности белого списка
+                                    if (isNotificationAccessGranted(baseApplicationContext)) {
+                                        NotificationReaderListenerService.start(baseApplicationContext)
+                                    }
+                                }
+                            }
+
+                            pendingStartMode.set(StartMode.NONE)
+                        }
+
+                        downloadJob.cancel()
+                    } else {
+                        lastPackageListState.value = LoadState.loading()
+                    }
                 }
-            }
         })
     }
 
@@ -426,7 +454,9 @@ class NotificationReaderSyncManager @Inject constructor(
 
     private suspend fun enqueueDownloadPackageList(): DownloadService.Params {
         val packageListUrl = settingsRepo.getSettings().packageListUrl
-        val params = DownloadParamsModel(packageListUrl).toParams()
+        val params = DownloadParamsModel(packageListUrl).toParams(
+            mimeTypeRule = Include(FileFormat.TEXT.mimeType)
+        )
         DownloadService.Params(
             params.requestParams,
             DownloadService.NotificationParams(
@@ -440,7 +470,8 @@ class NotificationReaderSyncManager @Inject constructor(
             params.skipIfDownloaded,
             params.replaceFile,
             params.deleteUnfinished,
-            params.retryWithNotifier
+            params.retryWithNotifier,
+            DOWNLOAD_TAG_PACKAGE_LIST
         ).let {
             downloadManager.enqueueDownload(it)
             return it
@@ -485,5 +516,10 @@ class NotificationReaderSyncManager @Inject constructor(
         JOBS_AND_SERVICE,
         JOBS,
         NONE
+    }
+
+    companion object {
+
+        const val DOWNLOAD_TAG_PACKAGE_LIST = "package_list"
     }
 }

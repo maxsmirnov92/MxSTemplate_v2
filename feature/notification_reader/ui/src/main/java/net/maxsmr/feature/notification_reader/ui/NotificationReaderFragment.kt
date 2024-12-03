@@ -5,7 +5,9 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -16,11 +18,15 @@ import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListe
 import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.live.zip
+import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.databinding.LayoutErrorContainerBinding
 import net.maxsmr.feature.demo.DemoChecker
 import net.maxsmr.feature.demo.strategies.AlertDemoExpiredStrategy
+import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStopResult
@@ -38,11 +44,17 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
     override val layoutId: Int = R.layout.fragment_notification_reader
 
-    override val viewModel by viewModels<NotificationReaderViewModel>()
+    override val viewModel: NotificationReaderViewModel by viewModels {
+        AbstractSavedStateViewModelFactory(this) {
+            factory.create(it, downloadsViewModel)
+        }
+    }
 
     override val menuResId: Int = R.menu.menu_notification_reader
 
     protected val binding by viewBinding(FragmentNotificationReaderBinding::bind)
+
+    private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
     private val adapter = NotificationsAdapter()
 
@@ -60,6 +72,9 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
+
+    @Inject
+    lateinit var factory: NotificationReaderViewModel.Factory
 
     @Inject
     lateinit var manager: NotificationReaderSyncManager
@@ -87,6 +102,8 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
         }
 
         with(binding) {
+            val errorBinding = LayoutErrorContainerBinding.bind(containerPackageListError.root)
+
             viewModel.notificationsItems.observe {
                 adapter.items = it
                 if (it.isNotEmpty()) {
@@ -99,6 +116,29 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                 refreshClearSuccessMenuItem()
             }
 
+            zip(viewModel.isRunning, viewModel.packageListLoadState) { isRunning, loadState ->
+                isRunning to loadState
+            }.observe {
+                val (isRunning, loadState) = it
+                val isSuccess = loadState?.isSuccessWithData() != false
+                if (isRunning == true) {
+                    containerPackageListState.isVisible = !isSuccess
+                    if (loadState?.isLoading == true) {
+                        containerPackageListLoading.isVisible = true
+                        containerPackageListError.root.isVisible = false
+                    } else {
+                        containerPackageListLoading.isVisible = false
+                        containerPackageListError.root.isVisible = !isSuccess
+                        errorBinding.tvEmptyError.text =
+                            loadState?.error?.message?.takeIf { message -> message.isNotEmpty() }?.let { message ->
+                                getString(R.string.notification_reader_package_list_error_format, message)
+                            } ?: getString(R.string.notification_reader_package_list_error)
+                    }
+                } else {
+                    containerPackageListState.isVisible = false
+                }
+            }
+
             rvNotifications.adapter = adapter
             touchHelper.attachToRecyclerView(rvNotifications)
             adapter.registerItemsEventsListener(this@NotificationReaderFragment)
@@ -107,6 +147,11 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                     .setDivider(Divider.Space(8), DividerItemDecoration.Mode.ALL)
                     .build()
             )
+
+            errorBinding.tvEmptyError.setTextColor(ContextCompat.getColor(requireContext(), net.maxsmr.core.ui.R.color.textColorError))
+            errorBinding.btRetry.setOnClickListener {
+                viewModel.onDownloadPackageListAction()
+            }
         }
 
         viewModel.doOnCanDrawOverlaysAsked(this, cacheRepo, settingsRepo) {

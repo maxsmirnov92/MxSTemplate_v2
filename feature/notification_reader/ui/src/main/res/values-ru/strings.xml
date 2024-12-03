@@ -9,10 +9,13 @@
     <string name="notification_reader_toast_stop_remove_in_settings">Приложение должно быть убрано в настройках для завершения сервиса</string>
     <string name="notification_reader_toast_can_draw_overlays_settings">Приложение должно быть отмечено в списке, чтобы запускать сервис в фоне</string>
     <string name="notification_reader_snack_cannot_start_service">Не удалось запустить сервис</string>
-    <string name="notification_reader_snack_download_package_list_not_started">Список пакетов в настоящий момент загружается</string>
+    <string name="notification_reader_snack_download_package_list_not_started">@string/notification_reader_package_list_loading</string>
     <string name="notification_reader_package_name_unknown">Неизвестный пакет</string>
     <string name="notification_reader_content_empty">Нет содержимого</string>
     <string name="notification_reader_no_notifications">Нет уведомлений</string>
+    <string name="notification_reader_package_list_loading">Файл со списком имён пакетов загружается</string>
+    <string name="notification_reader_package_list_error">Произошла неизвестная ошибка при загрузке файла со списком имён пакетов</string>
+    <string name="notification_reader_package_list_error_format">Произошла ошибка при загрузке файла со списком имён пакетов: \"%s\"</string>
     <string name="notification_reader_status_new">Новое</string>
     <string name="notification_reader_status_loading">Отправка…</string>
     <string name="notification_reader_status_success">Готово</string>
