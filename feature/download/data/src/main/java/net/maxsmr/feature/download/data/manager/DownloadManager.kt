@@ -32,14 +32,13 @@ import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.writeObject
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.appendToSet
-import net.maxsmr.core.android.network.NetworkStateManager
-import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.MAX_DOWNLOADS_UNLIMITED
-import net.maxsmr.core.network.exceptions.NoConnectivityException
+import net.maxsmr.core.network.equalsIgnoreSubDomain
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
+import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading.Type
@@ -48,8 +47,6 @@ import net.maxsmr.feature.download.data.DownloadsViewModel.DownloadInfoWithParam
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.File
 import java.io.Serializable
-import java.net.SocketException
-import java.net.SocketTimeoutException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -389,7 +386,7 @@ class DownloadManager @Inject constructor(
 
         fun refreshFailed(params: DownloadService.Params) {
             val currentFailed = _failedStartParamsFlow.value.toMutableList()
-            currentFailed.removeIf { p -> p.url == params.url }
+            currentFailed.removeIf { p -> p.isSame(params) }
             currentFailed.add(params)
             _failedStartParamsFlow.value = currentFailed
         }
@@ -409,24 +406,32 @@ class DownloadManager @Inject constructor(
         scope.launch {
             resultItems.collect { items ->
                 val currentFailed = _failedStartParamsFlow.value.toMutableList()
-                currentFailed.removeIf { failed -> items.any { it.params.url == failed.url } }
+                currentFailed.removeIf { failed -> items.any { it.params.isSame(failed) } }
                 _failedStartParamsFlow.value = currentFailed
             }
         }
     }
 
-    fun observeDownload(
+    fun observeDownloadByParams(
         params: DownloadService.Params,
         removeWhenFinished: Boolean,
+        isSameFunc: DownloadService.Params.(DownloadService.Params) -> Boolean = { isSame(it) }
     ): Flow<LoadState<DownloadInfoWithParams>> {
-        val url = params.url
+        return observeDownload(params, removeWhenFinished, isSameFunc)
+    }
+
+    fun <P> observeDownload(
+        params: P,
+        removeWhenFinished: Boolean,
+        isSameFunc: DownloadService.Params.(P) -> Boolean
+    ): Flow<LoadState<DownloadInfoWithParams>> {
         return combine(resultItems, _failedStartParamsFlow) { items, failedParams ->
             Pair(items, failedParams)
         }.mapNotNull { pair ->
-            pair.second.find { it.url == url }?.let {
+            pair.second.find { it.isSameFunc(params) }?.let {
                 return@mapNotNull Pair(it, null)
             }
-            pair.first.find { it.params.url == url }?.let {
+            pair.first.find { it.params.isSameFunc(params) }?.let {
                 return@mapNotNull Pair(it.params, it.downloadInfo)
             }
         }.map {
@@ -451,7 +456,7 @@ class DownloadManager @Inject constructor(
                         removeFinishedSuspended(id)
                     }
                     val currentFailed = _failedStartParamsFlow.value.toMutableList()
-                    currentFailed.removeIf { failed -> it.first.url == failed.url }
+                    currentFailed.removeIf { failed -> failed.isSameFunc(params) }
                     _failedStartParamsFlow.value = currentFailed
                 }
             }
@@ -467,19 +472,62 @@ class DownloadManager @Inject constructor(
         }
     }
 
-    fun retryDownload(downloadId: Long, params: DownloadService.Params) {
+    /**
+     * @return false, если не было найдено по tag среди завершённых
+     */
+    fun retryDownload(tag: String): Boolean {
+        downloadsFinishedQueue.value.find {
+            val t = it.params.tag
+            t != null && t == tag
+        }?.let {
+            val id = it.downloadId ?: return false
+            retryDownloadWithParams(id, it.params)
+            return true
+        }
+        return false
+    }
+
+    /**
+     * @return false, если не было найдено по id среди завершённых
+     */
+    fun retryDownload(downloadId: Long): Boolean {
+        downloadsFinishedQueue.value.find { it.downloadId == downloadId }?.let {
+            retryDownloadWithParams(downloadId, it.params)
+            return true
+        }
+        return false
+    }
+
+    fun retryDownloadWithParams(downloadId: Long, params: DownloadService.Params) {
         scope.launch {
             retryDownloadSuspended(downloadId, params)
         }
     }
 
+    fun cancelDownload(tag: String) {
+        resultItems.value.find {
+            val t = it.params.tag
+            t != null && t == tag
+        }?.let {
+            cancelDownload(it.id)
+        }
+    }
+
     fun cancelDownload(downloadId: Long) {
-        DownloadService.cancel(downloadId)
+        val pendingList = downloadsPendingQueue.value.toMutableSet()
+        if (pendingList.removeIf{ it.downloadId == downloadId }) {
+            // пока числится в pending
+            downloadsPendingQueue.value = pendingList
+        }
+        if (downloadsQueue.value.any { it.downloadId == downloadId }) {
+            // есть в downloadsQueue - значит выполняется в сервисе
+            DownloadService.cancel(downloadId)
+        }
     }
 
     fun cancelAllDownloads() {
         removeAllPending()
-        downloadsQueue.value.toList().forEach {
+        downloadsQueue.value.forEach {
             it.downloadId?.let { downloadId ->
                 DownloadService.cancel(downloadId)
             }
@@ -514,7 +562,9 @@ class DownloadManager @Inject constructor(
     }
 
     suspend fun enqueueDownloadSuspended(params: DownloadService.Params) {
-        logger.i("enqueueDownloadSuspended, params: $params")
+        logger.d("enqueueDownloadSuspended, params: $params")
+
+        fun DownloadService.Params.toShortString() = "url=$url, tag=$tag, targetResourceName=$targetResourceName"
 
         var failReason: FailAddReason? = null
         try {
@@ -523,14 +573,13 @@ class DownloadManager @Inject constructor(
                 return
             }
 
-            val targetResourceName = params.targetResourceName
-            if (downloadsLaunchedQueue.value.map { it.params }.any { it.targetResourceName == targetResourceName }) {
-                logger.w("Not added to pending queue - \"$targetResourceName\" already in launched queue")
+            if (downloadsLaunchedQueue.value.map { it.params }.any { params.isSame(it, true) }) {
+                logger.w("Not added to pending queue - \"${params.toShortString()}\" already in launched queue")
                 failReason = FailAddReason.ALREADY_ADDED
                 return
             }
-            if (downloadsPendingQueue.value.map { it.params }.any { it.targetResourceName == targetResourceName }) {
-                logger.w("Not added to pending queue - \"$targetResourceName\" already in pending queue")
+            if (downloadsPendingQueue.value.map { it.params }.any { params.isSame(it, true) }) {
+                logger.w("Not added to pending queue - \"${params.toShortString()}\" already in pending queue")
                 failReason = FailAddReason.ALREADY_ADDED
                 return
             }
@@ -540,7 +589,7 @@ class DownloadManager @Inject constructor(
             val prevDownload =
                 downloadsRepo.getByNameAndExt(params.resourceNameWithoutExt, params.extension)
             if (prevDownload?.isLoading == true) {
-                logger.w("Not added to pending queue - DownloadInfo with \"$targetResourceName\" already loading in service")
+                logger.w("Not added to pending queue - DownloadInfo with \"${params.toShortString()}\" already loading in service")
                 failReason = FailAddReason.ALREADY_LOADING
                 return
             }
@@ -664,7 +713,8 @@ class DownloadManager @Inject constructor(
                         skipIfDownloaded,
                         replaceFile,
                         deleteUnfinished,
-                        retryWithNotifier
+                        retryWithNotifier,
+                        tag
                     )
                 }
 
@@ -721,6 +771,12 @@ class DownloadManager @Inject constructor(
         if (!Regex(REG_EX_FILE_NAME).matches(resourceName)) return false
         if (!subDirPath.isNullOrEmpty() && !Regex(REG_EX_FILE_NAME).matches(subDirPath)) return false
         return !requestParams.headers.entries.any { it.key.isEmpty() || it.value.isEmpty() }
+    }
+
+    private fun DownloadService.Params.isSame(otherParams: DownloadService.Params, checkResourceName: Boolean = false): Boolean {
+        return url.equalsIgnoreSubDomain(otherParams.url)
+                && tag == otherParams.tag
+                && (!checkResourceName || targetResourceName == otherParams.targetResourceName)
     }
 
     enum class FailAddReason {

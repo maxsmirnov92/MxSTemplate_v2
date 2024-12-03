@@ -7,7 +7,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -175,12 +174,12 @@ class DownloadsStateViewModel @Inject constructor(
                 TextMessage(R.string.download_dialog_confirm_title),
                 onSelect = {
                     if (it == DialogInterface.BUTTON_POSITIVE) {
-                        manager.retryDownload(downloadId, params)
+                        manager.retryDownloadWithParams(downloadId, params)
                     }
                 }
             )
         } else {
-            manager.retryDownload(downloadId, params)
+            manager.retryDownloadWithParams(downloadId, params)
         }
     }
 

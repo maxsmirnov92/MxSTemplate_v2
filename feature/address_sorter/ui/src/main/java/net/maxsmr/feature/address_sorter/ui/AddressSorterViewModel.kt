@@ -229,7 +229,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                     }
 
                     if (shouldDownloadRoutingKey(e) && !wasKeyDownloaded) {
-                        downloadsViewModel.observeDownload(enqueueDownloadRoutingKey()).observe {
+                        downloadsViewModel.observeOnceDownloadByParams(enqueueDownloadRoutingKey()).observe {
                             viewModelScope.launch {
 
                                 fun handleDownloadError(e: Throwable?) {
@@ -527,7 +527,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                     is UseCaseResult.Error -> {
                         val e = result.exception
                         if (shouldDownloadRoutingKey(e) && !wasKeyDownloaded) {
-                            downloadsViewModel.observeDownload(enqueueDownloadRoutingKey()).observe {
+                            downloadsViewModel.observeOnceDownloadByParams(enqueueDownloadRoutingKey()).observe {
                                 viewModelScope.launch {
                                     var isHandled = false
                                     if (it.isSuccessWithData()) {

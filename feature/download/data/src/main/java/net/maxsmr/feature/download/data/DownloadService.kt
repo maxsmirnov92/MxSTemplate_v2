@@ -52,8 +52,6 @@ import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
-import net.maxsmr.core.network.isAnyResourceScheme
-import net.maxsmr.core.network.toValidUri
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.di.ApplicationScope
@@ -78,7 +76,9 @@ import net.maxsmr.core.network.getContentTypeHeader
 import net.maxsmr.core.network.getFileNameFromAttachmentHeader
 import net.maxsmr.core.network.hasBytesAcceptRanges
 import net.maxsmr.core.network.hasContentDisposition
+import net.maxsmr.core.network.isAnyResourceScheme
 import net.maxsmr.core.network.newCallSuspended
+import net.maxsmr.core.network.toValidUri
 import net.maxsmr.core.network.writeBufferedOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
 import net.maxsmr.feature.download.data.DownloadService.NotificationParams
@@ -452,7 +452,7 @@ class DownloadService : Service() {
                 if (wasParamsChanged) {
                     logger.d("Params changed, updating notification...")
                     // апдейт расширения/имени в основной нотификации
-                    updateForegroundNotification()
+                    updateForegroundNotification(false)
                     // актуализации изменёнными парамсами
                     downloadInfo = downloadInfo.copy(
                         name = params.resourceNameWithoutExt,
@@ -591,7 +591,7 @@ class DownloadService : Service() {
     private suspend fun onDownloadStarting(downloadInfo: DownloadInfo, params: Params) {
         logger.i("Download starting: ${downloadInfo.name}")
         downloadsRepo.upsert(downloadInfo)
-        updateForegroundNotification()
+        updateForegroundNotification(false)
         notifier.onDownloadStarting(downloadInfo, params)
     }
 
@@ -693,7 +693,7 @@ class DownloadService : Service() {
 
         downloadsRepo.upsert(downloadInfo)
         currentDownloads.remove(params.requestParams.url)
-        updateForegroundNotification()
+        updateForegroundNotification(true)
 
         notifier.onDownloadSuccess(downloadInfo, params, oldParams)
 
@@ -730,7 +730,7 @@ class DownloadService : Service() {
 
         downloadsRepo.upsert(downloadInfo)
         currentDownloads.remove(params.requestParams.url)
-        updateForegroundNotification()
+        updateForegroundNotification(true)
 
         notifier.onDownloadFailed(downloadInfo, params, oldParams, e)
 
@@ -760,7 +760,7 @@ class DownloadService : Service() {
         currentDownloads.remove(params.requestParams.url)
 //        downloadsRepo.remove(downloadInfo)
         downloadsRepo.upsert(downloadInfo)
-        updateForegroundNotification()
+        updateForegroundNotification(true)
 
         notifier.onDownloadCancelled(downloadInfo, params, oldParams)
 
@@ -782,21 +782,24 @@ class DownloadService : Service() {
         )
     }
 
-    private fun updateForegroundNotification() {
-        val title: String
-        val message: String?
+    private fun updateForegroundNotification(isFinished: Boolean) {
+        var title: String? = null
+        var message: String? = null
         if (currentDownloads.isNotEmpty()) {
             val size = currentDownloads.size
             title = context.resources.getQuantityString(R.plurals.download_files, size, size)
             message = currentDownloads.values.joinToString { it.targetResourceName }
         } else {
-            title = getString(R.string.download_notification_initial_text)
-            message = null
+            if (!isFinished) {
+                title = getString(R.string.download_notification_initial_text)
+            }
         }
-        notificationWrapper.show(
-            foregroundNotificationId,
-            foregroundNotification(title, message)
-        )
+        title?.let {
+            notificationWrapper.show(
+                foregroundNotificationId,
+                foregroundNotification(it, message)
+            )
+        } ?: notificationWrapper.cancel(foregroundNotificationId)
     }
 
     private fun foregroundNotification(title: String, message: String? = null): Notification {
@@ -881,6 +884,7 @@ class DownloadService : Service() {
      * @param skipIfDownloaded пропуск загрузки, если ресурс уже был успешно загружен ранее и его хэш совпадает
      * @param notificationParams параметры показа нотификаций и действий к ним; null, если нотификации по каждой загрузке не нужны
      * @param retryWithNotifier если true, повтор загрузки по действию в нотификации будет происходить через [DownloadStateNotifier]
+     * @param tag опциональный тег для идентификации параметров
      */
     class Params @JvmOverloads constructor(
         val requestParams: RequestParams,
@@ -893,6 +897,7 @@ class DownloadService : Service() {
         val replaceFile: Boolean = false,
         val deleteUnfinished: Boolean = true,
         val retryWithNotifier: Boolean = true,
+        val tag: String? = null
     ) : BaseDownloadParams(requestParams.url, resourceName, !requestParams.ignoreFileName) {
 
         constructor(params: Params) : this(
@@ -903,12 +908,13 @@ class DownloadService : Service() {
             params.subDirPath,
             params.targetHashInfo,
             params.skipIfDownloaded,
+            params.replaceFile,
             params.deleteUnfinished,
-            params.retryWithNotifier
+            params.retryWithNotifier,
+            params.tag
         )
 
         fun createRequest(listener: ProgressListener): Request = requestParams.createRequest(listener)
-
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is Params) return false
@@ -922,7 +928,10 @@ class DownloadService : Service() {
             if (skipIfDownloaded != other.skipIfDownloaded) return false
             if (replaceFile != other.replaceFile) return false
             if (deleteUnfinished != other.deleteUnfinished) return false
-            return retryWithNotifier == other.retryWithNotifier
+            if (retryWithNotifier != other.retryWithNotifier) return false
+            if (tag != other.tag) return false
+
+            return true
         }
 
         override fun hashCode(): Int {
@@ -936,6 +945,7 @@ class DownloadService : Service() {
             result = 31 * result + replaceFile.hashCode()
             result = 31 * result + deleteUnfinished.hashCode()
             result = 31 * result + retryWithNotifier.hashCode()
+            result = 31 * result + (tag?.hashCode() ?: 0)
             return result
         }
 

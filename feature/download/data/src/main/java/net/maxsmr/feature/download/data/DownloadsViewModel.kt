@@ -11,6 +11,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.asLiveData
+import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,7 +26,6 @@ import net.maxsmr.commonutils.live.unsubscribeIf
 import net.maxsmr.commonutils.media.readString
 import net.maxsmr.commonutils.media.takePersistableReadPermission
 import net.maxsmr.commonutils.states.LoadState
-import net.maxsmr.commonutils.states.Status
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.database.model.download.DownloadInfo
@@ -77,7 +77,6 @@ class DownloadsViewModel @Inject constructor(
 
     override fun onInitialized() {
         super.onInitialized()
-
 
         viewModelScope.launch {
             downloadManager.successAddedToQueueEvents.collect {
@@ -191,11 +190,53 @@ class DownloadsViewModel @Inject constructor(
         downloadManager.enqueueDownload(params)
     }
 
-    fun observeDownload(params: DownloadService.Params, removeWhenFinished: Boolean = true): LiveData<LoadState<DownloadInfoWithParams>> {
-        return downloadManager.observeDownload(params, removeWhenFinished).asLiveData().unsubscribeIf { !it.isLoading }
+    fun observeOnceDownloadByParams(
+        params: DownloadService.Params,
+        removeWhenFinished: Boolean = true,
+        isSameFunc: (DownloadService.Params.(DownloadService.Params) -> Boolean)? = null,
+    ) = observeDownloadByParamsInternal(params, removeWhenFinished, isSameFunc).unsubscribeIf { !it.isLoading }
+
+    fun observeDownloadByParams(
+        params: DownloadService.Params,
+        isSameFunc: (DownloadService.Params.(DownloadService.Params) -> Boolean)? = null,
+    ): LiveData<LoadState<DownloadInfoWithParams>> {
+        return observeDownloadByParamsInternal(params, false, isSameFunc)
     }
 
-    fun observeOnce(
+    private fun observeDownloadByParamsInternal(
+        params: DownloadService.Params,
+        removeWhenFinished: Boolean,
+        isSameFunc: (DownloadService.Params.(DownloadService.Params) -> Boolean)? = null,
+    ): LiveData<LoadState<DownloadInfoWithParams>> {
+        return (if (isSameFunc == null) {
+            downloadManager.observeDownloadByParams(params, removeWhenFinished)
+        } else {
+            downloadManager.observeDownloadByParams(params, removeWhenFinished, isSameFunc)
+        }).asLiveData().distinctUntilChanged()
+    }
+
+    fun <P> observeOnceDownload(
+        params: P,
+        removeWhenFinished: Boolean = true,
+        isSameFunc: (DownloadService.Params.(P) -> Boolean),
+    ) = observeDownloadInternal(params, removeWhenFinished, isSameFunc).unsubscribeIf { !it.isLoading }
+
+    fun <P> observeDownload(
+        params: P,
+        isSameFunc: (DownloadService.Params.(P) -> Boolean),
+    ): LiveData<LoadState<DownloadInfoWithParams>> {
+        return observeDownloadInternal(params, false, isSameFunc)
+    }
+
+    private fun <P> observeDownloadInternal(
+        params: P,
+        removeWhenFinished: Boolean,
+        isSameFunc: (DownloadService.Params.(P) -> Boolean),
+    ): LiveData<LoadState<DownloadInfoWithParams>> {
+        return downloadManager.observeDownload(params, removeWhenFinished, isSameFunc).asLiveData().distinctUntilChanged()
+    }
+
+    fun observeOnceDownloadByInfo(
         owner: LifecycleOwner,
         infoFunc: (DownloadInfo) -> Boolean,
         statusChangeCallback: (DownloadInfo) -> Unit,
@@ -203,9 +244,7 @@ class DownloadsViewModel @Inject constructor(
         val observer = object : Observer<List<DownloadInfo>?> {
             override fun onChanged(value: List<DownloadInfo>?) {
                 value?.find(infoFunc)?.let { info ->
-                    if (info.resourceStatus == Status.SUCCESS
-                            || info.resourceStatus == Status.ERROR
-                    ) {
+                    if (!info.isLoading) {
                         downloadsInfos.removeObserver(this)
                     }
                     statusChangeCallback(info)
