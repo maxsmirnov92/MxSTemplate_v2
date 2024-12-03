@@ -9,10 +9,13 @@
     <string name="notification_reader_toast_stop_remove_in_settings">App must be unselected in settings to stop service</string>
     <string name="notification_reader_toast_can_draw_overlays_settings">App must be selected to run service from background</string>
     <string name="notification_reader_snack_cannot_start_service">Cannot start service</string>
-    <string name="notification_reader_snack_download_package_list_not_started">Package list is currently downloading</string>
+    <string name="notification_reader_snack_download_package_list_not_started">@string/notification_reader_package_list_loading</string>
     <string name="notification_reader_package_name_unknown">Unknown package</string>
     <string name="notification_reader_content_empty">No content</string>
     <string name="notification_reader_no_notifications">No notifications</string>
+    <string name="notification_reader_package_list_loading">File with package list is loading</string>
+    <string name="notification_reader_package_list_error">Unknown error occurred while loading package list</string>
+    <string name="notification_reader_package_list_error_format">Error occurred while loading package list: \"%s\"</string>
     <string name="notification_reader_status_new">New</string>
     <string name="notification_reader_status_loading">Sending…</string>
     <string name="notification_reader_status_success">Done</string>
