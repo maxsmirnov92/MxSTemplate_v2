@@ -15,8 +15,12 @@ import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.live.setValueIfNew
+import net.maxsmr.commonutils.live.zip
+import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
+import net.maxsmr.commonutils.states.ILoadState.Companion.stateOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.base.delegates.persistableLiveData
+import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
@@ -31,6 +35,7 @@ import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.StartMode
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData.Companion.NOTIFICATION_DATETIME_FORMAT
+import net.maxsmr.feature.notification_reader.ui.adapter.PackageNameAdapterData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.preferences.ui.doOnBatteryOptimizationWithPostNotificationsAsk
@@ -50,9 +55,19 @@ class NotificationReaderViewModel @AssistedInject constructor(
 
     val serviceTargetState = _serviceTargetState as LiveData<ServiceTargetState?>
 
-    private val _packageListLoadState = MutableLiveData<LoadState<DownloadsViewModel.DownloadInfoWithParams>?>(null)
+    private val _packageListLoadState = MutableLiveData(
+        stateOf(null,
+            wasLoaded = false,
+            isLoading = false,
+            data = null,
+            createEmptyStateFunc = { LoadState<PackageListState>() }).first
+    ) // TODO LoadState.success(null, wasLoaded = false)
 
-    val packageListLoadState = _packageListLoadState as LiveData<LoadState<DownloadsViewModel.DownloadInfoWithParams>?>
+    val packageListLoadState = _packageListLoadState as LiveData<LoadState<PackageListState>>
+
+    private val _packageListExpandedState by persistableLiveDataInitial(false)
+
+    val packageListExpandedState = _packageListExpandedState as LiveData<Boolean>
 
     val notificationsItems = readerRepo.getNotifications().asLiveData().map { list ->
         list.map {
@@ -77,10 +92,39 @@ class NotificationReaderViewModel @AssistedInject constructor(
     init {
         // обозревание на постоянной основе загрузки с тегом (целевой url может меняться);
         // при этом может появляться и пропадать в resultItems манагера
-        downloadsViewModel.observeDownload(DOWNLOAD_TAG_PACKAGE_LIST) {
-            tag == it
+        // + настройка "белый список"
+        zip(
+            downloadsViewModel.observeDownload(DOWNLOAD_TAG_PACKAGE_LIST) {
+                tag == it
+            },
+            cacheRepo.packageList.asLiveData(),
+            settingsRepo.settingsFlow.asLiveData()
+        ) { loadState, packageList, settings ->
+            Triple(loadState, packageList, settings)
         }.observe {
-            _packageListLoadState.postValue(it)
+            val (loadState, packageList, settings) = it
+            viewModelScope.launch {
+                _packageListLoadState.postValue(
+                    if (loadState != null && !loadState.isSuccessWithData()) {
+                        loadState.copyOf(null)
+                    } else {
+                        LoadState.success(
+                            PackageListState(
+                                packageList.orEmpty().map { name -> PackageNameAdapterData(name) },
+                                settings?.isWhitePackageList == true
+                            )
+                        )
+                    }
+                )
+            }
+        }
+        viewModelScope.launch {
+            _packageListLoadState.value = LoadState.success(
+                PackageListState(
+                    cacheRepo.getPackageList().map { name -> PackageNameAdapterData(name) },
+                    settingsRepo.getSettings().isWhitePackageList
+                )
+            )
         }
     }
 
@@ -93,7 +137,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
         }
         serviceTargetState.observe {
             // костыль из-за Android Navigation с BottomNavigation:
-            // экран пересоздаётся и используется initial вместо последнего значения,
+            // экран пересоздаётся и используется initial вместо последнего значения
             // + не вызывается onCleared -> нужно актуализировать всегда
             viewModelScope.launch {
                 if (it != null) {
@@ -168,6 +212,10 @@ class NotificationReaderViewModel @AssistedInject constructor(
         }
     }
 
+    fun onTogglePackageListExpandedState() {
+        _packageListExpandedState.value = _packageListExpandedState.value == false
+    }
+
     fun isServiceRunning(): Boolean {
         // сервис может продолжать числитmся как выполняющийся
         // несмотря на убирание из настроек и stopService
@@ -210,6 +258,11 @@ class NotificationReaderViewModel @AssistedInject constructor(
         val state: Boolean,
         val changedFromView: Boolean,
     ) : Serializable
+
+    data class PackageListState(
+        val names: List<PackageNameAdapterData>,
+        val isWhiteList: Boolean,
+    )
 
     @AssistedFactory
     interface Factory {

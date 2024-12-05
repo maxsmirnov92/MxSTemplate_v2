@@ -18,6 +18,7 @@ import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListe
 import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.graphic.createBitmapDrawable
 import net.maxsmr.commonutils.live.zip
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
@@ -32,6 +33,7 @@ import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStopResult
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData
+import net.maxsmr.feature.notification_reader.ui.adapter.PackageNamesAdapter
 import net.maxsmr.feature.notification_reader.ui.databinding.FragmentNotificationReaderBinding
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
@@ -56,11 +58,13 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
     private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
-    private val adapter = NotificationsAdapter()
+    private val packageNamesAdapter = PackageNamesAdapter()
+    private val notificationsAdapter = NotificationsAdapter()
 
-    private val touchHelper: ItemTouchHelper = ItemTouchHelper(DragAndDropTouchHelperCallback(adapter)).also {
-        adapter.startDragListener = OnStartDragHelperListener(it)
-    }
+    private val touchHelper: ItemTouchHelper =
+        ItemTouchHelper(DragAndDropTouchHelperCallback(notificationsAdapter)).also {
+            notificationsAdapter.startDragListener = OnStartDragHelperListener(it)
+        }
 
     private val strategy: AlertDemoExpiredStrategy by lazy {
         AlertDemoExpiredStrategy(
@@ -105,7 +109,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
             val errorBinding = LayoutErrorContainerBinding.bind(containerPackageListError.root)
 
             viewModel.notificationsItems.observe {
-                adapter.items = it
+                notificationsAdapter.items = it
                 if (it.isNotEmpty()) {
                     rvNotifications.isVisible = true
                     tvNotificationsEmpty.isVisible = false
@@ -120,35 +124,86 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                 isRunning to loadState
             }.observe {
                 val (isRunning, loadState) = it
-                val isSuccess = loadState?.isSuccessWithData() != false
                 if (isRunning == true) {
-                    containerPackageListState.isVisible = !isSuccess
                     if (loadState?.isLoading == true) {
                         containerPackageListLoading.isVisible = true
+                        containerPackageNames.isVisible = false
                         containerPackageListError.root.isVisible = false
+                        containerPackageListState.isVisible = true
                     } else {
                         containerPackageListLoading.isVisible = false
-                        containerPackageListError.root.isVisible = !isSuccess
-                        errorBinding.tvEmptyError.text =
-                            loadState?.error?.message?.takeIf { message -> message.isNotEmpty() }?.let { message ->
-                                getString(R.string.notification_reader_package_list_error_format, message)
-                            } ?: getString(R.string.notification_reader_package_list_error)
+                        if (loadState?.isSuccessWithData() == true) {
+                            val data = loadState.data ?: return@observe
+                            tvPackageNamesSubtitle.text = getString(
+                                if (data.isWhiteList) {
+                                    R.string.notification_reader_package_list_white_subtitle
+                                } else {
+                                    R.string.notification_reader_package_list_black_subtitle
+                                }
+                            )
+                            packageNamesAdapter.items = data.names
+                            containerPackageNames.isVisible = true
+                            containerPackageListError.root.isVisible = false
+                            containerPackageListState.isVisible = true
+                        } else {
+                            containerPackageNames.isVisible = false
+                            if (loadState != null) {
+                                errorBinding.tvEmptyError.text =
+                                    loadState.error?.message?.takeIf { message -> message.isNotEmpty() }
+                                        ?.let { message ->
+                                            getString(R.string.notification_reader_package_list_error_format, message)
+                                        } ?: getString(R.string.notification_reader_package_list_error)
+                                containerPackageListError.root.isVisible = true
+                            } else {
+                                containerPackageListError.root.isVisible = false
+                            }
+                            containerPackageListState.isVisible = loadState != null && loadState.wasLoaded
+                        }
                     }
                 } else {
                     containerPackageListState.isVisible = false
                 }
             }
 
-            rvNotifications.adapter = adapter
+            viewModel.packageListExpandedState.observe {
+                ContextCompat.getDrawable(
+                    requireContext(),
+                    if (it) {
+                        R.drawable.ic_arrow_up
+                    } else {
+                        R.drawable.ic_arrow_down
+                    }
+                )?.let { d ->
+                    tvPackageNamesSubtitle.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                        null,
+                        null,
+                        d.createBitmapDrawable(requireContext(), 30, 30),
+                        null
+                    )
+                }
+                rvPackageNames.isVisible = it
+            }
+
+            rvPackageNames.adapter = packageNamesAdapter
+            rvNotifications.adapter = notificationsAdapter
             touchHelper.attachToRecyclerView(rvNotifications)
-            adapter.registerItemsEventsListener(this@NotificationReaderFragment)
+            notificationsAdapter.registerItemsEventsListener(this@NotificationReaderFragment)
             rvNotifications.addItemDecoration(
                 DividerItemDecoration.Builder(requireContext())
                     .setDivider(Divider.Space(8), DividerItemDecoration.Mode.ALL)
                     .build()
             )
 
-            errorBinding.tvEmptyError.setTextColor(ContextCompat.getColor(requireContext(), net.maxsmr.core.ui.R.color.textColorError))
+            tvPackageNamesSubtitle.setOnClickListener {
+                viewModel.onTogglePackageListExpandedState()
+            }
+
+            errorBinding.tvEmptyError.setTextColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    net.maxsmr.core.ui.R.color.textColorError
+                )
+            )
             errorBinding.btRetry.setOnClickListener {
                 viewModel.onDownloadPackageListAction()
             }
@@ -210,7 +265,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
     override fun onDestroyView() {
         super.onDestroyView()
-        adapter.unregisterItemsEventsListener(this)
+        notificationsAdapter.unregisterItemsEventsListener(this)
     }
 
     override fun onItemRemoved(position: Int, item: NotificationsAdapterData) {

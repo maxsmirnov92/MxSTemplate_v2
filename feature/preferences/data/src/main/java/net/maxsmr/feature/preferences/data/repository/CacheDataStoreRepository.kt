@@ -33,6 +33,9 @@ class CacheDataStoreRepository @Inject constructor(
     val canDrawOverlaysAsked: Flow<Boolean>? = data.map { it[FIELD_CAN_DRAW_OVERLAYS_ASKED] ?: false }
         .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.O }
 
+    val packageList: Flow<Set<String>> =
+        data.map { it[FIELD_KEY_PACKAGE_LIST].orEmpty() }
+
     val shouldNotificationReaderManagerRun: Flow<Boolean> =
         data.map { it[FIELD_KEY_SHOULD_NOTIFICATION_READER_RUN] ?: false }
 
