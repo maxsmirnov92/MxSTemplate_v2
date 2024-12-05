@@ -86,6 +86,11 @@ class DownloadManager @Inject constructor(
     private val downloadsLaunchedQueue = MutableStateFlow<Set<QueueItem>>(setOf())
 
     /**
+     * Загрузки, подлежащие отложенной отмене (на стадии, когда есть в launched, при onDownloadStarting)
+     */
+    private val downloadsPendingCancelQueue = MutableStateFlow<Set<QueueItem>>(setOf())
+
+    /**
      * Очередь фактически выполняющихся загрузок: сюда итемы попадают после удаления из [downloadsLaunchedQueue]
      */
     private val downloadsQueue = MutableStateFlow<Set<QueueItem>>(setOf())
@@ -259,6 +264,15 @@ class DownloadManager @Inject constructor(
                     downloadsStorage.addItem(it)
                 }
 
+                // дополнительно была отложенная отмена по launched
+                val pendingCancelQueue = downloadsPendingCancelQueue.value.toMutableSet()
+                if (pendingCancelQueue.removeIf { it.params.isSame(info.params) }) {
+                    downloadsPendingCancelQueue.value = pendingCancelQueue
+                    if (info.isStarted && info.downloadInfo != null) {
+                        cancelDownload(info.downloadInfo.id)
+                    }
+                }
+
                 // рефреш результирующих итемов
                 if (info.isStarted) {
                     info.downloadInfo?.let { downloadInfo ->
@@ -418,7 +432,7 @@ class DownloadManager @Inject constructor(
     fun observeDownloadByParams(
         params: DownloadService.Params,
         removeWhenFinished: Boolean,
-        isSameFunc: DownloadService.Params.(DownloadService.Params) -> Boolean = { isSame(it) }
+        isSameFunc: DownloadService.Params.(DownloadService.Params) -> Boolean = { isSame(it) },
     ): Flow<LoadState<DownloadInfoWithParams>> {
         return observeDownload(params, removeWhenFinished, isSameFunc)
     }
@@ -426,7 +440,7 @@ class DownloadManager @Inject constructor(
     fun <P> observeDownload(
         params: P,
         removeWhenFinished: Boolean,
-        isSameFunc: DownloadService.Params.(P) -> Boolean
+        isSameFunc: DownloadService.Params.(P) -> Boolean,
     ): Flow<LoadState<DownloadInfoWithParams>> {
         return combine(resultItems, _failedStartParamsFlow) { items, failedParams ->
             Pair(items, failedParams)
@@ -458,7 +472,11 @@ class DownloadManager @Inject constructor(
                     LoadState.loading(DownloadInfoWithParams(r.params, r.downloadInfo))
                 } ?: run {
                     // или можно поймать момент, когда оно сейчас в downloadsPendingQueue/downloadsLaunchedQueue
-                    (downloadsPendingQueue.value + downloadsLaunchedQueue.value).find { q -> q.params.isSameFunc(params) }?.let { q ->
+                    (downloadsPendingQueue.value + downloadsLaunchedQueue.value).find { q ->
+                        q.params.isSameFunc(
+                            params
+                        )
+                    }?.let { q ->
                         logger.w("observeDownload info is null, but params '$params' found in downloadsPendingQueue/downloadsLaunchedQueue")
                         LoadState.loading(DownloadInfoWithParams(q.params, null))
                     } ?: run {
@@ -479,6 +497,34 @@ class DownloadManager @Inject constructor(
                 }
             }
         }// .takeWhile { it.isLoading }
+    }
+
+    fun isPending(
+        params: DownloadService.Params,
+        isSameFunc: DownloadService.Params.(DownloadService.Params) -> Boolean = { isSame(it) },
+    ) = isPendingInternal(params) {
+        this.params.isSameFunc(it)
+    }
+
+    fun isPending(tag: String) = isPendingInternal(tag) {
+        val t = this.params.tag
+        t != null && t == it
+    }
+
+    fun isDownloading(
+        params: DownloadService.Params,
+        isSameFunc: DownloadService.Params.(DownloadService.Params) -> Boolean = { isSame(it) },
+    ) = isDownloadingInternal(params) {
+        this.params.isSameFunc(it)
+    }
+
+    fun isDownloading(tag: String) = isDownloadingInternal(tag) {
+        val t = this.params.tag
+        t != null && t == it
+    }
+
+    fun isDownloading(downloadId: Long) = isDownloadingInternal(downloadId) {
+        this.downloadId == it
     }
 
     /**
@@ -522,40 +568,72 @@ class DownloadManager @Inject constructor(
         }
     }
 
+    fun cancelPending(
+        params: DownloadService.Params,
+        isSameFunc: DownloadService.Params.(DownloadService.Params) -> Boolean = { isSame(it) },
+    ) {
+        logger.d("cancelDownload, params: $params")
+        cancelPendingInternal(params, isSameFunc)
+    }
+
+    fun cancelPending(tag: String) {
+        logger.d("cancelDownload, tag: $tag")
+        cancelPendingInternal(tag) {
+            val t = this.tag
+            t != null && t == it
+        }
+    }
+
+    fun cancelAllPending() {
+        scope.launch {
+            cancelAllPendingInternal()
+        }
+    }
+
+    fun cancelDownload(
+        params: DownloadService.Params,
+        isSameFunc: DownloadService.Params.(DownloadService.Params) -> Boolean = { isSame(it) },
+    ) {
+        logger.d("cancelDownload, params: $params")
+        cancelDownloadInternal(params, isSameFunc)
+    }
+
     fun cancelDownload(tag: String) {
-        resultItems.value.find {
-            val t = it.params.tag
-            t != null && t == tag
-        }?.let {
-            cancelDownload(it.id)
+        logger.d("cancelDownload, tag: $tag")
+        cancelDownloadInternal(tag) {
+            val t = this.tag
+            t != null && t == it
         }
     }
 
     fun cancelDownload(downloadId: Long) {
-        val pendingList = downloadsPendingQueue.value.toMutableSet()
-        if (pendingList.removeIf{ it.downloadId == downloadId }) {
-            // пока числится в pending
-            downloadsPendingQueue.value = pendingList
-        }
-        if (downloadsQueue.value.any { it.downloadId == downloadId }) {
-            // есть в downloadsQueue - значит выполняется в сервисе
-            DownloadService.cancel(downloadId)
-        }
-    }
-
-    fun cancelAllDownloads() {
-        removeAllPending()
-        downloadsQueue.value.forEach {
-            it.downloadId?.let { downloadId ->
+        logger.d("cancelDownload, downloadId: $downloadId")
+        scope.launch {
+            // непустой id есть только на стадии, когда загрузка в downloadsQueue
+            if (downloadsQueue.value.any { it.downloadId == downloadId }) {
+                logger.i("Cancel downloadId $downloadId with DownloadService")
                 DownloadService.cancel(downloadId)
             }
         }
     }
 
-    fun removeAllPending() {
+    fun cancelAllDownloads() {
+        logger.d("cancelAllDownloads")
         scope.launch {
-            downloadsPendingQueue.value = emptySet()
-            downloadsPendingStorage.clear()
+            cancelAllPendingInternal()
+
+            val pendingCancelQueue = downloadsPendingCancelQueue.value.toMutableSet()
+            downloadsLaunchedQueue.value.forEach {
+                pendingCancelQueue.add(it)
+            }
+            downloadsPendingCancelQueue.value = pendingCancelQueue
+
+            downloadsQueue.value.forEach {
+                it.downloadId?.let { downloadId ->
+                    logger.i("Cancel downloadId $downloadId with DownloadService")
+                    DownloadService.cancel(downloadId)
+                }
+            }
         }
     }
 
@@ -577,6 +655,71 @@ class DownloadManager @Inject constructor(
         scope.launch {
             removeFinishedSuspended(downloadId, withDb, withUri)
         }
+    }
+
+
+    private fun <P> isPendingInternal(
+        params: P,
+        isSameFunc: QueueItem.(P) -> Boolean,
+    ): Boolean {
+        return downloadsPendingQueue.value.any { it.isSameFunc(params) }
+    }
+
+    private fun <P> isDownloadingInternal(
+        params: P,
+        isSameFunc: QueueItem.(P) -> Boolean,
+    ): Boolean {
+        return (downloadsLaunchedQueue.value + downloadsQueue.value).any {
+            it.isSameFunc(params)
+        }
+    }
+
+    private fun <P> cancelPendingInternal(
+        params: P,
+        isSameFunc: DownloadService.Params.(P) -> Boolean,
+    ) {
+        val pendingList = downloadsPendingQueue.value.toMutableSet()
+        val pendingIterator = pendingList.iterator()
+        var pendingItem: QueueItem? = null
+        while (pendingIterator.hasNext()) {
+            val item = pendingIterator.next()
+            if (item.params.isSameFunc(params)) {
+                pendingIterator.remove()
+                pendingItem = item
+                break
+            }
+        }
+        pendingItem?.let {
+            // пока в отложенных - просто убрать
+            downloadsPendingQueue.value = pendingList
+            downloadsPendingStorage.removeItem(it)
+        }
+    }
+
+    private fun <P> cancelDownloadInternal(
+        params: P,
+        isSameFunc: DownloadService.Params.(P) -> Boolean,
+    ) {
+        scope.launch {
+            cancelPendingInternal(params, isSameFunc)
+
+            downloadsLaunchedQueue.value.find { it.params.isSameFunc(params) }?.let {
+                // из launched не убираем, запоминаем в отложенных на отмену
+                downloadsPendingCancelQueue.appendToSet(it)
+            }
+
+            downloadsQueue.value.find { it.params.isSameFunc(params) }?.let {
+                it.downloadId?.let { id ->
+                    // есть в downloadsQueue - значит выполняется в сервисе
+                    DownloadService.cancel(id)
+                }
+            }
+        }
+    }
+
+    private fun cancelAllPendingInternal() {
+        downloadsPendingQueue.value = emptySet()
+        downloadsPendingStorage.clear()
     }
 
     suspend fun enqueueDownloadSuspended(params: DownloadService.Params) {
@@ -792,7 +935,10 @@ class DownloadManager @Inject constructor(
         return !requestParams.headers.entries.any { it.key.isEmpty() || it.value.isEmpty() }
     }
 
-    private fun DownloadService.Params.isSame(otherParams: DownloadService.Params, checkResourceName: Boolean = false): Boolean {
+    private fun DownloadService.Params.isSame(
+        otherParams: DownloadService.Params,
+        checkResourceName: Boolean = false,
+    ): Boolean {
         return url.toUri().equalsIgnoreSubDomain(otherParams.url.toUri())
                 && tag == otherParams.tag
                 && (!checkResourceName || targetResourceName == otherParams.targetResourceName)

@@ -140,7 +140,7 @@ class DownloadsStateViewModel @Inject constructor(
                 TextMessage(R.string.download_dialog_confirm_title),
                 onSelect = {
                     if (it == DialogInterface.BUTTON_POSITIVE) {
-                        manager.removeAllPending()
+                        manager.cancelAllPending()
                     }
                 }
             )
