@@ -1,5 +1,6 @@
 package net.maxsmr.feature.notification_reader.ui.adapter
 
+import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -29,32 +30,17 @@ fun notificationsAdapterDelegate() = com.hannesdorfmann.adapterdelegates4.dsl.v2
             tvNotificationPackageName.text = item.packageName.takeIf { it.isNotEmpty() }
                 ?: getString(R.string.notification_reader_package_name_unknown)
             tvNotificationStatus.setText(item.statusTextResId)
-            val status = item.status
             tvNotificationStatus.setTextColor(
-                ContextCompat.getColor(
-                    context, when (status) {
-                        is NotificationReaderEntity.New -> {
-                            R.color.textColorNotificationNew
-                        }
-
-                        is NotificationReaderEntity.Loading -> {
-                            R.color.textColorNotificationLoading
-                        }
-
-                        is NotificationReaderEntity.Success -> {
-                            R.color.textColorNotificationSuccess
-                        }
-
-                        is NotificationReaderEntity.Failed -> {
-                            R.color.textColorNotificationFailed
-                        }
-
-                        is NotificationReaderEntity.Cancelled -> {
-                            R.color.textColorNotificationCancelled
-                        }
-                    }
-                )
+                ContextCompat.getColor(context, item.statusColorResId)
             )
+            val status = item.status
+            if (status is NotificationReaderEntity.Loading) {
+                pbNotificationLoading.isVisible = true
+                tvNotificationStatus.isVisible = false
+            } else {
+                pbNotificationLoading.isVisible = false
+                tvNotificationStatus.isVisible = true
+            }
             if (status is NotificationReaderEntity.Failed) {
                 tvNotificationFailReason.setTextOrGone(status.exception.message)
             } else {
@@ -118,6 +104,15 @@ data class NotificationsAdapterData(
         is NotificationReaderEntity.Success -> R.string.notification_reader_status_success
         is NotificationReaderEntity.Failed -> R.string.notification_reader_status_failed
         is NotificationReaderEntity.Cancelled -> R.string.notification_reader_status_cancelled
+    }
+
+    @ColorRes
+    val statusColorResId = when (status) {
+        is NotificationReaderEntity.New -> R.color.textColorNotificationNew
+        is NotificationReaderEntity.Loading -> R.color.textColorNotificationLoading
+        is NotificationReaderEntity.Success -> R.color.textColorNotificationSuccess
+        is NotificationReaderEntity.Failed -> R.color.textColorNotificationFailed
+        is NotificationReaderEntity.Cancelled -> R.color.textColorNotificationCancelled
     }
 
     override fun isSame(other: BaseAdapterData): Boolean = id == (other as? NotificationsAdapterData)?.id
