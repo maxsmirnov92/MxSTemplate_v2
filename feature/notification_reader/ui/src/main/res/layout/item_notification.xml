@@ -63,19 +63,34 @@
             app:layout_constraintWidth_default="wrap"
             app:layout_constraintWidth_max="100dp">
 
-            <TextView
-                android:id="@+id/tvNotificationStatus"
+            <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:gravity="end"
-                android:lines="1"
-                android:textAppearance="@style/TextAppearance.AppCompat.Headline"
-                android:textColor="@color/textColorNotificationNew"
-                android:textSize="@dimen/textSizeMini"
-                android:textStyle="bold"
-                android:typeface="monospace"
-                tools:text="New" />
+                android:layout_gravity="end">
+
+                <TextView
+                    android:id="@+id/tvNotificationStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:gravity="end"
+                    android:lines="1"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+                    android:textColor="@color/textColorNotificationNew"
+                    android:textSize="@dimen/textSizeMini"
+                    android:textStyle="bold"
+                    android:typeface="monospace"
+                    tools:text="New"
+                    tools:visibility="gone" />
+
+                <ProgressBar
+                    android:id="@+id/pbNotificationLoading"
+                    style="?android:attr/progressBarStyle"
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:layout_margin="@dimen/halfOfDefaultPadding" />
+
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/tvNotificationFailReason"
