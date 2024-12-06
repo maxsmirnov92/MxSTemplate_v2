@@ -31,11 +31,6 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
             donateInfo = AboutAppDescription.DonateInfo(
                 addresses = BuildConfig.DEV_PAYMENT_ADDRESSES.map { PaymentAddress(it.key, it.value) }
             ),
-            easterEggInfo = AboutAppDescription.EasterEggInfo(
-                animatedLogoResId = R.drawable.ic_splashscreen_logo_vector_animated,
-                targetClickCount = 10,
-                clicksLeftToShowToast = 4,
-            )
         )
     }
 

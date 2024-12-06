@@ -25,7 +25,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MxSTemplate"
+rootProject.name = "Camera ML"
 include(":app")
 
 //include(":lint")
