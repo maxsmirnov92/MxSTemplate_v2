@@ -1,4 +1,3 @@
 <resources>
-    <string name="app_name" translatable="false">MxSTemplate</string>
-    <string name="browser_name">Browser</string>
+    <string name="app_name" translatable="false">Camera ML Example</string>
 </resources>
