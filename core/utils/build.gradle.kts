@@ -11,7 +11,6 @@ dependencies {
 
     implementation(libs.decoro)
     implementation(libs.picasso)
-    implementation(libs.jodaTime)
 
     implementation(libs.kotlinx.serialization.json)
 }

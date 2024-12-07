@@ -1,9 +1,9 @@
 [versions]
 kotlin = "2.0.21"
 androidxAppCompat = "1.7.0"
-androidxConstraintLayout = "2.1.4"
-androidxConstraintLayoutCompose = "1.0.1"
-androidxCore = "1.13.1"
+androidxConstraintLayout = "2.2.0"
+androidxConstraintLayoutCompose = "1.1.0"
+androidxCore = "1.15.0"
 androidxCoreSplashScreen = "1.0.1"
 kotlinxCoroutines = "1.9.0"
 kotlinxCoroutinesRx2 = "1.9.0"
@@ -11,7 +11,7 @@ kotlinxCoroutinesRx2 = "1.9.0"
 #firebaseAnalytics = "22.1.2"
 #firebaseMessaging = "23.4.1"
 androidxEspresso = "3.6.1"
-androidxFragment = "1.8.4"
+androidxFragment = "1.8.5"
 googlePlayServicesLocation = "21.3.0"
 #googlePlayServicesDrive = "17.0.0"
 #googlePlayServicesAuth = "21.0.0"
@@ -23,7 +23,7 @@ huaweiServices = "1.9.1.300"
 gson = "2.10.1"
 junit4 = "4.13.2"
 junitExt = "1.1.5"
-androidxLifeCycle = "2.8.6"
+androidxLifeCycle = "2.8.7"
 lottie = "4.2.1"
 googleMaterial = "1.12.0"
 mockitoCore = "3.4.6"
@@ -32,7 +32,7 @@ mockitoAndroid = "2.19.0"
 okhttp = "4.12.0"
 room = "2.6.1"
 androidxTestRules = "1.6.1"
-androidxTestRunner = "1.6.1"
+androidxTestRunner = "1.6.2"
 timber = "5.0.1"
 treessence = "1.0.5"
 androidxViewPager2 = "1.1.0"
@@ -40,12 +40,13 @@ androidxLocalBroadcastManager = "1.1.0"
 androidxSwipeRefreshLayout = "1.1.0"
 jodaTime = "2.9.4"
 retrofit = "2.11.0"
+threeTenAbp = "1.4.7"
 picasso = "2.8"
 easyPermissions = "3.0.0"
 #volley = "1.2.1"
 androidxExifinterface = "1.3.7"
 hilt = "2.50"
-androidxPaging = "3.3.2"
+androidxPaging = "3.3.4"
 decoro = "1.5.1"
 androidxWindow = "1.3.0"
 androidxDataStore = "1.1.1"
@@ -58,7 +59,7 @@ zxingCore = "3.4.0"
 zxingParent = "3.4.0"
 zxingEmbedded = "3.3.0"
 flowLayout = "1.3.3"
-androidxNavigation = "2.8.3"
+androidxNavigation = "2.8.4"
 androidGradle = "8.6.1"
 #firebaseCrashlyticsPlugin = "3.0.2"
 #firebaseAppDistributionPlugin = "5.0.0"
@@ -69,11 +70,11 @@ glide = "4.16.0"
 glideCompose = "1.0.0-beta01"
 #orbit = "6.1.0"
 androidxTestExtJunit = "1.2.1"
-androidxComposeBom = "2024.09.03"
+androidxComposeBom = "2024.11.00"
 gridlayout = "1.0.0"
 r8 = "8.5.35"
-lint = "31.7.1"
-androidDesugarJdkLibs = "2.1.2"
+lint = "31.7.3"
+androidDesugarJdkLibs = "2.1.3"
 androidxComposeCompiler = "1.5.10"
 stfalconImageViewer = "v1.0.1"
 date4j = "1.5.1"
@@ -91,7 +92,7 @@ googlePlayAppUpdates = "2.1.0"
 ruStoreSdkBom = "6.0.0"
 showcaseView = "1.4.1"
 
-cameraX = "1.3.4"
+cameraX = "1.4.0"
 googleMlKit = "19.0.1"
 huaweiMl = "3.11.0.301"
 
@@ -104,8 +105,8 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 androidx-constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "androidxConstraintLayoutCompose" }
 androidx-fragment = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "androidxFragment" }
 androidx-fragment-testing = { group = "androidx.fragment", name = "fragment-testing", version.ref = "androidxFragment" }
-androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "androidxLifeCycle" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidxLifeCycle" }
+androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecycle-livedata-ktx", version.ref = "androidxLifeCycle" }
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "androidxLifeCycle" }
 #androidx-lifecycle-extensions = { group = "androidx.lifecycle", name = "lifecycle-extensions", version.ref = "androidxLifeCycle" }
 androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "androidxLifeCycle" }
@@ -184,6 +185,7 @@ okhttp-loggingInterceptor = { group = "com.squareup.okhttp3", name = "logging-in
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 treessence = { group = "com.github.bastienpaulfr", name = "Treessence", version.ref = "treessence" }
 jodaTime = { group = "joda-time", name = "joda-time", version.ref = "jodaTime" }
+threeTenAbp = { group = "com.jakewharton.threetenabp", name = "threetenabp", version.ref = "threeTenAbp" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-kotlinx-serializationConverter = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "kotlinxSerializationConverter" }
 picasso = { group = "com.squareup.picasso", name = "picasso", version.ref = "picasso" }

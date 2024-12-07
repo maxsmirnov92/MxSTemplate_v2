@@ -262,8 +262,6 @@ dependencies {
 
     implementation(project(":feature:showcase:settings"))
 
-    implementation(libs.jodaTime)
-
     //android
 //    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.exifinterface)

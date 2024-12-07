@@ -12,7 +12,7 @@ android {
 }
 
 dependencies {
-    api("core_android.libs:commonutils-release-1.1.2@aar")
+    api("core_android.libs:commonutils-release-1.1.3@aar")
     api("core_android.libs:permissionchecker-release-1.2.1.0@aar")
 
     implementation(project(":core:di"))
@@ -34,10 +34,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
 
     implementation(libs.kotlinx.serialization.json)
-
-    //time
-    implementation(libs.jodaTime)
-
 
     // Picasso
     implementation(libs.picasso)
