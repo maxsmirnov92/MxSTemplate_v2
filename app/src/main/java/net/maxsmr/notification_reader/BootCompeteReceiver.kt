@@ -2,13 +2,12 @@ package net.maxsmr.notification_reader
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
-import android.provider.Settings
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.maxsmr.core.android.base.receivers.BaseBootCompleteReceiver
-import net.maxsmr.core.android.baseApplicationContext
+import net.maxsmr.commonutils.service.canStartForegroundService
 import net.maxsmr.core.di.ApplicationScope
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -18,8 +17,14 @@ import javax.inject.Inject
 class BootCompeteReceiver : BaseBootCompleteReceiver() {
 
     override var lastBootCount: Int?
-        get() = null
-        set(value) {}
+        get() = runBlocking { cacheRepo.getBootCount() }
+        set(value) {
+            value?.let {
+                runBlocking {
+                    cacheRepo.setBootCount(value)
+                }
+            }
+        }
 
     @Inject
     lateinit var manager: NotificationReaderSyncManager
@@ -32,9 +37,7 @@ class BootCompeteReceiver : BaseBootCompleteReceiver() {
     lateinit var scope: CoroutineScope
 
     override fun doAction(context: Context, intent: Intent) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O
-                || Settings.canDrawOverlays(baseApplicationContext)
-        ) {
+        if (canStartForegroundService(context)) {
             scope.launch {
                 if (cacheRepo.shouldNotificationReaderRun()) {
                     manager.doStart(

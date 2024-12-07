@@ -165,6 +165,18 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
+    suspend fun getBootCount(): Int {
+        return dataStore.data.map { prefs ->
+            prefs[FIELD_KEY_LAST_BOOT_COUNT]
+        }.firstOrNull() ?: 0
+    }
+
+    suspend fun setBootCount(value: Int) {
+        dataStore.edit { prefs ->
+            prefs[FIELD_KEY_LAST_BOOT_COUNT] = value
+        }
+    }
+
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
@@ -176,5 +188,6 @@ class CacheDataStoreRepository @Inject constructor(
             booleanPreferencesKey("shouldNotificationReaderRun")
         private val FIELD_KEY_DEMO_PERIOD_EXPIRED = booleanPreferencesKey("demoPeriodExpired")
         private val FIELD_KEY_TUTORIAL_COMPLETED = booleanPreferencesKey("tutorialCompleted")
+        private val FIELD_KEY_LAST_BOOT_COUNT = intPreferencesKey("lastBootCount")
     }
 }

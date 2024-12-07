@@ -2,7 +2,6 @@ package net.maxsmr.feature.notification_reader.data
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.provider.Settings
 import androidx.annotation.MainThread
 import androidx.core.app.NotificationManagerCompat
@@ -18,11 +17,11 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.isPackageNameValid
-import net.maxsmr.commonutils.isSelfAppInBackground
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.media.readStrings
 import net.maxsmr.commonutils.service.StartResult
+import net.maxsmr.commonutils.service.canStartForegroundService
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.FileFormat
@@ -82,7 +81,8 @@ class NotificationReaderSyncManager @Inject constructor(
     init {
         scope.launch {
             if (cacheRepo.shouldNotificationReaderRun()) {
-                // запуск основной работы без сервиса
+                _isRunning.value = true
+                // запуск основной работы и сервиса после, если условия позволяют
                 launchDownloadJob()
             }
         }
@@ -91,7 +91,7 @@ class NotificationReaderSyncManager @Inject constructor(
     @MainThread
     fun doStart(context: Context, ignoreBackground: Boolean = false): ManagerStartResult {
         logger.d("doStart, ignoreBackground: $ignoreBackground")
-        if (ignoreBackground || context.isSelfAppInBackground() == false) {
+        if (ignoreBackground || canStartForegroundService(context)) {
             if (isNotificationAccessGranted(context)) {
                 val state = lastPackageListState.value
                 if (state != null && !state.isLoading) {
@@ -201,77 +201,86 @@ class NotificationReaderSyncManager @Inject constructor(
     private fun launchDownloadJob() {
         downloadJob.cancel()
         logger.d("launching downloadJob...")
-        // забираем актуальный список пакетов
-        downloadJob.set(scope.launch {
-            downloadManager.observeDownloadByParams(enqueueDownloadPackageList(), true)
-                .stateIn(scope, SharingStarted.WhileSubscribed(), null)
-                .collect {
 
-                    if (!isRunning.value) {
-                        lastPackageListState.value = null
-                        downloadJob.cancel()
-                    }
+        suspend fun doAfterDownload() {
+            // после успешной или неуспешной загрузки файла с разрешённым списком
+            // делаем следующее:
 
-                    if (it == null) return@collect
-                    if (!it.isLoading) {
+            // 1. сбрасываем статусы у зафейленных или подвешенных и пытаемся их отправить
+            sendOrRemoveNotifications {
+                status is NotificationReaderEntity.Failed
+                        || status is NotificationReaderEntity.Cancelled
+                        || status is NotificationReaderEntity.Loading
+            }
 
-                        lastPackageListState.value = if (it.isSuccessWithData()) {
-                            val packageList =
-                                it.data?.downloadInfo?.localUri?.readStrings(baseApplicationContext.contentResolver)
-                                    .orEmpty()
-                            val result = packageList.filter { name ->
-                                isPackageNameValid(name) || name == "android"
-                            }.toSet()
-                            cacheRepo.setPackageList(result)
-                            LoadState.success(result)
-                        } else {
-                            LoadState.error(it.error ?: NetworkException())
+            val mode = pendingStartMode.get()
+            if (mode in arrayOf(StartMode.JOBS_AND_SERVICE, StartMode.JOBS)) {
+                // 2. мониторим появляющиеся со статусом "New" для выполнения запроса
+                launchWatcherForNew()
+                // 3. запуск периодического повтора любых зафейленных
+                launchWatcherForFailed()
+                // 4. запуск периодического удаления успешных, срок по котороым прошёл
+                launchWatcherForSuccess()
+                // 5. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
+                launchNetworkStateWatcher()
+                // 6. реагирование на изменение некоторых настроек
+                launchObserveSettingsJob()
+
+                if (mode == StartMode.JOBS_AND_SERVICE) {
+                    if (canStartForegroundService(baseApplicationContext)) {
+                        // отложенный запуск сервиса по готовности белого списка
+                        if (isNotificationAccessGranted(baseApplicationContext)) {
+                            NotificationReaderListenerService.start(baseApplicationContext)
                         }
-
-                        // после успешной или неуспешной загрузки файла с разрешённым списком
-                        // делаем следующее:
-
-                        // 1. сбрасываем статусы у зафейленных или подвешенных и пытаемся их отправить
-                        sendOrRemoveNotifications {
-                            status is NotificationReaderEntity.Failed
-                                    || status is NotificationReaderEntity.Cancelled
-                                    || status is NotificationReaderEntity.Loading
-                        }
-
-                        val mode = pendingStartMode.get()
-                        if (mode in arrayOf(StartMode.JOBS_AND_SERVICE, StartMode.JOBS)) {
-                            // 2. мониторим появляющиеся со статусом "New" для выполнения запроса
-                            launchWatcherForNew()
-                            // 3. запуск периодического повтора любых зафейленных
-                            launchWatcherForFailed()
-                            // 4. запуск периодического удаления успешных, срок по котороым прошёл
-                            launchWatcherForSuccess()
-                            // 5. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
-                            launchNetworkStateWatcher()
-                            // 6. реагирование на изменение некоторых настроек
-                            launchObserveSettingsJob()
-
-                            if (mode == StartMode.JOBS_AND_SERVICE) {
-                                if (baseApplicationContext.isSelfAppInBackground() == false
-                                        || (Build.VERSION.SDK_INT < Build.VERSION_CODES.O
-                                                || Settings.canDrawOverlays(baseApplicationContext))
-                                ) {
-                                    // отложенный запуск сервиса по готовности белого списка
-                                    if (isNotificationAccessGranted(baseApplicationContext)) {
-                                        NotificationReaderListenerService.start(baseApplicationContext)
-                                    }
-                                }
-                            }
-
-                            pendingStartMode.set(StartMode.NONE)
-                        }
-
-                        downloadJob.cancel()
-                    } else {
-                        lastPackageListState.value = LoadState.loading()
                     }
                 }
-        })
+
+                pendingStartMode.set(StartMode.NONE)
+            }
+        }
+
+        if (canStartForegroundService(baseApplicationContext)) {
+            // забираем актуальный список пакетов
+            downloadJob.set(scope.launch {
+                downloadManager.observeDownloadByParams(enqueueDownloadPackageList(), true)
+                    .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+                    .collect {
+
+                        if (!isRunning.value) {
+                            lastPackageListState.value = null
+                            downloadJob.cancel()
+                        }
+
+                        if (it == null) return@collect
+                        if (!it.isLoading) {
+
+                            lastPackageListState.value = if (it.isSuccessWithData()) {
+                                val packageList =
+                                    it.data?.downloadInfo?.localUri?.readStrings(baseApplicationContext.contentResolver)
+                                        .orEmpty()
+                                val result = packageList.filter { name ->
+                                    isPackageNameValid(name) || name == "android"
+                                }.toSet()
+                                cacheRepo.setPackageList(result)
+                                LoadState.success(result)
+                            } else {
+                                LoadState.error(it.error ?: NetworkException())
+                            }
+
+                            doAfterDownload()
+
+                            downloadJob.cancel()
+                        } else {
+                            lastPackageListState.value = LoadState.loading()
+                        }
+                    }
+            })
+        } else {
+            lastPackageListState.value = LoadState.error(RuntimeException("App is not in foreground"))
+            downloadJob.set(scope.launch {
+                doAfterDownload()
+            })
+        }
     }
 
     private fun launchObserveSettingsJob() {
