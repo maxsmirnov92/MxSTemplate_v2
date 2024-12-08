@@ -99,7 +99,11 @@ class NotificationReaderViewModel @AssistedInject constructor(
             viewModelScope.launch {
                 _packageListLoadState.postValue(
                     if (loadState != null && !loadState.isSuccessWithData()) {
-                        loadState.copyOf(null)
+                        if (!settings?.packageListUrl.isNullOrEmpty()) {
+                            loadState.copyOf(null)
+                        } else {
+                            LoadState.success(null)
+                        }
                     } else {
                         LoadState.success(
                             PackageListState(
