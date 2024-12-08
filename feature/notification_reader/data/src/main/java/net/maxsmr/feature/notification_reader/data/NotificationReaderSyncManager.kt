@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.isPackageNameValid
 import net.maxsmr.commonutils.logger.BaseLogger
@@ -131,19 +132,7 @@ class NotificationReaderSyncManager @Inject constructor(
         logger.d("doStop, navigateToSettings: $navigateToSettings")
         _isRunning.value = false
 
-        val isPending = downloadManager.isPending(DOWNLOAD_TAG_PACKAGE_LIST)
-        val isDownloading = downloadManager.isDownloading(DOWNLOAD_TAG_PACKAGE_LIST)
-        if (isPending || isDownloading) {
-            downloadManager.cancelDownload(DOWNLOAD_TAG_PACKAGE_LIST)
-        }
-        if (!isDownloading) {
-            // если файл сейчас по факту грузится,
-            // после отмены загрузки надо дождаться
-            // убирания загрузки из finished в observeDownload,
-            downloadJob.cancel()
-            // при перезапуске манагера надо перезапросить список
-            lastPackageListState.value = null
-        }
+        cancelDownload()
 
         newWatcherJob.cancel()
         failedWatcherJob.cancel()
@@ -239,47 +228,93 @@ class NotificationReaderSyncManager @Inject constructor(
             }
         }
 
-        if (canStartForegroundService(baseApplicationContext)) {
-            // забираем актуальный список пакетов
-            downloadJob.set(scope.launch {
-                downloadManager.observeDownloadByParams(enqueueDownloadPackageList(), true)
-                    .stateIn(scope, SharingStarted.WhileSubscribed(), null)
-                    .collect {
-
-                        if (!isRunning.value) {
-                            lastPackageListState.value = null
-                            downloadJob.cancel()
-                        }
-
-                        if (it == null) return@collect
-                        if (!it.isLoading) {
-
-                            lastPackageListState.value = if (it.isSuccessWithData()) {
-                                val packageList =
-                                    it.data?.downloadInfo?.localUri?.readStrings(baseApplicationContext.contentResolver)
-                                        .orEmpty()
-                                val result = packageList.filter { name ->
-                                    isPackageNameValid(name) || name == "android"
-                                }.toSet()
-                                cacheRepo.setPackageList(result)
-                                LoadState.success(result)
-                            } else {
-                                LoadState.error(it.error ?: NetworkException())
-                            }
-
-                            doAfterDownload()
-
-                            downloadJob.cancel()
-                        } else {
-                            lastPackageListState.value = LoadState.loading()
-                        }
-                    }
-            })
-        } else {
-            lastPackageListState.value = LoadState.error(RuntimeException("App is not in foreground"))
+        suspend fun doWithoutDownload(state: LoadState<Set<String>>?) {
+            lastPackageListState.value = state
             downloadJob.set(scope.launch {
                 doAfterDownload()
             })
+        }
+
+        scope.launch {
+            val packageListUrl = settingsRepo.getSettings().packageListUrl
+            if (packageListUrl.isNotEmpty()) {
+                if (canStartForegroundService(baseApplicationContext)) {
+                    // забираем актуальный список пакетов
+                    downloadJob.set(scope.launch {
+                        downloadManager.observeDownloadByParams(enqueueDownloadPackageList(packageListUrl), true)
+                            .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+                            .collect {
+
+                                if (!isActive){
+                                    logger.w("State is $it, but downloadJob is not active")
+                                    lastPackageListState.value = null
+                                    return@collect
+                                }
+
+                                if (it == null) return@collect
+                                if (!it.isLoading) {
+
+                                    if (!isRunning.value) {
+                                        logger.w("Download complete, but manager is not running")
+                                        lastPackageListState.value = null
+                                        downloadJob.cancel()
+                                        return@collect
+                                    }
+
+                                    val currentUrl = settingsRepo.getSettings().packageListUrl
+                                    if (!packageListUrl.toUri().equalsIgnoreSubDomain(currentUrl.toUri())) {
+                                        logger.w("Download complete, but packageListUrl changed from \"$packageListUrl\" to \"$currentUrl\"")
+                                        // за время пока шла загрузка (сейчас скорее всего была отменена из observeSettingsJob),
+                                        // урла изменилась - требуется перезапуск
+                                        lastPackageListState.value = null
+                                        launchDownloadJob()
+                                        return@collect
+                                    }
+
+                                    lastPackageListState.value = if (it.isSuccessWithData()) {
+                                        val packageList =
+                                            it.data?.downloadInfo?.localUri?.readStrings(baseApplicationContext.contentResolver)
+                                                .orEmpty()
+                                        val result = packageList.filter { name ->
+                                            isPackageNameValid(name) || name == "android"
+                                        }.toSet()
+                                        cacheRepo.setPackageList(result)
+                                        LoadState.success(result)
+                                    } else {
+                                        LoadState.error(it.error ?: NetworkException())
+                                    }
+
+                                    doAfterDownload()
+
+                                    downloadJob.cancel()
+                                } else {
+                                    lastPackageListState.value = LoadState.loading()
+                                }
+                            }
+                    })
+                } else {
+                    doWithoutDownload(LoadState.error(RuntimeException("App is not in foreground")))
+                }
+            } else {
+                cacheRepo.setPackageList(emptySet())
+                doWithoutDownload(LoadState.success(null))
+            }
+        }
+    }
+
+    private fun cancelDownload() {
+        val isPending = downloadManager.isPending(DOWNLOAD_TAG_PACKAGE_LIST)
+        val isDownloading = downloadManager.isDownloading(DOWNLOAD_TAG_PACKAGE_LIST)
+        if (isPending || isDownloading) {
+            downloadManager.cancelDownload(DOWNLOAD_TAG_PACKAGE_LIST)
+        }
+        if (!isDownloading) {
+            // если файл сейчас по факту грузится,
+            // после отмены загрузки надо дождаться
+            // убирания загрузки из finished в observeDownload,
+            downloadJob.cancel()
+            // при перезапуске манагера надо перезапросить список
+            lastPackageListState.value = null
         }
     }
 
@@ -306,6 +341,7 @@ class NotificationReaderSyncManager @Inject constructor(
                     }
                     if (!lastSettings.packageListUrl.toUri().equalsIgnoreSubDomain(it.packageListUrl.toUri())) {
                         logger.d("setting 'packageListUrl' changed to ${it.packageListUrl}")
+                        cancelDownload()
                         doLaunchDownloadJobIfNeeded(StartMode.JOBS)
                     }
                     if (lastSettings.successNotificationsLifeTime != it.successNotificationsLifeTime) {
@@ -322,7 +358,7 @@ class NotificationReaderSyncManager @Inject constructor(
         }
     }
 
-    private suspend fun launchWatcherForNew() {
+    private fun launchWatcherForNew() {
         if (newWatcherJob.get()?.isCancelled != false) {
             logger.d("launching newWatcherJob...")
             newWatcherJob.set(scope.launch {
@@ -378,7 +414,7 @@ class NotificationReaderSyncManager @Inject constructor(
             .launchIn(scope))
     }
 
-    private suspend fun launchNetworkStateWatcher() {
+    private fun launchNetworkStateWatcher() {
         if (networkStateJob.get()?.isCancelled != false) {
             logger.d("launching networkStateJob...")
             networkStateJob.set(
@@ -461,9 +497,8 @@ class NotificationReaderSyncManager @Inject constructor(
         )
     }
 
-    private suspend fun enqueueDownloadPackageList(): DownloadService.Params {
-        val packageListUrl = settingsRepo.getSettings().packageListUrl
-        val params = DownloadParamsModel(packageListUrl).toParams(
+    private fun enqueueDownloadPackageList(url: String): DownloadService.Params {
+        val params = DownloadParamsModel(url).toParams(
             mimeTypeRule = Include(FileFormat.TEXT.mimeType)
         )
         DownloadService.Params(

@@ -42,7 +42,7 @@ class SettingsViewModel @Inject constructor(
 
     val packageListUrlField = state.urlField(
         R.string.settings_field_package_list_url_hint,
-        isRequired = true,
+        isRequired = false,
         isValidByBlank = false,
         key = KEY_FIELD_URL_PACKAGE_LIST
     )
