@@ -1,15 +1,11 @@
 package net.maxsmr.mxstemplate.initializers
 
 import android.content.Context
-import androidx.startup.Initializer
-import net.maxsmr.mxstemplate.BuildConfig
-import net.maxsmr.mxstemplate.timber.CustomFileLoggerTree
-import timber.log.Timber
 import android.util.Log
-import dagger.hilt.EntryPoint
-import fr.bipi.tressence.common.filters.TagFilter
-import net.maxsmr.mxstemplate.timber.CrashReportingTree
-import java.util.regex.Pattern
+import androidx.startup.Initializer
+import fr.bipi.treessence.file.FileLoggerTree
+import net.maxsmr.mxstemplate.BuildConfig
+import timber.log.Timber
 
 class TimberInitializer : Initializer<Unit> {
 
@@ -26,11 +22,11 @@ class TimberInitializer : Initializer<Unit> {
         })
         if (BuildConfig.LOG_WRITE_FILE) {
             Timber.plant(
-                CustomFileLoggerTree.Builder()
+                FileLoggerTree.Builder()
                     .withFileName("app_%g.log")
                     .withDir(context.externalCacheDir ?: context.cacheDir)
-                    .withMinPriority(Log.DEBUG)
-                    .withFilter(TagFilter(Pattern.compile("(TrackingStationService|TrackingInfo).*")))
+                    .withMinPriority(Log.VERBOSE)
+//                    .withFilter(TagFilter(Pattern.compile("")))
                     .build()
             )
         }

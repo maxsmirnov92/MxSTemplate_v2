@@ -9,6 +9,8 @@ import net.maxsmr.mxstemplate.logger.TimberLogger
 @HiltAndroidApp
 class App : BaseApplication() {
 
+    private val logger by lazy { BaseLoggerHolder.instance.getLogger<BaseLogger>("App") }
+
     init {
 //        if (BuildConfig.DEBUG) {
 //            System.setProperty(
@@ -22,6 +24,7 @@ class App : BaseApplication() {
 
     override fun onCreate() {
         super.onCreate()
+        logger.d("onCreate")
 //        FirebaseCrashlytics.getInstance().setUserId(uuidManager.uuid)
 
 //        if (isAtLeastPie()) {

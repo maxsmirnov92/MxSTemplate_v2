@@ -985,6 +985,10 @@ class DownloadManager @Inject constructor(
                         currentLevel: Int,
                         wasAdded: Boolean,
                     ): Boolean = continuation.isActive
+
+                    override fun onExceptionOccurred(e: RuntimeException) {
+                        // do nothing
+                    }
                 }
                 val files = getFiles(
                     queueDir,
