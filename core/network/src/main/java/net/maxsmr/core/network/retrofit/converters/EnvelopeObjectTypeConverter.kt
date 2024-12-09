@@ -1,5 +1,6 @@
 package net.maxsmr.core.network.retrofit.converters
 
+import net.maxsmr.commonutils.ReflectionUtils.invokeMethodOrThrow
 import net.maxsmr.core.network.OnServerResponseListener
 import net.maxsmr.core.network.ParameterizedTypeImpl
 import net.maxsmr.core.network.exceptions.ApiException
@@ -23,7 +24,7 @@ internal class EnvelopeObjectTypeConverter<E : BaseEnvelope<*>, O : BaseEnvelope
         retrofit: Retrofit,
     ): Converter<ResponseBody, *> {
         val envelopeObjectType =
-            (annotations.find { it.annotationClass == EnvelopeObjectType::class } as EnvelopeObjectType?)?.value
+            (annotations.find { it is EnvelopeObjectType } as? EnvelopeObjectType)?.getValue()
 
         val offlineCache = annotations.find { it.annotationClass == OfflineCache::class } != null
 
@@ -90,5 +91,20 @@ internal class EnvelopeObjectTypeConverter<E : BaseEnvelope<*>, O : BaseEnvelope
             "Missing type arguments for $rawType"
         }
         return ParameterizedTypeImpl(null, rawType, *typeArguments)
+    }
+
+    private fun EnvelopeObjectType.getValue(): String? {
+        return try {
+            this.value
+        } catch (e: ClassCastException) {
+            // см. комент в ResponseObjectTypeConverter
+            val type = this.javaClass
+            invokeMethodOrThrow<String>(
+                type,
+                "value",
+                arrayOf(),
+                this
+            )
+        }
     }
 }

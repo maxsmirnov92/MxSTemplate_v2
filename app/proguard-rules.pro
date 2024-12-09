@@ -155,6 +155,7 @@
 -keepclasseswithmembers class * {
     @retrofit2.http.* <methods>;
 }
+-keep class com.jakewharton.retrofit2.converter.kotlinx.serialization.** { *; }
 
 # With R8 full mode, it sees no subtypes of Retrofit interfaces since they are created with a Proxy
 # and replaces all potential values with null. Explicitly keeping the interfaces prevents this.
@@ -202,6 +203,7 @@
 -keepclassmembers class <2>$<3> {
     kotlinx.serialization.KSerializer serializer(...);
 }
+-keep class kotlinx.serialization.** { *; }
 
 # Keep `INSTANCE.serializer()` of serializable objects.
 -if @kotlinx.serialization.Serializable class ** {
@@ -211,6 +213,9 @@
     public static <1> INSTANCE;
     kotlinx.serialization.KSerializer serializer(...);
 }
+
+-keep class kotlin.** { *; }
+-keepclassmembers class kotlin.** { *; }
 
 # @Serializable and @Polymorphic are used at runtime for polymorphic serialization.
 -keepattributes RuntimeVisibleAnnotations,AnnotationDefault
@@ -238,6 +243,32 @@
 # Сохранение сериализуемых классов
 -keep class * implements java.io.Serializable { *; }
 
+# BaseResponse
+-keep class * implements net.maxsmr.core.network.retrofit.converters.BaseResponse
+-keepclassmembers class * implements net.maxsmr.core.network.retrofit.converters.BaseResponse {
+    <fields>;
+    <methods>;
+}
+-keepnames class * implements net.maxsmr.core.network.retrofit.converters.BaseResponse
+# Сохранение serializers для наследников BaseResponse в подпакетах
+-keep class net.maxsmr.core.network.api.** {*;}
+
+# Retrofit converters, response type annotations
+-keep class net.maxsmr.core.network.retrofit.converters.** { *; }
+-keep @interface net.maxsmr.core.network.retrofit.converters.ResponseObjectType
+-keepclassmembers class net.maxsmr.core.network.retrofit.converters.ResponseObjectType {
+    <fields>;
+    <methods>;
+    java.lang.Class value();
+}
+-keep @interface net.maxsmr.core.network.retrofit.converters.EnvelopeObjectType
+-keepclassmembers class net.maxsmr.core.network.retrofit.converters.EnvelopeObjectType {
+    <fields>;
+    <methods>;
+    java.lang.String value();
+}
+
+
 #Common rules
 -ignorewarnings
 -repackageclasses
@@ -248,12 +279,21 @@
 -keepattributes *Annotation*
 -keepattributes InnerClasses
 -keepattributes EnclosingMethod
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes RuntimeVisibleParameterAnnotations
+-keepattributes RuntimeVisibleTypeAnnotations
+-keepattributes RuntimeInvisibleAnnotations
+-keepattributes RuntimeInvisibleParameterAnnotations
+-keepattributes RuntimeInvisibleTypeAnnotations
 
 # Сохранение всех метаданных
 -keepattributes Signature
--keepattributes *Annotation*
 # Keep file names and line numbers.
 -keepattributes SourceFile,LineNumberTable
+-keepattributes Kotlin.Metadata
+-keep class kotlin.Metadata { *; }
+-keep class kotlin.reflect.KClass { *; }
+-keep class kotlin.reflect.jvm.internal.** { *; }
 
 -keepattributes Exceptions
 # Optional: Keep custom exceptions.

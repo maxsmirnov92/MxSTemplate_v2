@@ -9,6 +9,6 @@ package net.maxsmr.core.network.retrofit.converters
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
-internal annotation class EnvelopeObjectType(
+annotation class EnvelopeObjectType(
     val value: String = "",
 )
