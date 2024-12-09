@@ -160,26 +160,23 @@ class NotificationReaderViewModel @AssistedInject constructor(
         navigateToSettingsForStop: Boolean,
         resultFunc: ((Triple<Boolean, ManagerStartResult?, ManagerStopResult?>) -> Unit)? = null,
     ) {
-        // post_notifications не является обязательным для работы сервиса,
-        // но спрашиваем (при включённой настройке) чтобы нотификации от двух сервисов были
-        doOnBatteryOptimizationWithPostNotificationsAsk(fragment, cacheRepo, settingsRepo) {
-            with(fragment.requireContext()) {
-                val isStarted: Boolean
-                val startResult: ManagerStartResult?
-                val stopResult: ManagerStopResult?
-                if (_serviceTargetState.value?.state == true) {
-                    startResult = doStartWithHandleResult(this)
-                    stopResult = null
-                    isStarted = startResult.isSuccess
-                } else {
-                    stopResult = doStopWithHandleResult(this, navigateToSettingsForStop)
-                    startResult = null
-                    isStarted = !stopResult.isSuccess && stopResult != ManagerStopResult.SETTINGS_NEEDED
-                }
+        val context = fragment.requireContext()
+        if (_serviceTargetState.value?.state == true) {
+            // post_notifications не является обязательным для работы сервиса,
+            // но спрашиваем (при включённой настройке) чтобы нотификации от двух сервисов были
+            doOnBatteryOptimizationWithPostNotificationsAsk(fragment, cacheRepo, settingsRepo) {
+                val startResult = doStartWithHandleResult(context)
+                val isStarted = startResult.isSuccess
                 lastStartResult = startResult
-                lastStopResult = stopResult
-                resultFunc?.invoke(Triple(isStarted, startResult, stopResult))
+                lastStopResult = null
+                resultFunc?.invoke(Triple(isStarted, startResult, null))
             }
+        } else {
+            val stopResult: ManagerStopResult = doStopWithHandleResult(context, navigateToSettingsForStop)
+            val isStarted = !stopResult.isSuccess && stopResult != ManagerStopResult.SETTINGS_NEEDED
+            lastStopResult = stopResult
+            lastStartResult = null
+            resultFunc?.invoke(Triple(isStarted, null, stopResult))
         }
     }
 
