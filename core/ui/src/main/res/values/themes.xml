@@ -18,6 +18,7 @@
         <item name="colorControlHighlight">@color/colorControlActivated</item>
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <item name="android:windowBackground">@color/windowBackground</item>
+        <item name="android:navigationBarColor">@color/navigationBarColor</item>
         <!-- Customize your theme here. -->
         <item name="appHintColor">@color/textColorHint</item>
         <item name="appErrorColor">@color/textColorError</item>
