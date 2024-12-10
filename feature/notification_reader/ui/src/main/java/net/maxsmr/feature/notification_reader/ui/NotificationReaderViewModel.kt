@@ -18,7 +18,6 @@ import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.commonutils.live.zip
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
-import net.maxsmr.commonutils.states.ILoadState.Companion.stateOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.persistableLiveData
@@ -57,13 +56,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
 
     val serviceTargetState = _serviceTargetState as LiveData<ServiceTargetState?>
 
-    private val _packageListLoadState = MutableLiveData(
-        stateOf(null,
-            wasLoaded = false,
-            isLoading = false,
-            data = null,
-            createEmptyStateFunc = { LoadState<PackageListState>() }).first
-    ) // TODO LoadState.success(null, wasLoaded = false)
+    private val _packageListLoadState = MutableLiveData<LoadState<PackageListState>>(LoadState.success(null))
 
     val packageListLoadState = _packageListLoadState as LiveData<LoadState<PackageListState>>
 
@@ -82,6 +75,8 @@ class NotificationReaderViewModel @AssistedInject constructor(
             )
         }
     }
+
+    val settings = settingsRepo.settingsFlow.asLiveData()
 
     val isRunning = manager.isRunning.asLiveData()
 
@@ -105,7 +100,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
                 tag == it
             },
             cacheRepo.packageList.asLiveData(),
-            settingsRepo.settingsFlow.asLiveData()
+            settings
         ) { loadState, packageList, settings ->
             Triple(loadState, packageList, settings)
         }.observe {
@@ -154,7 +149,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
                 }
             }
         }
-        settingsRepo.settingsFlow.asLiveData().observeOnce {
+        settings.observeOnce {
             // при попадании на экран проверяем, был ли указан ключ
             if (it.notificationsApiKey.isEmpty()) {
                 showInputApiKeyDialog()

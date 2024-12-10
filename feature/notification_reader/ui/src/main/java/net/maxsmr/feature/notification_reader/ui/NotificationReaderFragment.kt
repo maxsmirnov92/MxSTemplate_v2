@@ -38,7 +38,6 @@ import net.maxsmr.core.ui.views.ViewClickDelegate
 import net.maxsmr.feature.demo.DemoChecker
 import net.maxsmr.feature.demo.strategies.AlertDemoExpiredStrategy
 import net.maxsmr.feature.download.data.DownloadsViewModel
-import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStopResult
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
@@ -93,9 +92,6 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
     lateinit var factory: NotificationReaderViewModel.Factory
 
     @Inject
-    lateinit var manager: NotificationReaderSyncManager
-
-    @Inject
     lateinit var cacheRepo: CacheDataStoreRepository
 
     @Inject
@@ -145,7 +141,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                         containerPackageListState.isVisible = true
                     } else {
                         containerPackageListLoading.isVisible = false
-                        if (loadState?.isSuccessWithData() == true) {
+                        if (loadState?.isSuccessWithData { state -> !state?.names.isNullOrEmpty() } == true) {
                             val data = loadState.data ?: return@observe
                             tvPackageNamesSubtitle.text = getString(
                                 if (data.isWhiteList) {
@@ -160,7 +156,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                             containerPackageListState.isVisible = true
                         } else {
                             containerPackageNames.isVisible = false
-                            if (loadState != null) {
+                            if (loadState != null && loadState.isError()) {
                                 errorBinding.tvEmptyError.text =
                                     loadState.error?.message?.takeIf { message -> message.isNotEmpty() }
                                         ?.let { message ->
@@ -170,12 +166,17 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                             } else {
                                 containerPackageListError.root.isVisible = false
                             }
-                            containerPackageListState.isVisible = loadState != null && loadState.wasLoaded
+                            containerPackageListState.isVisible = loadState != null
                         }
                     }
                 } else {
                     containerPackageListState.isVisible = false
                 }
+            }
+            zip(viewModel.isRunning, viewModel.settings) { isRunning, settings ->
+                isRunning to settings
+            }.observe {
+                refreshDownloadPackageListMenuItem()
             }
 
             viewModel.packageListExpandedState.observe {
@@ -221,7 +222,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                 viewModel.onDownloadPackageListAction()
             }
 
-            settingsRepo.settingsFlow.collectSafely {
+            viewModel.settings.observe {
                 val apiKey = it.notificationsApiKey
                 if (apiKey.isNotEmpty()) {
                     tvApiKeyValue.text = apiKey
@@ -306,7 +307,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
             // и не переходить в настройки для стопа
             doStartOrStop(false)
         }
-        refreshMenuItemsByRunning()
+        refreshStateItemByServiceRunning()
         lifecycleScope.launch {
             demoChecker.check(strategy)
         }
@@ -317,7 +318,8 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
         toggleServiceStateMenuItem = menu.findItem(R.id.actionServiceStartStop)
         downloadPackageListMenuItem = menu.findItem(R.id.actionDownloadPackageList)
         clearSuccessMenuItem = menu.findItem(R.id.actionClearSuccess)
-        refreshMenuItemsByRunning()
+        refreshStateItemByServiceRunning()
+        refreshDownloadPackageListMenuItem()
         refreshClearSuccessMenuItem()
     }
 
@@ -358,14 +360,14 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
     }
 
     private fun doStartOrStop(navigateToSettingsForStop: Boolean) {
-        viewModel.doStartOrStop(this, navigateToSettingsForStop) { (isStarted, startResult, stopResult) ->
+        viewModel.doStartOrStop(this, navigateToSettingsForStop) { (isStarted, _, _) ->
             // рефреш меню сразу в зав-ти от результата старт/стоп,
             // а не текущего состояния сервиса (ещё не успело измениться)
-            refreshMenuItemsByRunning(isStarted)
+            refreshStateItemByServiceRunning(isStarted)
         }
     }
 
-    private fun refreshMenuItemsByRunning(
+    private fun refreshStateItemByServiceRunning(
         isRunning: Boolean = viewModel.isServiceRunning(),
     ) {
         toggleServiceStateMenuItem?.let { item ->
@@ -378,9 +380,11 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                 })
             )
         }
-        downloadPackageListMenuItem?.let { item ->
-            item.isVisible = isRunning
-        }
+    }
+
+    private fun refreshDownloadPackageListMenuItem() {
+        downloadPackageListMenuItem?.isVisible = viewModel.isRunning.value == true
+                && !viewModel.settings.value?.packageListUrl.isNullOrEmpty()
     }
 
     private fun refreshClearSuccessMenuItem() {
