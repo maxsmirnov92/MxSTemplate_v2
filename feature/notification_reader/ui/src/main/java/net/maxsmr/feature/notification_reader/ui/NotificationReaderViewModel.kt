@@ -18,8 +18,8 @@ import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.commonutils.live.zip
 import net.maxsmr.commonutils.states.LoadState
-import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.states.LoadState.Companion.copyOf
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
@@ -76,6 +76,8 @@ class NotificationReaderViewModel @AssistedInject constructor(
         }
     }
 
+    val settings = settingsRepo.settingsFlow.asLiveData()
+
     val isRunning = manager.isRunning.asLiveData()
 
     val inputApiKeyField = Field.Builder(EMPTY_STRING)
@@ -98,7 +100,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
                 tag == it
             },
             cacheRepo.packageList.asLiveData(),
-            settingsRepo.settingsFlow.asLiveData()
+            settings
         ) { loadState, packageList, settings ->
             Triple(loadState, packageList, settings)
         }.observe {
@@ -147,7 +149,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
                 }
             }
         }
-        settingsRepo.settingsFlow.asLiveData().observeOnce {
+        settings.observeOnce {
             // при попадании на экран проверяем, был ли указан ключ
             if (it.notificationsApiKey.isEmpty()) {
                 showInputApiKeyDialog()
