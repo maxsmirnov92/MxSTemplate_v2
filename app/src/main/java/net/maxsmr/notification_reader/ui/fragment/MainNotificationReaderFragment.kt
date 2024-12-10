@@ -2,26 +2,24 @@ package net.maxsmr.notification_reader.ui.fragment
 
 import android.os.Bundle
 import android.view.View
-import androidx.lifecycle.asLiveData
 import dagger.hilt.android.AndroidEntryPoint
-import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.core.android.base.actions.NavigationAction
+import net.maxsmr.core.ui.views.ViewClickDelegate
 import net.maxsmr.feature.notification_reader.ui.NotificationReaderFragment
 import net.maxsmr.feature.notification_reader.ui.NotificationReaderViewModel
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
-class GuideNotificationReaderFragment: NotificationReaderFragment() {
+class MainNotificationReaderFragment: NotificationReaderFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: NotificationReaderViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
-        cacheRepo.isTutorialCompleted.asLiveData().observeOnce(this) {
-            if (!it) {
-                viewModel.navigate(
-                    NavigationAction.NavigationCommand.ToDirectionWithNavDirections(
-                        GuideNotificationReaderFragmentDirections.actionToSettings()
-                    )
+        ViewClickDelegate(binding.toolbar, 25, TimeUnit.SECONDS.toMillis(2)).setOnClickListener {
+            viewModel.navigate(
+                NavigationAction.NavigationCommand.ToDirectionWithNavDirections(
+                    MainNotificationReaderFragmentDirections.actionToSettings()
                 )
-            }
+            )
         }
     }
 }

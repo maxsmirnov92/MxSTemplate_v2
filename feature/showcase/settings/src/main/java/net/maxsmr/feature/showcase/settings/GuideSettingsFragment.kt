@@ -1,6 +1,5 @@
 package net.maxsmr.feature.showcase.settings
 
-import android.os.Bundle
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -17,7 +16,6 @@ import net.maxsmr.commonutils.gui.scrollToView
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.ui.SettingsFragment
-import net.maxsmr.feature.preferences.ui.SettingsViewModel
 import net.maxsmr.feature.showcase.GuideFragmentDelegate
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType
 import javax.inject.Inject
@@ -32,6 +30,7 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
             this@GuideSettingsFragment,
             viewModel,
             this@GuideSettingsFragment,
+            false,
             onNextListener = { item, _ ->
                 if (!item.view.isFullyVisible()) {
                     binding.svSettings.scrollToView(
@@ -72,75 +71,73 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
         importKeyMenuItem = menu.findItem(R.id.actionImportKey)
         with(binding) {
             requireView().post {
-                if (!guideDelegate.wasStarted) {
-                    // заполнение итемов пришлось перенести сюда
-                    // из-за неготовности OverflowMenuButton
-                    guideDelegate.items = mutableListOf(
-                        toolbar.settingsGuideItem(
-                            "root",
-                            R.string.showcase_settings_description_summary,
-                        ),
-                        tilNotificationsUrl.settingsGuideItem(
-                            "notificationsUrl",
-                            R.string.showcase_settings_description_notifications_url
-                        ),
-                        tilPackageListUrl.settingsGuideItem(
-                            "packageListUrl",
-                            R.string.showcase_settings_description_package_list_url
-                        ),
-                        switchWhitePackageList.settingsGuideItem(
-                            "isWhitePackageList",
-                            R.string.showcase_settings_description_is_white_package_list
-                        ),
-                        tilNotificationsApiKey.settingsGuideItem(
-                            "notificationsApiKey",
-                            R.string.showcase_settings_description_notifications_api_key
-                        ),
-                        tilFailedNotificationsWatcherInterval.settingsGuideItem(
-                            "failedNotificationsWatcherInterval",
-                            R.string.showcase_settings_description_failed_notifications_watcher_interval
-                        ),
-                        tilSuccessNotificationsLifeTime.settingsGuideItem(
-                            "successNotificationsLifeTime",
-                            R.string.showcase_settings_description_success_notifications_life_time
-                        ),
-                        tilConnectTimeout.settingsGuideItem(
-                            "connectTimeout",
-                            R.string.showcase_settings_description_connect_timeout
-                        ),
-                        switchLoadByWiFiOnly.settingsGuideItem(
-                            "loadByWiFiOnly",
-                            R.string.showcase_settings_description_load_by_wi_fi_only
-                        ),
-                        switchRetryOnConnectionFailure.settingsGuideItem(
-                            "retryOnConnectionFailure",
-                            R.string.showcase_settings_description_retry_on_connection_failure
-                        ),
-                        switchRetryDownloads.settingsGuideItem(
-                            "retryDownloads",
-                            R.string.showcase_settings_description_retry_downloads
-                        ),
-                        switchDisableNotifications.settingsGuideItem(
-                            "disableNotifications",
-                            R.string.showcase_settings_description_disable_notifications
+                // заполнение итемов пришлось перенести сюда
+                // из-за неготовности OverflowMenuButton
+                guideDelegate.items = mutableListOf(
+                    toolbar.settingsGuideItem(
+                        "root",
+                        R.string.showcase_settings_description_summary,
+                    ),
+                    tilNotificationsUrl.settingsGuideItem(
+                        "notificationsUrl",
+                        R.string.showcase_settings_description_notifications_url
+                    ),
+                    tilPackageListUrl.settingsGuideItem(
+                        "packageListUrl",
+                        R.string.showcase_settings_description_package_list_url
+                    ),
+                    switchWhitePackageList.settingsGuideItem(
+                        "isWhitePackageList",
+                        R.string.showcase_settings_description_is_white_package_list
+                    ),
+                    tilNotificationsApiKey.settingsGuideItem(
+                        "notificationsApiKey",
+                        R.string.showcase_settings_description_notifications_api_key
+                    ),
+                    tilFailedNotificationsWatcherInterval.settingsGuideItem(
+                        "failedNotificationsWatcherInterval",
+                        R.string.showcase_settings_description_failed_notifications_watcher_interval
+                    ),
+                    tilSuccessNotificationsLifeTime.settingsGuideItem(
+                        "successNotificationsLifeTime",
+                        R.string.showcase_settings_description_success_notifications_life_time
+                    ),
+                    tilConnectTimeout.settingsGuideItem(
+                        "connectTimeout",
+                        R.string.showcase_settings_description_connect_timeout
+                    ),
+                    switchLoadByWiFiOnly.settingsGuideItem(
+                        "loadByWiFiOnly",
+                        R.string.showcase_settings_description_load_by_wi_fi_only
+                    ),
+                    switchRetryOnConnectionFailure.settingsGuideItem(
+                        "retryOnConnectionFailure",
+                        R.string.showcase_settings_description_retry_on_connection_failure
+                    ),
+                    switchRetryDownloads.settingsGuideItem(
+                        "retryDownloads",
+                        R.string.showcase_settings_description_retry_downloads
+                    ),
+                    switchDisableNotifications.settingsGuideItem(
+                        "disableNotifications",
+                        R.string.showcase_settings_description_disable_notifications
+                    )
+                ).apply {
+                    if (switchCanDrawOverlays.isVisible) {
+                        add(
+                            switchCanDrawOverlays.settingsGuideItem(
+                                "canDrawOverlays",
+                                R.string.showcase_settings_description_can_draw_overlays
+                            )
                         )
-                    ).apply {
-                        if (switchCanDrawOverlays.isVisible) {
-                            add(
-                                switchCanDrawOverlays.settingsGuideItem(
-                                    "canDrawOverlays",
-                                    R.string.showcase_settings_description_can_draw_overlays
-                                )
+                    }
+                    if (importKeyMenuItem?.isVisible == true) {
+                        add(
+                            (toolbar.findOverflowButton() ?: toolbar).settingsGuideItem(
+                                "importNotificationsApiKey",
+                                R.string.showcase_settings_description_notifications_api_key_import
                             )
-                        }
-                        if (importKeyMenuItem?.isVisible == true) {
-                            add(
-                                (toolbar.findOverflowButton() ?: toolbar).settingsGuideItem(
-                                    "importNotificationsApiKey",
-                                    R.string.showcase_settings_description_notifications_api_key_import
-                                )
-                            )
-                        }
+                        )
                     }
                 }
             }
@@ -154,15 +151,6 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
             true
         } else {
             super.onMenuItemSelected(menuItem)
-        }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: SettingsViewModel) {
-        super.onViewCreated(view, savedInstanceState, viewModel)
-        cacheRepo.isTutorialCompleted.collectSafely {
-            if (!it) {
-                saveChanges()
-            }
         }
     }
 

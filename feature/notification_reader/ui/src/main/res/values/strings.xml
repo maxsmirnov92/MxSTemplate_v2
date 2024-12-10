@@ -16,6 +16,9 @@
     <string name="notification_reader_package_list_loading">File with package list is loading</string>
     <string name="notification_reader_package_list_error">Unknown error occurred while loading package list</string>
     <string name="notification_reader_package_list_error_format">Error occurred while loading package list: \"%s\"</string>
+    <string name="notification_reader_api_key_subtitle">Your API key</string>
+    <string name="notification_reader_api_key_empty">API key is empty. Click to edit.</string>
+    <string name="notification_reader_dialog_input_api_key_message">Notifications API key</string>
     <string name="notification_reader_package_list_white_subtitle">Package names white list</string>
     <string name="notification_reader_package_list_black_subtitle">Package names black list</string>
     <string name="notification_reader_status_new">New</string>

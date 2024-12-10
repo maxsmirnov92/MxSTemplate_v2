@@ -13,5 +13,5 @@
         android:visible="false" />
     <item
         android:id="@+id/actionStartGuide"
-        android:title="@string/settings_menu_action_restart_guide" />
+        android:title="@string/settings_menu_action_start_guide" />
 </menu>

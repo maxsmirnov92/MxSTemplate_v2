@@ -13,12 +13,14 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.commonutils.live.zip
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.ILoadState.Companion.stateOf
 import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
@@ -83,6 +85,11 @@ class NotificationReaderViewModel @AssistedInject constructor(
 
     val isRunning = manager.isRunning.asLiveData()
 
+    val inputApiKeyField = Field.Builder(EMPTY_STRING)
+        .emptyIf { it.isEmpty() }
+        .persist(state, KEY_FIELD_INPUT_API_KEY)
+        .build()
+
     var lastStartResult by persistableValueInitial<ManagerStartResult?>(null)
         private set
 
@@ -140,13 +147,17 @@ class NotificationReaderViewModel @AssistedInject constructor(
             }
         }
         serviceTargetState.observe {
-            // костыль из-за Android Navigation с BottomNavigation:
-            // экран пересоздаётся и используется initial вместо последнего значения
-            // + не вызывается onCleared -> нужно актуализировать всегда
+            // актуализация целевого состояния в cacheRepo при каждом изменении
             viewModelScope.launch {
                 if (it != null) {
                     cacheRepo.setShouldNotificationReaderRun(it.state)
                 }
+            }
+        }
+        settingsRepo.settingsFlow.asLiveData().observeOnce {
+            // при попадании на экран проверяем, был ли указан ключ
+            if (it.notificationsApiKey.isEmpty()) {
+                showInputApiKeyDialog()
             }
         }
     }
@@ -161,7 +172,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
         resultFunc: ((Triple<Boolean, ManagerStartResult?, ManagerStopResult?>) -> Unit)? = null,
     ) {
         val context = fragment.requireContext()
-        if (_serviceTargetState.value?.state == true) {
+        if (serviceTargetState.value?.state == true) {
             // post_notifications не является обязательным для работы сервиса,
             // но спрашиваем (при включённой настройке) чтобы нотификации от двух сервисов были
             doOnBatteryOptimizationWithPostNotificationsAsk(fragment, cacheRepo, settingsRepo) {
@@ -215,6 +226,37 @@ class NotificationReaderViewModel @AssistedInject constructor(
 
     fun onTogglePackageListExpandedState() {
         _packageListExpandedState.value = _packageListExpandedState.value == false
+    }
+
+    fun resetServiceTargetStateViewFlag() {
+        _serviceTargetState.setValueIfNew(_serviceTargetState.value?.copy(changedFromView = false))
+    }
+
+    fun showInputApiKeyDialog() {
+        viewModelScope.launch {
+            inputApiKeyField.value = settingsRepo.getSettings().notificationsApiKey
+            showOkDialog(
+                DIALOG_TAG_INPUT_API_KEY,
+                message = TextMessage(R.string.notification_reader_dialog_input_api_key_message),
+            )
+        }
+    }
+
+    fun onInputApiKeyDialogConfirm() {
+        viewModelScope.launch {
+            val value = inputApiKeyField.value
+            val settings = settingsRepo.getSettings()
+            val previousValue = settings.notificationsApiKey
+            if (previousValue != value) {
+                settingsRepo.updateSettings(
+                    settings.copy(notificationsApiKey = value)
+                )
+                if (value.isNotEmpty() && previousValue.isEmpty() && serviceTargetState.value?.state != true) {
+                    // ключ был указан -> целевое состояние меняется на запущенное
+                    _serviceTargetState.postValue(ServiceTargetState(state = true, changedFromView = true))
+                }
+            }
+        }
     }
 
     fun isServiceRunning(): Boolean {
@@ -272,5 +314,11 @@ class NotificationReaderViewModel @AssistedInject constructor(
             state: SavedStateHandle,
             downloadsViewModel: DownloadsViewModel,
         ): NotificationReaderViewModel
+    }
+
+    companion object {
+
+        const val DIALOG_TAG_INPUT_API_KEY = "input_api_key"
+        const val KEY_FIELD_INPUT_API_KEY = "input_api_key"
     }
 }

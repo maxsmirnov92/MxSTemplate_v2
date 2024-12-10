@@ -1,10 +1,13 @@
 package net.maxsmr.feature.notification_reader.ui
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.inputmethod.EditorInfo.IME_ACTION_DONE
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
@@ -19,12 +22,19 @@ import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.graphic.createBitmapDrawable
+import net.maxsmr.commonutils.gui.bindToTextNotNull
+import net.maxsmr.commonutils.gui.hideKeyboard
+import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.commonutils.live.zip
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
+import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.alert.representation.DialogRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.databinding.LayoutErrorContainerBinding
+import net.maxsmr.core.ui.views.ViewClickDelegate
 import net.maxsmr.feature.demo.DemoChecker
 import net.maxsmr.feature.demo.strategies.AlertDemoExpiredStrategy
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -34,11 +44,13 @@ import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData
 import net.maxsmr.feature.notification_reader.ui.adapter.PackageNamesAdapter
+import net.maxsmr.feature.notification_reader.ui.databinding.DialogInputApiKeyBinding
 import net.maxsmr.feature.notification_reader.ui.databinding.FragmentNotificationReaderBinding
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.preferences.ui.doOnCanDrawOverlaysAsked
 import net.maxsmr.permissionchecker.PermissionsHelper
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 open class NotificationReaderFragment : BaseNavigationFragment<NotificationReaderViewModel>(),
@@ -99,6 +111,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: NotificationReaderViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
 
+        viewModel.resetServiceTargetStateViewFlag()
         viewModel.serviceTargetState.observe {
             if (it != null) {
                 doStartOrStop(it.changedFromView)
@@ -207,12 +220,80 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
             errorBinding.btRetry.setOnClickListener {
                 viewModel.onDownloadPackageListAction()
             }
+
+            settingsRepo.settingsFlow.collectSafely {
+                val apiKey = it.notificationsApiKey
+                if (apiKey.isNotEmpty()) {
+                    tvApiKeyValue.text = apiKey
+                    tvApiKeyValue.isVisible = true
+                    tvApiKeyEmpty.isVisible = false
+                    ViewClickDelegate(
+                        containerApiKeyState,
+                        15,
+                        TimeUnit.SECONDS.toMillis(4)
+                    ).setOnClickListener {
+                        viewModel.showInputApiKeyDialog()
+                    }
+                } else {
+                    tvApiKeyValue.text = EMPTY_STRING
+                    tvApiKeyValue.isVisible = false
+                    tvApiKeyEmpty.isVisible = true
+                    containerApiKeyState.setOnClickListener {
+                        viewModel.showInputApiKeyDialog()
+                    }
+                }
+            }
         }
 
         viewModel.doOnCanDrawOverlaysAsked(this, cacheRepo, settingsRepo) {
             if (it) {
                 viewModel.showToast(TextMessage(R.string.notification_reader_toast_can_draw_overlays_settings))
             }
+        }
+    }
+
+    override fun handleAlerts(delegate: AlertFragmentDelegate<NotificationReaderViewModel>) {
+        super.handleAlerts(delegate)
+
+        bindAlertDialog(NotificationReaderViewModel.DIALOG_TAG_INPUT_API_KEY) {
+            val positiveAnswer =
+                it.answers.getOrNull(0) ?: throw IllegalStateException("Required positive answer is missing")
+
+            val dialogBinding = DialogInputApiKeyBinding.inflate(LayoutInflater.from(requireContext()))
+            dialogBinding.etApiKey.bindToTextNotNull(viewModel.inputApiKeyField)
+            viewModel.inputApiKeyField.observeFromText(dialogBinding.etApiKey, viewLifecycleOwner) { value ->
+                dialogBinding.ibClear.isVisible = value.isNotEmpty()
+                value
+            }
+
+            val onAction: () -> Unit = {
+                requireActivity().hideKeyboard()
+                viewModel.onInputApiKeyDialogConfirm()
+            }
+
+            dialogBinding.etApiKey.setOnEditorActionListener { _, actionId, _ ->
+                if (actionId == IME_ACTION_DONE) {
+                    positiveAnswer.select?.invoke()
+                    onAction.invoke()
+                    true
+                } else {
+                    false
+                }
+            }
+
+            dialogBinding.ibClear.setOnClickListener {
+                viewModel.inputApiKeyField.value = EMPTY_STRING
+            }
+
+            DialogRepresentation.Builder(requireContext(), it)
+                .setCustomView(dialogBinding.root) {
+                    viewModel.inputApiKeyField.errorLive.observe { error ->
+                        (this as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = error == null
+                    }
+                }
+                .setCancelable(false)
+                .setPositiveButton(positiveAnswer, onAction)
+                .build()
         }
     }
 

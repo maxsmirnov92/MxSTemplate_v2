@@ -54,7 +54,6 @@ class SettingsViewModel @Inject constructor(
 
     val notificationsApiKeyField: Field<String> = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
-        .setRequired(R.string.settings_field_notifications_api_key_empty_error)
 //        .validators(Field.Validator({
 //            return@Validator TextMessage(R.string.settings_field_api_key_error)
 //        })
