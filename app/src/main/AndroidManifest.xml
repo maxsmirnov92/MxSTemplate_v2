@@ -42,7 +42,7 @@
 
         <!--  при  adjustPan проблемы с пустым пространством при отсутствующей клавиатуре остаются   -->
         <activity
-            android:name="net.maxsmr.notification_reader.ui.activity.MainBottomActivity"
+            android:name="net.maxsmr.notification_reader.ui.activity.MainActivity"
             android:exported="true"
             android:launchMode="singleInstance"
             android:taskAffinity=""

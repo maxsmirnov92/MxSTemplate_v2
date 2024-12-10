@@ -36,6 +36,55 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
+                <LinearLayout
+                    android:id="@+id/containerApiKeyState"
+                    style="@style/Selectable"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/halfOfDefaultPadding">
+
+                    <TextView
+                        android:id="@+id/tvApiKeySubtitle"
+                        style="@style/NonSelectable"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="@dimen/halfOfDefaultPadding"
+                        android:text="@string/notification_reader_api_key_subtitle"
+                        android:textColor="@color/textColorPrimary"
+                        android:textSize="@dimen/textSizeExtraMiniMini"
+                        app:fontFamily="@font/roboto_medium" />
+
+                    <TextView
+                        android:id="@+id/tvApiKeyValue"
+                        style="@style/NonSelectable"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="@dimen/halfOfDefaultPadding"
+                        android:padding="@dimen/halfOfDefaultPadding"
+                        android:textColor="@color/textColorPrimary"
+                        android:textSize="@dimen/textSizeExtraMini"
+                        android:textStyle="bold"
+                        app:fontFamily="@font/roboto_bold"
+                        tools:text="jsdklgjkls2345" />
+
+                    <TextView
+                        android:id="@+id/tvApiKeyEmpty"
+                        style="@style/NonSelectable"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="@dimen/halfOfDefaultPadding"
+                        android:background="?attr/selectableItemBackground"
+                        android:duplicateParentState="true"
+                        android:padding="@dimen/halfOfDefaultPadding"
+                        android:text="@string/notification_reader_api_key_empty"
+                        android:textColor="@color/textColorError"
+                        android:textSize="@dimen/textSizeExtraMini"
+                        android:textStyle="bold"
+                        app:fontFamily="@font/roboto_bold" />
+
+                </LinearLayout>
+
                 <FrameLayout
                     android:id="@+id/containerPackageListState"
                     android:layout_width="match_parent"
@@ -63,7 +112,8 @@
                             android:layout_marginStart="12dp"
                             android:text="@string/notification_reader_package_list_loading"
                             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-                            android:textColor="@color/textColorHint" />
+                            android:textColor="@color/textColorHint"
+                            app:fontFamily="@font/roboto_regular" />
 
                     </LinearLayout>
 

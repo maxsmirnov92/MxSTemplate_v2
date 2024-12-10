@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="settings_menu_action_restart_guide">Перезапустить гид</string>
+    <string name="settings_menu_action_start_guide">Запустить гид</string>
 </resources>

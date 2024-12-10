@@ -100,7 +100,7 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etFailedNotificationsWatcherInterval"
                     style="@style/SingleLineInputText"
-                    android:inputType="numberDecimal"
+                    android:inputType="textNoSuggestions"
                     android:maxLength="10"
                     tools:hint="@string/settings_field_failed_notifications_watcher_interval_hint" />
 

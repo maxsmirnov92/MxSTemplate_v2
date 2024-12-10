@@ -5,10 +5,9 @@
     android:id="@+id/navigation_app_notification"
     app:startDestination="@+id/navigationNotificationReader">
 
-
     <fragment
         android:id="@+id/navigationNotificationReader"
-        android:name="net.maxsmr.notification_reader.ui.fragment.GuideNotificationReaderFragment"
+        android:name="net.maxsmr.notification_reader.ui.fragment.MainNotificationReaderFragment"
         android:label="@string/notification_reader_feature_title"
         tools:layout="@layout/fragment_notification_reader">
 
@@ -21,13 +20,11 @@
             app:popExitAnim="@anim/slide_out" />
     </fragment>
 
-
     <fragment
         android:id="@+id/navigationSettings"
         android:name="net.maxsmr.feature.showcase.settings.GuideSettingsFragment"
         android:label="@string/settings_feature_title"
         tools:layout="@layout/fragment_settings" />
-
 
     <!--  остальные destination, которых нет в menu,
     для навигации в пределах хоста - писать сюда же -->
