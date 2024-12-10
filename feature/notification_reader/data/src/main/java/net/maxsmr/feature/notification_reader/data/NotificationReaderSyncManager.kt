@@ -6,6 +6,7 @@ import android.provider.Settings
 import androidx.annotation.MainThread
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -24,7 +25,6 @@ import net.maxsmr.commonutils.media.readStrings
 import net.maxsmr.commonutils.service.StartResult
 import net.maxsmr.commonutils.service.canStartForegroundService
 import net.maxsmr.commonutils.states.LoadState
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.coroutines.tickerFlow
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
@@ -53,6 +53,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @Singleton
 class NotificationReaderSyncManager @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val notificationReaderRepo: NotificationReaderRepository,
     private val settingsRepo: SettingsDataStoreRepository,
     private val cacheRepo: CacheDataStoreRepository,
@@ -196,30 +197,33 @@ class NotificationReaderSyncManager @Inject constructor(
             // делаем следующее:
 
             // 1. сбрасываем статусы у зафейленных или подвешенных и пытаемся их отправить
+            // (либо удаляются, если не в списке)
             sendOrRemoveNotifications {
                 status is NotificationReaderEntity.Failed
                         || status is NotificationReaderEntity.Cancelled
                         || status is NotificationReaderEntity.Loading
             }
+            // 2. убираем New, которые не попадают в загруженный список (newWatcherJob об этом не знает)
+            removeNotifications { status is NotificationReaderEntity.New && !isPackageInList()}
 
             val mode = pendingStartMode.get()
             if (mode in arrayOf(StartMode.JOBS_AND_SERVICE, StartMode.JOBS)) {
-                // 2. мониторим появляющиеся со статусом "New" для выполнения запроса
+                // 3. мониторим появляющиеся со статусом "New" для выполнения запроса
                 launchWatcherForNew()
-                // 3. запуск периодического повтора любых зафейленных
+                // 4. запуск периодического повтора любых зафейленных
                 launchWatcherForFailed()
-                // 4. запуск периодического удаления успешных, срок по котороым прошёл
+                // 5. запуск периодического удаления успешных, срок по котороым прошёл
                 launchWatcherForSuccess()
-                // 5. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
+                // 6. запуск повтора зафейленных по причине сети при появлении сети / смене настроек
                 launchNetworkStateWatcher()
-                // 6. реагирование на изменение некоторых настроек
+                // 7. реагирование на изменение некоторых настроек
                 launchObserveSettingsJob()
 
                 if (mode == StartMode.JOBS_AND_SERVICE) {
-                    if (canStartForegroundService(baseApplicationContext)) {
+                    if (canStartForegroundService(context)) {
                         // отложенный запуск сервиса по готовности белого списка
-                        if (isNotificationAccessGranted(baseApplicationContext)) {
-                            NotificationReaderListenerService.start(baseApplicationContext)
+                        if (isNotificationAccessGranted(context)) {
+                            NotificationReaderListenerService.start(context)
                         }
                     }
                 }
@@ -238,7 +242,7 @@ class NotificationReaderSyncManager @Inject constructor(
         scope.launch {
             val packageListUrl = settingsRepo.getSettings().packageListUrl
             if (packageListUrl.isNotEmpty()) {
-                if (canStartForegroundService(baseApplicationContext)) {
+                if (canStartForegroundService(context)) {
                     // забираем актуальный список пакетов
                     downloadJob.set(scope.launch {
                         downloadManager.observeDownloadByParams(enqueueDownloadPackageList(packageListUrl), true)
@@ -273,7 +277,7 @@ class NotificationReaderSyncManager @Inject constructor(
 
                                     lastPackageListState.value = if (it.isSuccessWithData()) {
                                         val packageList =
-                                            it.data?.downloadInfo?.localUri?.readStrings(baseApplicationContext.contentResolver)
+                                            it.data?.downloadInfo?.localUri?.readStrings(context.contentResolver)
                                                 .orEmpty()
                                         val result = packageList.filter { name ->
                                             isPackageNameValid(name) || name == "android"
@@ -332,7 +336,7 @@ class NotificationReaderSyncManager @Inject constructor(
                         lastSettings = it
                     }
                     if (lastSettings.isWhitePackageList != it.isWhitePackageList) {
-                        logger.d("setting 'isWhitePackageList' changed to ${it.isWhitePackageList}, refreshing notifications...")
+                        logger.d("setting 'isWhitePackageList' changed to ${it.isWhitePackageList}")
                         sendOrRemoveNotifications {
                             status is NotificationReaderEntity.Failed
                                     || status is NotificationReaderEntity.Cancelled
@@ -449,11 +453,11 @@ class NotificationReaderSyncManager @Inject constructor(
         }
     }
 
-    private suspend fun removeNotifications(filterFunc: NotificationReaderEntity.() -> Boolean) {
+    private suspend fun removeNotifications(filterFunc: suspend NotificationReaderEntity.() -> Boolean) {
         notificationReaderRepo.removeNotifications(notificationReaderRepo.getNotificationsRaw(filterFunc = filterFunc))
     }
 
-    private suspend fun sendOrRemoveNotifications(filterFunc: NotificationReaderEntity.() -> Boolean) {
+    private suspend fun sendOrRemoveNotifications(filterFunc: suspend NotificationReaderEntity.() -> Boolean) {
         val currentNotifications =
             notificationReaderRepo.getNotificationsRaw(filterFunc = filterFunc)
         currentNotifications.sendOrRemove()
@@ -463,12 +467,7 @@ class NotificationReaderSyncManager @Inject constructor(
         val newNotifications = mutableListOf<NotificationReaderEntity>()
         val removedNotifications = mutableListOf<NotificationReaderEntity>()
         this.forEach { n ->
-            if (cacheRepo.isPackageInList(
-                        baseApplicationContext,
-                        n.packageName,
-                        settingsRepo.getSettings().isWhitePackageList
-                    )
-            ) {
+            if (n.isPackageInList()) {
                 // есть в белом/чёрном списке - снова становится "New" и отправляется сразу
                 newNotifications.add(n.copy(status = NotificationReaderEntity.New))
             } else {
@@ -497,6 +496,13 @@ class NotificationReaderSyncManager @Inject constructor(
         )
     }
 
+    private suspend fun NotificationReaderEntity.isPackageInList(): Boolean {
+        return cacheRepo.isPackageInList(
+            context,
+            packageName,
+            settingsRepo.getSettings().isWhitePackageList)
+    }
+
     private fun enqueueDownloadPackageList(url: String): DownloadService.Params {
         val params = DownloadParamsModel(url).toParams(
             mimeTypeRule = Include(FileFormat.TEXT.mimeType)
@@ -505,7 +511,7 @@ class NotificationReaderSyncManager @Inject constructor(
             params.requestParams,
             DownloadService.NotificationParams(
                 retryActionIfFailed = false,
-                successActions = DownloadsViewModel.defaultSuccessNotificationActions(baseApplicationContext),
+                successActions = DownloadsViewModel.defaultSuccessNotificationActions(context),
             ),
             params.resourceName,
             DownloadServiceStorage.Type.INTERNAL,

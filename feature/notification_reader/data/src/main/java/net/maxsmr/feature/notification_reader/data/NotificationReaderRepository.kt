@@ -19,7 +19,10 @@ class NotificationReaderRepository @Inject constructor(
     private val cacheRepo: CacheDataStoreRepository,
 ) {
 
-    fun getNotifications(sortAsc: Boolean = true, filterFunc: NotificationReaderEntity.() -> Boolean = { true }): Flow<List<NotificationReaderEntity>> {
+    fun getNotifications(
+        sortAsc: Boolean = true,
+        filterFunc: NotificationReaderEntity.() -> Boolean = { true },
+    ): Flow<List<NotificationReaderEntity>> {
         return if (sortAsc) {
             dao.getAll()
         } else {
@@ -28,7 +31,10 @@ class NotificationReaderRepository @Inject constructor(
 
     }
 
-    suspend fun getNotificationsRaw(sortAsc: Boolean = true, filterFunc: NotificationReaderEntity.() -> Boolean = { true }): List<NotificationReaderEntity> {
+    suspend fun getNotificationsRaw(
+        sortAsc: Boolean = true,
+        filterFunc: suspend NotificationReaderEntity.() -> Boolean = { true },
+    ): List<NotificationReaderEntity> {
         return if (sortAsc) {
             dao.getAllRaw()
         } else {
@@ -39,11 +45,14 @@ class NotificationReaderRepository @Inject constructor(
     suspend fun insertNewNotification(
         content: String,
         packageName: String,
-        timestamp: Long
+        timestamp: Long,
     ) {
-        if (cacheRepo.isPackageInList(baseApplicationContext,
+        if (cacheRepo.isPackageInList(
+                    baseApplicationContext,
                     packageName,
-                    settingsRepo.getSettings().isWhitePackageList)) {
+                    settingsRepo.getSettings().isWhitePackageList
+                )
+        ) {
             dao.upsert(
                 NotificationReaderEntity(
                     contentText = content,
