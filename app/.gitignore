@@ -1,5 +1,6 @@
 /build
 keystore.properties
-app.properties
 donate.properties
+app_debug.properties
+app_release.properties
 google-services.json

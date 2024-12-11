@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApkSigningConfig
 import com.android.build.api.dsl.ApplicationVariantDimension
+import com.android.build.api.dsl.VariantDimension
 import com.android.build.gradle.internal.api.ApkVariantOutputImpl
 import dagger.hilt.android.plugin.util.capitalize
 //import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
@@ -63,35 +64,13 @@ android {
 
         buildConfigField("int", "PROTOCOL_VERSION", "1")
 
-        val appProperties = Properties()
-        appProperties.load(FileInputStream(File(rootDir, "app/app.properties")))
+        buildConfigField("String", "MOBILE_BUILD_TYPE", "\"${appVersion.type}\"")
 
         buildConfigField(
-            "String",
-            "AUTHORIZATION_RADAR_IO",
-            "\"${appProperties.getPropertyNotNull("authorizationRadarIo")}\""
+            "boolean",
+            "IS_DEMO_BUILD",
+            "${appVersion.isDemo}"
         )
-        buildConfigField(
-            "String",
-            "API_KEY_YANDEX_SUGGEST",
-            "\"${appProperties.getPropertyNotNull("apiKeyYandexSuggest")}\""
-        )
-        buildConfigField(
-            "String",
-            "API_KEY_YANDEX_GEOCODE",
-            "\"${appProperties.getPropertyNotNull("apiKeyYandexGeocode")}\""
-        )
-        buildConfigField(
-            "String",
-            "API_KEY_HUAWEI_ML_ANALYZER",
-            "\"${appProperties.getPropertyNotNull("apiKeyHuaweiMlAnalyzer")}\""
-        )
-        buildConfigField(
-            "String",
-            "URL_DEMO_KEY_DOUBLE_GIS_ROUTING",
-            "\"${appProperties.getPropertyNotNull("urlDemoKeyDoubleGisRouting")}\""
-        )
-        buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getPropertyNotNull("devEmailAddress")}\"")
 
         val donateProperties = Properties()
         donateProperties.load(FileInputStream(File(rootDir, "app/donate.properties")))
@@ -112,13 +91,7 @@ android {
             addressesString
         )
 
-        buildConfigField("String", "MOBILE_BUILD_TYPE", "\"${appVersion.type}\"")
 
-        buildConfigField(
-            "boolean",
-            "IS_DEMO_BUILD",
-            "${appVersion.isDemo}"
-        )
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -132,6 +105,7 @@ android {
             isMinifyEnabled = false
             multiDexKeepProguard = file("multidex-config.pro")
 //            signingConfig = null
+            applyAppPropertiesFields(true)
         }
         getByName("release") {
             isDebuggable = false
@@ -148,7 +122,6 @@ android {
                 "release",
                 File(rootDir, "app/keystore.properties"),
             )
-
 //            val configureSigningTask = tasks.register("configureSigning") {
 //                doFirst {
 //                    // создавать конфиг в таком месте запрещается;
@@ -158,6 +131,8 @@ android {
 //            tasks.matching { it.name.endsWith("Release") }.configureEach {
 //                dependsOn(configureSigningTask)
 //            }
+
+            applyAppPropertiesFields(false)
         }
     }
 
@@ -303,7 +278,6 @@ dependencies {
 //    debugImplementation(libs.leakCanary)
 }
 
-
 fun ApplicationVariantDimension.applySigningConfig(
     signingConfigs: NamedDomainObjectCollection<out ApkSigningConfig>,
     signingConfigName: String,
@@ -347,6 +321,49 @@ fun ApplicationVariantDimension.applySigningConfig(
         logger.info("Applying signingConfig \"$signingConfigName\"")
         signingConfig = config
     }
+}
+
+fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
+    val appProperties = Properties()
+    appProperties.load(
+        FileInputStream(
+            File(
+                rootDir, "app/${
+                    if (isDebug) {
+                        "app_debug.properties"
+                    } else {
+                        "app_release.properties"
+                    }
+                }"
+            )
+        )
+    )
+    buildConfigField(
+        "String",
+        "AUTHORIZATION_RADAR_IO",
+        "\"${appProperties.getPropertyNotNull("authorizationRadarIo")}\""
+    )
+    buildConfigField(
+        "String",
+        "API_KEY_YANDEX_SUGGEST",
+        "\"${appProperties.getPropertyNotNull("apiKeyYandexSuggest")}\""
+    )
+    buildConfigField(
+        "String",
+        "API_KEY_YANDEX_GEOCODE",
+        "\"${appProperties.getPropertyNotNull("apiKeyYandexGeocode")}\""
+    )
+    buildConfigField(
+        "String",
+        "API_KEY_HUAWEI_ML_ANALYZER",
+        "\"${appProperties.getPropertyNotNull("apiKeyHuaweiMlAnalyzer")}\""
+    )
+    buildConfigField(
+        "String",
+        "URL_DEMO_KEY_DOUBLE_GIS_ROUTING",
+        "\"${appProperties.getPropertyNotNull("urlDemoKeyDoubleGisRouting")}\""
+    )
+    buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getPropertyNotNull("devEmailAddress")}\"")
 }
 
 /**
