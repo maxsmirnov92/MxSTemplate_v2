@@ -38,7 +38,7 @@ class RetrofitModule {
         json,
         File(context.cacheDir, CACHE_DIR_NAME).path,
         BuildConfig.PROTOCOL_VERSION,
-        false,
+        true,
         exceptionHandler,
         // cacheManager.getDisableCache()
     ) {

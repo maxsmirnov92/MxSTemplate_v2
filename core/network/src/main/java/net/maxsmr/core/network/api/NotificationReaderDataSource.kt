@@ -34,7 +34,7 @@ class MockNotificationReaderDataSource : BaseNotificationReaderDataSource {
     ): NotificationReaderDataResponse {
         delay(5000)
         if (Random.nextInt(Int.MAX_VALUE / 2) % 2 == 0) {
-            return NotificationReaderDataResponse()
+            return NotificationReaderDataResponse
         } else {
             throw ApiException(UNKNOWN_ERROR, "Random error")
         }
