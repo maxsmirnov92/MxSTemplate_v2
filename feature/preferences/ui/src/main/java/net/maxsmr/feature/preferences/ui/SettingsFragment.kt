@@ -69,7 +69,7 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return if (menuItem.itemId == R.id.actionSave) {
-            viewModel.saveChanges(errorFieldFunc)
+            saveChanges()
             true
         } else {
             super.onMenuItemSelected(menuItem)
@@ -144,12 +144,8 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
         }
     }
 
-    override fun onBackPressed(): Boolean {
-        return if (!viewModel.navigateBackWithAlert(errorFieldFunc)) {
-            super.onBackPressed()
-        } else {
-            true
-        }
+    protected open fun saveChanges() {
+        viewModel.saveChanges(errorFieldFunc)
     }
 
     private fun refreshSaveMenuItem(isEnabled: Boolean) {

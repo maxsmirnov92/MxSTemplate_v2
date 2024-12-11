@@ -20,7 +20,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChecker {
 
-    override val menuResId: Int = R.menu.menu_settings
+    override val menuResId: Int = R.menu.menu_settings_guide
 
     private val guideDelegate: GuideFragmentDelegate by lazy {
         GuideFragmentDelegate(

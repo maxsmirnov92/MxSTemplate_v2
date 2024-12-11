@@ -26,7 +26,13 @@ class GuideFragmentDelegate @JvmOverloads constructor(
     var items: List<GuideItem> = items
         set(value) {
             field = value
-            doStart()
+            if (wasStarted) {
+                if (value.isNotEmpty()) {
+                    doStart()
+                } else {
+                    doStop()
+                }
+            }
         }
 
     var wasStarted: Boolean = false
