@@ -309,13 +309,18 @@ fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
     )
     buildConfigField(
         "String",
-        "API_KEY_NOTIFICATION_READER",
-        "\"${appProperties.getPropertyNotNull("apiKeyNotificationReader")}\""
+        "API_KEY_NOTIFICATIONS",
+        "\"${appProperties.getPropertyNotNull("apiKeyNotifications")}\""
     )
     buildConfigField(
         "String",
-        "URL_NOTIFICATION_READER",
-        "\"${appProperties.getPropertyNotNull("urlNotificationReader")}\""
+        "URL_NOTIFICATIONS",
+        "\"${appProperties.getPropertyNotNull("urlNotifications")}\""
+    )
+    buildConfigField(
+        "String",
+        "URL_PACKAGE_LIST",
+        "\"${appProperties.getPropertyNotNull("urlPackageList")}\""
     )
 }
 

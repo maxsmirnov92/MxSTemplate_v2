@@ -25,13 +25,7 @@ class NotificationReaderOkHttpClientHolder(
         apiKeyProvider = {
             // не пересоздавать OkHttpClient при смене ключа - подставлять в Interceptor
             runBlocking {
-                val settings = settingsRepository.getSettings()
-                var key = settings.notificationsApiKey
-                if (key.isEmpty()) {
-                    key = BuildConfig.API_KEY_NOTIFICATION_READER
-                    settingsRepository.updateSettings(settings.copy(notificationsApiKey = key))
-                }
-                key
+                settingsRepository.getSettings().notificationsApiKey
             }
         },
         urlProvider = { hostManager.get().uri.toString() }

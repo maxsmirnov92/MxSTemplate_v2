@@ -17,7 +17,7 @@ class ModulesInitializer : Initializer<Unit> {
 
     override fun dependencies(): List<Class<out Initializer<*>>> = listOf(
         TimberInitializer::class.java,
-//        AppSettingsInitializer::class.java,
+        AppSettingsInitializer::class.java,
         RetrofitInitializer::class.java
     )
 }
