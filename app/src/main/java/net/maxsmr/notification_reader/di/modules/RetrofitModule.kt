@@ -37,7 +37,7 @@ class RetrofitModule {
         json,
         File(context.cacheDir, "OkHttpCache").path,
         BuildConfig.PROTOCOL_VERSION,
-        false
+        true
         // cacheManager.getDisableCache()
     ) {
         okHttpClient.get()

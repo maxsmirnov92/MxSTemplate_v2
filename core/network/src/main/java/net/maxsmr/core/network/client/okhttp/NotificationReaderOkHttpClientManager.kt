@@ -54,9 +54,7 @@ class NotificationReaderOkHttpClientManager(
                 }
             }
 
-            val newRequest = request.newBuilder()
-            newRequest.addHeader("Content-Type", "application/json")
-            return chain.proceed(newRequest.url(url.build()).build())
+            return chain.proceed(request.newBuilder().url(url.build()).build())
         }
     }
 }

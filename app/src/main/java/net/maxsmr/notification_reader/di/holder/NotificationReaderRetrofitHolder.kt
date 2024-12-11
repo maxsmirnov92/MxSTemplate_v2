@@ -24,7 +24,7 @@ class NotificationReaderRetrofitHolder(
         json,
         File(context.cacheDir, "OkHttpCache").path,
         BuildConfig.PROTOCOL_VERSION,
-        false
+        true
     ) {
         okHttpClient.get()
     }.apply {
