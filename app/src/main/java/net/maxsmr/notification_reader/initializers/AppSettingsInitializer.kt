@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import net.maxsmr.commonutils.isFileExists
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
+import net.maxsmr.notification_reader.BuildConfig
 import net.maxsmr.notification_reader.di.InitializerEntryPoint
 import javax.inject.Inject
 
@@ -21,7 +22,9 @@ class AppSettingsInitializer : Initializer<Unit> {
             if (!isFileExists("datastore/settings.preferences_pb", context.filesDir.absolutePath)) {
                 settingsRepo.updateSettings(
                     AppSettings(
-                        // дефолтные значения сюда
+                        notificationsUrl = BuildConfig.URL_NOTIFICATIONS,
+                        packageListUrl = BuildConfig.URL_PACKAGE_LIST,
+                        notificationsApiKey = BuildConfig.API_KEY_NOTIFICATIONS
                     )
                 )
             }

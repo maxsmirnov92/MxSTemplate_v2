@@ -15,14 +15,7 @@ class NotificationReaderHostManagerHolder(
     override val key: String
         get() = runBlocking {
             // динамическая базовая урла в зав-ти от настроек
-            val settings = settingsRepo.getSettings()
-            var url = settings.notificationsUrl
-            if (url.isEmpty()) {
-                url = BuildConfig.URL_NOTIFICATION_READER
-                if (url.isNotEmpty()) {
-                    settingsRepo.updateSettings(settings.copy(notificationsUrl = url))
-                }
-            }
-            return@runBlocking url
+            return@runBlocking settingsRepo.getSettings().notificationsUrl
+                .takeIf { it.isNotEmpty() } ?: BuildConfig.URL_NOTIFICATIONS
         }
 }
