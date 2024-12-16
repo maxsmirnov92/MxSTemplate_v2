@@ -42,6 +42,8 @@ class NotificationReaderRepository @Inject constructor(
         }.filter { filterFunc.invoke(it) }
     }
 
+    suspend fun getNotificationById(id: Long) = dao.getById(id)
+
     suspend fun insertNewNotification(
         content: String,
         packageName: String,

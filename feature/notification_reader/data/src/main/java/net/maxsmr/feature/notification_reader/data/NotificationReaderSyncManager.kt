@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import net.maxsmr.commonutils.isPackageNameValid
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
@@ -27,6 +29,7 @@ import net.maxsmr.commonutils.service.canStartForegroundService
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.coroutines.tickerFlow
+import net.maxsmr.core.database.dao.UpsertDao.Companion.NO_ID
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
@@ -39,6 +42,7 @@ import net.maxsmr.feature.download.data.DownloadService.RequestParams.MimeTypeMa
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.data.DownloadsViewModel.Companion.toParams
 import net.maxsmr.feature.download.data.manager.DownloadManager
+import net.maxsmr.feature.download.data.manager.NetworkStateWithSettings
 import net.maxsmr.feature.download.data.manager.observeNetworkStateWithSettings
 import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
 import net.maxsmr.feature.notification_reader.data.usecases.NotificationsSendUseCase
@@ -65,6 +69,8 @@ class NotificationReaderSyncManager @Inject constructor(
 
     private val scope = CoroutineScope(Dispatchers.IO)
 
+    private val mutex = Mutex()
+
     private val downloadJob = AtomicReference<Job>()
     private val newWatcherJob = AtomicReference<Job>()
     private val failedWatcherJob = AtomicReference<Job>()
@@ -76,9 +82,12 @@ class NotificationReaderSyncManager @Inject constructor(
 
     private val lastPackageListState = MutableStateFlow<LoadState<Set<String>>?>(null)
     private val lastSettings = MutableStateFlow<AppSettings?>(null)
+    private val lastNetworkStateWithSettings = MutableStateFlow<NetworkStateWithSettings?>(null)
 
     private val _isRunning = MutableStateFlow(false)
     val isRunning = _isRunning.asStateFlow()
+
+    private val retryJobsMap = mutableMapOf<Long, Job>()
 
     init {
         scope.launch {
@@ -140,7 +149,12 @@ class NotificationReaderSyncManager @Inject constructor(
         successWatcherJob.cancel()
         networkStateJob.cancel()
         observeSettingsJob.cancel()
+        retryJobsMap.values.forEach {
+            it.cancel()
+        }
+        retryJobsMap.clear()
         lastSettings.value = null
+        lastNetworkStateWithSettings.value = null
         pendingStartMode.set(StartMode.NONE)
 
         return if (NotificationReaderListenerService.isRunning(context)) {
@@ -188,6 +202,30 @@ class NotificationReaderSyncManager @Inject constructor(
         return true
     }
 
+    fun retryFailedNotifications() {
+        launchRetryForFailedIfNeeded(NO_ID) {
+            if (!isRunning.value) return@launchRetryForFailedIfNeeded
+            sendOrRemoveNotifications { status is NotificationReaderEntity.Failed }
+        }
+    }
+
+    fun retryFailedNotification(id: Long) {
+        launchRetryForFailedIfNeeded(id) {
+            if (!isRunning.value) return@launchRetryForFailedIfNeeded
+            val notification = notificationReaderRepo.getNotificationById(id)
+                ?.takeIf { it.status is NotificationReaderEntity.Failed }
+                ?: return@launchRetryForFailedIfNeeded
+            listOf(notification).sendOrRemove()
+        }
+    }
+
+    private fun launchRetryForFailedIfNeeded(id: Long, block: suspend CoroutineScope.() -> Unit) {
+        val job = retryJobsMap[id]?.takeIf { it.isActive && !it.isCompleted && !it.isCancelled }
+        if (job == null) {
+            retryJobsMap[id] = scope.launch(block = block)
+        }
+    }
+
     private fun launchDownloadJob() {
         downloadJob.cancel()
         logger.d("launching downloadJob...")
@@ -204,7 +242,7 @@ class NotificationReaderSyncManager @Inject constructor(
                         || status is NotificationReaderEntity.Loading
             }
             // 2. убираем New, которые не попадают в загруженный список (newWatcherJob об этом не знает)
-            removeNotifications { status is NotificationReaderEntity.New && !isPackageInList()}
+            removeNotifications { status is NotificationReaderEntity.New && !isPackageInList() }
 
             val mode = pendingStartMode.get()
             if (mode in arrayOf(StartMode.JOBS_AND_SERVICE, StartMode.JOBS)) {
@@ -249,7 +287,7 @@ class NotificationReaderSyncManager @Inject constructor(
                             .stateIn(scope, SharingStarted.WhileSubscribed(), null)
                             .collect {
 
-                                if (!isActive){
+                                if (!isActive) {
                                     logger.w("State is $it, but downloadJob is not active")
                                     lastPackageListState.value = null
                                     return@collect
@@ -424,19 +462,23 @@ class NotificationReaderSyncManager @Inject constructor(
             networkStateJob.set(
                 scope.launch {
                     settingsRepo.observeNetworkStateWithSettings().collect {
-                        logger.d("Network state or settings changed: '$it'")
-                        if (!it.shouldRetry) return@collect
-                        val state = lastPackageListState.value
-                        if (it.shouldReload(state?.error)) {
-                            // DownloadManager подхватит это изменение, но ранее были отписаны от observeDownload
-                            launchDownloadJob()
-                        } else {
-                            // если перезапускать главную Job не нужно,
-                            // проверка и выгрузка зафейленных сетевых нотификаций как обычно
-                            val failedNetworkNotifications = notificationReaderRepo.getNotificationsRaw {
-                                it.shouldReload((this.status as? NotificationReaderEntity.Failed)?.exception)
+                        val lastSettings = lastNetworkStateWithSettings.value
+                        if (lastSettings != it) {
+                            lastNetworkStateWithSettings.value = it
+                            logger.d("Network state or settings changed: '$it'")
+                            if (!it.shouldRetry) return@collect
+                            val state = lastPackageListState.value
+                            if (it.shouldReload(state?.error)) {
+                                // DownloadManager подхватит это изменение, но ранее были отписаны от observeDownload
+                                launchDownloadJob()
+                            } else {
+                                // если перезапускать главную Job не нужно,
+                                // проверка и выгрузка зафейленных сетевых нотификаций как обычно
+                                val failedNetworkNotifications = notificationReaderRepo.getNotificationsRaw {
+                                    it.shouldReload((this.status as? NotificationReaderEntity.Failed)?.exception)
+                                }
+                                failedNetworkNotifications.sendOrRemove()
                             }
-                            failedNetworkNotifications.sendOrRemove()
                         }
                     }
                 }
@@ -464,22 +506,24 @@ class NotificationReaderSyncManager @Inject constructor(
     }
 
     private suspend fun List<NotificationReaderEntity>.sendOrRemove() {
-        val newNotifications = mutableListOf<NotificationReaderEntity>()
-        val removedNotifications = mutableListOf<NotificationReaderEntity>()
-        this.forEach { n ->
-            if (n.isPackageInList()) {
-                // есть в белом/чёрном списке - снова становится "New" и отправляется сразу
-                newNotifications.add(n.copy(status = NotificationReaderEntity.New))
-            } else {
-                // нет в белом списке - подлежит удалению из таблицы
-                removedNotifications.add(n)
+        mutex.withLock {
+            val newNotifications = mutableListOf<NotificationReaderEntity>()
+            val removedNotifications = mutableListOf<NotificationReaderEntity>()
+            this.forEach { n ->
+                if (n.isPackageInList()) {
+                    // есть в белом/чёрном списке - снова становится "New" и отправляется сразу
+                    newNotifications.add(n.copy(status = NotificationReaderEntity.New))
+                } else {
+                    // нет в белом списке - подлежит удалению из таблицы
+                    removedNotifications.add(n)
+                }
             }
-        }
-        if (newNotifications.isNotEmpty()) {
-            newNotifications.send()
-        }
-        if (removedNotifications.isNotEmpty()) {
-            notificationReaderRepo.removeNotifications(removedNotifications)
+            if (newNotifications.isNotEmpty()) {
+                newNotifications.send()
+            }
+            if (removedNotifications.isNotEmpty()) {
+                notificationReaderRepo.removeNotifications(removedNotifications)
+            }
         }
     }
 
@@ -500,7 +544,8 @@ class NotificationReaderSyncManager @Inject constructor(
         return cacheRepo.isPackageInList(
             context,
             packageName,
-            settingsRepo.getSettings().isWhitePackageList)
+            settingsRepo.getSettings().isWhitePackageList
+        )
     }
 
     private fun enqueueDownloadPackageList(url: String): DownloadService.Params {

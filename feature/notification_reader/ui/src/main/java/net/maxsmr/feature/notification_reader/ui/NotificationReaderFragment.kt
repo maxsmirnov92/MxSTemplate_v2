@@ -70,7 +70,9 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
     private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
     private val packageNamesAdapter = PackageNamesAdapter()
-    private val notificationsAdapter = NotificationsAdapter()
+    private val notificationsAdapter = NotificationsAdapter {
+        viewModel.onRetryFailedNotification(it.id)
+    }
 
     private val touchHelper: ItemTouchHelper =
         ItemTouchHelper(DragAndDropTouchHelperCallback(notificationsAdapter)).also {
@@ -102,6 +104,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
     private var toggleServiceStateMenuItem: MenuItem? = null
     private var downloadPackageListMenuItem: MenuItem? = null
+    private var retryFailedMenuItem: MenuItem? = null
     private var clearSuccessMenuItem: MenuItem? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: NotificationReaderViewModel) {
@@ -126,6 +129,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                     rvNotifications.isVisible = false
                     tvNotificationsEmpty.isVisible = true
                 }
+                refreshRetryFailedMenuItem()
                 refreshClearSuccessMenuItem()
             }
 
@@ -317,9 +321,11 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
         super.onCreateMenu(menu, inflater)
         toggleServiceStateMenuItem = menu.findItem(R.id.actionServiceStartStop)
         downloadPackageListMenuItem = menu.findItem(R.id.actionDownloadPackageList)
+        retryFailedMenuItem = menu.findItem(R.id.actionRetryFailed)
         clearSuccessMenuItem = menu.findItem(R.id.actionClearSuccess)
         refreshStateItemByServiceRunning()
         refreshDownloadPackageListMenuItem()
+        refreshRetryFailedMenuItem()
         refreshClearSuccessMenuItem()
     }
 
@@ -332,6 +338,11 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
             R.id.actionDownloadPackageList -> {
                 viewModel.onDownloadPackageListAction()
+                true
+            }
+
+            R.id.actionRetryFailed -> {
+                viewModel.onRetryFailedNotificationsAction()
                 true
             }
 
@@ -385,6 +396,12 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
     private fun refreshDownloadPackageListMenuItem() {
         downloadPackageListMenuItem?.isVisible = viewModel.isRunning.value == true
                 && !viewModel.settings.value?.packageListUrl.isNullOrEmpty()
+    }
+
+    private fun refreshRetryFailedMenuItem() {
+        retryFailedMenuItem?.isVisible = viewModel.notificationsItems.value
+            ?.any { it.status is NotificationReaderEntity.Failed } == true
+                && viewModel.isRunning.value == true
     }
 
     private fun refreshClearSuccessMenuItem() {

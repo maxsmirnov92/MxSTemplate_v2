@@ -27,11 +27,13 @@ class NotificationsSendUseCase @Inject constructor(
 
         val startTimestamp = System.currentTimeMillis()
 
-        readerRepo.upsertNotifications(notifications.map {
-            it.copy(status = NotificationReaderEntity.Loading(startTimestamp))
-        })
+        var isSuccess = false
 
         try {
+            readerRepo.upsertNotifications(notifications.map {
+                it.copy(status = NotificationReaderEntity.Loading(startTimestamp))
+            })
+
             baseApplicationContext.checkPreferableConnection(parameters.preferredConnectionTypes)
 
             dataSource.notifyData(notifications.map {
@@ -42,19 +44,7 @@ class NotificationsSendUseCase @Inject constructor(
                     it.timestamp
                 )
             })
-            val successTimestamp = if (!parameters.shouldRemoveIfSuccess) {
-                System.currentTimeMillis()
-            } else {
-                0
-            }
-            val ids = notifications.map { it.id }
-            logger.d("Notifications were sent successfully, ids: $ids")
-            if (parameters.shouldRemoveIfSuccess) {
-                readerRepo.removeNotificationsByIds(ids)
-                logger.d("ids after delete: ${readerRepo.getNotificationsRaw().map { it.id }}")
-            } else {
-                readerRepo.updateNotificationsWithSuccess(ids, successTimestamp)
-            }
+            isSuccess = true
 
         } catch (e: Exception) {
             withContext(NonCancellable) {
@@ -72,6 +62,24 @@ class NotificationsSendUseCase @Inject constructor(
                 })
             }
             throw e
+        } finally {
+            if (isSuccess) {
+                withContext(NonCancellable) {
+                    val successTimestamp = if (!parameters.shouldRemoveIfSuccess) {
+                        System.currentTimeMillis()
+                    } else {
+                        0
+                    }
+                    val ids = notifications.map { it.id }
+                    logger.d("Notifications were sent successfully, ids: $ids")
+                    if (parameters.shouldRemoveIfSuccess) {
+                        readerRepo.removeNotificationsByIds(ids)
+                        logger.d("ids after delete: ${readerRepo.getNotificationsRaw().map { it.id }}")
+                    } else {
+                        readerRepo.updateNotificationsWithSuccess(ids, successTimestamp)
+                    }
+                }
+            }
         }
     }
 
@@ -79,5 +87,12 @@ class NotificationsSendUseCase @Inject constructor(
         val notifications: List<NotificationReaderEntity>,
         val preferredConnectionTypes: Set<PreferableType> = setOf(),
         val shouldRemoveIfSuccess: Boolean = false,
-    )
+    ) {
+
+        override fun toString(): String {
+            return "Parameters(notification ids=${notifications.map { it.id }}, " +
+                    "preferredConnectionTypes=$preferredConnectionTypes, " +
+                    "shouldRemoveIfSuccess=$shouldRemoveIfSuccess)"
+        }
+    }
 }
