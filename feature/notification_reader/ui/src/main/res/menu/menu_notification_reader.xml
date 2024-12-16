@@ -9,6 +9,13 @@
         app:showAsAction="always" />
 
     <item
+        android:id="@+id/actionRetryFailed"
+        android:icon="@drawable/ic_refresh"
+        android:title="@string/notification_reader_menu_action_retry_failed"
+        app:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/actionClearSuccess"
         android:icon="@drawable/ic_trash_can"
         android:title="@string/notification_reader_menu_action_clear_success"
@@ -17,6 +24,7 @@
 
     <item
         android:id="@+id/actionDownloadPackageList"
+        app:showAsAction="never"
         android:title="@string/notification_reader_menu_action_download_package_list" />
 
 

@@ -10,6 +10,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.gui.message.TextMessage
@@ -64,21 +66,24 @@ class NotificationReaderViewModel @AssistedInject constructor(
 
     val packageListExpandedState = _packageListExpandedState as LiveData<Boolean>
 
-    val notificationsItems = readerRepo.getNotifications().asLiveData().map { list ->
-        list.map {
+    val settings = settingsRepo.settingsFlow.asLiveData()
+
+    val isRunning = manager.isRunning.asLiveData()
+
+    val notificationsItems = zip(readerRepo.getNotifications().asLiveData(), isRunning) { list, isRunning ->
+        list to isRunning
+    }.map { (list, isRunning) ->
+        list.orEmpty().map {
             NotificationsAdapterData(
                 it.id,
                 it.contentText,
                 it.packageName,
                 formatDate(Date(it.timestamp), NOTIFICATION_DATETIME_FORMAT),
-                it.status
+                it.status,
+                isRunning ?: false
             )
         }
     }
-
-    val settings = settingsRepo.settingsFlow.asLiveData()
-
-    val isRunning = manager.isRunning.asLiveData()
 
     val inputApiKeyField = Field.Builder(EMPTY_STRING)
         .emptyIf { it.isEmpty() }
@@ -217,6 +222,22 @@ class NotificationReaderViewModel @AssistedInject constructor(
                 readerRepo.getNotificationsRaw { status is NotificationReaderEntity.Success }
             )
         }
+    }
+
+    fun onRetryFailedNotificationsAction() {
+        if (!manager.isRunning.value) {
+            showToast(TextMessage(R.string.notification_reader_toast_service_not_running))
+            return
+        }
+        manager.retryFailedNotifications()
+    }
+
+    fun onRetryFailedNotification(id: Long) {
+        if (!manager.isRunning.value) {
+            showToast(TextMessage(R.string.notification_reader_toast_service_not_running))
+            return
+        }
+        manager.retryFailedNotification(id)
     }
 
     fun onTogglePackageListExpandedState() {

@@ -4,10 +4,12 @@
     <string name="notification_reader_menu_action_service_start">Start</string>
     <string name="notification_reader_menu_action_service_stop">Stop</string>
     <string name="notification_reader_menu_action_download_package_list">Download package list file</string>
-    <string name="notification_reader_menu_action_clear_success">Clear all done notifications</string>
+    <string name="notification_reader_menu_action_retry_failed">Retry all failed</string>
+    <string name="notification_reader_menu_action_clear_success">Clear all done</string>
     <string name="notification_reader_toast_start_add_in_settings">App must be selected in settings to start service</string>
     <string name="notification_reader_toast_stop_remove_in_settings">App must be unselected in settings to stop service</string>
     <string name="notification_reader_toast_can_draw_overlays_settings">App must be selected to run service from background</string>
+    <string name="notification_reader_toast_service_not_running">Notification service currently not running</string>
     <string name="notification_reader_snack_cannot_start_service">Cannot start service</string>
     <string name="notification_reader_snack_download_package_list_not_started">@string/notification_reader_package_list_loading</string>
     <string name="notification_reader_package_name_unknown">Unknown package</string>

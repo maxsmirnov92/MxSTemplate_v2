@@ -17,7 +17,7 @@ import net.maxsmr.feature.notification_reader.ui.databinding.ItemNotificationBin
 import java.io.Serializable
 import java.util.Date
 
-fun notificationsAdapterDelegate() = com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate<
+fun notificationsAdapterDelegate(onRetryFailedClick: (NotificationsAdapterData) -> Unit) = com.hannesdorfmann.adapterdelegates4.dsl.v2.adapterDelegate<
         NotificationsAdapterData, NotificationsAdapterData, BaseDraggableDelegationAdapter.DragAndDropViewHolder<NotificationsAdapterData>
         >(
     R.layout.item_notification, createViewHolder = { it.createWithDraggable(R.id.containerNotification) }
@@ -43,8 +43,10 @@ fun notificationsAdapterDelegate() = com.hannesdorfmann.adapterdelegates4.dsl.v2
             }
             if (status is NotificationReaderEntity.Failed) {
                 tvNotificationFailReason.setTextOrGone(status.exception.message)
+                ibNotificationRetry.isVisible = item.isRunning
             } else {
                 tvNotificationFailReason.isVisible = false
+                ibNotificationRetry.isVisible = false
             }
 
             tvNotificationContentText.text =
@@ -85,6 +87,10 @@ fun notificationsAdapterDelegate() = com.hannesdorfmann.adapterdelegates4.dsl.v2
                 tvNotificationTimeValue.isVisible = false
             }
             containerNotificationTime.isVisible = tvNotificationTimeValue.isVisible
+
+            ibNotificationRetry.setOnClickListener {
+                onRetryFailedClick(item)
+            }
         }
     }
 }
@@ -95,6 +101,7 @@ data class NotificationsAdapterData(
     val packageName: String,
     val formattedTime: String,
     val status: Status,
+    val isRunning: Boolean
 ) : BaseAdapterData, Serializable {
 
     @StringRes
