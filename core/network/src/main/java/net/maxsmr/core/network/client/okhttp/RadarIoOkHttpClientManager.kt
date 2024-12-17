@@ -1,6 +1,7 @@
 package net.maxsmr.core.network.client.okhttp
 
 import android.content.Context
+import net.maxsmr.core.network.appendValues
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
 import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
@@ -37,29 +38,28 @@ class RadarIoOkHttpClientManager(
     internal inner class RadarIoInterceptor : Interceptor {
 
         override fun intercept(chain: Interceptor.Chain): Response {
-            val request = chain.request()
-            val newRequest = request.newBuilder()
-
+            var request = chain.request()
             val invocation = request.tag(Invocation::class.java)
+
             if (invocation != null) {
-                val needAuthorization = invocation.method().getAnnotation(Authorization::class.java) != null
-                if (needAuthorization) {
-//                    val subtype = request.body?.contentType()?.subtype
-//                    if (subtype == null || subtype.contains("json", true)) {
-                    authorization.takeIf { it.isNotEmpty() }?.let {
-                        newRequest.addHeader("Authorization", it)
+                request = request.appendValues(
+                    appendQueryParametersFunc = {
+                        val country = Locale.getDefault().toString().split("_")
+                            .getOrNull(1)?.takeIf { it.isNotEmpty() } ?: defaultCountry
+                        addQueryParameter("country", country)
+                    },
+                    appendHeadersFunc = {
+                        val needAuthorization = invocation.method().getAnnotation(Authorization::class.java) != null
+                        if (needAuthorization) {
+                            authorization.takeIf { it.isNotEmpty() }?.let {
+                                addHeader("Authorization", it)
+                            }
+                        }
                     }
-//                    }
-                }
+                )
             }
 
-            val country = Locale.getDefault().toString().split("_")
-                .getOrNull(1)?.takeIf { it.isNotEmpty() } ?: defaultCountry
-
-            val url = request.url.newBuilder()
-            url.addQueryParameter("country", country)
-
-            return chain.proceed(newRequest.url(url.build()).build())
+            return chain.proceed(request)
         }
     }
 }

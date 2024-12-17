@@ -36,7 +36,7 @@ import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.alert.AlertFragmentDelegate
 import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
-import net.maxsmr.core.utils.decodeFromStringOrNull
+import net.maxsmr.core.utils.kotlinx.serialization.decodeFromStringOrNull
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultGETServiceParamsFor
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultPOSTServiceParamsFor
 import net.maxsmr.feature.download.data.DownloadService.RequestParams.MimeTypeMatchRule

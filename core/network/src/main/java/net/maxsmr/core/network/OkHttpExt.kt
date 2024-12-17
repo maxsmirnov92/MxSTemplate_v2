@@ -5,6 +5,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.commonutils.model.toJSONObject
 import net.maxsmr.commonutils.stream.IStreamNotifier
 import net.maxsmr.commonutils.stream.copyStreamOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
@@ -13,6 +14,8 @@ import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.network.exceptions.HttpProtocolException
 import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
 import okhttp3.*
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.internal.connection.RealCall
 import okhttp3.internal.readBomAsCharset
 import okio.Buffer
 import okio.BufferedSink
@@ -23,6 +26,7 @@ import okio.Sink
 import okio.Source
 import okio.buffer
 import okio.sink
+import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -33,7 +37,7 @@ import kotlin.coroutines.resumeWithException
 
 private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("OkHttpExt")
 
-private const val HEADER_CONTENT_TYPE = "Content-Type"
+const val HEADER_CONTENT_TYPE = "Content-Type"
 private const val HEADER_CONTENT_ENCODING = "Content-Encoding"
 private const val HEADER_CONTENT_DISPOSITION = "Content-Disposition"
 private const val HEADER_ACCEPT_RANGES = "Accept-Ranges"
@@ -100,6 +104,65 @@ fun Request?.asStringOrThrow(charset: Charset = Charset.defaultCharset()): Strin
     val buffer = Buffer()
     copy.body?.writeTo(buffer)
     return buffer.readString(charset)
+}
+
+@JvmOverloads
+fun Request.appendValues(
+    appendQueryParametersFunc: (HttpUrl.Builder.() -> Unit)? = null,
+    appendHeadersFunc: (Request.Builder.() -> Unit)? = null,
+    appendJsonFunc: (JSONObject.() -> Unit)? = null,
+): Request {
+    if (appendQueryParametersFunc == null && appendHeadersFunc == null && appendJsonFunc == null) {
+        return this
+    }
+
+    var request = this
+
+    appendQueryParametersFunc?.let {
+        val url = request.url.newBuilder()
+        appendQueryParametersFunc(url)
+        request = request.newBuilder().url(url.build()).build()
+    }
+
+    body?.let { requestBody ->
+
+        val contentType = requestBody.contentType()
+        val subtype = contentType?.subtype
+        val charset = contentType?.charset() ?: Charset.defaultCharset()
+
+        val json: JSONObject? = appendJsonFunc?.let {
+            if (subtype == null || subtype.contains("json", true)) {
+                // если уже записан не json - не дописывать
+                (request
+                    .asString(charset)
+                    ?.toJSONObject() ?: JSONObject()).also {
+                    appendJsonFunc(it)
+                }
+            } else {
+                null
+            }
+        }
+
+        request = with(request.newBuilder()) {
+            appendHeadersFunc?.invoke(this)
+            if (json != null && (subtype.isNullOrEmpty() || !subtype.contains("json"))) {
+                // json был дописан, но тип не тот
+                removeHeader(HEADER_CONTENT_TYPE)
+                addHeader(HEADER_CONTENT_TYPE, "application/json; charset=${charset.name()}")
+            }
+            build()
+        }
+
+        json?.let {
+            request = request.newBuilder().tag(JSONObject::class.java, json)
+                .method(
+                    request.method,
+                    json.toString().toRequestBody(request.body?.contentType())
+                ).build()
+        }
+    }
+
+    return request
 }
 
 // endregion
@@ -330,6 +393,13 @@ fun Headers?.toPairs(): List<Pair<String, String>> {
 fun Response.isResumeDownloadSupported(): Boolean {
     val acceptHeader = this.header("Accept-Ranges") ?: ""
     return acceptHeader.isNotEmpty() && !acceptHeader.equals("none", ignoreCase = true)
+}
+
+fun Interceptor.Chain.resetTimeout() {
+    (this.call() as? RealCall)?.let { realCall ->
+        realCall.timeout().exit()
+        realCall.timeout().enter()
+    }
 }
 
 @Throws(IOException::class)

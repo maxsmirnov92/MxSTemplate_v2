@@ -16,8 +16,8 @@ import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.DataStoreType
 import net.maxsmr.core.di.DataStores
 import net.maxsmr.core.domain.entities.feature.rate.RateAppInfo
-import net.maxsmr.core.utils.decodeFromStringOrNull
-import net.maxsmr.core.utils.encodeToStringOrNull
+import net.maxsmr.core.utils.kotlinx.serialization.decodeFromStringOrNull
+import net.maxsmr.core.utils.kotlinx.serialization.encodeToStringOrNull
 import javax.inject.Inject
 
 /**

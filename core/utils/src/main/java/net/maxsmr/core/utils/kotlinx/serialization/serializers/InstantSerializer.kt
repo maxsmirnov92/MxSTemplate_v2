@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.retrofit.serializers
+package net.maxsmr.core.utils.kotlinx.serialization.serializers
 
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toInstant
@@ -9,7 +9,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-internal object InstantSerializer : KSerializer<Instant> {
+object InstantSerializer : KSerializer<Instant> {
 
     override fun deserialize(decoder: Decoder): Instant =
         fixOffsetRepresentation(decoder.decodeString()).toInstant()
@@ -32,8 +32,10 @@ internal object InstantSerializer : KSerializer<Instant> {
         val offsetLength = isoString.length - (offset + 1)
 
         return if (separator != -1) isoString else if (offsetLength == 2) "$isoString:00" else "${
-            isoString.substring(0,
-                isoString.length - 2)
+            isoString.substring(
+                0,
+                isoString.length - 2
+            )
         }:${isoString.substring(isoString.length - 2)}"
     }
 }

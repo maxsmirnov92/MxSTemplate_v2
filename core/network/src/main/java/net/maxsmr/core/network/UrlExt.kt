@@ -98,7 +98,7 @@ fun Uri?.equalsIgnoreSubDomain(other: Uri?): Boolean {
     if (this?.port != other?.port) {
         return false
     }
-    return this?.host?.equalsIgnoreSubDomain(other?.host) ?: false
+    return  this?.host.equalsIgnoreSubDomain(other?.host)
 }
 
 fun String?.isAnyResourceScheme() = !this.isNullOrEmpty() && RESOURCE_SCHEMES.any { this.equals(it, true) }

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 import net.maxsmr.core.domain.StringId
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
-import net.maxsmr.core.network.retrofit.serializers.StringIdEnumSerializer
+import net.maxsmr.core.utils.kotlinx.serialization.serializers.StringIdEnumSerializer
 
 /**
  * Ответ геокодера

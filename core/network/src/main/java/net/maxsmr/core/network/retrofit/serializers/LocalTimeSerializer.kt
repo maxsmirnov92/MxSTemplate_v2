@@ -1,5 +1,7 @@
 package net.maxsmr.core.network.retrofit.serializers
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.toJavaLocalTime
 import kotlinx.datetime.toKotlinLocalTime
@@ -12,6 +14,7 @@ import kotlinx.serialization.encoding.Encoder
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoField
 
+@RequiresApi(Build.VERSION_CODES.O)
 internal object LocalTimeSerializer : KSerializer<LocalTime> {
 
     private val LOCAL_TIME: DateTimeFormatter = (java.time.format.DateTimeFormatterBuilder())

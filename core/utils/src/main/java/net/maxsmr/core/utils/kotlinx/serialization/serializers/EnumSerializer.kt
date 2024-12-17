@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.retrofit.serializers
+package net.maxsmr.core.utils.kotlinx.serialization.serializers
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -15,7 +15,6 @@ open class IntIdEnumSerializer<T>(
     private val values: Array<T>,
     private val defaultValue: T
 ) : KSerializer<T> where T : Enum<T>, T : IntId {
-
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
         kClass.simpleName ?: "IntEnum", PrimitiveKind.STRING)

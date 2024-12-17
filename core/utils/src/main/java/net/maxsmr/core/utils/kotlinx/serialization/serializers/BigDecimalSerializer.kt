@@ -1,4 +1,4 @@
-package net.maxsmr.core.network.retrofit.serializers
+package net.maxsmr.core.utils.kotlinx.serialization.serializers
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -9,7 +9,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 
-internal object BigDecimalSerializer : KSerializer<BigDecimal> {
+object BigDecimalSerializer : KSerializer<BigDecimal> {
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("decimal", PrimitiveKind.STRING)
 
