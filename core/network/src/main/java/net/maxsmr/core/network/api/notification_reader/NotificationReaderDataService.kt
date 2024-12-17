@@ -14,7 +14,7 @@ interface NotificationReaderDataService {
     @POST("/")
     @ResponseObjectType(NotificationReaderDataResponse::class)
     suspend fun notifyData(
-        @Body request: List<NotificationReaderDataRequest>,
+        @Body request: NotificationReaderDataRequest,
     ): NotificationReaderDataResponse
 
     companion object {

@@ -37,7 +37,7 @@ class NotificationsSendUseCase @Inject constructor(
             baseApplicationContext.checkPreferableConnection(parameters.preferredConnectionTypes)
 
             dataSource.notifyData(notifications.map {
-                NotificationReaderDataRequest(
+                NotificationReaderDataRequest.NotificationReaderData(
                     it.id,
                     it.contentText,
                     it.packageName,
