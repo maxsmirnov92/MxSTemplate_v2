@@ -1,6 +1,7 @@
 package net.maxsmr.core.network.client.okhttp
 
 import android.content.Context
+import net.maxsmr.core.network.appendValues
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
 import net.maxsmr.core.network.client.okhttp.interceptors.UrlChangeInterceptor
@@ -40,21 +41,21 @@ class NotificationReaderOkHttpClientManager(
     internal inner class NotificationReaderInterceptor : Interceptor {
 
         override fun intercept(chain: Interceptor.Chain): Response {
-            val request = chain.request()
+            var request = chain.request()
             val invocation = request.tag(Invocation::class.java)
-
-            val url = request.url.newBuilder()
 
             if (invocation != null) {
                 val needAuthorization = invocation.method().getAnnotation(Authorization::class.java) != null
                 if (needAuthorization) {
-                    apiKeyProvider().takeIf { it.isNotEmpty() }?.let {
-                        url.addQueryParameter("key", it)
+                    apiKeyProvider().takeIf { it.isNotEmpty() }?.let { apiKey ->
+                        request = request.appendValues {
+                            put("apiKey", apiKey)
+                        }
                     }
                 }
             }
 
-            return chain.proceed(request.newBuilder().url(url.build()).build())
+            return chain.proceed(request)
         }
     }
 }
