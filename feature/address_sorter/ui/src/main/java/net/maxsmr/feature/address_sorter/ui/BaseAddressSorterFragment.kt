@@ -37,6 +37,7 @@ import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.core.ui.openAnyIntentWithToastError
+import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.DialogRepresentation
 import net.maxsmr.core.ui.view.content.pick.chooser.FragmentContentPickerBuilder
 import net.maxsmr.core.ui.view.location.LocationFragmentAlertDelegate
@@ -131,7 +132,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     private var shouldScrollToEnd: Boolean = false
 
-    override fun createAlertDelegate() = AddressSorterFragmentAlertDelegate(
+    override fun createAlertDelegate(): BaseAlertDelegate<AddressSorterViewModel> = AddressSorterFragmentAlertDelegate(
         this, viewModel
     )
 

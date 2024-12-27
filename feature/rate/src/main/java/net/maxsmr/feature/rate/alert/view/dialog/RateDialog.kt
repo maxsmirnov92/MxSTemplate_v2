@@ -1,4 +1,4 @@
-package net.maxsmr.feature.rate.dialog
+package net.maxsmr.feature.rate.alert.view.dialog
 
 import android.os.Bundle
 import android.widget.Button
@@ -76,7 +76,7 @@ class RateDialog(
         var rating = RATING_DEFAULT
     }
 
-    interface RateListener {
+    fun interface RateListener {
 
         fun onRateSelected(rating: Int)
     }

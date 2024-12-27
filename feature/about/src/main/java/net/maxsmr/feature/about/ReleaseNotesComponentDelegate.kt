@@ -1,5 +1,6 @@
 package net.maxsmr.feature.about
 
+import android.content.Context
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -12,16 +13,13 @@ import net.maxsmr.commonutils.text.removeExtension
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
-import net.maxsmr.core.ui.view.alert.representation.asCommonWrapBottomSheetDialog
-import net.maxsmr.core.ui.components.IFragmentDelegate
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import java.io.File
 import java.util.Locale
 
-class ReleaseNotesFragmentDelegate @JvmOverloads constructor(
-    override val fragment: BaseVmFragment<*>,
+class ReleaseNotesComponentDelegate @JvmOverloads constructor(
+    override val host: Context,
     override val viewModel: BaseViewModel,
     private val versionCode: Int,
     private val versionName: String,
@@ -29,7 +27,7 @@ class ReleaseNotesFragmentDelegate @JvmOverloads constructor(
     private val repo: CacheDataStoreRepository,
     private val defaultLocale: String = "en",
     private val shouldShowAll: Boolean = true,
-) : IFragmentDelegate {
+) : IComponentDelegate<Context> {
 
     init {
         check(versionCode >= 1) {
@@ -37,9 +35,11 @@ class ReleaseNotesFragmentDelegate @JvmOverloads constructor(
         }
     }
 
+    override val context: Context = host
+
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("ReleaseNotesFragmentDelegate")
 
-    override fun onViewCreated(delegate: BaseAlertDelegate<*>) {
+    override fun onCreated() {
         val scope = viewModel.viewModelScope
 
         scope.launch(Dispatchers.IO) {
@@ -52,7 +52,7 @@ class ReleaseNotesFragmentDelegate @JvmOverloads constructor(
                 return currentLocale.toString().split("_")[0].equals(this, true)
             }
 
-            val assets = fragment.requireContext().assets
+            val assets = context.assets
 
             /**
              * @return номер версии + название соответствующего ассета с заметками в [folderName]
@@ -171,19 +171,15 @@ class ReleaseNotesFragmentDelegate @JvmOverloads constructor(
 
             showNextDialog()
         }
-
-        delegate.bindAlertDialog(DIALOG_TAG_RELEASE_NOTES) {
-            it.asCommonWrapBottomSheetDialog(fragment.requireContext(), false)
-        }
     }
 
-    override fun onViewDestroyed() {
-        super.onViewDestroyed()
+    override fun onDestroyed() {
+        super.onDestroyed()
         viewModel.hideDialog(DIALOG_TAG_RELEASE_NOTES)
     }
 
     companion object {
 
-        private const val DIALOG_TAG_RELEASE_NOTES = "release_notes"
+        const val DIALOG_TAG_RELEASE_NOTES = "release_notes"
     }
 }

@@ -1,23 +1,26 @@
 package net.maxsmr.feature.showcase
 
+import android.content.Context
 import android.view.View
 import androidx.annotation.MainThread
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import net.maxsmr.commonutils.asContextOrThrow
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
-import net.maxsmr.core.ui.components.IFragmentDelegate
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.components.IComponentDelegate
 import smartdevelop.ir.eram.showcaseviewlib.GuideView
 
 @MainThread
-class GuideFragmentDelegate @JvmOverloads constructor(
-    override val fragment: BaseVmFragment<*>,
+class GuideComponentDelegate @JvmOverloads constructor(
+    override val host: LifecycleOwner,
     override val viewModel: BaseViewModel,
     private val checker: GuideChecker,
     private val shouldAutoStart: Boolean = true,
     private val onNextListener: ((GuideItem, Int) -> Unit)? = null,
     items: List<GuideItem> = emptyList(),
-) : IFragmentDelegate {
+) : IComponentDelegate<LifecycleOwner> {
+
+    override val context: Context by lazy { host.asContextOrThrow() }
 
     private val shownItems = mutableListOf<GuideItem>()
 
@@ -40,22 +43,22 @@ class GuideFragmentDelegate @JvmOverloads constructor(
 
     private var guideView: GuideView? = null
 
-    override fun onViewCreated(delegate: BaseAlertDelegate<*>) {
-        super.onViewCreated(delegate)
+    override fun onCreated() {
+        super.onCreated()
         if (shouldAutoStart) {
             doStart()
         }
     }
 
-    override fun onViewDestroyed() {
-        super.onViewDestroyed()
+    override fun onDestroyed() {
+        super.onDestroyed()
         if (wasStarted) {
             doStop()
         }
     }
 
     fun doStart(): Boolean {
-        if (!fragment.lifecycle.currentState.isAtLeast(Lifecycle.State.CREATED)) {
+        if (!host.lifecycle.currentState.isAtLeast(Lifecycle.State.CREATED)) {
             return false
         }
         if (items.isEmpty() || checker.isCompleted) {
@@ -101,7 +104,6 @@ class GuideFragmentDelegate @JvmOverloads constructor(
 
         onNextListener?.invoke(item, index)
 
-        val context = fragment.requireActivity()
         with(GuideView.Builder(context)) {
             item.builder(this)
             setTargetView(item.view)

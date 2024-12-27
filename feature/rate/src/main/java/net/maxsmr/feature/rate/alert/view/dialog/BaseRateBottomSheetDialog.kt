@@ -1,4 +1,4 @@
-package net.maxsmr.feature.rate.dialog
+package net.maxsmr.feature.rate.alert.view.dialog
 
 import android.content.Context
 import android.os.Bundle

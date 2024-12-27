@@ -1,61 +1,50 @@
 package net.maxsmr.feature.rate
 
+import android.app.Activity
+import android.content.Context
+import androidx.activity.ComponentActivity
 import androidx.annotation.CallSuper
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
+import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
-import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.view.alert.representation.toRepresentation
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.feature.rate.dialog.RateDialog
+import net.maxsmr.feature.rate.alert.view.dialog.RateDialog
 import net.maxsmr.mobile_services.IMobileServicesAvailability
 import net.maxsmr.mobile_services.MobileBuildType
 
 /**
  * @param availability null, если использование [ReviewManager] не предусматривается
  */
-abstract class BaseRateAppFragmentDelegate(
-    override val fragment: BaseVmFragment<*>,
+abstract class BaseRateAppComponentDelegate(
+    override val host: Activity,
     override val viewModel: BaseViewModel,
     private val availability: IMobileServicesAvailability?,
     private val mobileBuildType: MobileBuildType,
     private val repo: CacheDataStoreRepository,
-) : IFragmentDelegate, ReviewManager.Callbacks {
+) : IComponentDelegate<Activity>, ReviewManager.Callbacks {
+
+    override val context: Context by lazy { host }
 
     private var reviewManager: ReviewManager? = null
 
-    override fun onViewCreated(delegate: BaseAlertDelegate<*>) {
+    override fun onCreated() {
         this.reviewManager = availability?.let {
             ReviewManager(
-                fragment.requireActivity(),
+                host,
                 availability,
                 this
             )
         }
-
-        delegate.bindAlertDialog(DIALOG_TAG_RATE_APP) {
-            RateDialog(fragment, it, object : RateDialog.RateListener {
-
-                override fun onRateSelected(rating: Int) {
-                    viewModel.viewModelScope.launch {
-                        repo.setAppRated()
-                    }
-                    if (rating >= RateDialog.RATE_THRESHOLD_DEFAULT) {
-                        navigateToMarket()
-                    } else {
-                        navigateToFeedback(true)
-                    }
-                }
-            }).toRepresentation()
-        }
     }
 
-    override fun onViewDestroyed() {
-        super.onViewDestroyed()
+    override fun onDestroyed() {
+        super.onDestroyed()
         viewModel.hideDialog(DIALOG_TAG_RATE_APP)
         reviewManager = null
     }
@@ -74,8 +63,19 @@ abstract class BaseRateAppFragmentDelegate(
 
     abstract fun navigateToFeedback(shouldNavigateToMarket: Boolean)
 
+    fun onRateAppSelected(rating: Int) {
+        viewModel.viewModelScope.launch {
+            repo.setAppRated()
+        }
+        if (rating >= RateDialog.RATE_THRESHOLD_DEFAULT) {
+            navigateToMarket()
+        } else {
+            navigateToFeedback(true)
+        }
+    }
+
     @CallSuper
-    fun onRateAppSelected() {
+    fun doRateApp() {
         val manager = reviewManager
         if (manager != null
                 && mobileBuildType == MobileBuildType.COMMON
@@ -103,6 +103,6 @@ abstract class BaseRateAppFragmentDelegate(
 
     companion object {
 
-        private const val DIALOG_TAG_RATE_APP = "rate_app"
+        const val DIALOG_TAG_RATE_APP = "rate_app"
     }
 }

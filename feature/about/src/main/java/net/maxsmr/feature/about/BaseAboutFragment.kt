@@ -21,11 +21,11 @@ import net.maxsmr.feature.about.adapter.DonateAddressAdapter
 import net.maxsmr.feature.about.adapter.DonateAddressAdapterData
 import net.maxsmr.feature.about.adapter.DonateAddressClickListener
 import net.maxsmr.feature.about.databinding.FragmentAboutBinding
-import net.maxsmr.feature.rate.BaseRateAppFragmentDelegate
+import net.maxsmr.feature.rate.BaseRateAppComponentDelegate
 
 abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<VM>(), DonateAddressClickListener {
 
-    abstract val rateDelegate: BaseRateAppFragmentDelegate
+    abstract val rateDelegate: BaseRateAppComponentDelegate
 
     abstract val description: AboutViewModel.AboutAppDescription
 
@@ -91,7 +91,7 @@ abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<V
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.actionRateApp -> {
-                rateDelegate.onRateAppSelected()
+                rateDelegate.doRateApp()
                 true
             }
 

@@ -1,12 +1,11 @@
 package net.maxsmr.mobile_services.update
 
 import android.app.Activity
-import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.fragment.app.Fragment
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import ru.rustore.sdk.appupdate.listener.InstallStateUpdateListener
 import ru.rustore.sdk.appupdate.manager.RuStoreAppUpdateManager
 import ru.rustore.sdk.appupdate.manager.factory.RuStoreAppUpdateManagerFactory
@@ -18,7 +17,7 @@ import ru.rustore.sdk.core.presentation.ActivityResult
 
 @RequiresApi(Build.VERSION_CODES.N)
 class RuStoreInAppUpdateChecker(
-    private val fragment: Fragment,
+    private val wrapper: ICanRegisterForActivityResult,
     private val callbacks: InAppUpdateChecker.Callbacks,
     private val immediateUpdatePriority: Int = 4,
 ) : InAppUpdateChecker {
@@ -31,10 +30,10 @@ class RuStoreInAppUpdateChecker(
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("RuStoreInAppUpdateChecker")
 
-    private val context: Context by lazy { fragment.requireContext() }
+    private val activity: Activity by lazy { wrapper.attachedActivity }
 
     private val appUpdateManager: RuStoreAppUpdateManager by lazy {
-        RuStoreAppUpdateManagerFactory.create(context)
+        RuStoreAppUpdateManagerFactory.create(activity)
     }
 
     private val appUpdateListener = InstallStateUpdateListener { state ->
@@ -90,9 +89,8 @@ class RuStoreInAppUpdateChecker(
             .addOnSuccessListener { appUpdateInfo ->
                 logger.i("getAppUpdateInfo success, availableVersionCode: ${appUpdateInfo.availableVersionCode}, updateAvailability: ${appUpdateInfo.updateAvailability}")
 
-                val activity = fragment.activity
-                if (activity == null || activity.isFinishing) {
-                    logger.w("Not attached to activity or it is finishing, not updating")
+                if (activity.isFinishing) {
+                    logger.w("Activity is finishing, not updating")
                     return@addOnSuccessListener
                 }
 

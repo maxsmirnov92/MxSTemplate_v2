@@ -3,10 +3,11 @@ package net.maxsmr.mxstemplate.ui.fragment
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.android.base.actions.NavigationAction
-import net.maxsmr.core.ui.components.IFragmentDelegate
+import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.feature.download.ui.webview.BaseDownloadableWebViewFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.feature.rate.RateAppReminderFragmentDelegate
+import net.maxsmr.feature.rate.RateAppReminderComponentDelegate
+import net.maxsmr.feature.rate.alert.view.RateAppReminderFragmentAlertDelegate
 import net.maxsmr.mxstemplate.RATE_APP_ASK_INTERVAL
 import net.maxsmr.mxstemplate.ui.MainWebViewModel
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -25,9 +26,9 @@ class MainWebViewFragment: BaseDownloadableWebViewFragment<MainWebViewModel>() {
     @Inject
     lateinit var cacheRepo: CacheDataStoreRepository
 
-    private val rateDelegate by lazy {
-        RateAppReminderFragmentDelegate(
-            this,
+    private val rateReminderDelegate by lazy {
+        RateAppReminderComponentDelegate(
+            requireContext(),
             viewModel,
             RATE_APP_ASK_INTERVAL,
             cacheRepo
@@ -40,7 +41,11 @@ class MainWebViewFragment: BaseDownloadableWebViewFragment<MainWebViewModel>() {
         }
     }
 
-    override fun createFragmentDelegates(): List<IFragmentDelegate> {
-        return listOf(rateDelegate)
+    override fun createAlertDelegate(): RateAppReminderFragmentAlertDelegate<MainWebViewModel> {
+        return RateAppReminderFragmentAlertDelegate(rateReminderDelegate, this, viewModel)
+    }
+
+    override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
+        return listOf(rateReminderDelegate)
     }
 }

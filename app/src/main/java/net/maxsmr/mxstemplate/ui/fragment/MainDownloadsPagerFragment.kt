@@ -4,14 +4,18 @@ import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.di.DI_NAME_VERSION_CODE
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
-import net.maxsmr.core.ui.components.IFragmentDelegate
+import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_IN_APP_UPDATES
-import net.maxsmr.feature.about.ReleaseNotesFragmentDelegate
+import net.maxsmr.core.ui.view.alert.CombinedViewFragmentAlertDelegate
+import net.maxsmr.feature.about.ReleaseNotesComponentDelegate
+import net.maxsmr.feature.about.alert.view.ReleaseNotesFragmentAlertDelegate
+import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.BaseDownloadsPagerFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
-import net.maxsmr.feature.rate.RateAppReminderFragmentDelegate
+import net.maxsmr.feature.rate.RateAppReminderComponentDelegate
+import net.maxsmr.feature.rate.alert.view.RateAppReminderFragmentAlertDelegate
 import net.maxsmr.mobile_services.IMobileServicesAvailability
-import net.maxsmr.mobile_services.update.ui.InAppUpdatesFragmentDelegate
+import net.maxsmr.mobile_services.update.ui.InAppUpdatesComponentDelegate
 import net.maxsmr.mxstemplate.CHECK_IN_APP_UPDATES_INTERVAL
 import net.maxsmr.mxstemplate.RATE_APP_ASK_INTERVAL
 import net.maxsmr.mxstemplate.RELEASE_NOTES_ASSETS_FOLDER_NAME_EN
@@ -22,10 +26,10 @@ import javax.inject.Inject
 import javax.inject.Named
 
 @AndroidEntryPoint
-class MainDownloadsPagerFragment: BaseDownloadsPagerFragment() {
+class MainDownloadsPagerFragment : BaseDownloadsPagerFragment() {
 
     private val appUpdateDelegate by lazy {
-        InAppUpdatesFragmentDelegate(
+        InAppUpdatesComponentDelegate(
             this,
             viewModel,
             cacheRepo,
@@ -36,9 +40,9 @@ class MainDownloadsPagerFragment: BaseDownloadsPagerFragment() {
         )
     }
 
-    private val rateDelegate by lazy {
-        RateAppReminderFragmentDelegate(
-            this,
+    private val rateReminderDelegate by lazy {
+        RateAppReminderComponentDelegate(
+            requireContext(),
             viewModel,
             RATE_APP_ASK_INTERVAL,
             cacheRepo
@@ -52,8 +56,8 @@ class MainDownloadsPagerFragment: BaseDownloadsPagerFragment() {
     }
 
     private val releaseNotesDelegate by lazy {
-        ReleaseNotesFragmentDelegate(
-            this,
+        ReleaseNotesComponentDelegate(
+            requireContext(),
             viewModel,
             versionCode,
             versionName,
@@ -83,7 +87,16 @@ class MainDownloadsPagerFragment: BaseDownloadsPagerFragment() {
     @Named(DI_NAME_VERSION_NAME)
     lateinit var versionName: String
 
-    override fun createFragmentDelegates(): List<IFragmentDelegate> {
-        return listOf(rateDelegate, appUpdateDelegate, releaseNotesDelegate)
+    override fun createAlertDelegate(): CombinedViewFragmentAlertDelegate<DownloadsViewModel> {
+        return CombinedViewFragmentAlertDelegate(
+            listOf(
+                ReleaseNotesFragmentAlertDelegate(this, viewModel),
+                RateAppReminderFragmentAlertDelegate(rateReminderDelegate, this, viewModel)
+            ), this, viewModel
+        )
+    }
+
+    override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
+        return listOf(rateReminderDelegate, appUpdateDelegate, releaseNotesDelegate)
     }
 }

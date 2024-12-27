@@ -1,5 +1,6 @@
 package net.maxsmr.mobile_services.update.ui
 
+import android.content.Context
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
@@ -10,8 +11,8 @@ import net.maxsmr.core.android.base.actions.ToastDuration
 import net.maxsmr.core.android.base.actions.ToastExtraData
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
-import net.maxsmr.core.ui.components.IFragmentDelegate
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
+import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.utils.hasTimePassed
 import net.maxsmr.feature.mobile_services.R
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -22,15 +23,15 @@ import net.maxsmr.mobile_services.update.InAppUpdateChecker
 import net.maxsmr.mobile_services.update.RuStoreInAppUpdateChecker
 import net.maxsmr.mobile_services.update.StubInAppUpdateChecker
 
-class InAppUpdatesFragmentDelegate(
-    override val fragment: BaseVmFragment<*>,
+class InAppUpdatesComponentDelegate(
+    override val host: ICanRegisterForActivityResult,
     override val viewModel: BaseViewModel,
     private val cacheRepo: CacheDataStoreRepository,
     private val interval: Long,
     updateRequestCode: Int,
     availability: IMobileServicesAvailability,
     mobileBuildType: MobileBuildType,
-) : IFragmentDelegate, InAppUpdateChecker.Callbacks {
+) : IComponentDelegate<ICanRegisterForActivityResult>, InAppUpdateChecker.Callbacks {
 
     init {
         check(interval >= 0) {
@@ -38,23 +39,25 @@ class InAppUpdatesFragmentDelegate(
         }
     }
 
+    override val context: Context by lazy { host.attachedActivity }
+
     // by lazy нельзя из-за registerForActivityResult в CommonInAppUpdateChecker
     private val checker: InAppUpdateChecker = when (mobileBuildType) {
         MobileBuildType.COMMON -> {
-            CommonInAppUpdateChecker(availability, fragment, updateRequestCode, this)
+            CommonInAppUpdateChecker(availability, host, updateRequestCode, this)
         }
 
         MobileBuildType.RUSTORE -> {
             if (isAtLeastNougat()) {
-                RuStoreInAppUpdateChecker(fragment, this)
+                RuStoreInAppUpdateChecker(host, this)
             } else {
                 StubInAppUpdateChecker()
             }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onResumed() {
+        super.onResumed()
         viewModel.viewModelScope.launch {
             if (hasTimePassed(cacheRepo.getLastCheckInAppUpdate(), interval)) {
                 checker.doCheck()

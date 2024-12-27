@@ -15,7 +15,7 @@ open class BaseActivity : AppCompatActivity() {
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
-    open val canUseFragmentDelegates: Boolean get() {
+    open val canUseComponentDelegates: Boolean get() {
         val app = baseApplicationContext as BaseApplication
         return app.isActivityFirstAndSingle(javaClass)
     }

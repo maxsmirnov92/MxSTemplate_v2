@@ -5,16 +5,17 @@ import android.view.View
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
-import net.maxsmr.core.ui.components.IFragmentDelegate
+import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
 import net.maxsmr.feature.about.BaseAboutFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.rate.alert.view.RateAppFragmentAlertDelegate
 import net.maxsmr.mxstemplate.BuildConfig
 import net.maxsmr.mxstemplate.R
 import net.maxsmr.mxstemplate.mobileBuildType
 import net.maxsmr.mxstemplate.ui.MainAboutViewModel
-import net.maxsmr.mxstemplate.ui.delegate.MainRateAppFragmentDelegate
+import net.maxsmr.mxstemplate.ui.delegate.MainRateAppComponentDelegate
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 import javax.inject.Named
@@ -42,8 +43,8 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
     override val viewModel: MainAboutViewModel by viewModels()
 
     override val rateDelegate by lazy {
-        MainRateAppFragmentDelegate(
-            this,
+        MainRateAppComponentDelegate(
+            requireActivity(),
             viewModel,
             null,
             mobileBuildType,
@@ -64,11 +65,14 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: MainAboutViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
         if (viewModel.isForRate) {
-            rateDelegate.onRateAppSelected()
+            rateDelegate.doRateApp()
         }
     }
 
-    override fun createFragmentDelegates(): List<IFragmentDelegate> {
+    override fun createAlertDelegate(): RateAppFragmentAlertDelegate<MainAboutViewModel> =
+        RateAppFragmentAlertDelegate(rateDelegate, this, viewModel)
+
+    override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
         return listOf(rateDelegate)
     }
 }

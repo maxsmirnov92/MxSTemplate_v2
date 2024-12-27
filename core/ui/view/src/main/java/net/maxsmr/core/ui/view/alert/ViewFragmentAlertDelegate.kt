@@ -1,7 +1,6 @@
 package net.maxsmr.core.ui.view.alert
 
 
-import androidx.annotation.CallSuper
 import androidx.fragment.app.Fragment
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_BATTERY_OPTIMIZATION
@@ -23,7 +22,7 @@ import net.maxsmr.core.ui.view.alert.representation.asYesNoDialog
  * требующий [fragment] и взаимодействующий с [viewModel]
  */
 open class ViewFragmentAlertDelegate<VM : BaseViewModel>(
-    private val fragment: Fragment,
+    protected val fragment: Fragment,
     viewModel: VM,
 ) : BaseAlertDelegate<VM>(fragment.requireContext(),
     fragment.viewLifecycleOwner,
@@ -40,7 +39,6 @@ open class ViewFragmentAlertDelegate<VM : BaseViewModel>(
         }
     }
 
-    @CallSuper
     override fun handleCommonAlertDialogs() {
         val context = context
         bindDefaultProgress()
@@ -58,7 +56,7 @@ open class ViewFragmentAlertDelegate<VM : BaseViewModel>(
         }
     }
 
-    final override fun handleSnackbarAlerts() {
+    override fun handleSnackbarAlerts() {
         val view = fragment.requireView()
         bindAlertSnackbar(SNACKBAR_TAG_QUEUE) {
             it.asSnackbar(view)

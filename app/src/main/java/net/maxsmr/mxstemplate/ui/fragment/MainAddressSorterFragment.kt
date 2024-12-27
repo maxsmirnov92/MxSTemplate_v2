@@ -3,9 +3,12 @@ package net.maxsmr.mxstemplate.ui.fragment
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.di.DI_NAME_VERSION_CODE
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
-import net.maxsmr.core.ui.components.IFragmentDelegate
+import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.location.LocationViewModel
-import net.maxsmr.feature.about.ReleaseNotesFragmentDelegate
+import net.maxsmr.core.ui.view.alert.CombinedViewFragmentAlertDelegate
+import net.maxsmr.feature.about.ReleaseNotesComponentDelegate
+import net.maxsmr.feature.about.alert.view.ReleaseNotesFragmentAlertDelegate
+import net.maxsmr.feature.address_sorter.ui.AddressSorterFragmentAlertDelegate
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel
 import net.maxsmr.feature.address_sorter.ui.BaseAddressSorterFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -20,8 +23,8 @@ import javax.inject.Named
 class MainAddressSorterFragment : BaseAddressSorterFragment() {
 
     private val releaseNotesDelegate by lazy {
-        ReleaseNotesFragmentDelegate(
-            this,
+        ReleaseNotesComponentDelegate(
+            requireContext(),
             viewModel,
             versionCode,
             versionName,
@@ -58,7 +61,17 @@ class MainAddressSorterFragment : BaseAddressSorterFragment() {
     @Named(DI_NAME_VERSION_NAME)
     lateinit var versionName: String
 
-    override fun createFragmentDelegates(): List<IFragmentDelegate> {
+    override fun createAlertDelegate(): CombinedViewFragmentAlertDelegate<AddressSorterViewModel> {
+        return CombinedViewFragmentAlertDelegate(
+            listOf(
+                AddressSorterFragmentAlertDelegate(this, viewModel),
+                ReleaseNotesFragmentAlertDelegate(this, viewModel)
+            ),
+            this, viewModel
+        )
+    }
+
+    override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
         return listOf(releaseNotesDelegate)
     }
 }

@@ -9,21 +9,21 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import net.maxsmr.commonutils.gui.isFullyVisible
 import net.maxsmr.commonutils.gui.scrollToView
-import net.maxsmr.core.ui.components.IFragmentDelegate
+import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.ui.SettingsFragment
-import net.maxsmr.feature.showcase.GuideFragmentDelegate
+import net.maxsmr.feature.showcase.GuideComponentDelegate
 import smartdevelop.ir.eram.showcaseviewlib.config.DismissType
 import javax.inject.Inject
 
 
 @AndroidEntryPoint
-class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChecker {
+class GuideSettingsFragment : SettingsFragment(), GuideComponentDelegate.GuideChecker {
 
     override val menuResId: Int = R.menu.menu_settings_guide
 
-    private val guideDelegate: GuideFragmentDelegate by lazy {
-        GuideFragmentDelegate(
+    private val guideDelegate: GuideComponentDelegate by lazy {
+        GuideComponentDelegate(
             this@GuideSettingsFragment,
             viewModel,
             this@GuideSettingsFragment,
@@ -69,7 +69,7 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
         }
     }
 
-    override fun createFragmentDelegates(): List<IFragmentDelegate> {
+    override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
         return listOf(guideDelegate)
     }
 
@@ -79,7 +79,7 @@ class GuideSettingsFragment : SettingsFragment(), GuideFragmentDelegate.GuideChe
         textRes: Int,
         @StringRes
         titleRes: Int? = null,
-    ) = GuideFragmentDelegate.GuideItem(key, this) {
+    ) = GuideComponentDelegate.GuideItem(key, this) {
         titleRes?.let {
             setTitle(getString(titleRes))
         }

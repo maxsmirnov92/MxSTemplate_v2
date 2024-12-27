@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.ComponentActivity
 import androidx.annotation.CallSuper
 import androidx.annotation.LayoutRes
 import androidx.fragment.app.Fragment
@@ -31,6 +32,7 @@ import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.connection.ConnectionManager
+import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.android.coroutines.repeatOnLifecycle
 import net.maxsmr.core.android.coroutines.collectWithOwner
@@ -38,7 +40,7 @@ import net.maxsmr.core.android.permissions.formatDeniedPermissionsMessage
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
-import net.maxsmr.core.ui.components.IFragmentDelegate
+import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.permissionchecker.BaseDeniedPermissionsHandler
 import net.maxsmr.permissionchecker.PermissionsCallbacks
@@ -47,9 +49,11 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 /**
  * Фрагмент с конкретным типом VM и базовыми методами для подписки
  */
-abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
+abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment(), ICanRegisterForActivityResult {
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
+
+    override val attachedActivity: ComponentActivity by lazy { requireActivity() }
 
     /**
      * Разметка для использования в чистом view либо с ComposeView
@@ -61,9 +65,9 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
 
     abstract val permissionsHelper: PermissionsHelper
 
-    private val delegates: List<IFragmentDelegate> by lazy {
+    private val delegates: List<IComponentDelegate<*>> by lazy {
         val activity = requireActivity() as BaseActivity
-        if (activity.canUseFragmentDelegates) {
+        if (activity.canUseComponentDelegates) {
             createFragmentDelegates()
         } else {
             listOf()
@@ -108,7 +112,7 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         handleEvents()
 
         delegates.forEach {
-            it.onViewCreated(alertDelegate)
+            it.onCreated()
         }
 
         onViewCreated(view, savedInstanceState, viewModel)
@@ -117,7 +121,7 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
     override fun onResume() {
         super.onResume()
         delegates.forEach {
-            it.onResume()
+            it.onResumed()
         }
     }
 
@@ -125,7 +129,7 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         delegates.forEach {
-            it.onViewDestroyed()
+            it.onDestroyed()
         }
     }
 
@@ -148,7 +152,7 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment() {
         viewModel.handleEvents(this@BaseVmFragment)
     }
 
-    protected open fun createFragmentDelegates(): List<IFragmentDelegate> = listOf()
+    protected open fun createFragmentDelegates(): List<IComponentDelegate<*>> = listOf()
 
     @JvmOverloads
     protected inline fun <T> LiveData<T>.observe(

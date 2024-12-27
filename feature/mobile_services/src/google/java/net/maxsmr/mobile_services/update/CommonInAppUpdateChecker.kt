@@ -1,11 +1,9 @@
 package net.maxsmr.mobile_services.update
 
 import android.app.Activity
-import android.content.Context
 import android.content.IntentSender
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.fragment.app.Fragment
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
@@ -17,10 +15,11 @@ import com.google.android.play.core.install.model.UpdateAvailability
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.mobile_services.IMobileServicesAvailability
+import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 
 class CommonInAppUpdateChecker(
     private val availability: IMobileServicesAvailability,
-    private val fragment: Fragment,
+    private val registerer: ICanRegisterForActivityResult,
     private val updateRequestCode: Int,
     private val callbacks: InAppUpdateChecker.Callbacks,
     private val immediateUpdatePriority: Int = 4,
@@ -34,13 +33,13 @@ class CommonInAppUpdateChecker(
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("CommonInAppUpdateChecker")
 
-    private val context: Context by lazy { fragment.requireContext() }
+    private val activity: Activity by lazy { registerer.attachedActivity  }
 
     private val appUpdateManager: AppUpdateManager by lazy {
-        AppUpdateManagerFactory.create(context)
+        AppUpdateManagerFactory.create(activity)
     }
 
-    private val updateResultLauncher = fragment.registerForActivityResult(
+    private val updateResultLauncher = registerer.registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
 //        if (result.data == null) return@registerForActivityResult
@@ -125,9 +124,8 @@ class CommonInAppUpdateChecker(
             .addOnSuccessListener { appUpdateInfo ->
                 logger.i("getAppUpdateInfo success, availableVersionCode: ${appUpdateInfo.availableVersionCode()}, updateAvailability: ${appUpdateInfo.updateAvailability()}")
 
-                val activity = fragment.activity
-                if (activity == null || activity.isFinishing) {
-                    logger.w("Not attached to activity or it is finishing, not updating")
+                if (activity.isFinishing) {
+                    logger.w("Activity is finishing, not updating")
                     return@addOnSuccessListener
                 }
 
@@ -172,7 +170,7 @@ class CommonInAppUpdateChecker(
             .addOnFailureListener {
                 logger.w("getAppUpdateInfo failed", it)
             }
-            .addOnCompleteListener(fragment.requireActivity()) {
+            .addOnCompleteListener(activity) {
                 logger.i("getAppUpdateInfo complete")
                 isChecking = false
             }
