@@ -1,16 +1,18 @@
 import com.android.build.gradle.LibraryExtension
+import net.maxsmr.mxstemplate.configureAndroidCompose
+import net.maxsmr.mxstemplate.libs
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getByType
-import net.maxsmr.mxstemplate.configureAndroidCompose
-import net.maxsmr.mxstemplate.libs
 
 class AndroidLibraryComposeConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         with(target) {
-            pluginManager.apply("com.android.library")
-            pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
+            with(pluginManager) {
+                apply("mxs.template.library")
+                apply("org.jetbrains.kotlin.plugin.compose")
+            }
 
             val extension = extensions.getByType<LibraryExtension>()
             configureAndroidCompose(extension)
@@ -22,10 +24,17 @@ class AndroidLibraryComposeConventionPlugin : Plugin<Project> {
 
                 //Material Design 2
                 add("implementation", libs.findLibrary("androidx.compose.material").get())
+                add("implementation", libs.findLibrary("androidx.compose.material.icons.extended").get())
 
-                add("implementation", libs.findLibrary("androidx.lifecycle.runtime.compose").get())
-                add("implementation", libs.findLibrary("glide.compose").get())
                 add("implementation", libs.findLibrary("androidx.constraintlayout.compose").get())
+                add("implementation", libs.findLibrary("androidx.activity.compose").get())
+                add("implementation", libs.findLibrary("androidx.compose.runtime.livedata").get())
+                add("implementation", libs.findLibrary("androidx.lifecycle.runtime.compose").get())
+                add("implementation", libs.findLibrary("androidx.lifecycle.viewmodel.compose").get())
+                add("implementation", libs.findLibrary("androidx.navigation.compose").get())
+                add("implementation", libs.findLibrary("hilt.navigation.compose").get())
+                add("implementation", libs.findLibrary("glide.compose").get())
+//                add("implementation", libs.findLibrary("orbit.compose").get())
 
                 // Android Studio Preview support
                 add("implementation", libs.findLibrary("androidx.compose.ui.tooling.preview").get())

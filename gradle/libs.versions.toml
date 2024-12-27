@@ -1,8 +1,7 @@
 [versions]
-kotlin = "2.0.21"
+kotlin = "2.1.0"
 androidxAppCompat = "1.7.0"
 androidxConstraintLayout = "2.2.0"
-androidxConstraintLayoutCompose = "1.1.0"
 androidxCore = "1.15.0"
 androidxCoreSplashScreen = "1.0.1"
 kotlinxCoroutines = "1.9.0"
@@ -21,7 +20,7 @@ huaweiAgconnectCore = "1.6.5.300"
 huaweiHmsLocation = "6.8.0.300"
 huaweiServices = "1.9.1.300"
 gson = "2.10.1"
-junit4 = "4.13.2"
+junit = "4.13.2"
 junitExt = "1.1.5"
 androidxLifeCycle = "2.8.7"
 lottie = "4.2.1"
@@ -45,7 +44,7 @@ picasso = "2.8"
 easyPermissions = "3.0.0"
 #volley = "1.2.1"
 androidxExifinterface = "1.3.7"
-hilt = "2.50"
+hilt = "2.54"
 androidxPaging = "3.3.4"
 decoro = "1.5.1"
 androidxWindow = "1.3.0"
@@ -59,18 +58,25 @@ zxingCore = "3.4.0"
 zxingParent = "3.4.0"
 zxingEmbedded = "3.3.0"
 flowLayout = "1.3.3"
-androidxNavigation = "2.8.4"
+androidxNavigation = "2.8.5"
 androidGradle = "8.6.1"
 #firebaseCrashlyticsPlugin = "3.0.2"
 #firebaseAppDistributionPlugin = "5.0.0"
 gmsPlugin = "4.4.2"
-ksp = "2.0.21-1.0.25"
-junit = "1.1.5"
+ksp = "2.1.0-1.0.29"
 glide = "4.16.0"
 glideCompose = "1.0.0-beta01"
+hiltNavigationCompose = '1.2.0'
 #orbit = "6.1.0"
 androidxTestExtJunit = "1.2.1"
-androidxComposeBom = "2024.11.00"
+
+#androidxCompose = '1.7.6'
+androidxComposeBom = "2024.12.01"
+androidxConstraintLayoutCompose = "1.1.0"
+androidxActivityCompose = '1.9.3'
+androidxNavigationCompose = '2.8.5'
+androidxLifecycleViewModelCompose = '2.8.7'
+
 gridlayout = "1.0.0"
 r8 = "8.5.35"
 lint = "31.7.3"
@@ -102,7 +108,6 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "androidxCoreSplashScreen" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidxAppCompat" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "androidxConstraintLayout" }
-androidx-constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "androidxConstraintLayoutCompose" }
 androidx-fragment = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "androidxFragment" }
 androidx-fragment-testing = { group = "androidx.fragment", name = "fragment-testing", version.ref = "androidxFragment" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "androidxLifeCycle" }
@@ -130,12 +135,21 @@ androidx-navigation-plugin = { group = "androidx.navigation", name = "navigation
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "androidxDataStore" }
 androidx-datastore-preferences-core = { group = "androidx.datastore", name = "datastore-preferences-core", version.ref = "androidxDataStore" }
 androidx-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidxAppStartup" }
+
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidxComposeBom" }
 androidx-compose-material = { group = "androidx.compose.material", name = "material" }
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-ui-viewbinding = { group = "androidx.compose.ui", name = "ui-viewbinding" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata" }
+
+androidx-constraintlayout-compose = { group = "androidx.constraintlayout", name = "constraintlayout-compose", version.ref = "androidxConstraintLayoutCompose" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivityCompose" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "androidxNavigationCompose" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "androidxLifecycleViewModelCompose" }
+
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 androidx-gridlayout = { group = "androidx.gridlayout", name = "gridlayout", version.ref = "gridlayout" }
 androidx-legacy = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "androidxLegacy" }
@@ -165,12 +179,12 @@ google-zxing-core = { group = "com.google.zxing", name = "core", version.ref = "
 google-zxing-parent = { group = "com.google.zxing", name = "zxing-parent", version.ref = "zxingParent" }
 google-http-client-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttpClientGson" }
 
-google-play-review = { group ="com.google.android.play", name = "review", version.ref = "googlePlayReview"}
-google-play-review-ktx = { group ="com.google.android.play", name = "review-ktx", version.ref = "googlePlayReview"}
-google-play-app-update = { group ="com.google.android.play", name = "app-update", version.ref = "googlePlayAppUpdates"}
-google-play-app-update-ktx = { group ="com.google.android.play", name = "app-update-ktx", version.ref = "googlePlayAppUpdates"}
-rustore-sdk-bom = { group ="ru.rustore.sdk", name = "bom", version.ref = "ruStoreSdkBom" }
-rustore-sdk-appupdate = { group ="ru.rustore.sdk", name = "appupdate" }
+google-play-review = { group = "com.google.android.play", name = "review", version.ref = "googlePlayReview" }
+google-play-review-ktx = { group = "com.google.android.play", name = "review-ktx", version.ref = "googlePlayReview" }
+google-play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "googlePlayAppUpdates" }
+google-play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "googlePlayAppUpdates" }
+rustore-sdk-bom = { group = "ru.rustore.sdk", name = "bom", version.ref = "ruStoreSdkBom" }
+rustore-sdk-appupdate = { group = "ru.rustore.sdk", name = "appupdate" }
 
 huawei-agconnect-core = { group = "com.huawei.agconnect", name = "agconnect-core", version.ref = "huaweiAgconnectCore" }
 huawei-agconnect-agcp = { group = "com.huawei.agconnect", name = "agcp", version.ref = "huaweiServices" }
@@ -195,6 +209,7 @@ decoro = { group = "ru.tinkoff.decoro", name = "decoro", version.ref = "decoro" 
 flowlayout = { group = "com.nex3z", name = "flow-layout", version.ref = "flowLayout" }
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 glide-compose = { group = "com.github.bumptech.glide", name = "compose", version.ref = "glideCompose" }
+hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 #orbit-viewmodel = { group = "org.orbit-mvi", name = "orbit-viewmodel", version.ref = "orbit" }
 #orbit-compose = { group = "org.orbit-mvi", name = "orbit-compose", version.ref = "orbit" }
 stfalcon-imageviewer = { group = "com.github.stfalcon-studio", name = "StfalconImageViewer", version.ref = "stfalconImageViewer" }
@@ -212,8 +227,7 @@ showcaseView = { group = "com.github.mreram", name = "showcaseview", version.ref
 androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidxEspresso" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidxTestRules" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
-junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
-
+junit4 = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
 
 r8 = { group = "com.android.tools", name = "r8", version.ref = "r8" }
@@ -249,7 +263,7 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.1.0" }
 
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 navigation-safeargs-kotlin = { id = "androidx.navigation.safeargs.kotlin", version.ref = "androidxNavigation" }

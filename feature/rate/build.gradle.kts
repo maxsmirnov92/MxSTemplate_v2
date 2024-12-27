@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.mxs.template.feature.ui)
+    alias(libs.plugins.mxs.template.feature.view)
     alias(libs.plugins.mxs.template.room)
     alias(libs.plugins.mxs.template.hilt)
     alias(libs.plugins.kotlin.serialization)

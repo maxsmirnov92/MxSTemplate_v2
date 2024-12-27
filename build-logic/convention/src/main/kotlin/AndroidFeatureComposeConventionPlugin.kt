@@ -14,7 +14,8 @@ class AndroidFeatureComposeConventionPlugin : Plugin<Project> {
             dependencies {
                 add("implementation", project(":designsystem:compose"))
                 add("implementation", project(":designsystem:shared_res"))
-//                add("implementation", libs.findLibrary("orbit.compose").get())
+                add("implementation", project(":core:ui:base"))
+                add("implementation", project(":core:ui:compose"))
             }
         }
     }

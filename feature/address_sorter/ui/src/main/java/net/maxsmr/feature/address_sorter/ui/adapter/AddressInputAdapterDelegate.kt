@@ -13,8 +13,8 @@ import net.maxsmr.commonutils.gui.setTextWithSelectionToEnd
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
-import net.maxsmr.core.ui.adapters.SuggestAdapter
-import net.maxsmr.core.ui.views.applySuggestions
+import net.maxsmr.core.ui.view.adapters.SuggestAdapter
+import net.maxsmr.core.ui.view.applySuggestions
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel
 import net.maxsmr.feature.address_sorter.ui.R
 import net.maxsmr.feature.address_sorter.ui.databinding.ItemAddressBinding
@@ -29,14 +29,14 @@ fun addressInputAdapterDelegate(listener: AddressInputListener) =
         ): ArrayAdapter<String> {
             val adapter = SuggestAdapter(
                 context,
-                net.maxsmr.core.ui.R.layout.item_suggest_dropdown_white,
-                net.maxsmr.core.ui.R.id.tvItemSuggest,
+                net.maxsmr.core.ui.view.R.layout.item_suggest_dropdown_white,
+                net.maxsmr.core.ui.view.R.id.tvItemSuggest,
                 {
                     onItemSelect(it)
                     dismissDropDown()
                 }
             )
-            adapter.setDropDownViewResource(net.maxsmr.core.ui.R.layout.item_suggest_dropdown_white)
+            adapter.setDropDownViewResource(net.maxsmr.core.ui.view.R.layout.item_suggest_dropdown_white)
             setAdapter(adapter)
             threshold = 1
             setDropDownBackgroundResource(net.maxsmr.core.ui.R.drawable.shape_rectangle_white)

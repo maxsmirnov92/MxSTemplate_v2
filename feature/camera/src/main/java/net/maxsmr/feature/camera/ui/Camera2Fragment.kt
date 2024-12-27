@@ -13,9 +13,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
+import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.camera.Camera2Controller
 import net.maxsmr.feature.camera.Camera2Controller.CameraState
 import net.maxsmr.feature.camera.CameraFacing
@@ -42,8 +42,11 @@ class Camera2Fragment : BaseNavigationFragment<Camera2ViewModel>() {
         Camera2Controller(binding.textureView)
     }
 
+    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
+
     @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: Camera2ViewModel) {
+        super.onViewCreated(view, savedInstanceState, viewModel)
         with(LayoutCameraControlsBinding.bind(binding.containerControls)) {
             val adapter = ArrayAdapter.createFromResource(
                 requireContext(),

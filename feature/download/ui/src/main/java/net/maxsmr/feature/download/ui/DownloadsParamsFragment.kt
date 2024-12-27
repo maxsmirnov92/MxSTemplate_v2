@@ -28,11 +28,13 @@ import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.network.Method
+import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.fields.bindValue
 import net.maxsmr.core.ui.fields.bindValueWithState
+import net.maxsmr.core.ui.view.content.pick.chooser.FragmentContentPickerBuilder
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapter
 import net.maxsmr.feature.download.ui.adapter.HeaderListener
@@ -65,7 +67,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
 
     private val headerInfoAdapter by lazy { HeaderInfoAdapter(this) }
 
-    private val contentPicker: ContentPicker = FragmentContentPickerBuilder()
+    private val contentPicker: ContentPicker = FragmentContentPickerBuilder(this)
         .addRequest(
             PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_BODY)
                 .addSafParams(SafPickerParams.any())
@@ -107,12 +109,19 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
 
     private var wasResumedOnce = false
 
+    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
         viewModel: DownloadsParamsViewModel,
     ) {
         super.onViewCreated(view, savedInstanceState, viewModel)
+
+//        with(downloadsViewModel) {
+//            handleAlerts(DownloadsFragmentAlertDelegate(this@DownloadsParamsFragment, this))
+//            handleEvents(this@DownloadsParamsFragment)
+//        }
 
         binding.etUrl.bindToTextNotNull(viewModel.urlField)
         viewModel.urlField.observeFromText(binding.etUrl, viewLifecycleOwner)

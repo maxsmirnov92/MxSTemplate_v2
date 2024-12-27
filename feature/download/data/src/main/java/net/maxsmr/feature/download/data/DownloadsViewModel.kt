@@ -33,8 +33,6 @@ import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.network.Method
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.utils.kotlinx.serialization.decodeFromStringOrNull
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultGETServiceParamsFor
@@ -139,19 +137,6 @@ class DownloadsViewModel @Inject constructor(
             }
         }
 
-    }
-
-    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(delegate)
-        val context = delegate.context
-        with(delegate) {
-            bindAlertDialog(DIALOG_TAG_FAILED_ADD_TO_QUEUE) {
-                it.asOkDialog(context)
-            }
-            bindAlertDialog(DIALOG_TAG_FAILED_START) {
-                it.asOkDialog(context)
-            }
-        }
     }
 
     fun downloadFromJson(uri: Uri, contentResolver: ContentResolver) {

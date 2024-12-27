@@ -8,6 +8,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.core.android.base.delegates.viewBinding
+import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.DownloadsPagerAdapter
@@ -27,6 +28,8 @@ abstract class BaseDownloadsPagerFragment : BaseNavigationFragment<DownloadsView
             requireActivity().hideKeyboard(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
         }
     }
+
+    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
 
     override fun onViewCreated(
         view: View,

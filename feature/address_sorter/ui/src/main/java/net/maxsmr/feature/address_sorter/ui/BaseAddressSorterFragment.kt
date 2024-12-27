@@ -31,13 +31,15 @@ import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.DialogRepresentation
+import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_PERMISSION_GPS
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.core.ui.openAnyIntentWithToastError
+import net.maxsmr.core.ui.view.alert.representation.DialogRepresentation
+import net.maxsmr.core.ui.view.content.pick.chooser.FragmentContentPickerBuilder
+import net.maxsmr.core.ui.view.location.LocationFragmentAlertDelegate
 import net.maxsmr.feature.address_sorter.data.toPointF
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputAdapter
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
@@ -88,7 +90,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     // by lazy не подходит, т.к.
     // "Fragments must call registerForActivityResult() before they are created"
-    private val contentPicker: ContentPicker = FragmentContentPickerBuilder()
+    private val contentPicker: ContentPicker = FragmentContentPickerBuilder(this)
         .addRequest(
             PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_JSON)
                 .addSafParams(SafPickerParams.json())
@@ -129,13 +131,17 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     private var shouldScrollToEnd: Boolean = false
 
+    override fun createAlertDelegate() = AddressSorterFragmentAlertDelegate(
+        this, viewModel
+    )
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: AddressSorterViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
 
         with(locationViewModel) {
             handleAlerts(
                 // должен использоваться dialogQueue из locationViewModel
-                AlertFragmentDelegate(this@BaseAddressSorterFragment, this)
+                LocationFragmentAlertDelegate(this@BaseAddressSorterFragment, this)
             )
             handleEvents(this@BaseAddressSorterFragment)
         }
@@ -198,7 +204,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
         adapter.registerItemsEventsListener(this)
     }
 
-    override fun handleAlerts(delegate: AlertFragmentDelegate<AddressSorterViewModel>) {
+    override fun handleAlerts(delegate: BaseAlertDelegate<AddressSorterViewModel>) {
         super.handleAlerts(delegate)
         bindAlertDialog(AddressSorterViewModel.DIALOG_TAG_EXPORT_FILE_NAME) {
 

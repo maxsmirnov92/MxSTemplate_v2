@@ -9,8 +9,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import net.maxsmr.commonutils.gui.disableTalkback
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.ui.alert.dialog.BaseCustomDialog
-import net.maxsmr.core.ui.views.sendAnnouncementEvent
+import net.maxsmr.core.ui.view.alert.dialog.BaseCustomDialog
+import net.maxsmr.core.ui.sendAnnouncementEvent
 import net.maxsmr.feature.rate.R
 
 class RateDialog(

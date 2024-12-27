@@ -19,7 +19,7 @@ class AndroidFeatureUiConventionPlugin : Plugin<Project> {
                 add("implementation", project(":core:utils"))
                 add("implementation", project(":core:network"))
                 add("implementation", project(":core:android"))
-                add("implementation", project(":core:ui"))
+                add("implementation", project(":core:ui:base"))
 //                add("implementation", libs.findLibrary("orbit.viewmodel").get())
                 add("implementation", libs.findLibrary("androidx.lifecycle.viewmodel.ktx").get())
             }

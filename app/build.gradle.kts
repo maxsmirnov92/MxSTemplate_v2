@@ -223,7 +223,9 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":core:android"))
     implementation(project(":core:utils"))
-    implementation(project(":core:ui"))
+    implementation(project(":core:ui:base"))
+    implementation(project(":core:ui:view"))
+    implementation(project(":core:ui:compose"))
 
     implementation(project(":feature:mobile_services"))
     implementation(project(":feature:preferences:ui"))

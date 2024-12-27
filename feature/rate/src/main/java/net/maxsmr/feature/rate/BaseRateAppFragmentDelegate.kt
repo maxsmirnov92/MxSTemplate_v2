@@ -6,10 +6,10 @@ import kotlinx.coroutines.launch
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.toRepresentation
+import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.view.alert.representation.toRepresentation
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.rate.dialog.RateDialog
 import net.maxsmr.mobile_services.IMobileServicesAvailability
@@ -28,9 +28,7 @@ abstract class BaseRateAppFragmentDelegate(
 
     private var reviewManager: ReviewManager? = null
 
-    override fun onViewCreated(
-        delegate: AlertFragmentDelegate<*>,
-    ) {
+    override fun onViewCreated(delegate: BaseAlertDelegate<*>) {
         this.reviewManager = availability?.let {
             ReviewManager(
                 fragment.requireActivity(),
@@ -40,7 +38,7 @@ abstract class BaseRateAppFragmentDelegate(
         }
 
         delegate.bindAlertDialog(DIALOG_TAG_RATE_APP) {
-            RateDialog(delegate.fragment, it, object : RateDialog.RateListener {
+            RateDialog(fragment, it, object : RateDialog.RateListener {
 
                 override fun onRateSelected(rating: Int) {
                     viewModel.viewModelScope.launch {

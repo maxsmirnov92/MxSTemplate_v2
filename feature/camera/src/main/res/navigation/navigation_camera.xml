@@ -9,7 +9,9 @@
         android:id="@+id/navigationCamera2"
         android:name="net.maxsmr.feature.camera.ui.Camera2Fragment"
         android:label="@string/camera_screen_v2_title"
-        tools:layout="@layout/fragment_camera_2" />
+        tools:layout="@layout/fragment_camera_2" >
+
+    </fragment>
 
     <fragment
         android:id="@+id/navigationCameraX"

@@ -13,8 +13,8 @@ import net.maxsmr.commonutils.convertAnyToPx
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
-import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.viewBinding
+import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
 import net.maxsmr.feature.about.adapter.DonateAddressAdapter
@@ -36,6 +36,8 @@ abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<V
     private val binding by viewBinding(FragmentAboutBinding::bind)
 
     private val adapter by lazy { DonateAddressAdapter(this) }
+
+    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         super.onViewCreated(view, savedInstanceState, viewModel)

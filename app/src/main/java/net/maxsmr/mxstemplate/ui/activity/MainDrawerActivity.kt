@@ -7,11 +7,9 @@ import android.view.View
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.ui.components.activities.BaseDrawerNavigationActivity
-import net.maxsmr.core.ui.databinding.LayoutHeaderNavigationViewBinding
+import net.maxsmr.core.ui.view.databinding.LayoutHeaderNavigationViewBinding
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import net.maxsmr.mxstemplate.App
 import net.maxsmr.mxstemplate.R
 import javax.inject.Inject
 
@@ -44,7 +42,7 @@ class MainDrawerActivity : BaseDrawerNavigationActivity() {
         navigateWithGraphFragmentsFromCaller()
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         navigateWithGraphFragmentsFromCaller()
     }

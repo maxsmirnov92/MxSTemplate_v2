@@ -28,6 +28,7 @@ import net.maxsmr.core.network.exceptions.HttpProtocolException
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.isResponseOk
 import net.maxsmr.core.network.toPairs
+import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
@@ -73,6 +74,8 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
 
     protected var isWebViewInitialized = false
         private set
+
+    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
 
     @CallSuper
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {

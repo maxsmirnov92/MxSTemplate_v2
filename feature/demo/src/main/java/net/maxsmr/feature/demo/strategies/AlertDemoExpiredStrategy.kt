@@ -2,7 +2,7 @@ package net.maxsmr.feature.demo.strategies
 
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.ui.alert.representation.asOkDialog
+import net.maxsmr.core.ui.view.alert.representation.asOkDialog
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.demo.R
 import kotlin.system.exitProcess

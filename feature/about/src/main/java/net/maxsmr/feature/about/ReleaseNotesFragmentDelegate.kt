@@ -12,8 +12,8 @@ import net.maxsmr.commonutils.text.removeExtension
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.asCommonWrapBottomSheetDialog
+import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.view.alert.representation.asCommonWrapBottomSheetDialog
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -39,7 +39,7 @@ class ReleaseNotesFragmentDelegate @JvmOverloads constructor(
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("ReleaseNotesFragmentDelegate")
 
-    override fun onViewCreated(delegate: AlertFragmentDelegate<*>) {
+    override fun onViewCreated(delegate: BaseAlertDelegate<*>) {
         val scope = viewModel.viewModelScope
 
         scope.launch(Dispatchers.IO) {

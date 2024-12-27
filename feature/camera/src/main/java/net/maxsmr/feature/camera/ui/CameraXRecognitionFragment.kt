@@ -26,7 +26,7 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.views.setShowProgress
+import net.maxsmr.core.ui.view.setShowProgress
 import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.CameraXController
 import net.maxsmr.feature.camera.CameraXController.ErrorCallbacks
@@ -99,6 +99,8 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
 
     private var toggleFlashLightMenuItem: MenuItem? = null
     private var toggleRecognitionMenuItem: MenuItem? = null
+
+    override fun createAlertDelegate() = CameraXRecognitionFragmentAlertDelegate(this, viewModel)
 
     @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: CameraXRecognitionViewModel) {

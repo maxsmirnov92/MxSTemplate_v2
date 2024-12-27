@@ -25,8 +25,6 @@ import net.maxsmr.core.android.coroutines.usecase.succeeded
 import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine.Companion.joinLines
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.asOkDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.FrameCalculator
@@ -105,13 +103,6 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
                         it.exception.message)
                 )
             }
-        }
-    }
-
-    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(delegate)
-        delegate.bindAlertDialog(DIALOG_TAG_CAPTURE_RECOGNITION_RESULT) {
-            it.asOkDialog(delegate.context)
         }
     }
 

@@ -49,10 +49,6 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingTyp
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.network.HttpErrorCode
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.RoutingFailedException
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.asMultiChoiceDialog
-import net.maxsmr.core.ui.alert.representation.asOkDialog
-import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.fields.fileNameField
 import net.maxsmr.core.ui.location.LocationViewModel
@@ -148,40 +144,6 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
         exportFileNameField.valueLive.observe {
             exportFileNameField.validateAndSetByRequired()
-        }
-    }
-
-    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(delegate)
-        delegate.bindAlertDialog(DIALOG_TAG_IMPORT_FAILED) {
-            it.asOkDialog(delegate.context)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_EXPORT_SUCCESS) {
-            it.asOkDialog(delegate.context)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_EXPORT_FAILED) {
-            it.asOkDialog(delegate.context)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_CHANGE_ROUTING_MODE) {
-            it.asMultiChoiceDialog(delegate.context, isRadioButton = true)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_CHANGE_ROUTING_TYPE) {
-            it.asMultiChoiceDialog(delegate.context, isRadioButton = true)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_CHANGE_SORT_PRIORITY) {
-            it.asMultiChoiceDialog(delegate.context, isRadioButton = true)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_CLEAR_ITEMS) {
-            it.asYesNoDialog(delegate.context)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_REVERSE_GEOCODE_FAILED) {
-            it.asOkDialog(delegate.context)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_ROUTING_FAILED) {
-            it.asOkDialog(delegate.context)
-        }
-        delegate.bindAlertDialog(DIALOG_TAG_DOWNLOAD_KEY_FAILED) {
-            it.asOkDialog(delegate.context)
         }
     }
 

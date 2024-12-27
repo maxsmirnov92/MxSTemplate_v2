@@ -16,8 +16,6 @@ import net.maxsmr.core.android.base.delegates.persistableValue
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.fields.BooleanFieldWithState
 import net.maxsmr.core.ui.fields.LongFieldWithState
@@ -189,12 +187,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(delegate)
-        delegate.bindAlertDialog(DIALOG_TAG_CONFIRM_EXIT) {
-            it.asYesNoNeutralDialog(delegate.context)
-        }
-    }
 
     fun saveChanges(
         errorFieldResult: (Field<*>) -> Unit?,

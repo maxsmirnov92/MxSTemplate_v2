@@ -10,7 +10,7 @@ android {
 
 dependencies {
     implementation(project(":core:android"))
-    implementation(project(":core:ui"))
+    implementation(project(":core:ui:base"))
 
     api(libs.okhttp)
 }

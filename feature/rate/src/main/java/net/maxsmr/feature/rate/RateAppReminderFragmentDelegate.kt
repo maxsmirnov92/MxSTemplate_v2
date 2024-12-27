@@ -6,8 +6,8 @@ import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.asYesNoNeutralDialog
+import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.view.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.utils.hasTimePassed
@@ -27,7 +27,7 @@ class RateAppReminderFragmentDelegate(
         }
     }
 
-    override fun onViewCreated(delegate: AlertFragmentDelegate<*>) {
+    override fun onViewCreated(delegate: BaseAlertDelegate<*>) {
         val scope = viewModel.viewModelScope
         delegate.bindAlertDialog(DIALOG_TAG_RATE_APP_REMINDER) {
             it.asYesNoNeutralDialog(fragment.requireContext(), onCancel = {

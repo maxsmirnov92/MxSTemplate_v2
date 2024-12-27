@@ -16,7 +16,7 @@ dependencyResolutionManagement {
         gradlePluginPortal()
 
         flatDir(
-            "dirs" to listOf("core/android/libs", "core/ui/libs", "core/utils/libs")
+            "dirs" to listOf("core/android/libs", "core/ui/base/libs", "core/utils/libs")
         )
 
         maven { url = uri("https://developer.huawei.com/repo/") }
@@ -35,7 +35,11 @@ include(":designsystem:shared_res")
 include(":core:network")
 include(":core:domain")
 include(":core:database")
-include(":core:ui")
+
+include(":core:ui:base")
+include(":core:ui:compose")
+include(":core:ui:view")
+
 include(":core:utils")
 include(":core:di")
 include(":feature:address_sorter:data")

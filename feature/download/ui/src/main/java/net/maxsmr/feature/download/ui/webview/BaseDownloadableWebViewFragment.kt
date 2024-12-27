@@ -10,10 +10,11 @@ import androidx.fragment.app.activityViewModels
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.live.field.observeFromText
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.DialogRepresentation
+import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.fields.bindHintError
+import net.maxsmr.core.ui.view.alert.representation.DialogRepresentation
 import net.maxsmr.feature.download.data.DownloadsViewModel
+import net.maxsmr.feature.download.ui.DownloadsFragmentAlertDelegate
 import net.maxsmr.feature.download.ui.databinding.DialogSaveAsBinding
 import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewFragment
 import okhttp3.OkHttpClient
@@ -29,13 +30,13 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         super.onViewCreated(view, savedInstanceState, viewModel)
         with(downloadsViewModel) {
-            // dialogQueue не из downloadsViewModel
-            handleAlerts(AlertFragmentDelegate(this@BaseDownloadableWebViewFragment, this))
+            // dialogQueue из downloadsViewModel
+            handleAlerts(DownloadsFragmentAlertDelegate(this@BaseDownloadableWebViewFragment, this))
             handleEvents(this@BaseDownloadableWebViewFragment)
         }
     }
 
-    override fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
+    override fun handleAlerts(delegate: BaseAlertDelegate<VM>) {
         super.handleAlerts(delegate)
         bindAlertDialog(BaseDownloadableWebViewModel.DIALOG_TAG_SAVE_AS) {
             @Suppress("UNCHECKED_CAST")

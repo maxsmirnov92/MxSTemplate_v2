@@ -10,6 +10,9 @@ object AppColors {
     val Black10 = Color(0xFFEBEDEF)
     val LightGrey = Color(0xFFF4F4F4)
 
+    val Black500 = Color(0xFF9A9B9D)
+    val Black900 = Color(0xFF191919)
+
     val Neutrals030 = Color(0xFFF4F5F6)
     val Neutrals050 = Color(0XFFEAEDEE)
     val Neutrals100 = Color(0XFFBFC7CB)
@@ -65,5 +68,9 @@ object AppColors {
     val Teal700 = Color(0xFF063747)
     val Teal800 = Color(0xFF042B37)
     val Teal900 = Color(0xFF03212A)
+
+    val Purple200 = Color(0xFFBB86FC)
+    val Purple500 = Color(0xFF6200EE)
+    val Purple700 = Color(0xFF3700B3)
 }
 

@@ -12,7 +12,7 @@ android {
 dependencies {
     implementation(project(":feature:preferences:data"))
     implementation(project(":core:android"))
-    implementation(project(":core:ui"))
+    implementation(project(":core:ui:base"))
 
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)

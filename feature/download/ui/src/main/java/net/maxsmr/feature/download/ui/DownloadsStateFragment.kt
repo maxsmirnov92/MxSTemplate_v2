@@ -33,7 +33,7 @@ import net.maxsmr.commonutils.media.path
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.download.DownloadInfo
-import net.maxsmr.core.ui.alert.representation.asSnackbar
+import net.maxsmr.core.ui.view.alert.representation.asSnackbar
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
@@ -43,6 +43,7 @@ import net.maxsmr.feature.download.ui.adapter.DownloadListener
 import net.maxsmr.feature.download.ui.databinding.FragmentDownloadsStateBinding
 import net.maxsmr.feature.download.ui.databinding.LayoutPopupDownloadDetailsBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
+import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -77,6 +78,8 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
 
     private var searchView: SearchView? = null
 
+    override fun createAlertDelegate() = DownloadsStateFragmentAlertDelegate(this, viewModel)
+
     override fun onViewCreated(
         view: View,
         savedInstanceState: Bundle?,
@@ -88,7 +91,9 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         infoAdapter.registerItemsEventsListener(this)
 
         viewModel.queueNames.observe {
-            binding.tvQueueCount.text = it.size.toString()
+            binding.tvQueueCount.text = String.format(
+                Locale.getDefault(), it.size.toString()
+            )
             binding.containerQueue.isVisible = it.isNotEmpty()
             val mergedNames = it.joinToString("; ")
             binding.tvQueuedNames.setTextOrGone("[ $mergedNames ]", isEmptyFunc = { mergedNames.isEmpty() })

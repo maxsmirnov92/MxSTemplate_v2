@@ -9,7 +9,7 @@ android {
 dependencies {
     implementation(project(":core:utils"))
     implementation(project(":core:android"))
-    implementation(project(":core:ui"))
+    implementation(project(":core:ui:base"))
     implementation(project(":feature:preferences:data"))
 
     implementation(platform(libs.rustore.sdk.bom))

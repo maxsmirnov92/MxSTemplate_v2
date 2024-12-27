@@ -61,6 +61,8 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
 
     private var saveMenuItem: MenuItem? = null
 
+    override fun createAlertDelegate() = SettingsFragmentAlertDelegate(this, viewModel)
+
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
         saveMenuItem = menu.findItem(R.id.actionSave)
@@ -109,8 +111,8 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
 
         binding.spinnerRoutingApp.adapter = ArrayAdapter(
             requireContext(),
-            net.maxsmr.core.ui.R.layout.item_spinner,
-            net.maxsmr.core.ui.R.id.tvSpinner,
+            net.maxsmr.core.ui.view.R.layout.item_spinner,
+            net.maxsmr.core.ui.view.R.id.tvSpinner,
             resources.getStringArray(R.array.settings_field_routing_app_values)
         )
         viewModel.routingAppField.valueLive.observe {

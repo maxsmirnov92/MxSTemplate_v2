@@ -1,6 +1,7 @@
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
+import org.gradle.kotlin.dsl.project
 
 class AndroidFeatureViewConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) {
@@ -10,8 +11,9 @@ class AndroidFeatureViewConventionPlugin : Plugin<Project> {
             }
 
             dependencies {
-                add("implementation", project(":designsystem:view"))
+//                add("implementation", project(":designsystem:view"))
                 add("implementation", project(":designsystem:shared_res"))
+                add("implementation", project(":core:ui:view"))
             }
         }
     }

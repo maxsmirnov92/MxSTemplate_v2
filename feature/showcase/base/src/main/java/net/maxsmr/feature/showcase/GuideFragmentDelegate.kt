@@ -4,7 +4,7 @@ import android.view.View
 import androidx.annotation.MainThread
 import androidx.lifecycle.Lifecycle
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
+import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.IFragmentDelegate
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import smartdevelop.ir.eram.showcaseviewlib.GuideView
@@ -40,7 +40,7 @@ class GuideFragmentDelegate @JvmOverloads constructor(
 
     private var guideView: GuideView? = null
 
-    override fun onViewCreated(delegate: AlertFragmentDelegate<*>) {
+    override fun onViewCreated(delegate: BaseAlertDelegate<*>) {
         super.onViewCreated(delegate)
         if (shouldAutoStart) {
             doStart()

@@ -21,8 +21,6 @@ import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ViewStrategy
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.download.data.DownloadService
@@ -80,25 +78,6 @@ class DownloadsStateViewModel @Inject constructor(
         }
         queryNameFilter.observe {
             currentItems.value = manager.resultItems.value.mapWithFilterByName(it)
-        }
-    }
-
-    override fun handleAlerts(delegate: AlertFragmentDelegate<*>) {
-        super.handleAlerts(delegate)
-        with(delegate) {
-            val context = context
-            bindAlertDialog(DIALOG_TAG_CLEAR_QUEUE) {
-                it.asYesNoDialog(context)
-            }
-            bindAlertDialog(DIALOG_TAG_CANCEL_ALL) {
-                it.asYesNoDialog(context)
-            }
-            bindAlertDialog(DIALOG_TAG_RETRY_IF_SUCCESS) {
-                it.asYesNoDialog(context)
-            }
-            bindAlertDialog(DIALOG_TAG_DELETE_IF_SUCCESS) {
-                it.asYesNoDialog(context)
-            }
         }
     }
 

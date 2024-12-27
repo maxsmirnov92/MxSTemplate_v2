@@ -8,6 +8,7 @@ import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.fields.bindHintError
+import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
 import net.maxsmr.feature.rate.R
 import net.maxsmr.feature.rate.databinding.FragmentFeedbackBinding
 
@@ -16,6 +17,8 @@ abstract class BaseFeedbackFragment<VM : BaseFeedbackViewModel>: BaseVmFragment<
     override val layoutId: Int = R.layout.fragment_feedback
 
     private val binding by viewBinding(FragmentFeedbackBinding::bind)
+
+    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         binding.etSubject.bindToTextNotNull(viewModel.subjectField)

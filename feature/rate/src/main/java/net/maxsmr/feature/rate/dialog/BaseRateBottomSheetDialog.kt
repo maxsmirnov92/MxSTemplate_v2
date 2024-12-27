@@ -15,8 +15,8 @@ import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.live.setValueIfNew
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.Alert.Answer.Companion.findByTag
-import net.maxsmr.core.ui.alert.dialog.BaseCustomBottomSheetDialog
-import net.maxsmr.core.ui.views.sendAnnouncementEvent
+import net.maxsmr.core.ui.view.alert.dialog.BaseCustomBottomSheetDialog
+import net.maxsmr.core.ui.sendAnnouncementEvent
 import net.maxsmr.feature.rate.R
 
 abstract class BaseRateBottomSheetDialog<D : BaseRateBottomSheetDialog.RateData>(

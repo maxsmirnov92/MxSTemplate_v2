@@ -31,8 +31,8 @@ import net.maxsmr.commonutils.text.isEmpty
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.isAnyResourceScheme
-import net.maxsmr.core.ui.alert.AlertFragmentDelegate
-import net.maxsmr.core.ui.alert.representation.DialogRepresentation
+import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.view.alert.representation.DialogRepresentation
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
@@ -99,7 +99,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         }
     }
 
-    override fun handleAlerts(delegate: AlertFragmentDelegate<VM>) {
+    override fun handleAlerts(delegate: BaseAlertDelegate<VM>) {
         super.handleAlerts(delegate)
         bindAlertDialog(BaseCustomizableWebViewModel.DIALOG_TAG_OPEN_URL) {
             val positiveAnswer =
