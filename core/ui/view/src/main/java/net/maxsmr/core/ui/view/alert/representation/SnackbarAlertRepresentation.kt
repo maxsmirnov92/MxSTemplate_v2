@@ -40,9 +40,9 @@ fun Alert.asSnackbar(view: View): AlertRepresentation {
             snackbar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_action)
         snackbarActionTextView.setTextSize(
             TypedValue.COMPLEX_UNIT_PX,
-            context.resources.getDimensionPixelSize(R.dimen.snackbarActionTextSize).toFloat()
+            context.resources.getDimensionPixelSize(net.maxsmr.designsystem.shared_res.R.dimen.snackbarActionTextSize).toFloat()
         )
-        snackbar.setActionTextColor(ContextCompat.getColor(context, R.color.snackbarActionColor))
+        snackbar.setActionTextColor(ContextCompat.getColor(context, net.maxsmr.designsystem.shared_res.R.color.snackbarActionColor))
         snackbar.setAction(answer.title.get(context)) {
             answer.select?.invoke()
             if (answer.closeAfterSelect) {

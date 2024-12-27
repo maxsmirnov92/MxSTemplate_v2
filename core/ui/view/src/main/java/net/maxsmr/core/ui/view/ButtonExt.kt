@@ -6,7 +6,6 @@ import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import com.google.android.material.button.MaterialButton
-import net.maxsmr.core.ui.R
 
 fun MaterialButton.setShowProgress(
     toggle: Boolean,
@@ -16,7 +15,7 @@ fun MaterialButton.setShowProgress(
     icon = if (toggle) {
         CircularProgressDrawable(context).apply {
             setStyle(CircularProgressDrawable.DEFAULT)
-            setColorSchemeColors(ContextCompat.getColor(context, colorResId ?: R.color.colorAccent))
+            setColorSchemeColors(ContextCompat.getColor(context, colorResId ?: net.maxsmr.designsystem.shared_res.R.color.colorAccent))
             start()
         }
     } else {

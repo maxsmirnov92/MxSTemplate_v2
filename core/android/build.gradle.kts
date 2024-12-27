@@ -18,10 +18,9 @@ dependencies {
     implementation(project(":core:di"))
     implementation(project(":core:network"))
     implementation(project(":core:utils"))
-    implementation(project(":designsystem:shared_res"))
 
+    implementation(libs.google.material)
     implementation(libs.kotlinx.datetime)
-    implementation(libs.picasso)
 
     //android
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -35,7 +34,6 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
 
-    // Picasso
     implementation(libs.picasso)
 
     implementation(libs.decoro)

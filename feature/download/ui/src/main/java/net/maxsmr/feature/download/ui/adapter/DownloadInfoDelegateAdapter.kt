@@ -72,7 +72,7 @@ fun downloadInfoAdapterDelegate(listener: DownloadListener) =
                 val isIndeterminate: Boolean
 
                 val statusInfoText: String
-                var statusColorResId: Int = net.maxsmr.core.ui.R.color.textColorPrimary
+                var statusColorResId: Int = net.maxsmr.designsystem.shared_res.R.color.textColorPrimary
 
                 if (state != null) {
                     hasProgress = state is DownloadState.Loading || state is DownloadState.Success

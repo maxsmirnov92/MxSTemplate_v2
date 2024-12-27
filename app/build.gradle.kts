@@ -217,6 +217,7 @@ dependencies {
     //modules
 //    lintChecks(project(":lint"))
 
+    implementation(project(":designsystem:shared_res"))
     implementation(project(":core:di"))
     implementation(project(":core:domain"))
     implementation(project(":core:database"))

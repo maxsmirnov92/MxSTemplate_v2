@@ -79,9 +79,9 @@ open class SuggestAdapter(
                 tvItemSuggest.setTextColor(
                     ContextCompat.getColor(
                         context, if (state.isError() && state.error !is EmptyResultException) {
-                            net.maxsmr.core.ui.R.color.textColorError
+                            net.maxsmr.designsystem.shared_res.R.color.textColorError
                         } else {
-                            net.maxsmr.core.ui.R.color.textColorPrimary
+                            net.maxsmr.designsystem.shared_res.R.color.textColorPrimary
                         }
                     )
                 )

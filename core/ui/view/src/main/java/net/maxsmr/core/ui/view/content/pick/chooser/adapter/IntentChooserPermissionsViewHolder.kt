@@ -31,7 +31,7 @@ internal class IntentChooserPermissionsViewHolder(
                 settings,
                 listOf(
                     UnderlineSpan(),
-                    ForegroundColorSpan(ContextCompat.getColor(itemView.context, R.color.colorAccent))
+                    ForegroundColorSpan(ContextCompat.getColor(itemView.context, net.maxsmr.designsystem.shared_res.R.color.colorAccent))
                 )
             )
         )

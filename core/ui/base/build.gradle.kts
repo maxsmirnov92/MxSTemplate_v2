@@ -12,10 +12,10 @@ dependencies {
     // TODO по непонятным причинам api из core_utils через core_android не видит в этом модуле
     api("core_utils.libs:commonutils-jre-1.1@jar")
 
+    implementation(project(":designsystem:shared_res"))
     implementation(project(":core:di"))
     implementation(project(":core:android"))
     implementation(project(":core:network"))
-    implementation(project(":designsystem:shared_res"))
 
     //paging
     api(libs.androidx.paging.runtime)

@@ -7,5 +7,5 @@ android {
 }
 
 dependencies {
-    api(libs.google.material)
+    implementation(libs.google.material)
 }

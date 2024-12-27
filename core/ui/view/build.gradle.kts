@@ -11,6 +11,7 @@ android {
 dependencies {
     api("core_ui_base.libs:recyclerview-lib-release-1.1.2.2@aar")
 
+    implementation(project(":designsystem:shared_res"))
     implementation(project(":core:ui:base"))
     implementation(project(":core:android"))
 

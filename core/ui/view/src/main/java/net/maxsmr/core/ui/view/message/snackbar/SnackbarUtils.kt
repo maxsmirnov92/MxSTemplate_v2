@@ -38,13 +38,13 @@ fun View.createSnackbar(
 
         val snackbarView = snackbar.view
         snackbarView.fitsSystemWindows = false
-        snackbarView.setBackgroundColor(ContextCompat.getColor(context, R.color.snackbarBackground))
+        snackbarView.setBackgroundColor(ContextCompat.getColor(context, net.maxsmr.designsystem.shared_res.R.color.snackbarBackground))
 
         val snackbarTextView = snackbarView.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)
-        snackbarTextView.setTextColor(ContextCompat.getColor(context, R.color.snackbarTextColor))
+        snackbarTextView.setTextColor(ContextCompat.getColor(context, net.maxsmr.designsystem.shared_res.R.color.snackbarTextColor))
         snackbarTextView.setTextSize(
             TypedValue.COMPLEX_UNIT_PX,
-            context.resources.getDimensionPixelSize(R.dimen.snackbarMessageTextSize).toFloat()
+            context.resources.getDimensionPixelSize(net.maxsmr.designsystem.shared_res.R.dimen.snackbarMessageTextSize).toFloat()
         )
         maxLines?.takeIf { it > 0 }?.let {
             snackbarTextView.maxLines = it

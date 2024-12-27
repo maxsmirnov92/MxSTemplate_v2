@@ -86,7 +86,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         with(binding) {
             setTitle(title)
             toolbar.navigationIcon =
-                ContextCompat.getDrawable(requireContext(), net.maxsmr.core.ui.R.drawable.ic_close_clear_cancel_white)
+                ContextCompat.getDrawable(requireContext(), net.maxsmr.designsystem.shared_res.R.drawable.ic_close_clear_cancel_white)
             errorContainer.btReload.setOnClickListener {
                 doReloadWebView()
             }
