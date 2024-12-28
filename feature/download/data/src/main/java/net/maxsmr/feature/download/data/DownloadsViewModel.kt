@@ -27,13 +27,13 @@ import net.maxsmr.commonutils.media.readString
 import net.maxsmr.commonutils.media.takePersistableReadPermission
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.network.Method
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.utils.kotlinx.serialization.decodeFromStringOrNull
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultGETServiceParamsFor
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultPOSTServiceParamsFor
@@ -57,7 +57,7 @@ class DownloadsViewModel @Inject constructor(
     private val downloadManager: DownloadManager,
     @BaseJson private val json: Json,
     state: SavedStateHandle,
-) : BaseHandleableViewModel(state) {
+) : BaseViewModel(state) {
 
     val downloadsInfos: LiveData<List<DownloadInfo>> = downloadRepo.get().asLiveData()
 

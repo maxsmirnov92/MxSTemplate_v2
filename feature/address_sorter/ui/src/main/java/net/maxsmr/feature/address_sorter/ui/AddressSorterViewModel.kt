@@ -27,6 +27,7 @@ import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.text.capFirstChar
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
@@ -38,7 +39,6 @@ import net.maxsmr.core.android.coroutines.usecase.data
 import net.maxsmr.core.android.coroutines.usecase.mapData
 import net.maxsmr.core.android.coroutines.usecase.succeeded
 import net.maxsmr.core.android.exceptions.EmptyResultException
-import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
@@ -48,25 +48,25 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingMod
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingType
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.network.HttpErrorCode
-import net.maxsmr.feature.address_sorter.data.usecase.exceptions.RoutingFailedException
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
+import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.core.ui.fields.fileNameField
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.feature.address_sorter.data.getDisplayedMessageResId
 import net.maxsmr.feature.address_sorter.data.getDoubleGisRouteIntent
 import net.maxsmr.feature.address_sorter.data.getYandexNaviRouteIntent
-import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestUseCase
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
+import net.maxsmr.feature.address_sorter.data.toAddressLocation
 import net.maxsmr.feature.address_sorter.data.usecase.AddressExportUseCase
+import net.maxsmr.feature.address_sorter.data.usecase.AddressExportUseCase.Companion.EXPORT_FILE_NAME_DEFAULT
 import net.maxsmr.feature.address_sorter.data.usecase.AddressImportUseCase
-import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestGeocodeUseCase
-import net.maxsmr.feature.address_sorter.data.usecase.AddressSortUseCase
-import net.maxsmr.feature.address_sorter.data.usecase.ReverseGeocodeUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.AddressRoutingUseCase
+import net.maxsmr.feature.address_sorter.data.usecase.AddressSortUseCase
+import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestGeocodeUseCase
+import net.maxsmr.feature.address_sorter.data.usecase.AddressSuggestUseCase
+import net.maxsmr.feature.address_sorter.data.usecase.ReverseGeocodeUseCase
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLastLocationException
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLocationException
-import net.maxsmr.feature.address_sorter.data.toAddressLocation
-import net.maxsmr.feature.address_sorter.data.usecase.AddressExportUseCase.Companion.EXPORT_FILE_NAME_DEFAULT
+import net.maxsmr.feature.address_sorter.data.usecase.exceptions.RoutingFailedException
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.AddressSuggestItem.Companion.toUi
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressErrorMessageData
@@ -96,7 +96,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     private val reverseGeocodeUseCase: ReverseGeocodeUseCase,
     private val addressSortUseCase: AddressSortUseCase,
     private val addressRoutingUseCase: AddressRoutingUseCase,
-) : BaseHandleableViewModel(state) {
+) : BaseViewModel(state) {
 
     // сразу нельзя получить из
     // repo.sortedAddress.asLiveData(),

@@ -2,10 +2,10 @@ package net.maxsmr.feature.camera.ui
 
 import androidx.lifecycle.SavedStateHandle
 import net.maxsmr.commonutils.live.field.Field
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.feature.camera.CameraFacing
 
-class Camera2ViewModel(state: SavedStateHandle): BaseHandleableViewModel(state) {
+class Camera2ViewModel(state: SavedStateHandle): BaseViewModel(state) {
 
     val cameraFacingField: Field<CameraFacing?> = Field.Builder<CameraFacing?>(null)
         .emptyIf { false }

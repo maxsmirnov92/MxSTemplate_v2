@@ -7,10 +7,8 @@ import androidx.activity.OnBackPressedCallback
 import androidx.annotation.CallSuper
 import androidx.appcompat.widget.Toolbar
 import androidx.navigation.fragment.findNavController
-import net.maxsmr.core.android.base.actions.NavigationAction
-import net.maxsmr.core.android.base.actions.NavigationAction.NavigationCommand
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.ui.R
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
 
 
 interface INavigationHost {
@@ -27,7 +25,7 @@ interface INavigationDestination {
     fun onUserInteraction() {}
 }
 
-abstract class BaseNavigationFragment<VM : BaseHandleableViewModel> : BaseMenuFragment<VM>(),
+abstract class BaseNavigationFragment<VM : BaseViewModel> : BaseMenuFragment<VM>(),
         INavigationDestination {
 
     private var navigationHost: INavigationHost? = null
@@ -86,40 +84,8 @@ abstract class BaseNavigationFragment<VM : BaseHandleableViewModel> : BaseMenuFr
     open fun onUpPressed() = false
 
     protected open fun onBackPressed(): Boolean {
-        navigateUp()
+        navigationActor.navigateUp()
         return true
-    }
-
-    protected fun navigateUp() {
-        if (!findNavController().navigateUp()) { // (requireActivity() as BaseNavigationActivity).appBarConfiguration
-            requireActivity().finish()
-        }
-    }
-
-    class NavigationActorImpl(private val fragment: BaseNavigationFragment<*>) : NavigationAction.INavigationActor {
-
-        override fun doNavigate(command: NavigationCommand) {
-            when (command) {
-                is NavigationCommand.ToDirectionWithNavDirections -> fragment.findNavController().navigate(
-                    command.directions.actionId,
-                    command.directions.arguments,
-                    command.navOptions,
-                    command.navigatorExtras,
-                )
-                is NavigationCommand.ToDirectionWithRoute -> fragment.findNavController().navigate(
-                    command.route,
-                    command.navOptions,
-                    command.navigatorExtras,
-                )
-                is NavigationCommand.Back -> {
-//                    fragment.requireActivity().onBackPressed()
-                    fragment.navigateUp()
-                }
-                else -> {
-                    throw IllegalArgumentException("Unknown command: $command")
-                }
-            }
-        }
     }
 
     companion object {

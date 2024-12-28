@@ -10,9 +10,9 @@ import androidx.annotation.MenuRes
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
+import net.maxsmr.core.android.base.BaseViewModel
 
-abstract class BaseMenuFragment<VM : BaseHandleableViewModel> : BaseVmFragment<VM>(), MenuProvider {
+abstract class BaseMenuFragment<VM : BaseViewModel> : BaseVmFragment<VM>(), MenuProvider {
 
     @get:MenuRes
     protected open val menuResId: Int = 0

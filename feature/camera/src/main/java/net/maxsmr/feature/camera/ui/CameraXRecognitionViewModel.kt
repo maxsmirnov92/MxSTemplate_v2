@@ -17,6 +17,7 @@ import net.maxsmr.commonutils.graphic.isBitmapValid
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logException
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
@@ -25,7 +26,6 @@ import net.maxsmr.core.android.coroutines.usecase.succeeded
 import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine.Companion.joinLines
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.FrameCalculator
 import net.maxsmr.feature.camera.R
@@ -48,7 +48,7 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     @Assisted val imageAnalyzerExecutor: Executor,
     @Assisted val textMatcherUseCases: List<BaseTextMatcherUseCase<*>>,
     private val textRecognition: ITextRecognition,
-) : BaseHandleableViewModel(state) {
+) : BaseViewModel(state) {
 
     /**
      * Целевой тип камеры (совпадёт с фактическим при успешном подключении)

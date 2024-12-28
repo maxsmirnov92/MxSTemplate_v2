@@ -2,6 +2,7 @@ package net.maxsmr.feature.download.ui
 
 import android.content.DialogInterface
 import android.net.Uri
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
@@ -9,20 +10,19 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.media.isEmpty
-import net.maxsmr.commonutils.startActivitySafe
-import net.maxsmr.commonutils.wrapChooserWithInitial
+import net.maxsmr.core.android.base.BaseViewModel
+import net.maxsmr.core.android.base.actions.NavigationAction
+import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
+import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
-import net.maxsmr.core.android.coroutines.collectEventsWithOwner
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
@@ -34,7 +34,7 @@ import javax.inject.Inject
 class DownloadsStateViewModel @Inject constructor(
     state: SavedStateHandle,
     private val manager: DownloadManager,
-) : BaseHandleableViewModel(state) {
+) : BaseViewModel(state) {
 
     val queueNames = MutableLiveData<List<String>>()
 
@@ -46,7 +46,8 @@ class DownloadsStateViewModel @Inject constructor(
 
     val queryNameFilter = MutableLiveData<String>()
 
-    private val navigateUriEvent = MutableStateFlow<VmEvent<IntentWithUriProvideStrategy<*>>?>(null)
+    private val _navigateUriEvent = MutableStateFlow<VmEvent<IntentWithUriProvideStrategy<*>>?>(null)
+    val navigateUriEvent = _navigateUriEvent as StateFlow<VmEvent<IntentWithUriProvideStrategy<*>>?>
 
     override fun onInitialized() {
         super.onInitialized()
@@ -78,36 +79,6 @@ class DownloadsStateViewModel @Inject constructor(
         }
         queryNameFilter.observe {
             currentItems.value = manager.resultItems.value.mapWithFilterByName(it)
-        }
-    }
-
-    override fun handleEvents(fragment: BaseVmFragment<*>) {
-        super.handleEvents(fragment)
-        navigateUriEvent.collectEventsWithOwner(fragment.viewLifecycleOwner) { s ->
-            val context = fragment.requireContext()
-            var intent = s.intent()
-
-            val titleResId = when (s) {
-                is ViewStrategy -> {
-                    net.maxsmr.core.ui.R.string.chooser_title_view
-                }
-
-                is ShareStrategy -> {
-                    net.maxsmr.core.ui.R.string.chooser_title_send
-                }
-
-                else -> {
-                    null
-                }
-            }
-            titleResId?.let {
-                intent = intent.wrapChooserWithInitial(context, context.getString(it))
-            }
-            // по дефолту "открыть с помощью" или "поделиться"
-
-            context.startActivitySafe(intent) {
-                showToast(TextMessage(net.maxsmr.core.ui.R.string.error_intent_any))
-            }
         }
     }
 
@@ -218,7 +189,7 @@ class DownloadsStateViewModel @Inject constructor(
                     )
                 )
             } else {
-                navigateUriEvent.emit(VmEvent(strategy))
+                _navigateUriEvent.emit(VmEvent(strategy))
             }
             withContext(Dispatchers.Main.immediate) {
                 dialogQueue.removeAllWithTag(DIALOG_TAG_PROGRESS)

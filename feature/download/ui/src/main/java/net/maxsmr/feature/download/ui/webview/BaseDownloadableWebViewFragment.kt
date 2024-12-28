@@ -11,6 +11,8 @@ import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.components.handleAlerts
+import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.view.alert.representation.DialogRepresentation
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -18,7 +20,6 @@ import net.maxsmr.feature.download.ui.DownloadsFragmentAlertDelegate
 import net.maxsmr.feature.download.ui.databinding.DialogSaveAsBinding
 import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewFragment
 import okhttp3.OkHttpClient
-import java.lang.IllegalStateException
 
 abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel> : BaseCustomizableWebViewFragment<VM>() {
 
@@ -31,14 +32,14 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
         super.onViewCreated(view, savedInstanceState, viewModel)
         with(downloadsViewModel) {
             // dialogQueue из downloadsViewModel
-            handleAlerts(DownloadsFragmentAlertDelegate(this@BaseDownloadableWebViewFragment, this))
-            handleEvents(this@BaseDownloadableWebViewFragment)
+            DownloadsFragmentAlertDelegate(this@BaseDownloadableWebViewFragment, this).handleAlerts()
+            handleEvents(this@BaseDownloadableWebViewFragment, navigationActor, toastActor)
         }
     }
 
     override fun handleAlerts(delegate: BaseAlertDelegate<VM>) {
         super.handleAlerts(delegate)
-        bindAlertDialog(BaseDownloadableWebViewModel.DIALOG_TAG_SAVE_AS) {
+        delegate.bindAlertDialog(BaseDownloadableWebViewModel.DIALOG_TAG_SAVE_AS) {
             @Suppress("UNCHECKED_CAST")
             val modelWithType = it.extraData as? ParamsModelWithType ?: throw IllegalStateException("Extra data for this dialog not specified")
             val model = modelWithType.first

@@ -26,22 +26,21 @@ import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_PROGRESS
-import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.base.alert.queue.AlertQueue
-import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
-import net.maxsmr.core.android.coroutines.repeatOnLifecycle
 import net.maxsmr.core.android.coroutines.collectWithOwner
+import net.maxsmr.core.android.coroutines.repeatOnLifecycle
 import net.maxsmr.core.android.permissions.formatDeniedPermissionsMessage
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
+import net.maxsmr.core.ui.components.handleAlerts
+import net.maxsmr.core.ui.components.handleEvents
+import net.maxsmr.core.ui.message.toast.ToastActorImpl
+import net.maxsmr.core.ui.navigation.NavigationActorImpl
 import net.maxsmr.permissionchecker.BaseDeniedPermissionsHandler
 import net.maxsmr.permissionchecker.PermissionsCallbacks
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -49,11 +48,13 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 /**
  * Фрагмент с конкретным типом VM и базовыми методами для подписки
  */
-abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment(), ICanRegisterForActivityResult {
+abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(), ICanRegisterForActivityResult {
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
     override val attachedActivity: ComponentActivity by lazy { requireActivity() }
+
+    abstract val permissionsHelper: PermissionsHelper
 
     /**
      * Разметка для использования в чистом view либо с ComposeView
@@ -61,9 +62,22 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment(), ICanRe
     @get:LayoutRes
     protected abstract val layoutId: Int
 
-    abstract val viewModel: VM
+    protected abstract val viewModel: VM
 
-    abstract val permissionsHelper: PermissionsHelper
+    /**
+     * Отвечает за реакцию фрагмента на появление/отсутствие сети
+     *
+     * @see BaseViewModel.connectionManager
+     */
+    protected open val connectionHandler: ConnectionHandler? = null
+
+    protected val navigationActor by lazy { NavigationActorImpl(this) }
+
+    protected val toastActor by lazy { ToastActorImpl(requireContext()) }
+
+    private val alertDelegate: BaseAlertDelegate<VM> by lazy {
+        createAlertDelegate()
+    }
 
     private val delegates: List<IComponentDelegate<*>> by lazy {
         val activity = requireActivity() as BaseActivity
@@ -75,21 +89,12 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment(), ICanRe
     }
 
     /**
-     * Отвечает за реакцию фрагмента на появление/отсутствие сети
-     *
-     * @see BaseViewModel.connectionManager
-     */
-    protected open val connectionHandler: ConnectionHandler? = null
-
-    /**
      * [BaseDeniedPermissionsHandler] c хостовой активити
      * Вызывать только после аттача!
      */
-    val permanentlyDeniedPermissionsHandler: BaseDeniedPermissionsHandler by lazy {
+    private val permanentlyDeniedPermissionsHandler: BaseDeniedPermissionsHandler by lazy {
         DialogDeniedPermissionsHandler()
     }
-
-    private lateinit var alertDelegate: BaseAlertDelegate<VM>
 
     protected abstract fun createAlertDelegate(): BaseAlertDelegate<VM>
 
@@ -102,14 +107,12 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment(), ICanRe
     final override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        observeNetworkConnectionHandler()
         // иниицализировать alertDelegate нужно здесь из-за особенности
         // NavigationComponent: инстанс фрагмента переиспользуется при возврате на него,
         // onViewCreated вызывается повторно на том же
-        alertDelegate = createAlertDelegate()
-
-        observeNetworkConnectionHandler()
         handleAlerts(alertDelegate)
-        handleEvents()
+        handleVmEvents()
 
         delegates.forEach {
             it.onCreated()
@@ -144,12 +147,12 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment(), ICanRe
 
     @CallSuper
     protected open fun handleAlerts(delegate: BaseAlertDelegate<VM>) {
-        viewModel.handleAlerts(delegate)
+        delegate.handleAlerts()
     }
 
     @CallSuper
-    protected open fun handleEvents() {
-        viewModel.handleEvents(this@BaseVmFragment)
+    protected open fun handleVmEvents() {
+        viewModel.handleEvents(this@BaseVmFragment, navigationActor, toastActor)
     }
 
     protected open fun createFragmentDelegates(): List<IComponentDelegate<*>> = listOf()
@@ -170,43 +173,6 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment(), ICanRe
         this.observe(owner) {
             it.get()?.let(onNext)
         }
-    }
-
-    /**
-     * Вызов обёрнутой функции привязки для показа диалогов только при проинициализированном [BaseAlertDelegate]
-     */
-    fun bindAlertDialog(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
-        if (!::alertDelegate.isInitialized) return
-        alertDelegate.bindAlertDialog(tag, representationFactory)
-    }
-
-    fun bindAlertSnackbar(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
-        if (!::alertDelegate.isInitialized) return
-        alertDelegate.bindAlertSnackbar(tag, representationFactory)
-    }
-
-    fun bindAlertToast(tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
-        if (!::alertDelegate.isInitialized) return
-        alertDelegate.bindAlertToast(tag, representationFactory)
-    }
-
-    fun bindAlert(alertQueue: AlertQueue, tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
-        if (!::alertDelegate.isInitialized) return
-        alertDelegate.bindAlert(alertQueue, tag, representationFactory)
-    }
-
-    /**
-     * Стандартная реализация progress, нужно вызвать по месту на конкретном экране;
-     * только при проинициализированном [BaseAlertDelegate]
-     */
-    @JvmOverloads
-    fun bindDefaultProgress(
-        tag: String = DIALOG_TAG_PROGRESS,
-        cancelable: Boolean = false,
-        onCancel: (() -> Unit)? = null,
-    ) {
-        if (!::alertDelegate.isInitialized) return
-        alertDelegate.bindDefaultProgress(tag, cancelable, onCancel)
     }
 
     @JvmOverloads
@@ -252,24 +218,27 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment(), ICanRe
     }
 
     protected inline fun <T : Any> Flow<T>.collectSafely(
+        owner: LifecycleOwner = viewLifecycleOwner,
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
         crossinline action: suspend (value: T) -> Unit,
     ) {
-        collectWithOwner(viewLifecycleOwner, lifecycleState, action)
+        collectWithOwner(owner, lifecycleState, action)
     }
 
     protected inline fun <T : Any> StateFlow<VmEvent<T>?>.collectEvent(
+        owner: LifecycleOwner = viewLifecycleOwner,
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
         crossinline action: suspend (value: T) -> Unit,
     ) {
-        collectEventsWithOwner(viewLifecycleOwner, lifecycleState, action)
+        collectEventsWithOwner(owner, lifecycleState, action)
     }
 
     protected inline fun <T : Any> Flow<PagingData<T>>.collectPaging(
+        owner: LifecycleOwner = viewLifecycleOwner,
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
         crossinline action: suspend (value: PagingData<T>) -> Unit,
     ) {
-        repeatOnLifecycle(viewLifecycleOwner, lifecycleState) { this.collectLatest { action(it) } }
+        repeatOnLifecycle(owner, lifecycleState) { this.collectLatest { action(it) } }
     }
 
     private fun observeNetworkConnectionHandler() {
@@ -281,7 +250,7 @@ abstract class BaseVmFragment<VM : BaseHandleableViewModel> : Fragment(), ICanRe
         connectionHandler?.alertsMapper?.let { mapper ->
             viewModel.connectionManager.queue?.let {
                 // queue разные: snackbarQueue вместо dialogQueue
-                bindAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
+                alertDelegate.bindAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
                     mapper(alert)
                 }
             }

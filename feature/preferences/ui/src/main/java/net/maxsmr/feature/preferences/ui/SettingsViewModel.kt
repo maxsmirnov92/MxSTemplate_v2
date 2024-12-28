@@ -10,13 +10,13 @@ import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.field.clearErrorOnChange
 import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableValue
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.fields.BooleanFieldWithState
 import net.maxsmr.core.ui.fields.LongFieldWithState
 import net.maxsmr.core.ui.fields.toggleRequiredFieldState
@@ -30,7 +30,7 @@ class SettingsViewModel @Inject constructor(
     private val repository: SettingsDataStoreRepository,
     val cacheRepository: CacheDataStoreRepository,
     state: SavedStateHandle,
-) : BaseHandleableViewModel(state) {
+) : BaseViewModel(state) {
 
     val maxDownloadsField: Field<Int> = Field.Builder(0)
         .emptyIf { false }

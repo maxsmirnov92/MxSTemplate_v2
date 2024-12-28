@@ -101,7 +101,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     override fun handleAlerts(delegate: BaseAlertDelegate<VM>) {
         super.handleAlerts(delegate)
-        bindAlertDialog(BaseCustomizableWebViewModel.DIALOG_TAG_OPEN_URL) {
+        delegate.bindAlertDialog(BaseCustomizableWebViewModel.DIALOG_TAG_OPEN_URL) {
             val positiveAnswer =
                 it.answers.getOrNull(0) ?: throw IllegalStateException("Required positive answer is missing")
 

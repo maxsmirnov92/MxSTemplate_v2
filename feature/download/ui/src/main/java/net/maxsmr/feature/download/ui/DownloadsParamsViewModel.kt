@@ -21,6 +21,7 @@ import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
 import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStreamOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.actions.SnackbarExtraData.SnackbarLength
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
@@ -31,7 +32,6 @@ import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.network.Method
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.fields.BooleanFieldWithState
 import net.maxsmr.core.ui.fields.fileNameField
@@ -49,7 +49,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     @Assisted private val viewModel: DownloadsViewModel,
     private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository
-) : BaseHandleableViewModel(state) {
+) : BaseViewModel(state) {
 
     val urlField: Field<String> = state.urlField(
         R.string.download_field_url_hint,

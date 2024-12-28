@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.DialogInterface
 import android.location.Location
 import android.os.HandlerThread
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
@@ -15,10 +16,14 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.asContextOrThrow
 import net.maxsmr.commonutils.getLocationSettingsIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.postValueIfNew
+import net.maxsmr.core.android.base.BaseViewModel
+import net.maxsmr.core.android.base.actions.NavigationAction
+import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.asDispatcher
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
@@ -26,14 +31,13 @@ import net.maxsmr.core.android.location.LocationCallback
 import net.maxsmr.core.android.location.receiver.ILocationReceiver
 import net.maxsmr.core.android.location.receiver.LocationParams
 import net.maxsmr.core.ui.R
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 
 class LocationViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val mockLocationReceiver: ILocationReceiver?,
     private val locationReceiver: ILocationReceiver,
-) : BaseHandleableViewModel(state), LocationCallback {
+) : BaseViewModel(state), LocationCallback {
 
     private val _currentLocation: MutableLiveData<Location?> = MutableLiveData()
     val currentLocation: LiveData<Location?> = _currentLocation
@@ -85,13 +89,6 @@ class LocationViewModel @AssistedInject constructor(
     override fun onCleared() {
         locationThread.quit()
         unregisterLocationUpdates()
-    }
-
-    override fun handleEvents(fragment: BaseVmFragment<*>) {
-        super.handleEvents(fragment)
-        navigateToLocationSettings.collectEventsWithOwner(fragment.viewLifecycleOwner) {
-            fragment.startActivity(getLocationSettingsIntent())
-        }
     }
 
     fun getLastKnownLocation(isGpsOnly: Boolean = false): Location? {

@@ -9,13 +9,13 @@ import androidx.lifecycle.SavedStateHandle
 import net.maxsmr.commonutils.RangeSpanInfo
 import net.maxsmr.commonutils.createSpanText
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
 import java.io.Serializable
 
-open class AboutViewModel(state: SavedStateHandle) : BaseHandleableViewModel(state) {
+open class AboutViewModel(state: SavedStateHandle) : BaseViewModel(state) {
 
     val animatedLogoState by persistableLiveDataInitial(false)
 

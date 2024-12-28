@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
 import net.maxsmr.android.recyclerview.adapters.base.drag.OnStartDragHelperListener
+import net.maxsmr.commonutils.getLocationSettingsIntent
 import net.maxsmr.commonutils.getViewLocationIntent
 import net.maxsmr.commonutils.gui.addFloatingActionButtonScrollListener
 import net.maxsmr.commonutils.gui.bindToTextNotNull
@@ -29,15 +30,17 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
+import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_PERMISSION_GPS
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.components.handleAlerts
+import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.core.ui.openAnyIntentWithToastError
-import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.DialogRepresentation
 import net.maxsmr.core.ui.view.content.pick.chooser.FragmentContentPickerBuilder
 import net.maxsmr.core.ui.view.location.LocationFragmentAlertDelegate
@@ -140,11 +143,12 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
         super.onViewCreated(view, savedInstanceState, viewModel)
 
         with(locationViewModel) {
-            handleAlerts(
-                // должен использоваться dialogQueue из locationViewModel
-                LocationFragmentAlertDelegate(this@BaseAddressSorterFragment, this)
-            )
-            handleEvents(this@BaseAddressSorterFragment)
+            // должен использоваться dialogQueue из locationViewModel
+            LocationFragmentAlertDelegate(this@BaseAddressSorterFragment, this).handleAlerts()
+            handleEvents(this@BaseAddressSorterFragment, navigationActor, toastActor)
+            navigateToLocationSettings.collectEventsWithOwner(viewLifecycleOwner) {
+                startActivity(getLocationSettingsIntent())
+            }
         }
 
         with(binding) {
@@ -207,7 +211,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     override fun handleAlerts(delegate: BaseAlertDelegate<AddressSorterViewModel>) {
         super.handleAlerts(delegate)
-        bindAlertDialog(AddressSorterViewModel.DIALOG_TAG_EXPORT_FILE_NAME) {
+        delegate.bindAlertDialog(AddressSorterViewModel.DIALOG_TAG_EXPORT_FILE_NAME) {
 
             val positiveAnswer = it.answers.getOrNull(0) ?: throw IllegalStateException("Required positive answer is missing")
             val negativeAnswer = it.answers.getOrNull(1) ?: throw IllegalStateException("Required negative answer is missing")

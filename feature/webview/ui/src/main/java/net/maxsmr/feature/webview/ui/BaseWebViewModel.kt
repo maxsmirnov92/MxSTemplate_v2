@@ -10,12 +10,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
 import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
 import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData.Companion.fromWebViewData
 
-open class BaseWebViewModel(state: SavedStateHandle) : BaseHandleableViewModel(state) {
+open class BaseWebViewModel(state: SavedStateHandle) : BaseViewModel(state) {
 
     /**
      * Первые данные в WebView с состоянием загрузки/ошибки - после очередного вызова loadUrl/loadData

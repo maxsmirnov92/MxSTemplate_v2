@@ -30,11 +30,17 @@ import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
 import net.maxsmr.commonutils.media.path
+import net.maxsmr.commonutils.startActivitySafe
+import net.maxsmr.commonutils.wrapChooserWithInitial
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
+import net.maxsmr.core.android.content.ShareStrategy
+import net.maxsmr.core.android.content.ViewStrategy
+import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.ui.view.alert.representation.asSnackbar
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
+import net.maxsmr.core.ui.view.alert.representation.asSnackbar
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
@@ -204,6 +210,36 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
 
     override fun onItemRemoved(position: Int, item: DownloadInfoAdapterData) {
         viewModel.onRemoveFinishedDownload(item.id)
+    }
+
+    override fun handleVmEvents() {
+        super.handleVmEvents()
+        viewModel.navigateUriEvent.collectEventsWithOwner(viewLifecycleOwner) { s ->
+            val context = requireContext()
+            var intent = s.intent()
+
+            val titleResId = when (s) {
+                is ViewStrategy -> {
+                    net.maxsmr.core.ui.R.string.chooser_title_view
+                }
+
+                is ShareStrategy -> {
+                    net.maxsmr.core.ui.R.string.chooser_title_send
+                }
+
+                else -> {
+                    null
+                }
+            }
+            titleResId?.let {
+                intent = intent.wrapChooserWithInitial(context, context.getString(it))
+            }
+            // по дефолту "открыть с помощью" или "поделиться"
+
+            context.startActivitySafe(intent) {
+                viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.error_intent_any))
+            }
+        }
     }
 
     private fun showDetailsPopup(state: DownloadStateNotifier.DownloadState, anchorView: View) {

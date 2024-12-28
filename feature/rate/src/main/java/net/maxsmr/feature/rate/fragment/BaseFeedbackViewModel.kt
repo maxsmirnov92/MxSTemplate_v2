@@ -6,11 +6,11 @@ import androidx.lifecycle.SavedStateHandle
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.live.zip
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.ui.components.BaseHandleableViewModel
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.ui.openEmailIntentWithToastError
 import net.maxsmr.feature.rate.R
 
-abstract class BaseFeedbackViewModel(state: SavedStateHandle) : BaseHandleableViewModel(state) {
+abstract class BaseFeedbackViewModel(state: SavedStateHandle) : BaseViewModel(state) {
 
     protected abstract val emailAddress: String
 

@@ -118,9 +118,10 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
     ) {
         super.onViewCreated(view, savedInstanceState, viewModel)
 
+        // FIXME проблема с повторными диалогами из расшаренных VM, если использовать в двух фрагментах
 //        with(downloadsViewModel) {
 //            handleAlerts(DownloadsFragmentAlertDelegate(this@DownloadsParamsFragment, this))
-//            handleEvents(this@DownloadsParamsFragment)
+//            handleEvents(this@DownloadsParamsFragment, navigationActor, toastActor)
 //        }
 
         binding.etUrl.bindToTextNotNull(viewModel.urlField)
