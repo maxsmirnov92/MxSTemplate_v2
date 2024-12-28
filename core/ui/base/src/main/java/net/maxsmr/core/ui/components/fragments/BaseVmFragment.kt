@@ -1,6 +1,5 @@
 package net.maxsmr.core.ui.components.fragments
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -19,8 +18,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import net.maxsmr.commonutils.getAppSettingsIntent
-import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.logger.BaseLogger
@@ -32,7 +29,6 @@ import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.android.coroutines.collectWithOwner
 import net.maxsmr.core.android.coroutines.repeatOnLifecycle
-import net.maxsmr.core.android.permissions.formatDeniedPermissionsMessage
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.IComponentDelegate
@@ -41,6 +37,7 @@ import net.maxsmr.core.ui.components.handleAlerts
 import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.message.toast.ToastActorImpl
 import net.maxsmr.core.ui.navigation.NavigationActorImpl
+import net.maxsmr.core.ui.permission.DialogDeniedPermissionsHandler
 import net.maxsmr.permissionchecker.BaseDeniedPermissionsHandler
 import net.maxsmr.permissionchecker.PermissionsCallbacks
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -93,7 +90,7 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(), ICanRegisterForA
      * Вызывать только после аттача!
      */
     private val permanentlyDeniedPermissionsHandler: BaseDeniedPermissionsHandler by lazy {
-        DialogDeniedPermissionsHandler()
+        DialogDeniedPermissionsHandler(viewModel, requireActivity())
     }
 
     protected abstract fun createAlertDelegate(): BaseAlertDelegate<VM>
@@ -257,26 +254,5 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(), ICanRegisterForA
         }
     }
 
-    private inner class DialogDeniedPermissionsHandler : BaseDeniedPermissionsHandler() {
 
-        override fun doShowMessage(
-            requestCode: Int,
-            message: String,
-            deniedPerms: Set<String>,
-            negativeAction: ((Set<String>) -> Unit)?,
-        ) {
-            viewModel.showYesNoPermissionDialog(
-                TextMessage(message)
-            ) {
-                if (it == DialogInterface.BUTTON_POSITIVE) {
-                    requireActivity().startActivityForResult(getAppSettingsIntent(requireActivity()), requestCode)
-                } else {
-                    negativeAction?.invoke(deniedPerms)
-                }
-            }
-        }
-
-        override fun formatDeniedPermissionsMessage(perms: Collection<String>): String =
-            requireActivity().formatDeniedPermissionsMessage(perms)
-    }
 }
