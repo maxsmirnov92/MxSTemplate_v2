@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.CallSuper
+import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.Lifecycle
@@ -26,6 +27,7 @@ import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.handleAlerts
 import net.maxsmr.core.ui.components.handleEvents
+import net.maxsmr.core.ui.compose.alert.ComposeActivityAlertDelegate
 import net.maxsmr.core.ui.message.toast.ToastActorImpl
 import net.maxsmr.core.ui.navigation.NavigationActorImpl
 import net.maxsmr.core.ui.permission.DialogDeniedPermissionsHandler
@@ -54,6 +56,8 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(), ICanReg
     protected val navigationActor by lazy { NavigationActorImpl(this, navController) }
 
     protected val toastActor by lazy { ToastActorImpl(this) }
+
+    protected val snackbarHostState by lazy { SnackbarHostState() }
 
     private val delegates: List<IComponentDelegate<*>> by lazy {
         if (canUseComponentDelegates) {
@@ -193,7 +197,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(), ICanReg
 
     protected class ScreenComponents<VM : BaseViewModel>(
         val viewModel: VM,
-        val alertDelegate: BaseAlertDelegate<VM>,
+        val alertDelegate: ComposeActivityAlertDelegate<VM>,
         val connectionHandler: ConnectionHandler? = null,
     )
 }
