@@ -29,6 +29,8 @@ import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.android.coroutines.collectWithOwner
 import net.maxsmr.core.android.coroutines.repeatOnLifecycle
+import net.maxsmr.core.utils.ktx.ResettableLazy
+import net.maxsmr.core.utils.ktx.resettableLazy
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.IComponentDelegate
@@ -72,7 +74,7 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(), ICanRegisterForA
 
     protected val toastActor by lazy { ToastActorImpl(requireContext()) }
 
-    private val alertDelegate: BaseAlertDelegate<VM> by lazy {
+    private val alertDelegate: ResettableLazy<BaseAlertDelegate<VM>> = resettableLazy {
         createAlertDelegate()
     }
 
@@ -105,10 +107,10 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(), ICanRegisterForA
         super.onViewCreated(view, savedInstanceState)
 
         observeNetworkConnectionHandler()
-        // иниицализировать alertDelegate нужно здесь из-за особенности
-        // NavigationComponent: инстанс фрагмента переиспользуется при возврате на него,
-        // onViewCreated вызывается повторно на том же
-        handleAlerts(alertDelegate)
+        // см. коммент к navigateWithGraphFragments;
+        // viewLifecycleOwner другой, показ алертов не срабатывает
+        alertDelegate.reset()
+        handleAlerts(alertDelegate.value)
         handleVmEvents()
 
         delegates.forEach {
@@ -247,12 +249,10 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(), ICanRegisterForA
         connectionHandler?.alertsMapper?.let { mapper ->
             viewModel.connectionManager.queue?.let {
                 // queue разные: snackbarQueue вместо dialogQueue
-                alertDelegate.bindAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
+                alertDelegate.value.bindAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
                     mapper(alert)
                 }
             }
         }
     }
-
-
 }

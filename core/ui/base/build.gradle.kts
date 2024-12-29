@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":core:di"))
     implementation(project(":core:android"))
     implementation(project(":core:network"))
+    implementation(project(":core:utils"))
 
     //paging
     api(libs.androidx.paging.runtime)
