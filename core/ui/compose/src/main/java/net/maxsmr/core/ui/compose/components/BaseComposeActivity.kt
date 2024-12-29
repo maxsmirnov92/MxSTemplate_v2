@@ -1,5 +1,6 @@
 package net.maxsmr.core.ui.compose.components
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,6 +22,8 @@ import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.android.coroutines.collectWithOwner
+import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
+import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.IComponentDelegate
@@ -30,7 +33,6 @@ import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.compose.alert.ComposeActivityAlertDelegate
 import net.maxsmr.core.ui.message.toast.ToastActorImpl
 import net.maxsmr.core.ui.navigation.NavigationActorImpl
-import net.maxsmr.core.ui.permission.DialogDeniedPermissionsHandler
 import net.maxsmr.designsystem.compose.component.AppBackground
 import net.maxsmr.permissionchecker.BaseDeniedPermissionsHandler
 import net.maxsmr.permissionchecker.PermissionsCallbacks
@@ -39,11 +41,12 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 /**
  * [BaseActivity] для использования экранов в виде Composable-функций
  */
-abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(), ICanRegisterForActivityResult {
+abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
+        ICanAskPermissions, ICanRegisterForActivityResult {
+
+    override val attachedContext: Context by lazy { this }
 
     override val attachedActivity: ComponentActivity by lazy { this }
-
-    abstract val permissionsHelper: PermissionsHelper
 
     protected abstract val viewModel: VM
 
@@ -113,11 +116,11 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(), ICanReg
         }
     }
 
-    fun doOnPermissionsResult(
+    override fun doOnPermissionsResult(
         code: Int,
         permissions: Collection<String>,
-        shouldShowPermanentlyDeniedDialog: Boolean = true,
-        onDenied: ((Set<String>) -> Unit)? = null,
+        shouldShowPermanentlyDeniedDialog: Boolean,
+        onDenied: ((Set<String>) -> Unit)?,
         onAllGranted: () -> Unit,
     ): PermissionsHelper.ResultListener? {
         val rationale = getString(R.string.get_permission)

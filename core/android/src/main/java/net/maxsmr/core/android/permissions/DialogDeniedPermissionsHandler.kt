@@ -1,11 +1,10 @@
-package net.maxsmr.core.ui.permission
+package net.maxsmr.core.android.permissions
 
 import android.app.Activity
 import android.content.DialogInterface
 import net.maxsmr.commonutils.getAppSettingsIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.permissions.formatDeniedPermissionsMessage
 import net.maxsmr.permissionchecker.BaseDeniedPermissionsHandler
 
 class DialogDeniedPermissionsHandler(

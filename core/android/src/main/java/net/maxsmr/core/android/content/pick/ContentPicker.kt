@@ -9,11 +9,14 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.R
 import net.maxsmr.core.android.base.delegates.FragmentViewBindingDelegate.Companion.onViewLifecycleCreated
+import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.content.pick.ContentPicker.Builder
 import net.maxsmr.core.android.content.pick.concrete.ConcretePickerParams
 import net.maxsmr.core.android.content.pick.concrete.camera.CameraPicker
@@ -23,6 +26,7 @@ import net.maxsmr.core.android.content.pick.concrete.media.MediaPickerParams
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPicker
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
+import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.permissionchecker.PermissionsHelper
 
 /**
@@ -35,28 +39,30 @@ import net.maxsmr.permissionchecker.PermissionsHelper
  * 1. В нужный момент вызвать метод [pick], передав в параметры 1 из requestCode'ов, с которыми был создан этот пикер.
  * Запрашивать разрешения не требуется, пикер делает это внутри самостоятельно.
  */
-class ContentPicker private constructor(
-    private val fragment: Fragment,
+class ContentPicker<T> private constructor(
+    private val host: T,
     private val requests: Set<PickRequest>,
     private val permissionHandler: PermissionHandler,
     private val showChooserAction: (Int, TextMessage, Map<ConcretePickerParams, IntentWithPermissions>) -> Unit,
-) {
+) where T : ICanAskPermissions, T : ICanRegisterForActivityResult, T : ViewModelStoreOwner, T : LifecycleOwner {
 
     private val viewModel: ContentPickerViewModel by lazy {
         // VM шарится между ContentPicker и AppIntentChooser
-        ViewModelProvider(fragment.requireActivity())[ContentPickerViewModel::class.java]
+        ViewModelProvider(host.attachedActivity)[ContentPickerViewModel::class.java]
     }
 
-    private val cameraPicker by lazy { CameraPicker(fragment) }
+    private val cameraPicker by lazy { CameraPicker(host) }
     private val mediaPicker by lazy { MediaPicker() }
     private val safPicker by lazy { SafPicker() }
 
     private val resultLaunchers = mutableMapOf<Int, ActivityResultLauncher<Intent>>()
 
+    private val context by lazy { host.attachedContext }
+
     init {
         // регистрируем launcher'ы для всех реквестов в этом пикере
         requests.forEach {
-            val launcher = fragment.registerForActivityResult(
+            val launcher = host.registerForActivityResult(
                 ActivityResultContracts.StartActivityForResult(),
                 PickerResultHandler(it)
             )
@@ -88,28 +94,28 @@ class ContentPicker private constructor(
                     request.takePhotoParams,
                     data?.data,
                     request.needPersistableUriAccess,
-                    fragment.requireContext()
+                    context
                 )
 
                 request.takeVideoParams?.type -> cameraPicker.onPickResult(
                     request.takeVideoParams,
                     data?.data,
                     request.needPersistableUriAccess,
-                    fragment.requireContext()
+                    context
                 )
 
                 request.mediaParams?.type -> mediaPicker.onPickResult(
                     request.mediaParams,
                     data?.data,
                     request.needPersistableUriAccess,
-                    fragment.requireContext()
+                    context
                 )
 
                 request.safParams?.type -> safPicker.onPickResult(
                     request.safParams,
                     data?.data,
                     request.needPersistableUriAccess,
-                    fragment.requireContext()
+                    context
                 )
 
                 else -> throw IllegalStateException("Unexpected params type $pickerType")
@@ -123,16 +129,16 @@ class ContentPicker private constructor(
     }
 
     init {
-        fragment.onViewLifecycleCreated {
+        host.onViewLifecycleCreated {
             // Наблюдаем за выбором аппа пользователем, запускаем выбранное приложение либо запрашиваем необходимые разрешения
-            viewModel.appChoices.collectEventsWithOwner(fragment.viewLifecycleOwner) { choice ->
+            viewModel.appChoices.collectEventsWithOwner(host) { choice ->
                 val requiredPermissions = choice.requiredPermissions().toSet()
                 permissionHandler.handle(choice.requestCode, requiredPermissions,
                     onDenied = {
                         // здесь нет ToastActionImpl :(
                         Toast.makeText(
-                            fragment.requireContext(),
-                            fragment.requireContext().getString(R.string.pick_no_permissions),
+                            context,
+                            context.getString(R.string.pick_no_permissions),
                             Toast.LENGTH_SHORT
                         ).show()
                     },
@@ -140,15 +146,15 @@ class ContentPicker private constructor(
                 )
             }
             //Наблюдаем за результатом, вызываем соответствующие методы в случае успеха или неуспеха на нужном запросе
-            viewModel.pickResult.collectEventsWithOwner(fragment.viewLifecycleOwner) { result ->
+            viewModel.pickResult.collectEventsWithOwner(host) { result ->
                 val request = requests.find { it.requestCode == result.requestCode }
                     ?: return@collectEventsWithOwner
                 when (result) {
                     is PickResult.Success -> request.onSuccess(result)
                     is PickResult.Error -> request.onError?.invoke(result)
                         ?: Toast.makeText(
-                            fragment.requireContext(),
-                            result.reason.get(fragment.requireContext()),
+                            context,
+                            result.reason.get(context),
                             Toast.LENGTH_SHORT
                         ).show()
                 }
@@ -166,7 +172,7 @@ class ContentPicker private constructor(
         val request = requests.first { it.requestCode == requestCode }
         val intents = request.intentsWithPermissions()
 
-        val permissionsHelper = permissionHandler.permissionHelper
+        val permissionsHelper = host.permissionsHelper
 
         val flatIntents = intents.flatMap { (params, srcIntent) ->
             srcIntent.flatten(context).map { params to it }
@@ -179,7 +185,7 @@ class ContentPicker private constructor(
         // разрешения с опцией "Больше не спрашивать", т.к. на чузере есть возможность перехода к настройкам для дачи разрешения
         val needShowChooser = flatIntents.size > 1 ||
                 permissionsHelper.filterDeniedNotAskAgain(
-                    fragment.requireContext(),
+                    context,
                     flatIntents.first().second.permissions.toList()
                 ).isNotEmpty()
         if (needShowChooser) {
@@ -192,9 +198,9 @@ class ContentPicker private constructor(
     }
 
     private fun ContentPickerViewModel.AppChoice.requiredPermissions() = when (params) {
-        is CameraPickerParams -> cameraPicker.requiredPermissions(params, fragment.requireContext())
-        is MediaPickerParams -> mediaPicker.requiredPermissions(params, fragment.requireContext())
-        is SafPickerParams -> safPicker.requiredPermissions(params, fragment.requireContext())
+        is CameraPickerParams -> cameraPicker.requiredPermissions(params, context)
+        is MediaPickerParams -> mediaPicker.requiredPermissions(params, context)
+        is SafPickerParams -> safPicker.requiredPermissions(params, context)
         else -> throw IllegalArgumentException("Unexpected params ${this::class.java.simpleName}")
     }
 
@@ -203,7 +209,7 @@ class ContentPicker private constructor(
         viewModel.selectedPickerType = params.type
         launcher.launch(intentWithPermissions.intent.also {
             if (params is CameraPickerParams) {
-                cameraPicker.addExtrasToIntent(it, params, fragment.requireContext())
+                cameraPicker.addExtrasToIntent(it, params, context)
             }
         })
     }
@@ -213,17 +219,17 @@ class ContentPicker private constructor(
 
         if (takePhotoParams != null) {
             intentList[takePhotoParams] =
-                cameraPicker.intentWithPermissions(takePhotoParams, fragment.requireContext())
+                cameraPicker.intentWithPermissions(takePhotoParams, context)
         }
         if (takeVideoParams != null) {
             intentList[takeVideoParams] =
-                cameraPicker.intentWithPermissions(takeVideoParams, fragment.requireContext())
+                cameraPicker.intentWithPermissions(takeVideoParams, context)
         }
         if (mediaParams != null) {
-            intentList[mediaParams] = mediaPicker.intentWithPermissions(mediaParams, fragment.requireContext())
+            intentList[mediaParams] = mediaPicker.intentWithPermissions(mediaParams, context)
         }
         if (safParams != null) {
-            intentList[safParams] = safPicker.intentWithPermissions(safParams, fragment.requireContext())
+            intentList[safParams] = safPicker.intentWithPermissions(safParams, context)
         }
         return intentList
     }
@@ -234,11 +240,11 @@ class ContentPicker private constructor(
      *
      * Для создания обязателен хотя бы 1 вызов [addRequest].
      */
-    open class Builder(
-        private val fragment: Fragment,
+    open class Builder<T>(
+        protected val host: T,
         private val permissionHandler: PermissionHandler,
         private val showChooserAction: (Int, TextMessage, Map<ConcretePickerParams, IntentWithPermissions>) -> Unit,
-    ) {
+    ) where T : ICanAskPermissions, T : ICanRegisterForActivityResult, T : ViewModelStoreOwner, T : LifecycleOwner {
 
         private val requests: MutableSet<PickRequest> = mutableSetOf()
 
@@ -246,17 +252,15 @@ class ContentPicker private constructor(
             requests.add(request)
         }
 
-        fun build(): ContentPicker {
+        fun build(): ContentPicker<T> {
             check(requests.isNotEmpty()) {
                 "Content picker without provided requests is useless"
             }
-            return ContentPicker(fragment, requests, permissionHandler, showChooserAction)
+            return ContentPicker(host, requests, permissionHandler, showChooserAction)
         }
     }
 
     interface PermissionHandler {
-
-        val permissionHelper: PermissionsHelper
 
         fun handle(requestCode: Int, permissions: Set<String>, onDenied: (Set<String>) -> Unit, onGranted: () -> Unit)
     }

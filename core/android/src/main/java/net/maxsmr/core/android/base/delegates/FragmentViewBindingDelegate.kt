@@ -81,14 +81,15 @@ class FragmentViewBindingDelegate<T : ViewBinding> @JvmOverloads constructor(
     companion object {
 
         @JvmStatic
-        fun Fragment.isViewLifecycleAvailable(): Boolean = try {
-            view != null && viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.INITIALIZED)
+        fun LifecycleOwner.isViewLifecycleAvailable(): Boolean = try {
+            (this !is Fragment || this.view != null)
+                && lifecycle.currentState.isAtLeast(Lifecycle.State.INITIALIZED)
         } catch (e: IllegalStateException) {
             false
         }
 
         @JvmStatic
-        fun Fragment.onViewLifecycleCreated(block: (LifecycleOwner) -> Unit) {
+        fun LifecycleOwner.onViewLifecycleCreated(block: (LifecycleOwner) -> Unit) {
             addViewLifecycleObserver(object : DefaultLifecycleObserver {
                 override fun onCreate(owner: LifecycleOwner) {
                     block(owner)
@@ -97,19 +98,21 @@ class FragmentViewBindingDelegate<T : ViewBinding> @JvmOverloads constructor(
         }
 
         @JvmStatic
-        fun Fragment.addViewLifecycleObserver(observer: DefaultLifecycleObserver) {
+        fun LifecycleOwner.addViewLifecycleObserver(observer: DefaultLifecycleObserver) {
             try {
                 //viewLifecycleOwner уже есть
-                viewLifecycleOwner.lifecycle.addObserver(observer)
+                lifecycle.addObserver(observer)
             } catch (e: IllegalStateException) {
                 //сначала ждем viewLifecycleOwner, затем добавляем обсервера
-                lifecycle.addObserver(object : DefaultLifecycleObserver {
-                    override fun onCreate(owner: LifecycleOwner) {
-                        viewLifecycleOwnerLiveData.observe(owner) { viewLifecycleOwner ->
-                            viewLifecycleOwner.lifecycle.addObserver(observer)
+                if (this is Fragment) {
+                    lifecycle.addObserver(object : DefaultLifecycleObserver {
+                        override fun onCreate(owner: LifecycleOwner) {
+                            viewLifecycleOwnerLiveData.observe(owner) { viewLifecycleOwner ->
+                                viewLifecycleOwner.lifecycle.addObserver(observer)
+                            }
                         }
-                    }
-                })
+                    })
+                }
             }
         }
     }

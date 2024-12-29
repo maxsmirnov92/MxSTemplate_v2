@@ -1,5 +1,6 @@
 package net.maxsmr.core.ui.components.fragments
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -29,8 +30,8 @@ import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.android.coroutines.collectWithOwner
 import net.maxsmr.core.android.coroutines.repeatOnLifecycle
-import net.maxsmr.core.utils.ktx.ResettableLazy
-import net.maxsmr.core.utils.ktx.resettableLazy
+import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
+import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.IComponentDelegate
@@ -39,7 +40,8 @@ import net.maxsmr.core.ui.components.handleAlerts
 import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.message.toast.ToastActorImpl
 import net.maxsmr.core.ui.navigation.NavigationActorImpl
-import net.maxsmr.core.ui.permission.DialogDeniedPermissionsHandler
+import net.maxsmr.core.utils.ktx.ResettableLazy
+import net.maxsmr.core.utils.ktx.resettableLazy
 import net.maxsmr.permissionchecker.BaseDeniedPermissionsHandler
 import net.maxsmr.permissionchecker.PermissionsCallbacks
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -47,13 +49,14 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 /**
  * Фрагмент с конкретным типом VM и базовыми методами для подписки
  */
-abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(), ICanRegisterForActivityResult {
+abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
+        ICanAskPermissions, ICanRegisterForActivityResult {
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
-    override val attachedActivity: ComponentActivity by lazy { requireActivity() }
+    override val attachedContext: Context by lazy { requireContext() }
 
-    abstract val permissionsHelper: PermissionsHelper
+    override val attachedActivity: ComponentActivity by lazy { requireActivity() }
 
     /**
      * Разметка для использования в чистом view либо с ComposeView
@@ -174,12 +177,11 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(), ICanRegisterForA
         }
     }
 
-    @JvmOverloads
-    fun doOnPermissionsResult(
+    override fun doOnPermissionsResult(
         code: Int,
         permissions: Collection<String>,
-        shouldShowPermanentlyDeniedDialog: Boolean = true,
-        onDenied: ((Set<String>) -> Unit)? = null,
+        shouldShowPermanentlyDeniedDialog: Boolean,
+        onDenied: ((Set<String>) -> Unit)?,
         onAllGranted: () -> Unit,
     ): PermissionsHelper.ResultListener? {
         val rationale = getString(R.string.get_permission)

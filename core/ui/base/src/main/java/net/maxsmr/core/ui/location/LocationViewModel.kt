@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.DialogInterface
 import android.location.Location
 import android.os.HandlerThread
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
@@ -16,22 +15,17 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import net.maxsmr.commonutils.asContextOrThrow
-import net.maxsmr.commonutils.getLocationSettingsIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.postValueIfNew
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.actions.NavigationAction
-import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.asDispatcher
-import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.android.location.LocationCallback
 import net.maxsmr.core.android.location.receiver.ILocationReceiver
 import net.maxsmr.core.android.location.receiver.LocationParams
 import net.maxsmr.core.ui.R
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.android.permissions.ICanAskPermissions
 
 class LocationViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
@@ -100,12 +94,12 @@ class LocationViewModel @AssistedInject constructor(
     }
 
     fun registerLocationUpdates(
-        fragment: BaseVmFragment<*>,
+        host: ICanAskPermissions,
         isGpsOnly: Boolean,
         requireFineLocation: Boolean,
     ) {
-        if (!hasGpsPermissions(fragment, requireFineLocation)) return
-        if (!checkLocationEnabled(fragment.requireContext(), isGpsOnly)) return
+        if (!hasGpsPermissions(host, requireFineLocation)) return
+        if (!checkLocationEnabled(host.attachedContext, isGpsOnly)) return
 
         viewModelScope.launch(locationDispatcher) {
             // запрос геолокации на отдельном треде со своим looper
@@ -131,7 +125,7 @@ class LocationViewModel @AssistedInject constructor(
         _navigateToLocationSettings.tryEmit(VmEvent(Unit))
     }
 
-    fun hasGpsPermissions(fragment: BaseVmFragment<*>, requireFineLocation: Boolean): Boolean {
+    fun hasGpsPermissions(host: ICanAskPermissions, requireFineLocation: Boolean): Boolean {
         val perms: List<String> =
             if (requireFineLocation || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
                 listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -139,12 +133,12 @@ class LocationViewModel @AssistedInject constructor(
                 listOf(Manifest.permission.ACCESS_COARSE_LOCATION)
             }
 
-        return fragment.permissionsHelper.hasPermissions(fragment.requireContext(), perms)
+        return host.permissionsHelper.hasPermissions(host.attachedContext, perms)
     }
 
     @JvmOverloads
     fun registerLocationUpdatesOnGpsCheck(
-        fragment: BaseVmFragment<*>,
+        host: ICanAskPermissions,
         requestCode: Int,
         isGpsOnly: Boolean,
         requireFineLocation: Boolean,
@@ -152,7 +146,7 @@ class LocationViewModel @AssistedInject constructor(
         callbacks: GpsCheckCallbacks? = null,
     ) {
         doOnGpsCheck(
-            fragment,
+            host,
             requestCode,
             isGpsOnly,
             requireFineLocation,
@@ -172,7 +166,7 @@ class LocationViewModel @AssistedInject constructor(
                 }
 
                 override fun onPermissionsGranted() {
-                    registerLocationUpdates(fragment, isGpsOnly, requireFineLocation)
+                    registerLocationUpdates(host, isGpsOnly, requireFineLocation)
                     callbacks?.onPermissionsGranted()
                 }
             }
@@ -181,7 +175,7 @@ class LocationViewModel @AssistedInject constructor(
 
     @JvmOverloads
     fun doOnGpsCheck(
-        fragment: BaseVmFragment<*>,
+        host: ICanAskPermissions,
         requestCode: Int,
         isGpsOnly: Boolean,
         requireFineLocation: Boolean,
@@ -195,13 +189,12 @@ class LocationViewModel @AssistedInject constructor(
                 listOf(Manifest.permission.ACCESS_COARSE_LOCATION)
             }
 
-        logger.d("doOnGpsCheck")
-        fragment.doOnPermissionsResult(requestCode, perms, onDenied = {
+        host.doOnPermissionsResult(requestCode, perms, onDenied = {
             lastGpsDeniedState = GpsDeniedState.PERMISSIONS
             callbacks.onPermissionsDenied()
         }) {
             callbacks.onBeforeGpsCheck()
-            if (checkLocationEnabled(fragment.requireContext(), isGpsOnly, checkOnly)) {
+            if (checkLocationEnabled(host.attachedContext, isGpsOnly, checkOnly)) {
                 lastGpsDeniedState = null
                 callbacks.onPermissionsGranted()
             } else {

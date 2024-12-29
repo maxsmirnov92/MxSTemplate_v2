@@ -36,13 +36,14 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_PERMISSION_GPS
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.components.handleAlerts
 import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.core.ui.openAnyIntentWithToastError
 import net.maxsmr.core.ui.view.alert.representation.DialogRepresentation
-import net.maxsmr.core.ui.view.content.pick.chooser.FragmentContentPickerBuilder
+import net.maxsmr.core.ui.view.content.pick.chooser.HandlerContentPickerBuilder
 import net.maxsmr.core.ui.view.location.LocationFragmentAlertDelegate
 import net.maxsmr.feature.address_sorter.data.toPointF
 import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputAdapter
@@ -94,7 +95,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     // by lazy не подходит, т.к.
     // "Fragments must call registerForActivityResult() before they are created"
-    private val contentPicker: ContentPicker = FragmentContentPickerBuilder(this)
+    private val contentPicker: ContentPicker<BaseVmFragment<*>> = HandlerContentPickerBuilder<BaseVmFragment<*>>(this)
         .addRequest(
             PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_JSON)
                 .addSafParams(SafPickerParams.json())

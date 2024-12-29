@@ -2,6 +2,7 @@ package net.maxsmr.feature.preferences.ui
 
 import android.Manifest
 import android.content.Context
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
@@ -11,8 +12,8 @@ import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.openBatteryOptimizationSettings
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
+import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.core.ui.components.activities.BaseActivity
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.permissionchecker.PermissionsHelper
 
@@ -45,12 +46,12 @@ fun CacheDataStoreRepository.doOnBatteryOptimizationAsk(
     }
 }
 
-fun CacheDataStoreRepository.doOnPostNotificationPermissionResult(
-    fragment: BaseVmFragment<*>,
+fun <T>  CacheDataStoreRepository.doOnPostNotificationPermissionResult(
+    host: T,
     onlyWhenGranted: Boolean,
     targetAction: () -> Unit,
-) {
-    observeOncePostNotificationPermissionAsked(fragment,
+) where T: ICanAskPermissions, T: LifecycleOwner {
+    observeOncePostNotificationPermissionAsked(host,
         targetAction,
         onPostNotificationDenied = {
             if (!onlyWhenGranted) {
@@ -65,23 +66,23 @@ fun CacheDataStoreRepository.doOnPostNotificationPermissionResult(
 }
 
 @JvmOverloads
-fun CacheDataStoreRepository.observeOncePostNotificationPermissionAsked(
-    fragment: BaseVmFragment<*>,
+fun <T> CacheDataStoreRepository.observeOncePostNotificationPermissionAsked(
+    host: T,
     onPostNotificationGranted: (() -> Unit)? = null,
     onPostNotificationDenied: (() -> Unit)? = null,
     onPostNotificationAlreadyAsked: ((Boolean) -> Unit)? = null,
-) {
+) where T: ICanAskPermissions, T: LifecycleOwner {
     /**
      * после получения разрешения или отказа пользователя получать уведомления - не показывать этот запрос снова
      */
     fun setPostNotificationAsked() {
-        fragment.lifecycleScope.launch {
+        host.lifecycleScope.launch {
             this@observeOncePostNotificationPermissionAsked.setPostNotificationAsked()
         }
     }
-    postNotificationAsked?.asLiveData()?.observeOnce(fragment.viewLifecycleOwner) { asked ->
+    postNotificationAsked?.asLiveData()?.observeOnce(host) { asked ->
         if (!asked) {
-            fragment.doOnPermissionsResult(
+            host.doOnPermissionsResult(
                 BaseActivity.REQUEST_CODE_PERMISSION_NOTIFICATIONS,
                 PermissionsHelper.withPostNotificationsByApiVersion(emptySet()),
                 onDenied = {
@@ -95,8 +96,8 @@ fun CacheDataStoreRepository.observeOncePostNotificationPermissionAsked(
         } else {
             if (isAtLeastTiramisu()) {
                 onPostNotificationAlreadyAsked?.invoke(
-                    fragment.permissionsHelper.hasPermissions(
-                        fragment.requireContext(),
+                    host.permissionsHelper.hasPermissions(
+                        host.attachedContext,
                         Manifest.permission.POST_NOTIFICATIONS
                     )
                 )
@@ -106,23 +107,23 @@ fun CacheDataStoreRepository.observeOncePostNotificationPermissionAsked(
 }
 
 @JvmOverloads
-fun CacheDataStoreRepository.observePostNotificationPermissionAsked(
-    fragment: BaseVmFragment<*>,
+fun <T> CacheDataStoreRepository.observePostNotificationPermissionAsked(
+    host: T,
     onPostNotificationGranted: (() -> Unit)? = null,
     onPostNotificationDenied: (() -> Unit)? = null,
     onPostNotificationAlreadyAsked: (() -> Unit)? = null,
-) {
+) where T: ICanAskPermissions, T: LifecycleOwner {
     /**
      * после получения разрешения или отказа пользователя получать уведомления - не показывать этот запрос снова
      */
     fun setPostNotificationAsked() {
-        fragment.lifecycleScope.launch {
+        host.lifecycleScope.launch {
             this@observePostNotificationPermissionAsked.setPostNotificationAsked()
         }
     }
-    postNotificationAsked?.asLiveData()?.observe(fragment.viewLifecycleOwner) { asked ->
+    postNotificationAsked?.asLiveData()?.observe(host) { asked ->
         if (!asked) {
-            fragment.doOnPermissionsResult(
+            host.doOnPermissionsResult(
                 BaseActivity.REQUEST_CODE_PERMISSION_NOTIFICATIONS,
                 PermissionsHelper.withPostNotificationsByApiVersion(emptySet()),
                 onDenied = {

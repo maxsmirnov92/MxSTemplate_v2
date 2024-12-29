@@ -4,19 +4,17 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStoreOwner
 import net.maxsmr.core.android.content.pick.concrete.ConcretePicker
 
 /**
  * Пикер для взятия фото или видео с камеры.
  */
-internal class CameraPicker(
-    fragment: Fragment,
-) : ConcretePicker<CameraPickerParams> {
+internal class CameraPicker(viewModelStoreOwner: ViewModelStoreOwner) : ConcretePicker<CameraPickerParams> {
 
     private val viewModel: CameraPickerViewModel =
-        ViewModelProvider(fragment)[CameraPickerViewModel::class.java]
+        ViewModelProvider(viewModelStoreOwner)[CameraPickerViewModel::class.java]
 
     override fun intent(params: CameraPickerParams, context: Context): Intent {
         return Intent(params.pickType.intentAction).also { viewModel.init(params, context) }

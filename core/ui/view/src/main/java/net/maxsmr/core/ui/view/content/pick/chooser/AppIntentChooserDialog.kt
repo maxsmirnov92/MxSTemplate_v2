@@ -1,5 +1,6 @@
 package net.maxsmr.core.ui.view.content.pick.chooser
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -12,6 +13,8 @@ import androidx.core.os.bundleOf
 import androidx.core.view.doOnLayout
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -163,10 +166,19 @@ internal class AppIntentChooserDialog : BottomSheetDialogFragment() {
 
         private const val EXTRA_DATA = "EXTRA_DATA"
 
-        fun show(src: Fragment, data: AppIntentChooserData): AppIntentChooserDialog {
+        fun show(src: LifecycleOwner, data: AppIntentChooserData): AppIntentChooserDialog {
             return AppIntentChooserDialog().apply {
                 arguments = bundleOf(EXTRA_DATA to data)
-                show(src.childFragmentManager, null)
+                show(
+                    when (src) {
+                        is Fragment -> src.childFragmentManager
+                        is FragmentActivity -> src.supportFragmentManager
+                        else -> {
+                            throw IllegalArgumentException("Incorrect type of LifecycleOwner: ${src.javaClass}")
+                        }
+                    },
+                    null
+                )
             }
         }
     }

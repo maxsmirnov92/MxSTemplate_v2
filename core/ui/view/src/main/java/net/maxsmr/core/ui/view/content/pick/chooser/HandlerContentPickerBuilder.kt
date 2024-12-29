@@ -1,14 +1,13 @@
 package net.maxsmr.core.ui.view.content.pick.chooser
 
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ViewModelStoreOwner
+import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.content.pick.ContentPicker
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
-import net.maxsmr.permissionchecker.PermissionsHelper
+import net.maxsmr.core.android.permissions.ICanAskPermissions
 
-class FragmentContentPickerBuilder(private val fragment: BaseVmFragment<*>) : ContentPicker.Builder(fragment,
+class HandlerContentPickerBuilder<T>(host: T) : ContentPicker.Builder<T>(host,
     object : ContentPicker.PermissionHandler {
-
-        override val permissionHelper: PermissionsHelper
-            get() = fragment.permissionsHelper
 
         override fun handle(
             requestCode: Int,
@@ -16,7 +15,7 @@ class FragmentContentPickerBuilder(private val fragment: BaseVmFragment<*>) : Co
             onDenied: (Set<String>) -> Unit,
             onGranted: () -> Unit,
         ) {
-            fragment.doOnPermissionsResult(
+            host.doOnPermissionsResult(
                 requestCode,
                 permissions,
                 false,
@@ -27,7 +26,7 @@ class FragmentContentPickerBuilder(private val fragment: BaseVmFragment<*>) : Co
     },
     { code, title, intents ->
         AppIntentChooserDialog.show(
-            fragment,
+            host,
             AppIntentChooserData(code, title, intents)
         )
-    })
+    }) where T : ICanAskPermissions, T : ICanRegisterForActivityResult, T : ViewModelStoreOwner, T : LifecycleOwner

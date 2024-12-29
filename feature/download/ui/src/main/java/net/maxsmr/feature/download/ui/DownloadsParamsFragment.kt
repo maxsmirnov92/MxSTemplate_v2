@@ -31,10 +31,11 @@ import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
+import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.fields.bindValue
 import net.maxsmr.core.ui.fields.bindValueWithState
-import net.maxsmr.core.ui.view.content.pick.chooser.FragmentContentPickerBuilder
+import net.maxsmr.core.ui.view.content.pick.chooser.HandlerContentPickerBuilder
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapter
 import net.maxsmr.feature.download.ui.adapter.HeaderListener
@@ -67,7 +68,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
 
     private val headerInfoAdapter by lazy { HeaderInfoAdapter(this) }
 
-    private val contentPicker: ContentPicker = FragmentContentPickerBuilder(this)
+    private val contentPicker: ContentPicker<BaseVmFragment<*>> = HandlerContentPickerBuilder<BaseVmFragment<*>>(this)
         .addRequest(
             PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_BODY)
                 .addSafParams(SafPickerParams.any())
