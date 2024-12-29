@@ -4,6 +4,8 @@ import android.view.MenuItem
 import androidx.annotation.IdRes
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.navOptions
 import kotlinx.coroutines.launch
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.download.data.DownloadService
@@ -24,7 +26,7 @@ internal fun NavController.navigateWithGraphFragmentsFromCaller(
             R.id.navigationDownloads,
             lifecycleScope,
             settingsRepo,
-            currentNavFragment
+            currentNavFragment,
         )
     }
 }
@@ -68,6 +70,22 @@ private fun NavController.navigateWithGraphFragments(
     lifecycleScope: LifecycleCoroutineScope,
     settingsRepo: SettingsDataStoreRepository,
 ) {
+    fun navOptions() = navOptions {
+        // убирает все до startDestinationId, на них сработает onDestroy
+        popUpTo(graph.findStartDestination().id) { // startDestinationId
+            saveState = true
+        }
+        // проверка currentNavDestinationId уже была
+        launchSingleTop = true
+        restoreState = true
+        // при navigate с saveState + restoreState будет переиспользоваться тот же инстанс фрагмента и VM,
+        // но на нём также при уходе будет вызываться onDestroyView, а при переходе onCreateView
+        // (т.е. viewLifecycleOwner в любом случае другой);
+        // если один из флагов false - каждый раз будет новый инстанс (в т.ч. VM, которая by viewModels):
+        // при этом на новом будет вызван onCreate,
+        // а на предыдущем не вызван onDestroy (если только не попадает в popupTo)
+    }
+
     if (destinationId == R.id.navigationWebView) {
         lifecycleScope.launch {
             val settings = settingsRepo.getSettings()
@@ -83,10 +101,11 @@ private fun NavController.navigateWithGraphFragments(
                             }
                         )
                         .build()
-                )
+                ),
+                navOptions = navOptions()
             )
         }
     } else {
-        navigate(destinationId)
+        navigate(resId = destinationId, args = null, navOptions = navOptions())
     }
 }

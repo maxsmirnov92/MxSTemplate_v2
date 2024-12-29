@@ -1,11 +1,12 @@
 package net.maxsmr.core.android.base.actions
 
+import android.os.Bundle
 import androidx.navigation.NavDirections
 import androidx.navigation.NavOptions
 import androidx.navigation.Navigator
 
 class NavigationAction(
-    private val command: NavigationCommand
+    private val command: NavigationCommand,
 ) : BaseViewModelAction<NavigationAction.INavigationActor>() {
 
     override fun doAction(actor: INavigationActor) {
@@ -19,7 +20,7 @@ class NavigationAction(
 
     sealed class NavigationCommand {
 
-        abstract class ToDirection: NavigationCommand() {
+        abstract class ToDirection : NavigationCommand() {
 
             abstract val navOptions: NavOptions?
             abstract val navigatorExtras: Navigator.Extras?
@@ -30,14 +31,21 @@ class NavigationAction(
             // т.к. исключает неверную комбинацию actionId + Bundle
             val directions: NavDirections,
             override val navOptions: NavOptions? = null,
-            override val navigatorExtras: Navigator.Extras?  = null
+            override val navigatorExtras: Navigator.Extras? = null,
+        ) : ToDirection()
+
+        data class ToDirectionWithId(
+            val destinationId: Int,
+            val args: Bundle? = null,
+            override val navOptions: NavOptions? = null,
+            override val navigatorExtras: Navigator.Extras? = null,
         ): ToDirection()
 
         data class ToDirectionWithRoute(
             val route: String,
             override val navOptions: NavOptions? = null,
-            override val navigatorExtras: Navigator.Extras?  = null
-        ): ToDirection()
+            override val navigatorExtras: Navigator.Extras? = null,
+        ) : ToDirection()
 
         data object Back : NavigationCommand()
     }

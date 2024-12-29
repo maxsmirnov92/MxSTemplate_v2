@@ -32,7 +32,7 @@ class MainBottomActivity : BaseBottomNavigationActivity() {
         get() = if (currentNavDestinationId != R.id.navigationWebView
                 && topLevelDestinationIds.contains(currentNavDestinationId)
         ) {
-            BackPressedMode.PRESS_TWICE_CURRENT
+            BackPressedMode.PRESS_TWICE_LAST
         } else {
             BackPressedMode.NO_CHANGE
         }

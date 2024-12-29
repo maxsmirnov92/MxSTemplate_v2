@@ -26,6 +26,13 @@ class NavigationActorImpl(
                 command.navigatorExtras,
             )
 
+            is NavigationCommand.ToDirectionWithId -> navController.navigate(
+                command.destinationId,
+                command.args,
+                command.navOptions,
+                command.navigatorExtras,
+            )
+
             is NavigationCommand.ToDirectionWithRoute -> navController.navigate(
                 command.route,
                 command.navOptions,
