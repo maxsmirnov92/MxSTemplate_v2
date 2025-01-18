@@ -17,6 +17,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.graphic.createBitmapFromUri
+import net.maxsmr.commonutils.gui.message.errorMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.live.observeLoadStateOnce
 import net.maxsmr.commonutils.live.zip
@@ -229,7 +230,9 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                     } else {
                         containerPreview.previewView.isVisible = false
                         containerError.root.isVisible = true
-                        containerError.tvEmptyError.setTextOrGone(it.error?.message)
+                        containerError.tvEmptyError.setTextOrGone(
+                            it.error?.errorMessage()?.get(requireContext())
+                        )
                     }
                 }
             }

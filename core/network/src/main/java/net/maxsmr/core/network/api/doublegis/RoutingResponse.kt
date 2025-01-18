@@ -2,7 +2,7 @@ package net.maxsmr.core.network.api.doublegis
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import net.maxsmr.core.domain.StringId
+import net.maxsmr.core.utils.StringId
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.AddressRoute
 import net.maxsmr.core.network.retrofit.converters.api.BaseDoubleGisRoutingResponse
 import net.maxsmr.core.utils.kotlinx.serialization.serializers.StringIdEnumSerializer

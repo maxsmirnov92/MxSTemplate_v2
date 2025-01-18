@@ -21,6 +21,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.getAppSettingsIntent
+import net.maxsmr.commonutils.getParcelableCompat
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPickerViewModel
@@ -67,7 +68,7 @@ internal class AppIntentChooserDialog : BottomSheetDialogFragment() {
     }
 
     private fun init() = binding.run {
-        val data = arguments?.getParcelable(EXTRA_DATA) as? AppIntentChooserData ?: return@run
+        val data = arguments?.getParcelableCompat<AppIntentChooserData>(EXTRA_DATA) ?: return@run
         val adapterData = data.intents.toAdapterData()
 
         val screenWidth = resources.displayMetrics.widthPixels

@@ -21,10 +21,12 @@ import net.maxsmr.commonutils.format.TimePluralFormat
 import net.maxsmr.commonutils.format.decomposeTimeFormatted
 import net.maxsmr.commonutils.gui.message.JoinTextMessage
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.gui.message.errorMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.media.readString
-import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
+import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.commonutils.states.LoadState.Companion.copyOf
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.text.capFirstChar
 import net.maxsmr.core.android.base.BaseViewModel
@@ -112,7 +114,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     val exportFileNameField: Field<String> =
         state.fileNameField(isRequired = true, initialValue = EXPORT_FILE_NAME_DEFAULT)
 
-    val resultItemsState = MutableLiveData<LoadState<List<AddressInputData>>>(LoadState.success(emptyList()))
+    val resultItemsState = MutableLiveData<LoadState<List<AddressInputData>>>(LoadState.initial(emptyList()))
 
     val resultLocationsState = resultItemsState.map {
         it.copyOf(it.data?.mapNotNull { data -> data.item.location })
@@ -184,7 +186,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                     val e = result.exception
 
                     fun handleBaseError(showMessage: Boolean = true) {
-                        resultItemsState.value = LoadState.error(e, currentData)
+                        resultItemsState.value = LoadState.error(result.errorData(), currentData)
                         if (showMessage) {
                             showRoutingFailedMessage(e, result.errorMessage())
                         }
@@ -194,7 +196,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                         downloadsViewModel.observeOnceDownloadByParams(enqueueDownloadRoutingKey()).observe {
                             viewModelScope.launch {
 
-                                fun handleDownloadError(e: Throwable?) {
+                                fun handleDownloadError(e: ILoadState.ErrorData?) {
                                     showDownloadRoutingKeyError(e)
                                     handleBaseError(false)
                                 }
@@ -210,7 +212,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                                         // повтор юзкейса с актуализированным ключом
                                         doAddressSort()
                                     } else {
-                                        handleDownloadError(EmptyResultException())
+                                        handleDownloadError(ILoadState.ErrorData(EmptyResultException()))
                                     }
                                 } else if (!it.isLoading) {
                                     handleDownloadError(it.error)
@@ -504,7 +506,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                                             // повтор юзкейса с актуализированным ключом
                                             doAddressRouting()
                                         } else {
-                                            showDownloadRoutingKeyError(EmptyResultException())
+                                            showDownloadRoutingKeyError(ILoadState.ErrorData(EmptyResultException()))
                                         }
                                     } else if (it.isLoading) {
                                         isHandled = true
@@ -723,8 +725,8 @@ class AddressSorterViewModel @AssistedInject constructor(
         }
     }
 
-    private fun showDownloadRoutingKeyError(e: Throwable?) {
-        showOkDialog(DIALOG_TAG_DOWNLOAD_KEY_FAILED, e?.message?.takeIf { it.isNotEmpty() }?.let {
+    private fun showDownloadRoutingKeyError(e: ILoadState.ErrorData?) {
+        showOkDialog(DIALOG_TAG_DOWNLOAD_KEY_FAILED, e?.errorMessage()?.let {
             TextMessage(R.string.address_sorter_download_routing_key_failed_format, it)
         } ?: TextMessage(R.string.address_sorter_download_routing_key_failed))
     }

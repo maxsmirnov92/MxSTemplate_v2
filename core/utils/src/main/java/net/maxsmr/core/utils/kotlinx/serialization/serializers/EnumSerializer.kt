@@ -6,8 +6,8 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import net.maxsmr.core.domain.IntId
-import net.maxsmr.core.domain.StringId
+import net.maxsmr.core.utils.IntId
+import net.maxsmr.core.utils.StringId
 import kotlin.reflect.KClass
 
 open class IntIdEnumSerializer<T>(

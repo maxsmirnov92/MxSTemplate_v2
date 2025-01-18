@@ -1,4 +1,4 @@
-package net.maxsmr.core.domain
+package net.maxsmr.core.utils
 
 inline fun <reified T: Enum<T>> enumValueOfOrDefault(name: String?, default: T): T {
     return name?.let { enumValues<T>().find { it.name.equals(name, ignoreCase = true) } } ?: default

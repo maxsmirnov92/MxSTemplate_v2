@@ -28,7 +28,10 @@ sealed class UseCaseResult<out R> {
                 ?: exception.message?.takeIf { it.isNotEmpty() }?.let {
                     TextMessage(it)
                 }
+        }
 
+        fun errorData(): ILoadState.ErrorData {
+            return ILoadState.ErrorData(this.exception, this.message)
         }
     }
 
@@ -74,7 +77,7 @@ inline fun <reified T> UseCaseResult<T>.updateOnSuccess(stateFlow: MutableStateF
 fun <T> ILoadState<T>.asUseCaseResult() = when {
     isLoading -> UseCaseResult.Loading
     isSuccess() -> UseCaseResult.Success(data)
-    else -> UseCaseResult.Error(error ?: Exception())
+    else -> UseCaseResult.Error(error?.error ?: Exception(), error?.message as? TextMessage)
 }
 
 fun <T, U> ILoadState<T>.asUseCaseResult(mapOnSuccess: (data: T) -> U) = when {
@@ -88,13 +91,13 @@ fun <T, U> ILoadState<T>.asUseCaseResult(mapOnSuccess: (data: T) -> U) = when {
         }
     }
 
-    else -> UseCaseResult.Error(error ?: Exception())
+    else -> UseCaseResult.Error(error?.error ?: Exception(), error?.message as? TextMessage)
 }
 
 fun <T> UseCaseResult<T>.asState() = when (this) {
     is UseCaseResult.Loading -> LoadState.loading()
     is UseCaseResult.Success -> LoadState.success(this.data)
-    is UseCaseResult.Error -> LoadState.error(this.exception)
+    is UseCaseResult.Error -> LoadState.error(errorData())
 }
 
 fun <T, U> UseCaseResult<T>.mapData(mapData: (data: T) -> U): UseCaseResult<U> = when (this) {

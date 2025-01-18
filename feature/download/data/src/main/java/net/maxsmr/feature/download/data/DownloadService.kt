@@ -274,7 +274,7 @@ class DownloadService : Service() {
                 true
             } ?: false
 
-        val params = intent?.getSerializableExtraCompat(EXTRA_DOWNLOAD_SERVICE_PARAMS, Params::class.java)
+        val params = intent?.getSerializableExtraCompat<Params>(EXTRA_DOWNLOAD_SERVICE_PARAMS)
         if (params == null
                 || params.requestParams.url.isEmpty()
                 || params.resourceNameWithoutExt.isEmpty()

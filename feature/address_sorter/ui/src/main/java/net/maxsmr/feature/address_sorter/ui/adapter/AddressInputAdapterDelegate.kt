@@ -10,8 +10,8 @@ import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseAdapterData
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.commonutils.gui.listeners.AfterTextChangeListener
 import net.maxsmr.commonutils.gui.setTextWithSelectionToEnd
-import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
 import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.commonutils.states.LoadState.Companion.copyOf
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.ui.view.adapters.SuggestAdapter
 import net.maxsmr.core.ui.view.applySuggestions

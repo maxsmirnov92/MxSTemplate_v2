@@ -15,8 +15,10 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.graphic.isBitmapValid
 import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.gui.message.errorMessage
 import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logException
+import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
@@ -199,11 +201,13 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
         showSnackbar(TextMessage(R.string.camera_error_state_format, "${e.code} ${e.type}"))
     }
 
-    fun showTakePictureError(e: Throwable) {
+    fun showTakePictureError(e: ILoadState.ErrorData) {
         showSnackbar(
             TextMessage(
                 R.string.camera_error_take_picture_format,
-                e.message.takeIf { !it.isNullOrEmpty() } ?: e.toString()))
+                e.errorMessage() ?: e.toString()
+            )
+        )
     }
 
     private suspend fun BaseTextMatcherUseCase<*>.invokeWithLines(lines: List<RecognizedLine>): TextRecognitionResult {

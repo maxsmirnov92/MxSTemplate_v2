@@ -6,6 +6,7 @@ import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import kotlinx.coroutines.CancellationException
+import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.text.appendExtension
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import java.io.InterruptedIOException
@@ -46,9 +47,9 @@ data class DownloadInfo(
 
     @Ignore
     val resourceStatus = when {
-        isLoading -> net.maxsmr.commonutils.states.Status.LOADING
-        isSuccess -> net.maxsmr.commonutils.states.Status.SUCCESS
-        else -> net.maxsmr.commonutils.states.Status.ERROR
+        isLoading -> ILoadState.Status.LOADING
+        isSuccess -> ILoadState.Status.SUCCESS
+        else -> ILoadState.Status.ERROR
     }
 
     @Ignore

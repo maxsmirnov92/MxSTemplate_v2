@@ -9,6 +9,7 @@ import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import net.maxsmr.commonutils.gui.message.errorMessage
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.exceptions.EmptyResultException
@@ -60,8 +61,8 @@ open class SuggestAdapter(
 
             else -> {
                 val error = state.error
-                if (error !is EmptyResultException) {
-                    error?.message?.takeIf { mes -> mes.isNotEmpty() }?.let { mes ->
+                if (error?.error !is EmptyResultException) {
+                    error?.errorMessage()?.let { mes ->
                         context.getString(net.maxsmr.core.android.R.string.error_format, mes)
                     } ?: context.getString(net.maxsmr.core.android.R.string.error_unexpected)
                 } else {
@@ -78,7 +79,7 @@ open class SuggestAdapter(
                 pbSuggest.isVisible = state.isLoading
                 tvItemSuggest.setTextColor(
                     ContextCompat.getColor(
-                        context, if (state.isError() && state.error !is EmptyResultException) {
+                        context, if (state.isError() && state.error?.error !is EmptyResultException) {
                             net.maxsmr.designsystem.shared_res.R.color.textColorError
                         } else {
                             net.maxsmr.designsystem.shared_res.R.color.textColorPrimary

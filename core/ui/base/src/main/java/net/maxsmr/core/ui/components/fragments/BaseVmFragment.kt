@@ -19,10 +19,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.ResettableLazy
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.commonutils.resettableLazy
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.connection.ConnectionManager
@@ -40,8 +42,6 @@ import net.maxsmr.core.ui.components.handleAlerts
 import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.message.toast.ToastActorImpl
 import net.maxsmr.core.ui.navigation.NavigationActorImpl
-import net.maxsmr.core.utils.ktx.ResettableLazy
-import net.maxsmr.core.utils.ktx.resettableLazy
 import net.maxsmr.permissionchecker.BaseDeniedPermissionsHandler
 import net.maxsmr.permissionchecker.PermissionsCallbacks
 import net.maxsmr.permissionchecker.PermissionsHelper

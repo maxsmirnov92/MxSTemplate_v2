@@ -5,7 +5,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import net.maxsmr.commonutils.live.event.VmEvent
-import net.maxsmr.commonutils.states.Status
+import net.maxsmr.commonutils.states.ILoadState
+import net.maxsmr.commonutils.states.ILoadState.Status
 import net.maxsmr.core.database.dao.download.DownloadsDao
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.feature.download.data.manager.DownloadsHashManager
@@ -82,8 +83,8 @@ class DownloadsRepo @Inject constructor(
         downloadsInfos(resourceNames).map {
             when {
                 it.isEmpty() || it.any { it.isLoading } -> Status.LOADING
-                it.any { it.isError } -> Status.ERROR
-                it.all { it.isSuccess } -> Status.SUCCESS
+                it.any { info -> info.isError } -> Status.ERROR
+                it.all { info -> info.isSuccess } -> Status.SUCCESS
                 else -> Status.LOADING
             }
         }

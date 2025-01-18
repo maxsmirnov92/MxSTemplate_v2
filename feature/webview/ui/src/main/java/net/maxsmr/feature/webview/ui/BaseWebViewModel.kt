@@ -8,8 +8,9 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
-import net.maxsmr.commonutils.states.ILoadState.Companion.copyOf
+import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.commonutils.states.LoadState.Companion.copyOf
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
@@ -20,14 +21,14 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseViewModel(state) {
     /**
      * Первые данные в WebView с состоянием загрузки/ошибки - после очередного вызова loadUrl/loadData
      */
-    private val _firstWebViewData = MutableLiveData<LoadState<MainWebViewData?>>(LoadState.success(null))
+    private val _firstWebViewData = MutableLiveData<LoadState<MainWebViewData?>>(LoadState.initial())
 
     val firstWebViewData = _firstWebViewData as LiveData<LoadState<MainWebViewData?>>
 
     /**
      * Текущие данные в [WebView] с состоянием загрузки/ошибки
      */
-    private val _currentWebViewData = MutableLiveData<LoadState<MainWebViewData?>>(LoadState.success(null))
+    private val _currentWebViewData = MutableLiveData<LoadState<MainWebViewData?>>(LoadState.initial())
 
     val currentWebViewData = _currentWebViewData as LiveData<LoadState<MainWebViewData?>>
 
@@ -52,8 +53,8 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseViewModel(state) {
 
     @CallSuper
     open fun onWebViewDestroyed() {
-        _firstWebViewData.value = LoadState.success(null)
-        _currentWebViewData.value = LoadState.success(null)
+        _firstWebViewData.value = LoadState.initial()
+        _currentWebViewData.value = LoadState.initial()
         _currentWebViewProgress.value = null
         isFirstResourceChanged = false
     }
@@ -68,10 +69,9 @@ open class BaseWebViewModel(state: SavedStateHandle) : BaseViewModel(state) {
             // игнор ресурсов, не относящихся к главной странице / без WebViewData вовсе
             return
         }
-        @Suppress("UNCHECKED_CAST")
-        val thisData = resource.copyOf(
+        val thisData: LoadState<MainWebViewData?> = resource.copyOf(
             fromWebViewData(resource.data, title)
-        ) as LoadState<MainWebViewData?>
+        )
 
         val shouldChangeFirst = !isFirstResourceChanged
         if (shouldChangeFirst) {
