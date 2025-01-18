@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.android.asCoroutineDispatcher
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -61,8 +62,8 @@ inline fun <T : Any> Flow<T>.collectWithOwner(
     owner: LifecycleOwner,
     lifecycleState: Lifecycle.State = Lifecycle.State.RESUMED,
     crossinline action: suspend (value: T) -> Unit,
-) {
-    repeatOnLifecycle(owner, lifecycleState) { collectLatest { action(it) } }
+): Job {
+    return repeatOnLifecycle(owner, lifecycleState) { collectLatest { action(it) } }
 }
 
 /**
@@ -71,8 +72,8 @@ inline fun <T : Any> Flow<T>.collectWithOwner(
 inline fun <T : Any> StateFlow<VmEvent<T>?>.collectEvents(
     scope: CoroutineScope,
     crossinline action: (value: T) -> Unit
-) {
-    scope.launch {
+): Job {
+    return scope.launch {
         collectLatest { event ->
             event?.get(true)?.let {
                 action(it)
@@ -85,8 +86,8 @@ inline fun <T : Any> StateFlow<VmEvent<T>?>.collectEventsWithOwner(
     owner: LifecycleOwner,
     lifecycleState: Lifecycle.State = Lifecycle.State.RESUMED,
     crossinline action: suspend (value: T) -> Unit,
-) {
-    repeatOnLifecycle(owner, lifecycleState) { collectLatest { event ->
+): Job {
+    return repeatOnLifecycle(owner, lifecycleState) { collectLatest { event ->
         event?.get(true)?.let {
             action(it)
         }
@@ -97,8 +98,8 @@ inline fun repeatOnLifecycle(
     owner: LifecycleOwner,
     lifecycleState: Lifecycle.State,
     crossinline action: suspend () -> Unit,
-) {
-    owner.lifecycleScope.launch {
+): Job {
+    return owner.lifecycleScope.launch {
         owner.repeatOnLifecycle(lifecycleState) {
             action()
         }

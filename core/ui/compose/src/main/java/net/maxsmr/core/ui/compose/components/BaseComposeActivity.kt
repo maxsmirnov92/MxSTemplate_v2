@@ -13,6 +13,7 @@ import androidx.lifecycle.LiveData
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import net.maxsmr.commonutils.live.event.VmEvent
@@ -42,19 +43,13 @@ import net.maxsmr.permissionchecker.PermissionsHelper
  * [BaseActivity] для использования экранов в виде Composable-функций
  */
 abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
-        ICanAskPermissions, ICanRegisterForActivityResult {
+        ICanAskPermissions, ICanRegisterForActivityResult, IScreenViewModelNotifier {
 
     override val attachedContext: Context by lazy { this }
 
     override val attachedActivity: ComponentActivity by lazy { this }
 
     protected abstract val viewModel: VM
-
-    /**
-     * key - route экрана,
-     * value - [ScreenComponents] для него
-     */
-    protected abstract val screenComponentsMap: Map<String, ScreenComponents<*>>
 
     protected val navigationActor by lazy { NavigationActorImpl(this, navController) }
 
@@ -74,6 +69,12 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         DialogDeniedPermissionsHandler(viewModel, this@BaseComposeActivity)
     }
 
+    /**
+     * key - route экрана,
+     * value - [ScreenComponents] для него
+     */
+    private val screenComponentsMap = mutableMapOf<String, ScreenComponents>()
+
     protected lateinit var scope: CoroutineScope
     protected lateinit var navController: NavHostController
 
@@ -85,12 +86,6 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         setContent {
             scope = rememberCoroutineScope()
             navController = rememberNavController()
-
-            screenComponentsMap.values.forEach {
-                it.observeNetworkConnectionHandler()
-                handleAlerts(it.viewModel, it.alertDelegate)
-                handleVmEvents(it.viewModel)
-            }
 
             AppBackground {
                 SetScreenContent()
@@ -142,14 +137,31 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         )
     }
 
+    override fun onViewModelRetrieved(route: String, viewModel: BaseViewModel) {
+        // Добавление происходит динамически,
+        // т.к. не по всем экранам VM известны на момент инициализации Activity
+        val component = screenComponentsMap[route]
+        if (component == null || component.viewModel != viewModel) {
+            component?.unregister()
+            screenComponentsMap[route] = ScreenComponents(
+                viewModel,
+                ComposeActivityAlertDelegate(
+                    this@BaseComposeActivity, scope, snackbarHostState, viewModel
+                )
+            ).also {
+                it.register()
+            }
+        }
+    }
+
     @CallSuper
     protected open fun handleAlerts(viewModel: BaseViewModel, delegate: BaseAlertDelegate<*>) {
         delegate.handleAlerts()
     }
 
     @CallSuper
-    protected open fun handleVmEvents(viewModel: BaseViewModel) {
-        viewModel.handleEvents(this, navigationActor, toastActor)
+    protected open fun handleVmEvents(viewModel: BaseViewModel): List<Job> {
+        return viewModel.handleEvents(this, navigationActor, toastActor)
     }
 
     protected open fun createActivityDelegates(): List<IComponentDelegate<*>> = listOf()
@@ -182,7 +194,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         collectEventsWithOwner(this@BaseComposeActivity, lifecycleState, action)
     }
 
-    private fun ScreenComponents<*>.observeNetworkConnectionHandler() {
+    private fun ScreenComponents.observeNetworkConnectionHandler() {
         connectionHandler?.onNetworkStateChanged?.let { onStateChanged ->
             viewModel.connectionManager.asLiveData.observe {
                 onStateChanged(it)
@@ -198,9 +210,27 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         }
     }
 
-    protected class ScreenComponents<VM : BaseViewModel>(
-        val viewModel: VM,
-        val alertDelegate: ComposeActivityAlertDelegate<VM>,
+    private fun ScreenComponents.register() {
+        // FIXME по остальным нет возможности отписаться
+        observeNetworkConnectionHandler()
+        handleAlerts(viewModel, alertDelegate)
+        disposables.addAll(handleVmEvents(viewModel))
+    }
+
+    private fun ScreenComponents.unregister() {
+        disposables.let {
+            it.forEach { j ->
+                j.cancel()
+            }
+        }
+    }
+
+    private class ScreenComponents(
+        val viewModel: BaseViewModel,
+        val alertDelegate: ComposeActivityAlertDelegate<*>,
         val connectionHandler: ConnectionHandler? = null,
-    )
+    ) {
+
+        val disposables = mutableListOf<Job>()
+    }
 }
