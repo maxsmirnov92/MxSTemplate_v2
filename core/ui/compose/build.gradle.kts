@@ -12,5 +12,7 @@ dependencies {
     implementation(project(":designsystem:shared_res"))
     implementation(project(":core:ui:base"))
     implementation(project(":core:android"))
+    implementation(project(":core:utils"))
     implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlinx.serialization.json)
 }

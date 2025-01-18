@@ -6,6 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import net.maxsmr.mxstemplate.initializers.AppSettingsInitializer
+import net.maxsmr.mxstemplate.initializers.NavTypeHolderInitializer
 import net.maxsmr.mxstemplate.initializers.RetrofitInitializer
 
 @[EntryPoint
@@ -15,6 +16,8 @@ interface InitializerEntryPoint {
     fun inject(initializer: RetrofitInitializer)
 
     fun inject(initializer: AppSettingsInitializer)
+
+    fun inject(initializer: NavTypeHolderInitializer)
 
     companion object {
 
