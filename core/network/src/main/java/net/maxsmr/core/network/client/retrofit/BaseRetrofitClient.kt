@@ -1,20 +1,26 @@
 package net.maxsmr.core.network.client.retrofit
 
+import androidx.annotation.CallSuper
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
+import net.maxsmr.core.network.exceptions.handler.IApiExceptionHandler
 import net.maxsmr.core.network.retrofit.internal.cache.CacheWrapper
 import okhttp3.HttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import retrofit2.Retrofit
+import java.lang.StringBuilder
 
 abstract class BaseRetrofitClient(
-    protected val baseUrl: HttpUrl?,
-    protected val json: Json,
-    protected val cachePath: String,
-    protected val protocolVersion: Int,
-    protected val disableCache: Boolean,
-    protected val clientProvider: () -> OkHttpClient,
+    private val baseUrl: HttpUrl?,
+    private val json: Json,
+    private val cachePath: String,
+    private val protocolVersion: Int,
+    private val disableCache: Boolean,
+    private val exceptionHandler: IApiExceptionHandler,
+    private val clientProvider: () -> OkHttpClient,
 ) {
 
     @Volatile
@@ -46,11 +52,15 @@ abstract class BaseRetrofitClient(
         }
     }
 
-    protected abstract fun Retrofit.Builder.configureBuild(json: Json)
+    @CallSuper
+    protected open fun configureBuild(builder: Retrofit.Builder, json: Json) {
+        builder.addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+    }
 
     private fun build() = Retrofit.Builder().apply {
         baseUrl?.let { baseUrl(it) }
+        addCallAdapterFactory(ExceptionHandlingCallAdapterFactory(exceptionHandler))
         callFactory { clientProvider().newCall(it) }
-        configureBuild(json)
+        configureBuild(this, json)
     }.build()
 }

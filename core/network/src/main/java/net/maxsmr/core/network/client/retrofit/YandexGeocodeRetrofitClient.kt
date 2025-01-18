@@ -1,12 +1,11 @@
 package net.maxsmr.core.network.client.retrofit
 
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
+import net.maxsmr.core.network.exceptions.handler.IApiExceptionHandler
 import net.maxsmr.core.network.retrofit.converters.BaseEnvelopeWithObject
 import net.maxsmr.core.network.retrofit.converters.EnvelopeObjectTypeConverter
 import net.maxsmr.core.network.retrofit.converters.api.YandexGeocodeEnvelope
 import okhttp3.HttpUrl
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 
@@ -16,15 +15,16 @@ class YandexGeocodeRetrofitClient(
     cachePath: String,
     protocolVersion: Int,
     disableCache: Boolean,
+    exceptionHandler: IApiExceptionHandler,
     clientProvider: () -> OkHttpClient,
-) : BaseRetrofitClient(baseUrl, json, cachePath, protocolVersion, disableCache, clientProvider) {
+) : BaseRetrofitClient(baseUrl, json, cachePath, protocolVersion, disableCache, exceptionHandler, clientProvider) {
 
-    override fun Retrofit.Builder.configureBuild(json: Json) {
-        addConverterFactory(
+    override fun configureBuild(builder: Retrofit.Builder, json: Json) {
+        builder.addConverterFactory(
             EnvelopeObjectTypeConverter<YandexGeocodeEnvelope<*>, BaseEnvelopeWithObject<Any>>(
                 YandexGeocodeEnvelope::class.java
             )
         )
-        addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        super.configureBuild(builder, json)
     }
 }

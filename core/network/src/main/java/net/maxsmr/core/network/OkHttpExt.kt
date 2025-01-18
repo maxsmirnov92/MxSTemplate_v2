@@ -15,6 +15,7 @@ import net.maxsmr.core.network.exceptions.HttpProtocolException
 import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.connection.RealCall
 import okhttp3.internal.readBomAsCharset
 import okio.Buffer
@@ -283,7 +284,7 @@ fun Response?.asStringClonedOrThrow(): Pair<String, Charset>? {
 }
 
 /**
- * Вычитывает тело запроса в [OutputStream], не изменяя исходный [InputStream]
+ * Вычитывает тело ответа в [OutputStream], не изменяя исходный [InputStream]
  */
 fun Response?.writeCloned(
     outputStream: OutputStream?,
@@ -306,6 +307,15 @@ fun Response?.writeClonedOrThrow(
     val buffer = source.cloneBufferOrThrow() ?: return null
     buffer.inputStream().copyToOutputStreamOrThrow(outputStream, notifier, responseBody.contentLength())
     return responseBody
+}
+
+fun Response.toResponseBody(shouldClone: Boolean): ResponseBody {
+    val bodyBytes = if (shouldClone) {
+        asByteArrayClonedOrThrow()
+    } else {
+        asByteArrayOrThrow()
+    } ?: ByteArray(0)
+    return bodyBytes.toResponseBody(body?.contentType())
 }
 
 @Throws(IOException::class)

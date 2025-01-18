@@ -4,13 +4,11 @@ import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.runBlocking
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.network.NetworkConnectivityChecker
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.di.DoubleGisRoutingOkHttpClient
@@ -26,11 +24,9 @@ import net.maxsmr.core.network.client.okhttp.DownloadOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.RadarIoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.YandexOkHttpClientManager
-import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
-import net.maxsmr.core.network.retrofit.converters.api.BaseYandexSuggestResponse
+import net.maxsmr.core.network.exceptions.handler.CombinedApiExceptionHandler
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.mxstemplate.BuildConfig
-import net.maxsmr.mxstemplate.di.ModuleAppEntryPoint
 import okhttp3.CacheControl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -108,61 +104,61 @@ class OkHttpModule {
     ).build()
 
     @[Provides Singleton RadarIoOkHttpClient]
-    fun provideRadarIoOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
+    fun provideRadarIoOkHttpClient(
+        @ApplicationContext context: Context,
+        handler: CombinedApiExceptionHandler,
+    ): OkHttpClient {
         return RadarIoOkHttpClientManager(
             BuildConfig.AUTHORIZATION_RADAR_IO,
             context = context,
+            exceptionHandler = handler,
             connectivityChecker = NetworkConnectivityChecker,
-        ) {
-            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
-                .radarIoRetrofit().instance
-        }.build()
+        ).build()
     }
 
     @[Provides Singleton YandexSuggestOkHttpClient]
-    fun provideYandexSuggestOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
+    fun provideYandexSuggestOkHttpClient(
+        @ApplicationContext context: Context,
+        handler: CombinedApiExceptionHandler,
+    ): OkHttpClient {
         return YandexOkHttpClientManager(
             BuildConfig.API_KEY_YANDEX_SUGGEST,
             YandexOkHttpClientManager.LocalizationField.LANG,
             "ru",
             context = context,
+            exceptionHandler = handler,
             connectivityChecker = NetworkConnectivityChecker,
-            responseAnnotation = ResponseObjectType(BaseYandexSuggestResponse::class),
-        ) {
-            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
-                .yandexSuggestRetrofit().instance
-        }.build()
+        ).build()
     }
 
     @[Provides Singleton YandexGeocodeOkHttpClient]
-    fun provideYandexGeocodeOkHttpClient(@ApplicationContext context: Context): OkHttpClient {
+    fun provideYandexGeocodeOkHttpClient(
+        @ApplicationContext context: Context,
+        handler: CombinedApiExceptionHandler,
+    ): OkHttpClient {
         return YandexOkHttpClientManager(
             BuildConfig.API_KEY_YANDEX_GEOCODE,
             YandexOkHttpClientManager.LocalizationField.LOCALE,
             "ru_RU",
             context = context,
+            exceptionHandler = handler,
             connectivityChecker = NetworkConnectivityChecker,
-            responseAnnotation = null // ситуативный BaseEnvelopeWithObject подставить нельзя, а BaseEnvelope не требуется
-        ) {
-            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
-                .yandexGeocodeRetrofit().instance
-        }.build()
+        ).build()
     }
 
     @[Provides Singleton DoubleGisRoutingOkHttpClient]
     fun provideDoubleGisRoutingOkHttpClient(
         @ApplicationContext context: Context,
+        handler: CombinedApiExceptionHandler,
         cacheRepo: CacheDataStoreRepository,
     ): OkHttpClient {
         return DoubleGisOkHttpClientManager(
             context = context,
+            exceptionHandler = handler,
             connectivityChecker = NetworkConnectivityChecker,
             apiKeyProvider = {
                 runBlocking { cacheRepo.getDoubleGisRoutingApiKey() }
             }
-        ) {
-            EntryPointAccessors.fromApplication(baseApplicationContext, ModuleAppEntryPoint::class.java)
-                .doubleGisRoutingRetrofit().instance
-        }.build()
+        ).build()
     }
 }

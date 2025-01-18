@@ -22,12 +22,12 @@ import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.di.YandexSuggestRetrofit
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
 import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
+import net.maxsmr.core.network.exceptions.handler.CombinedApiExceptionHandler
 import net.maxsmr.core.network.host.HostManager
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import java.io.File
-import javax.inject.Provider
 import javax.inject.Singleton
 
 @[Module
@@ -37,77 +37,94 @@ class RetrofitModule {
     @[Provides Singleton RadarIoRetrofit]
     fun provideRadarIoRetrofit(
         @ApplicationContext context: Context,
+        exceptionHandler: CombinedApiExceptionHandler,
         @RadarIoHostManager hostManager: HostManager,
-        @RadarIoOkHttpClient okHttpClient: Provider<OkHttpClient>,
+        @RadarIoOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            File(context.cacheDir, "OkHttpCache").path,
+            File(context.cacheDir, CACHE_DIR_NAME).path,
             BuildConfig.PROTOCOL_VERSION,
-            false
+            false,
+            exceptionHandler
             // cacheManager.getDisableCache()
         ) {
-            okHttpClient.get()
+            okHttpClient
         }
     }
 
     @[Provides Singleton YandexSuggestRetrofit]
     fun provideYandexSuggestRetrofit(
         @ApplicationContext context: Context,
+        exceptionHandler: CombinedApiExceptionHandler,
         @YandexSuggestHostManager hostManager: HostManager,
-        @YandexSuggestOkHttpClient okHttpClient: Provider<OkHttpClient>,
+        @YandexSuggestOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            File(context.cacheDir, "OkHttpCache").path,
+            File(context.cacheDir, CACHE_DIR_NAME).path,
             BuildConfig.PROTOCOL_VERSION,
-            false
+            false,
+            exceptionHandler
             // cacheManager.getDisableCache()
         ) {
-            okHttpClient.get()
+            okHttpClient
         }
     }
 
     @[Provides Singleton YandexGeocodeRetrofit]
     fun provideYandexGeocodeRetrofit(
         @ApplicationContext context: Context,
+        exceptionHandler: CombinedApiExceptionHandler,
         @YandexGeocodeHostManager hostManager: HostManager,
-        @YandexGeocodeOkHttpClient okHttpClient: Provider<OkHttpClient>,
+        @YandexGeocodeOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
     ): YandexGeocodeRetrofitClient {
         return YandexGeocodeRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
-
             json,
-            File(context.cacheDir, "OkHttpCache").path,
+            File(context.cacheDir, CACHE_DIR_NAME).path,
             BuildConfig.PROTOCOL_VERSION,
-            false
+            false,
+            exceptionHandler
             // cacheManager.getDisableCache()
         ) {
-            okHttpClient.get()
+            okHttpClient
         }
     }
 
     @[Provides Singleton DoubleGisRoutingRetrofit]
     fun provideDoubleGisRoutingRetrofit(
         @ApplicationContext context: Context,
+        exceptionHandler: CombinedApiExceptionHandler,
         @DoubleGisRoutingHostManager hostManager: HostManager,
-        @DoubleGisRoutingOkHttpClient okHttpClient: Provider<OkHttpClient>,
+        @DoubleGisRoutingOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            File(context.cacheDir, "OkHttpCache").path,
+            File(context.cacheDir, CACHE_DIR_NAME).path,
             BuildConfig.PROTOCOL_VERSION,
-            false
+            false,
+            exceptionHandler
             // cacheManager.getDisableCache()
         ) {
-            okHttpClient.get()
+            okHttpClient
         }
+    }
+
+    @[Provides Singleton]
+    fun provideApiExceptionHandler(): CombinedApiExceptionHandler {
+        return CombinedApiExceptionHandler(listOf())
+    }
+
+    companion object {
+
+        private const val CACHE_DIR_NAME = "OkHttpCache"
     }
 }

@@ -3,22 +3,25 @@ package net.maxsmr.core.network.client.okhttp.interceptors
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.network.exceptions.ApiException
+import net.maxsmr.core.network.exceptions.handler.IApiExceptionHandler
 import net.maxsmr.core.network.retrofit.converters.BaseResponse
 import okhttp3.Interceptor
 import okhttp3.Response
 import retrofit2.Retrofit
 
 /**
- * Заменяет сообщение в [Response] актуальным из [BaseResponse], если есть;
- * Применяется при неуспешном ответе,
- * подставляет вручную [responseAnnotation] с целевым классом от [BaseResponse] для парсинга
+ * При неуспешном http-ответе парсит тело для оповещения [ApiException] в [handler],
+ * подставляет вручную [responseAnnotation] с целевым классом от [BaseResponse] для парсинга;
+ * Заменяет сообщение в [Response] внутренним, если есть
  */
-class ResponseErrorMessageInterceptor(
+@Deprecated("use ExceptionHandlingCallAdapterFactory")
+class HttpResponseErrorInterceptor(
+    private val handler: IApiExceptionHandler? = null,
     private val responseAnnotation: Annotation? = null,
     private val retrofitProvider: () -> Retrofit,
 ) : Interceptor {
 
-    private val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("ResponseErrorMessageInterceptor")
+    private val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("HttpResponseErrorInterceptor")
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -35,17 +38,16 @@ class ResponseErrorMessageInterceptor(
             )
             try {
                 // Читаем тело ответа в буфер, чтобы предотвратить закрытие потока
-                val baseResponse = baseConverter.convert(response.peekBody(Long.MAX_VALUE))
-                if (baseResponse != null && baseResponse.isOk) {
-                    // если в API не подразумеваются внутренние коды или он оказался 0
-                    throw ApiException(response.code, baseResponse.errorMessage)
-                }
+                baseConverter.convert(response.peekBody(Long.MAX_VALUE))
             } catch (e: Exception) {
                 // convert может выкинуть что-то отличное от ApiException
                 // (например, если в теле не json),
-                // мессадж меняем только для ApiException
                 if (e is ApiException) {
                     logger.w(e)
+                    handler?.onApiException(e)
+                    // проброс API exception не сработает,
+                    // будет исходный retrofit2.HttpException,
+                    // поэтому остаётся просто подменить сообщение в респонсе на внутреннее
                     e.message?.takeIf { it.isNotEmpty() }?.let {
                         // при наличии errorMessage - продолжаем цепочку с изменённым response
                         return response.newBuilder().message(it).build()

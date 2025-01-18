@@ -3,10 +3,8 @@ package net.maxsmr.core.network.client.okhttp
 import androidx.annotation.CallSuper
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.core.network.client.okhttp.interceptors.ExceptionHandlingInterceptor
-import net.maxsmr.core.network.client.okhttp.interceptors.ResponseErrorMessageInterceptor
+import net.maxsmr.core.network.client.okhttp.interceptors.OkHttpExceptionTransformInterceptor
 import okhttp3.OkHttpClient
-import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 
 abstract class BaseOkHttpClientManager(
@@ -21,7 +19,7 @@ abstract class BaseOkHttpClientManager(
 
     @CallSuper
     protected open fun configureBuild(builder: OkHttpClient.Builder) {
-        builder.addInterceptor(ExceptionHandlingInterceptor())
+        builder.addInterceptor(OkHttpExceptionTransformInterceptor())
     }
 
     fun build(): OkHttpClient {
