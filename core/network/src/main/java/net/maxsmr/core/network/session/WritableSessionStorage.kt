@@ -1,14 +1,12 @@
-package net.maxsmr.core.network
+package net.maxsmr.core.network.session
 
 
-interface SessionStorage {
+interface WritableSessionStorage: SessionStorage {
 
     /**
      * Переменная для сохранения сессии при стандартной авторизации (вход по логину и паролю)
      */
-    var session: String?
-
-    fun has(): Boolean = !session.isNullOrEmpty()
+    override var session: String?
 
     fun clear()
 }

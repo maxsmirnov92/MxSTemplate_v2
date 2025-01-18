@@ -1,7 +1,7 @@
 package net.maxsmr.core.network.client.okhttp.interceptors
 
-import net.maxsmr.core.network.SessionStorage
 import net.maxsmr.core.network.appendValues
+import net.maxsmr.core.network.session.SessionStorage
 import okhttp3.Interceptor
 import okhttp3.Response
 import retrofit2.Invocation

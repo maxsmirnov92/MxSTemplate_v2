@@ -5,10 +5,9 @@ import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.arch.SharedPreferenceLiveData
-import net.maxsmr.core.network.SessionStorage
+import net.maxsmr.core.network.session.WritableSessionStorage
 
-
-open class DefaultSessionStorage(private val prefs: SharedPreferences) : SessionStorage {
+open class DefaultSessionStorage(private val prefs: SharedPreferences) : WritableSessionStorage {
 
     override var session: String?
         get() {
