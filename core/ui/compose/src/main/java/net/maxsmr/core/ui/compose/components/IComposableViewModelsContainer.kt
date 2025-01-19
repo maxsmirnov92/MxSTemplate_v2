@@ -1,5 +1,6 @@
 package net.maxsmr.core.ui.compose.components
 
+import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModelProvider
 import net.maxsmr.core.android.base.BaseViewModel
 
@@ -8,13 +9,24 @@ import net.maxsmr.core.android.base.BaseViewModel
  * регистрации экранных компонентов
  * и предоставления [ViewModelProvider.Factory] для данного типа VM и аргументов по требованию
  */
-interface IScreenViewModelContainer {
+interface IComposableViewModelsContainer {
 
-    fun <VM: BaseViewModel> getFactoryForViewModel(viewModelClass: Class<VM>, args: IFactoryArgs<VM>?): ViewModelProvider.Factory?
+    fun <VM: BaseViewModel> getFactoryForViewModel(
+        viewModelClass: Class<VM>,
+        args: IFactoryArgs<VM>?
+    ): ViewModelProvider.Factory?
 
     fun <VM: BaseViewModel> getViewModelForRoute(route: String): VM?
 
-    fun onViewModelRetrieved(route: String, viewModel: BaseViewModel)
+    /**
+     * @return true, если компонент был создан
+     */
+    @Composable
+    fun registerViewModelByRoute(
+        route: String,
+        viewModel: BaseViewModel,
+        dependencies: ComposableDependencies
+    ): Boolean
 
     interface IFactoryArgs<VM: BaseViewModel>
 }

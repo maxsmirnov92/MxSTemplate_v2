@@ -7,13 +7,13 @@ import androidx.activity.compose.setContent
 import androidx.annotation.CallSuper
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.NavHostController
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +44,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
  * [BaseActivity] для использования экранов в виде Composable-функций
  */
 abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
-        ICanAskPermissions, ICanRegisterForActivityResult, IScreenViewModelContainer {
+        ICanAskPermissions, ICanRegisterForActivityResult, IComposableViewModelsContainer {
 
     override val attachedContext: Context by lazy { this }
 
@@ -52,17 +52,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
 
     protected abstract val viewModel: VM
 
-    /**
-     * Дополнительные [ScreenComponents] к основному для [VM],
-     * при наличии других расшаренных [BaseViewModel] на этой активности
-     */
-    protected open val extraActivityScreenComponents: List<ScreenComponents> = listOf()
-
-    protected val navigationActor by lazy { NavigationActorImpl(this, navController) }
-
-    protected val toastActor by lazy { ToastActorImpl(this) }
-
-    protected val snackbarHostState by lazy { SnackbarHostState() }
+    private val toastActor by lazy { ToastActorImpl(this) }
 
     private val delegates: List<IComponentDelegate<*>> by lazy {
         if (canUseComponentDelegates) {
@@ -72,16 +62,11 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         }
     }
 
-    private val activityScreenComponents: ScreenComponents by lazy {
-        ScreenComponents(
-            viewModel,
-            getAlertDelegateForActivityViewModel()
-        )
-    }
-
     private val permanentlyDeniedPermissionsHandler: BaseDeniedPermissionsHandler by lazy {
         DialogDeniedPermissionsHandler(viewModel, this@BaseComposeActivity)
     }
+
+    private val activityScreenComponents = mutableListOf<ScreenComponents>()
 
     /**
      * key - route экрана,
@@ -89,24 +74,22 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
      */
     private val screenComponentsMap = mutableMapOf<String, ScreenComponents>()
 
-    protected lateinit var scope: CoroutineScope
-        private set
-    protected lateinit var navController: NavHostController
-        private set
-
     @Composable
-    abstract fun SetScreenContent()
+    abstract fun SetScreenContent(dependencies: ComposableDependencies)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            scope = rememberCoroutineScope()
-            navController = rememberNavController()
-            registerActivityComponents()
+            ComposableDependencies(
+                rememberNavController(),
+                SnackbarHostState()
 
-            AppBackground {
-                SetScreenContent()
+            ).apply {
+                RegisterActivityComponents(this)
+                AppBackground {
+                    SetScreenContent(this)
+                }
             }
         }
 
@@ -126,6 +109,12 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         super.onDestroy()
         delegates.forEach {
             it.onDestroyed()
+        }
+        activityScreenComponents.forEach {
+            it.unregister()
+        }
+        screenComponentsMap.values.forEach {
+            it.unregister()
         }
     }
 
@@ -157,7 +146,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
 
     override fun <VM : BaseViewModel> getFactoryForViewModel(
         viewModelClass: Class<VM>,
-        args: IScreenViewModelContainer.IFactoryArgs<VM>?,
+        args: IComposableViewModelsContainer.IFactoryArgs<VM>?,
     ): ViewModelProvider.Factory? {
         return null
     }
@@ -167,30 +156,42 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         return screenComponentsMap[route]?.viewModel as? VM
     }
 
-    override fun onViewModelRetrieved(route: String, viewModel: BaseViewModel) {
+    @Composable
+    final override fun registerViewModelByRoute(
+        route: String,
+        viewModel: BaseViewModel,
+        dependencies: ComposableDependencies,
+    ): Boolean {
         // Добавление происходит динамически,
         // т.к. не по всем экранам VM известны на момент инициализации Activity
         val component = screenComponentsMap[route]
         if (component == null || component.viewModel != viewModel) {
-            component?.unregister()
-            screenComponentsMap[route] = ScreenComponents(
-                viewModel,
-                getAlertDelegateForViewModel(viewModel)
-            ).also {
-                it.register()
+            LaunchedEffect(Unit) {
+                component?.unregister()
+                screenComponentsMap[route] = ScreenComponents(
+                    viewModel,
+                    getAlertDelegateForViewModel(viewModel, dependencies)
+                ).also {
+                    it.register(dependencies.navHostController)
+                }
             }
+            return true
         }
+        return false
     }
 
-    protected open fun getAlertDelegateForActivityViewModel(): ComposeActivityAlertDelegate<VM> {
+    protected open fun getAlertDelegateForActivityViewModel(dependencies: ComposableDependencies): ComposeActivityAlertDelegate<VM> {
         return ComposeActivityAlertDelegate(
-            this@BaseComposeActivity, scope, snackbarHostState, viewModel
+            this@BaseComposeActivity, lifecycleScope, dependencies.snackbarHostState, viewModel
         )
     }
 
-    protected open fun <VM : BaseViewModel> getAlertDelegateForViewModel(viewModel: VM): ComposeActivityAlertDelegate<VM> {
+    protected open fun <VM : BaseViewModel> getAlertDelegateForViewModel(
+        viewModel: VM,
+        dependencies: ComposableDependencies,
+    ): ComposeActivityAlertDelegate<VM> {
         return ComposeActivityAlertDelegate(
-            this@BaseComposeActivity, scope, snackbarHostState, viewModel
+            this@BaseComposeActivity, lifecycleScope, dependencies.snackbarHostState, viewModel
         )
     }
 
@@ -200,11 +201,18 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     }
 
     @CallSuper
-    protected open fun handleVmEvents(viewModel: BaseViewModel): List<Job> {
-        return viewModel.handleEvents(this, navigationActor, toastActor)
+    protected open fun handleVmEvents(viewModel: BaseViewModel, navController: NavController): List<Job> {
+        return viewModel.handleEvents(this, NavigationActorImpl(this, navController), toastActor)
     }
 
     protected open fun createActivityDelegates(): List<IComponentDelegate<*>> = listOf()
+
+    /**
+     * Дополнительные [ScreenComponents] к основному для [VM],
+     * при наличии других расшаренных [BaseViewModel] на этой активности
+     */
+    protected open fun getExtraActivityScreenComponents(dependencies: ComposableDependencies): List<ScreenComponents> =
+        listOf()
 
     protected inline fun <T> LiveData<T>.observe(
         crossinline onNext: (T) -> Unit,
@@ -234,6 +242,13 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         collectEventsWithOwner(this@BaseComposeActivity, lifecycleState, action)
     }
 
+    private fun getActivityScreenComponents(dependencies: ComposableDependencies): ScreenComponents {
+        return ScreenComponents(
+            viewModel,
+            getAlertDelegateForActivityViewModel(dependencies)
+        )
+    }
+
     private fun ScreenComponents.observeNetworkConnectionHandler() {
         connectionHandler?.onNetworkStateChanged?.let { onStateChanged ->
             viewModel.connectionManager.asLiveData.observe {
@@ -250,20 +265,25 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         }
     }
 
-    private fun registerActivityComponents() {
-        mutableListOf(activityScreenComponents).apply {
-            addAll(extraActivityScreenComponents)
-            forEach {
-                it.register()
+    @Composable
+    private fun RegisterActivityComponents(dependencies: ComposableDependencies) {
+        LaunchedEffect(Unit) {
+            with(activityScreenComponents) {
+                clear()
+                add(getActivityScreenComponents(dependencies))
+                addAll(getExtraActivityScreenComponents(dependencies))
+                forEach {
+                    it.register(dependencies.navHostController)
+                }
             }
         }
     }
 
-    private fun ScreenComponents.register() {
+    private fun ScreenComponents.register(navController: NavController) {
         // FIXME по остальным нет возможности отписаться
         observeNetworkConnectionHandler()
         handleAlerts(viewModel, alertDelegate)
-        disposables.addAll(handleVmEvents(viewModel))
+        disposables.addAll(handleVmEvents(viewModel, navController))
     }
 
     private fun ScreenComponents.unregister() {
