@@ -12,6 +12,10 @@ fun <T> AbstractSavedStateViewModelFactory(
     savedStateRegistryOwner: SavedStateRegistryOwner,
     create: (handle: SavedStateHandle) -> T,
 ) = object : AbstractSavedStateViewModelFactory(savedStateRegistryOwner, null) {
-    override fun <T : ViewModel> create(key: String, modelClass: Class<T>, handle: SavedStateHandle) =
-        create.invoke(handle) as T
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(key: String, modelClass: Class<T>, handle: SavedStateHandle): T {
+        savedStateRegistryOwner.savedStateRegistry.unregisterSavedStateProvider(key)
+        return create.invoke(handle) as T
+    }
 }
