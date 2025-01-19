@@ -1,0 +1,10 @@
+<resources>
+    <string name="vk_news_client_navigation_item_main">Главный</string>
+    <string name="vk_news_client_navigation_item_favorite">Избранное</string>
+    <string name="vk_news_client_navigation_item_profile">Профиль</string>
+    <string name="vk_news_client_login_button">Логин</string>
+    <string name="vk_news_client_auth_cancelled">Авторизация отменена</string>
+    <string name="vk_news_client_logout_failed_format">Разлогин завершился с ошибкой: %s</string>
+    <string name="vk_news_client_access_token_expired">Токен авторизации истёк, обновление</string>
+    <string name="vk_news_client_access_token_refreshed">Токен авторизации был успешно обновлён</string>
+</resources>

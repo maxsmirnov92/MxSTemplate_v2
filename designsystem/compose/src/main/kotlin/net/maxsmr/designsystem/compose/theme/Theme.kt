@@ -10,7 +10,7 @@ import net.maxsmr.designsystem.compose.theme.AppColors.Black500
 import net.maxsmr.designsystem.compose.theme.AppColors.Teal200
 
 private val DarkColorPalette = darkColorScheme(
-//    primary = Purple500,
+//    primary = Black900,
 //    primaryVariant = Purple700,
     secondary = Teal200,
     background = Color.Black,
@@ -22,7 +22,7 @@ private val DarkColorPalette = darkColorScheme(
 )
 
 private val LightColorPalette = lightColorScheme(
-//    primary = Purple500,
+//    primary = Color.White,
 //    primaryVariant = Purple700,
     secondary = Teal200,
     background = Color.White,

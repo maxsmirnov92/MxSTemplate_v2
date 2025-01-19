@@ -5,6 +5,7 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.ui.components.BaseApplication
 import net.maxsmr.mxstemplate.logger.TimberLogger
+import com.vk.id.VKID
 
 @HiltAndroidApp
 class App : BaseApplication() {
@@ -32,6 +33,8 @@ class App : BaseApplication() {
 //                WebView.setDataDirectorySuffix("chromeWebView")
 //            }
 //        }
+
+        VKID.init(this)
     }
 
     private fun initLogging() {

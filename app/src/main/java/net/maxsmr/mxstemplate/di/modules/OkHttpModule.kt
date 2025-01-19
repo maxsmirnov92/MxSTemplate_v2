@@ -7,7 +7,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.runBlocking
-import net.maxsmr.core.android.network.NetworkConnectivityChecker
 import net.maxsmr.core.di.DoubleGisRoutingOkHttpClient
 import net.maxsmr.core.di.DownloadHttpLoggingInterceptor
 import net.maxsmr.core.di.DownloaderOkHttpClient
@@ -15,16 +14,20 @@ import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
 import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.ResponseBodyCache
+import net.maxsmr.core.di.SessionStorageType
+import net.maxsmr.core.di.VkOkHttpClient
 import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.network.client.okhttp.DoubleGisOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.DownloadOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.RadarIoOkHttpClientManager
+import net.maxsmr.core.network.client.okhttp.VkOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.YandexOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.BodyCachingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
+import net.maxsmr.core.network.session.SessionStorage
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.Interceptor
@@ -130,6 +133,22 @@ class OkHttpModule {
             apiKeyProvider = {
                 runBlocking { cacheRepo.getDoubleGisRoutingApiKey() }
             }
+        ).build()
+    }
+
+    @[Provides Singleton VkOkHttpClient]
+    fun provideVkOkHttpClient(
+        @net.maxsmr.core.di.SessionStorage(SessionStorageType.VK) sessionStorage: SessionStorage,
+        apiLoggingInterceptor: ApiLoggingInterceptor,
+        cachingInterceptor: BodyCachingInterceptor,
+        connectionInterceptor: NetworkConnectionInterceptor,
+        cacheRepo: CacheDataStoreRepository,
+    ): OkHttpClient {
+        return VkOkHttpClientManager(
+            apiLoggingInterceptor = apiLoggingInterceptor,
+            cachingInterceptor = cachingInterceptor,
+            connectionInterceptor = connectionInterceptor,
+            sessionStorage = sessionStorage,
         ).build()
     }
 

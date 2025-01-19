@@ -103,6 +103,9 @@ cameraX = "1.4.2"
 googleMlKit = "19.0.1"
 huaweiMl = "3.11.0.301"
 
+vkId = "2.2.2"
+vkIdManifestPlaceholders = "1.1.0"
+
 [libraries]
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }
@@ -256,6 +259,9 @@ google-mlkit-text-recognition = { group = "com.google.android.gms", name = "play
 huawei-ml-computer-vision-ocr = { group = "com.huawei.hms", name = "ml-computer-vision-ocr", version.ref = "huaweiMl" }
 huawei-ml-computer-vision-ocr-latin-model = { group = "com.huawei.hms", name = "ml-computer-vision-ocr-latin-model", version.ref = "huaweiMl" }
 
+vk-id = { group = "com.vk.id", name = "vkid", version.ref = "vkId" }
+vk-onetap-compose = { group = "com.vk.id", name = "onetap-compose", version.ref = "vkId" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradle" }
 android-library = { id = "com.android.library", version.ref = "androidGradle" }
@@ -272,6 +278,7 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.1.0" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 navigation-safeargs-kotlin = { id = "androidx.navigation.safeargs.kotlin", version.ref = "androidxNavigation" }
 room = { id = "androidx.room", version.ref = "room" }
+vk-id-manifest-placeholders = { id = "vkid.manifest.placeholders", version.ref = "vkIdManifestPlaceholders" }
 
 # Плагины проекта
 mxs-template-application = { id = "mxs.template.application", version = "unspecified" }

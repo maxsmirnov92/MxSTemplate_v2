@@ -5,15 +5,19 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import net.maxsmr.core.di.DoubleGisRoutingRetrofit
+import net.maxsmr.core.di.VkRetrofit
 import net.maxsmr.core.di.YandexGeocodeRetrofit
 import net.maxsmr.core.di.YandexSuggestRetrofit
 import net.maxsmr.core.network.api.DoubleGisRoutingDataSource
 import net.maxsmr.core.network.api.GeocodeDataSource
 import net.maxsmr.core.network.api.RoutingDataSource
 import net.maxsmr.core.network.api.SuggestDataSource
+import net.maxsmr.core.network.api.VkNewsDataSource
+import net.maxsmr.core.network.api.VkNewsDataSourceImpl
 import net.maxsmr.core.network.api.YandexGeocodeDataSource
 import net.maxsmr.core.network.api.YandexSuggestDataSource
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
+import net.maxsmr.core.network.client.retrofit.VkRetrofitClient
 import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
 import javax.inject.Singleton
 
@@ -38,4 +42,10 @@ class DataSourceModule {
     fun provideRoutingDataSource(
         @DoubleGisRoutingRetrofit retrofit: CommonRetrofitClient,
     ): RoutingDataSource = DoubleGisRoutingDataSource(retrofit)
+
+    @Provides
+    @Singleton
+    fun provideVkNewsDataSource(
+        @VkRetrofit retrofit: VkRetrofitClient,
+    ): VkNewsDataSource = VkNewsDataSourceImpl(retrofit)
 }

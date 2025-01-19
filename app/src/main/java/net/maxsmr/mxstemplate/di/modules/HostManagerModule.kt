@@ -7,6 +7,7 @@ import dagger.hilt.components.SingletonComponent
 import net.maxsmr.mxstemplate.manager.host.DoubleGisRoutingHostManager
 import net.maxsmr.core.network.host.HostManager
 import net.maxsmr.mxstemplate.manager.host.RadarIoHostManager
+import net.maxsmr.mxstemplate.manager.host.VkHostManager
 import net.maxsmr.mxstemplate.manager.host.YandexGeocodeHostManager
 import net.maxsmr.mxstemplate.manager.host.YandexSuggestHostManager
 import javax.inject.Singleton
@@ -26,4 +27,7 @@ class HostManagerModule {
 
     @[Provides Singleton net.maxsmr.core.di.DoubleGisRoutingHostManager]
     fun provideDoubleGisRoutingHostManager(): HostManager = DoubleGisRoutingHostManager()
+
+    @[Provides Singleton net.maxsmr.core.di.VkHostManager]
+    fun provideVkHostManager(): HostManager = VkHostManager()
 }

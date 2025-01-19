@@ -42,7 +42,7 @@
 
         <!--  при  adjustPan проблемы с пустым пространством при отсутствующей клавиатуре остаются   -->
         <activity
-            android:name=".ui.activity.MainBottomActivity"
+            android:name="net.maxsmr.vk_news_client.ui.presentation.main.MainActivity"
             android:exported="true"
             android:launchMode="singleInstance"
             android:taskAffinity=""

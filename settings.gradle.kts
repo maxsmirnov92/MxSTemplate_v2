@@ -6,6 +6,7 @@ pluginManagement {
         gradlePluginPortal()
 
         maven { url = uri("https://developer.huawei.com/repo/") }
+        maven { url = uri("https://artifactory-external.vkpartner.ru/artifactory/vkid-sdk-android") }
     }
 }
 dependencyResolutionManagement {
@@ -22,6 +23,7 @@ dependencyResolutionManagement {
         maven { url = uri("https://developer.huawei.com/repo/") }
         maven { url = uri("https://jitpack.io") }
         maven { url = uri("https://artifactory-external.vkpartner.ru/artifactory/maven") }
+        maven { url = uri("https://artifactory-external.vkpartner.ru/artifactory/vkid-sdk-android") }
     }
 }
 
@@ -57,3 +59,5 @@ include(":feature:camera")
 include(":feature:demo")
 include(":feature:showcase:base")
 include(":feature:showcase:settings")
+include(":feature:vk_news_client:data")
+include(":feature:vk_news_client:ui")

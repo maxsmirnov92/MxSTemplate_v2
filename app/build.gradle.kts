@@ -24,6 +24,7 @@ plugins {
     alias(libs.plugins.mxs.template.room)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.navigation.safeargs.kotlin)
+    alias(libs.plugins.vk.id.manifest.placeholders)
 }
 
 val gradleTaskNames: List<String> = gradle.startParameter.taskNames
@@ -211,6 +212,8 @@ dependencies {
 
     implementation(project(":feature:rate"))
     implementation(project(":feature:about"))
+
+    implementation(project(":feature:vk_news_client:ui"))
 
     implementation(project(":feature:showcase:settings"))
 

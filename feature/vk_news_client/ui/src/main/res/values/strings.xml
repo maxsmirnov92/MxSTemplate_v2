@@ -1,0 +1,11 @@
+<resources>
+    <string name="vk_news_client_feature_name" translatable="false">Vk News Client</string>
+    <string name="vk_news_client_navigation_item_main">Main</string>
+    <string name="vk_news_client_navigation_item_favorite">Favorite</string>
+    <string name="vk_news_client_navigation_item_profile">Profile</string>
+    <string name="vk_news_client_login_button">Login</string>
+    <string name="vk_news_client_auth_cancelled">Authorization cancelled</string>
+    <string name="vk_news_client_logout_failed_format">Logout failed: %s</string>
+    <string name="vk_news_client_access_token_expired">Access token expired, refreshing</string>
+    <string name="vk_news_client_access_token_refreshed">Access token refreshed successfully</string>
+</resources>

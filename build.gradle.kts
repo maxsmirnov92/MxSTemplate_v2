@@ -1,3 +1,6 @@
+import java.util.Properties
+
+
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
     alias(libs.plugins.android.application) apply false
@@ -13,6 +16,17 @@ plugins {
     alias(libs.plugins.navigation.safeargs.kotlin) apply false
     alias(libs.plugins.room) apply false
     alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.vk.id.manifest.placeholders) apply true
+}
+
+vkidManifestPlaceholders {
+    val vkProperties = Properties()
+    vkProperties.load(File(rootDir, "vk.properties").inputStream())
+    // Добавьте плейсхолдеры сокращенным способом. Например, vkidRedirectHost будет "vk.com", а vkidRedirectScheme будет "vk$clientId".
+    init(
+        clientId = vkProperties.getProperty("clientId"),
+        clientSecret = vkProperties.getProperty("clientSecret"),
+    )
 }
 
 buildscript {

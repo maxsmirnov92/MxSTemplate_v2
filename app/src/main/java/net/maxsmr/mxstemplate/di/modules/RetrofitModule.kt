@@ -13,6 +13,7 @@ import net.maxsmr.core.di.RadarIoHostManager
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.RadarIoRetrofit
 import net.maxsmr.core.di.ResponseBodyCache
+import net.maxsmr.core.di.VkRetrofit
 import net.maxsmr.core.di.YandexGeocodeHostManager
 import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexGeocodeRetrofit
@@ -21,6 +22,7 @@ import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.di.YandexSuggestRetrofit
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
 import net.maxsmr.core.network.client.retrofit.RetrofitClient
+import net.maxsmr.core.network.client.retrofit.VkRetrofitClient
 import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
 import net.maxsmr.core.network.exceptions.handler.CombinedCallExceptionHandler
 import net.maxsmr.core.network.host.HostManager
@@ -52,6 +54,7 @@ class RetrofitModule {
             cacheManager.disableCache,
             cache,
             exceptionHandler,
+            // cacheManager.getDisableCache()
         ) {
             okHttpClient
         }
@@ -111,6 +114,28 @@ class RetrofitModule {
         @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
+            hostManager.baseUrl.toHttpUrl(),
+            json,
+            cacheManager.dirPath,
+            BuildConfig.PROTOCOL_VERSION,
+            cacheManager.disableCache,
+            cache,
+            exceptionHandler
+        ) {
+            okHttpClient
+        }
+    }
+
+    @[Provides Singleton VkRetrofit]
+    fun provideVkRetrofit(
+        cacheManager: CacheManager,
+        exceptionHandler: CombinedCallExceptionHandler,
+        @YandexGeocodeHostManager hostManager: HostManager,
+        @YandexGeocodeOkHttpClient okHttpClient: OkHttpClient,
+        @BaseJson json: Json,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
+    ): VkRetrofitClient {
+        return VkRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
             cacheManager.dirPath,

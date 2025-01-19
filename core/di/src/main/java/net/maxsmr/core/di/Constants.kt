@@ -37,6 +37,14 @@ enum class DataStoreType(val dataStoreName: String) {
 }
 
 @Qualifier
+@Retention
+annotation class SessionStorage(val type: SessionStorageType)
+
+enum class SessionStorageType {
+    VK
+}
+
+@Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class BaseJson
 
@@ -55,6 +63,10 @@ annotation class YandexGeocodeHostManager
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DoubleGisRoutingHostManager
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class VkHostManager
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
@@ -79,6 +91,10 @@ annotation class YandexGeocodeOkHttpClient
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DoubleGisRoutingOkHttpClient
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class VkOkHttpClient
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
@@ -107,3 +123,7 @@ annotation class YandexGeocodeRetrofit
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DoubleGisRoutingRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class VkRetrofit
