@@ -240,6 +240,8 @@ dependencies {
 
     implementation(project(":feature:showcase:settings"))
 
+    implementation(project(":feature:compose_sample:ui"))
+
     //android
 //    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.exifinterface)

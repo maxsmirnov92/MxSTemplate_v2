@@ -57,3 +57,5 @@ include(":feature:camera")
 include(":feature:demo")
 include(":feature:showcase:base")
 include(":feature:showcase:settings")
+
+include(":feature:compose_sample:ui")
