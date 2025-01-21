@@ -3,9 +3,9 @@
         <!--        <item name="android:windowSplashScreenAnimatedIcon">-->
         <!--            @drawable/ic_splashscreen_logo_sample_vector_animated-->
         <!--        </item>-->
-        <item name="android:windowSplashScreenAnimatedIcon">
-            @drawable/ic_splashscreen_logo_animated
-        </item>
+<!--        <item name="android:windowSplashScreenAnimatedIcon">-->
+<!--            @drawable/ic_splashscreen_logo_animated-->
+<!--        </item>-->
         <item name="android:windowSplashScreenBackground">@color/splashscreenBackground</item>
         <item name="android:windowSplashScreenAnimationDuration">2147483647</item>
         <item name="android:windowSplashScreenBrandingImage">
