@@ -1,4 +1,4 @@
-package net.maxsmr.core.ui.view.alert
+package net.maxsmr.core.ui.view.alert.delegate
 
 import androidx.fragment.app.Fragment
 import net.maxsmr.core.android.base.BaseViewModel

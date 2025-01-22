@@ -1,7 +1,7 @@
-package net.maxsmr.core.android.base.connection
+package net.maxsmr.core.ui.alert
 
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
+import net.maxsmr.core.ui.alert.representation.AlertRepresentation
 
 /**
  * Обработчик эвентов о смене состояния сети
@@ -11,14 +11,15 @@ import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
  * @param alertsMapper функция, определяющая способ отображения алерта при **отсутствии сети**,
  * либо null, если фрагмент не заинтересован в этом
  */
-class ConnectionHandler private constructor(
+class ConnectionHandler<AR : AlertRepresentation> private constructor(
     val onNetworkStateChanged: ((Boolean) -> Unit)? = null,
-    val alertsMapper: ((Alert) -> AlertRepresentation?)? = null,
+    val alertsMapper: ((Alert) -> AR?)? = null,
 ) {
 
-    class Builder {
+    class Builder<AR : AlertRepresentation> {
+
         private var onNetworkStateChanged: ((Boolean) -> Unit)? = null
-        private var alertsMapper: ((Alert) -> AlertRepresentation?)? = null
+        private var alertsMapper: ((Alert) -> AR?)? = null
 
         /**
          * Задает способ обработки изменения состояния сети.
@@ -35,7 +36,7 @@ class ConnectionHandler private constructor(
          *
          * @param handler лямбда, вызываемая при **пропаже** интернет соединения
          */
-        fun mapAlerts(handler: (Alert) -> AlertRepresentation?) = apply {
+        fun mapAlerts(handler: (Alert) -> AR?) = apply {
             alertsMapper = handler
         }
 

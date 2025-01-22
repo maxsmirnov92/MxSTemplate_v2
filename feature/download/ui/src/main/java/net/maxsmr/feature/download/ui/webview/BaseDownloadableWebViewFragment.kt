@@ -14,7 +14,8 @@ import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.handleAlerts
 import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.fields.bindHintError
-import net.maxsmr.core.ui.view.alert.representation.DialogRepresentation
+import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.DownloadsFragmentAlertDelegate
 import net.maxsmr.feature.download.ui.databinding.DialogSaveAsBinding
@@ -37,7 +38,7 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
         }
     }
 
-    override fun handleAlerts(delegate: BaseAlertDelegate<VM>) {
+    override fun handleAlerts(delegate: BaseAlertDelegate<VM, StandardAlertRepresentation>) {
         super.handleAlerts(delegate)
         delegate.bindAlertDialog(BaseDownloadableWebViewModel.DIALOG_TAG_SAVE_AS) {
             @Suppress("UNCHECKED_CAST")
@@ -75,7 +76,7 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
                 }
             }
 
-            DialogRepresentation.Builder(requireContext(), it)
+            DialogViewAlertRepresentation.Builder(requireContext(), it)
                 .setCustomView(dialogBinding.root) {
                     viewModel.canStartDownload.observe {isEnabled ->
                         (this as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = isEnabled

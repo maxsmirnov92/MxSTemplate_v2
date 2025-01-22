@@ -16,21 +16,20 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AlertDialog
 import net.maxsmr.commonutils.ISpanInfo
-import net.maxsmr.commonutils.createSpanText
-import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
-import net.maxsmr.core.ui.view.alert.representation.DialogRepresentation.Builder.MultiChoiceAnswersData.Companion.isNotEmpty
+import net.maxsmr.core.ui.alert.representation.BaseDialogAlertRepresentationBuilder
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation.Builder.MultiChoiceAnswersData.Companion.isNotEmpty
 
-fun Dialog.toRepresentation(): DialogRepresentation = DialogRepresentation(this)
+fun Dialog.toRepresentation(): DialogViewAlertRepresentation = DialogViewAlertRepresentation(this)
 
-class DialogRepresentation(
+class DialogViewAlertRepresentation(
     private val dialog: Dialog,
-) : AlertRepresentation {
+) : StandardAlertRepresentation {
 
-    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("DialogRepresentation")
+    private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("DialogViewAlertRepresentation")
 
     override fun show() {
         if (dialog.isShowing) return
@@ -47,9 +46,9 @@ class DialogRepresentation(
     }
 
     class Builder(
-        val context: Context,
-        val alert: Alert,
-    ) {
+        private val context: Context,
+        alert: Alert,
+    ): BaseDialogAlertRepresentationBuilder<DialogViewAlertRepresentation>(alert) {
 
         @StyleRes
         private var themeResId: Int? = null
@@ -60,25 +59,8 @@ class DialogRepresentation(
         private var customViewResId: Int? = null
         private var customViewConfigBlock: (Dialog.() -> Unit)? = null
 
-        private var titleSpans: List<ISpanInfo> = emptyList()
-        private var messageSpans: List<ISpanInfo> = emptyList()
-
-        private var cancelable = true
-        private var onCancel: (() -> Unit)? = null
-
-        private var positiveAnswer: Alert.Answer? = null
-        private var onPositiveClick: (() -> Unit)? = null
-
-        private var negativeAnswer: Alert.Answer? = null
-        private var onNegativeClick: (() -> Unit)? = null
-
-        private var neutralAnswer: Alert.Answer? = null
-        private var onNeutralClick: (() -> Unit)? = null
-
         private var multiChoiceAnswers: MultiChoiceAnswersData? = null
         private var onMultiChoiceClick: ((Int) -> Unit)? = null
-
-        private var onDismiss: (() -> Unit)? = null
 
         fun setThemeResId(@StyleRes themeResId: Int) = apply {
             this.themeResId = themeResId
@@ -136,7 +118,7 @@ class DialogRepresentation(
             this.onDismiss = onDismiss
         }
 
-        fun build(): DialogRepresentation {
+        override fun build(): DialogViewAlertRepresentation {
             val hasAnyAnswer = positiveAnswer != null
                     || negativeAnswer != null
                     || neutralAnswer != null
@@ -220,9 +202,7 @@ class DialogRepresentation(
                 .toRepresentation()
         }
 
-        private fun TextMessage.format(context: Context, spans: List<ISpanInfo>): CharSequence {
-            return get(context).createSpanText(*spans.toTypedArray())
-        }
+
 
         data class MultiChoiceAnswersData(
             val answers: List<Alert.Answer> = emptyList(),

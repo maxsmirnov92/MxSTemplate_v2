@@ -3,7 +3,7 @@ package net.maxsmr.feature.rate.alert.view
 import androidx.fragment.app.Fragment
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.ui.view.alert.representation.toRepresentation
-import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.feature.rate.BaseRateAppComponentDelegate
 import net.maxsmr.feature.rate.BaseRateAppComponentDelegate.Companion.DIALOG_TAG_RATE_APP
 import net.maxsmr.feature.rate.alert.view.dialog.RateDialog

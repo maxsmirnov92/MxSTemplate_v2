@@ -1,13 +1,12 @@
 package net.maxsmr.core.ui.alert.representation
 
 import android.widget.Toast
-import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
 
 internal fun Toast.toRepresentation() = ToastRepresentation(this)
 
 internal class ToastRepresentation(
     private val toast: Toast,
-) : AlertRepresentation {
+) : StandardAlertRepresentation {
 
     private var wasShown = false
 

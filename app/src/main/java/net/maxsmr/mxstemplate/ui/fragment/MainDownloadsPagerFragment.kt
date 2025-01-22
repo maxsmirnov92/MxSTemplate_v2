@@ -6,7 +6,7 @@ import net.maxsmr.core.di.DI_NAME_VERSION_CODE
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_IN_APP_UPDATES
-import net.maxsmr.core.ui.view.alert.CombinedViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.CombinedViewFragmentAlertDelegate
 import net.maxsmr.feature.about.ReleaseNotesComponentDelegate
 import net.maxsmr.feature.about.alert.view.ReleaseNotesFragmentAlertDelegate
 import net.maxsmr.feature.download.data.DownloadsViewModel

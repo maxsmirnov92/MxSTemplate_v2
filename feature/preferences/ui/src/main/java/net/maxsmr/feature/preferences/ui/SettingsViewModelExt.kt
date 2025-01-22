@@ -10,7 +10,7 @@ import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 
 fun BaseViewModel.doOnBatteryOptimizationWithPostNotificationsAsk(
-    fragment: BaseVmFragment<*>,
+    fragment: BaseVmFragment<*, *>,
     cacheRepo: CacheDataStoreRepository,
     settingsRepo: SettingsDataStoreRepository,
     targetAction: () -> Unit

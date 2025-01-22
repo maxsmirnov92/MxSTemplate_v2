@@ -1,21 +1,25 @@
-package net.maxsmr.core.ui.compose.alert
+package net.maxsmr.core.ui.compose.alert.delegate
 
+import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.compose.material.SnackbarHostState
+import androidx.compose.runtime.Composable
+import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.CoroutineScope
 import net.maxsmr.core.android.base.BaseViewModel
 
-class CombinedComposeActivityAlertDelegate<VM : BaseViewModel>(
-    private val delegates: List<ComposeActivityAlertDelegate<VM>>,
+class CombinedComposableActivityAlertDelegate<VM : BaseViewModel>(
+    private val delegates: List<ComposableActivityAlertDelegate<VM>>,
     activity: ComponentActivity,
+    viewModel: VM,
     scope: CoroutineScope,
     state: SnackbarHostState,
-    viewModel: VM,
-) : ComposeActivityAlertDelegate<VM>(activity, scope, state, viewModel) {
+) : ComposableActivityAlertDelegate<VM>(activity, viewModel, scope, state) {
 
-    override fun handleCommonAlertDialogs() {
+    @Composable
+    override fun HandleCommonAlertDialogs() {
         delegates.forEach {
-            it.handleCommonAlertDialogs()
+            it.HandleCommonAlertDialogs()
         }
     }
 

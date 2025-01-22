@@ -2,7 +2,7 @@ package net.maxsmr.feature.about.alert.view
 
 import androidx.fragment.app.Fragment
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asCommonWrapBottomSheetDialog
 import net.maxsmr.feature.about.ReleaseNotesComponentDelegate.Companion.DIALOG_TAG_RELEASE_NOTES
 

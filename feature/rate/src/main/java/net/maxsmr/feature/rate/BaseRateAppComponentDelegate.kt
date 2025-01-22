@@ -2,7 +2,6 @@ package net.maxsmr.feature.rate
 
 import android.app.Activity
 import android.content.Context
-import androidx.activity.ComponentActivity
 import androidx.annotation.CallSuper
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
@@ -10,9 +9,6 @@ import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.ui.components.IComponentDelegate
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
-import net.maxsmr.core.ui.view.alert.representation.toRepresentation
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.rate.alert.view.dialog.RateDialog
 import net.maxsmr.mobile_services.IMobileServicesAvailability

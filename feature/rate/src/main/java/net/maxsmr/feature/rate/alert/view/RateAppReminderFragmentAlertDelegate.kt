@@ -2,7 +2,7 @@ package net.maxsmr.feature.rate.alert.view
 
 import androidx.fragment.app.Fragment
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.feature.rate.RateAppReminderComponentDelegate
 import net.maxsmr.feature.rate.RateAppReminderComponentDelegate.Companion.DIALOG_TAG_RATE_APP_REMINDER

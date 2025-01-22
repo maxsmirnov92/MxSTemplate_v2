@@ -3,7 +3,7 @@ package net.maxsmr.mxstemplate.ui.fragment
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.ui.components.IComponentDelegate
-import net.maxsmr.core.ui.view.alert.CombinedViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.CombinedViewFragmentAlertDelegate
 import net.maxsmr.feature.about.alert.view.ReleaseNotesFragmentAlertDelegate
 import net.maxsmr.feature.preferences.ui.SettingsFragment
 import net.maxsmr.feature.preferences.ui.SettingsFragmentAlertDelegate

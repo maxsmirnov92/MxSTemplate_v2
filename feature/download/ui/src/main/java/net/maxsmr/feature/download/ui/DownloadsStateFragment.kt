@@ -32,7 +32,7 @@ import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
 import net.maxsmr.commonutils.media.path
 import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.commonutils.wrapChooserWithInitial
-import net.maxsmr.core.android.base.connection.ConnectionHandler
+import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
@@ -40,7 +40,7 @@ import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.ui.view.alert.representation.asSnackbar
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
-import net.maxsmr.core.ui.view.alert.representation.asSnackbar
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
@@ -53,11 +53,11 @@ import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
+class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel, StandardAlertRepresentation>(),
         DownloadListener, BaseDraggableDelegationAdapter.ItemsEventsListener<DownloadInfoAdapterData>,
         SearchView.OnQueryTextListener {
 
-    override val connectionHandler: ConnectionHandler = ConnectionHandler.Builder().mapAlerts {
+    override val connectionHandler = ConnectionHandler.Builder<StandardAlertRepresentation>().mapAlerts {
         it.asSnackbar(requireView())
     }.build()
 

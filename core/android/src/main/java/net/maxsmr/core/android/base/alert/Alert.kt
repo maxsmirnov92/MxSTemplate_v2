@@ -51,11 +51,11 @@ class Alert private constructor(
      *
      * @param title текст ответа на вопрос
      */
-    class Answer(
+    data class Answer(
         val title: TextMessage,
         val tag: Any? = null,
         val contentDescription: TextMessage? = null,
-        val isChecked: Boolean? = null
+        val isChecked: Boolean? = null,
     ) {
 
         /**

@@ -27,6 +27,7 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.view.setShowProgress
 import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.CameraXController
@@ -48,7 +49,7 @@ import javax.inject.Inject
 import kotlin.math.roundToInt
 
 @AndroidEntryPoint
-class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionViewModel>(), ErrorCallbacks {
+class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionViewModel, StandardAlertRepresentation>(), ErrorCallbacks {
 
     override val layoutId: Int = R.layout.fragment_camera_x
 

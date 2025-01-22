@@ -5,7 +5,7 @@ import androidx.compose.material.SnackbarHostState
 import androidx.compose.material.SnackbarResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 
 internal fun SnackbarHostState.toRepresentation(
     scope: CoroutineScope,
@@ -29,15 +29,17 @@ internal class SnackbarRepresentation(
     private val action: String,
     private val duration: SnackbarDuration,
     private val onResult: (SnackbarResult) -> Unit,
-) : AlertRepresentation {
+) : StandardAlertRepresentation {
 
     override fun show() {
         scope.launch {
-            onResult(snackbar.showSnackbar(
-                message = message,
-                actionLabel = action,
-                duration = duration
-            ))
+            onResult(
+                snackbar.showSnackbar(
+                    message = message,
+                    actionLabel = action,
+                    duration = duration
+                )
+            )
         }
     }
 

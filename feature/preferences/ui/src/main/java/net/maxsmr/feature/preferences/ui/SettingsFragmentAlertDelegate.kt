@@ -1,7 +1,7 @@
 package net.maxsmr.feature.preferences.ui
 
 import androidx.fragment.app.Fragment
-import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.feature.preferences.ui.SettingsViewModel.Companion.DIALOG_TAG_CONFIRM_EXIT
 

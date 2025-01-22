@@ -26,7 +26,6 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.resettableLazy
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
@@ -35,7 +34,9 @@ import net.maxsmr.core.android.coroutines.repeatOnLifecycle
 import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
 import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.core.ui.R
+import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.alert.representation.AlertRepresentation
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.handleAlerts
@@ -49,7 +50,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 /**
  * Фрагмент с конкретным типом VM и базовыми методами для подписки
  */
-abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
+abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fragment(),
         ICanAskPermissions, ICanRegisterForActivityResult {
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
@@ -71,13 +72,13 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
      *
      * @see BaseViewModel.connectionManager
      */
-    protected open val connectionHandler: ConnectionHandler? = null
+    protected open val connectionHandler: ConnectionHandler<AR>? = null
 
     protected val navigationActor by lazy { NavigationActorImpl(this) }
 
     protected val toastActor by lazy { ToastActorImpl(requireContext()) }
 
-    private val alertDelegate: ResettableLazy<BaseAlertDelegate<VM>> = resettableLazy {
+    private val alertDelegate: ResettableLazy<BaseAlertDelegate<VM, AR>> = resettableLazy {
         createAlertDelegate()
     }
 
@@ -98,7 +99,7 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
         DialogDeniedPermissionsHandler(viewModel, requireActivity())
     }
 
-    protected abstract fun createAlertDelegate(): BaseAlertDelegate<VM>
+    protected abstract fun createAlertDelegate(): BaseAlertDelegate<VM, AR>
 
     final override fun onCreateView(
         inflater: LayoutInflater,
@@ -148,7 +149,7 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
     )
 
     @CallSuper
-    protected open fun handleAlerts(delegate: BaseAlertDelegate<VM>) {
+    protected open fun handleAlerts(delegate: BaseAlertDelegate<VM, AR>) {
         delegate.handleAlerts()
     }
 

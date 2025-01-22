@@ -1,7 +1,7 @@
 package net.maxsmr.core.ui.view.location
 
 import androidx.fragment.app.Fragment
-import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asOkDialog
 import net.maxsmr.core.ui.view.alert.representation.asYesNoDialog
 import net.maxsmr.core.ui.location.LocationViewModel

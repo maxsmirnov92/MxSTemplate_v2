@@ -79,17 +79,17 @@ abstract class BaseViewModel(
     /**
      * Очередь для показа диалогов
      */
-    open val dialogQueue: AlertQueue by lazy { AlertQueue() }
+    val dialogQueue: AlertQueue by lazy { AlertQueue() }
 
     /**
      * Очередь сообщений для показа снекбаров
      */
-    open val snackbarQueue: AlertQueue by lazy { AlertQueue() }
+    val snackbarQueue: AlertQueue by lazy { AlertQueue() }
 
     /**
      * Очередь сообщений для показа тостов
      */
-    open val toastQueue: AlertQueue by lazy { AlertQueue() }
+    val toastQueue: AlertQueue by lazy { AlertQueue() }
 
     /**
      * Определяет логику обработки событий состояния сети. Переопределите, если требуется обработка.
@@ -321,6 +321,16 @@ abstract class BaseViewModel(
         } ?: targetAction.invoke(true)
     }
 
+    protected fun AlertQueue.toggle(
+        add: Boolean,
+        tag: String,
+        message: TextMessage,
+    ) {
+        toggle(add, tag) {
+            setMessage(message)
+        }
+    }
+
     /**
      * Добавляет, либо удаляет диалог с тегом [tag] из очереди в зависимости от параметра [add]
      */
@@ -338,11 +348,18 @@ abstract class BaseViewModel(
 
     protected fun <T> LiveData<ILoadState<T>>.bindProgress(
         tag: String = DIALOG_TAG_PROGRESS,
-        @StringRes messageRes: Int? = null,
+        message: TextMessage,
+    ) = bindProgress(tag) {
+        setMessage(message)
+    }
+
+    protected fun <T> LiveData<ILoadState<T>>.bindProgress(
+        tag: String = DIALOG_TAG_PROGRESS,
+        builderConfig: (AlertDialogBuilder.() -> Unit)? = null,
     ): LiveData<ILoadState<T>> =
         doOnNext {
             if (it?.isLoading == true) {
-                AlertDialogBuilder(tag).setMessage(messageRes).build()
+                AlertDialogBuilder(tag).apply { builderConfig?.invoke(this) }.build()
             } else {
                 hideDialog(tag)
             }

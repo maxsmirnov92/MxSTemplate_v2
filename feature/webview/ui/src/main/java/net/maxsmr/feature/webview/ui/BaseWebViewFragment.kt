@@ -20,7 +20,7 @@ import net.maxsmr.commonutils.gui.loadDataCompat
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.LoadState.Companion.copyOf
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.base.connection.ConnectionHandler
+import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.URL_PAGE_BLANK
 import net.maxsmr.core.network.exceptions.HttpProtocolException
@@ -28,8 +28,9 @@ import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.isResponseOk
 import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.core.network.toPairs
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
 import net.maxsmr.feature.webview.data.client.ProgressWebChromeClient
@@ -38,7 +39,7 @@ import net.maxsmr.feature.webview.data.client.exception.WebResourceException
 import okhttp3.Headers.Companion.toHeaders
 import java.nio.charset.Charset
 
-abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragment<VM>() {
+abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragment<VM, StandardAlertRepresentation>() {
 
     abstract val webView: WebView
 
@@ -48,7 +49,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
 
     abstract val errorContainer: View?
 
-    override val connectionHandler: ConnectionHandler = ConnectionHandler.Builder()
+    override val connectionHandler = ConnectionHandler.Builder<StandardAlertRepresentation>()
         .onStateChanged {
             if (it && shouldReloadAfterConnectionError) {
                 val data = viewModel.currentWebViewData.value

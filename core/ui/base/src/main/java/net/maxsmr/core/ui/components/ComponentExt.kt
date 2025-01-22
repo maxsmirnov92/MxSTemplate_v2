@@ -8,7 +8,7 @@ import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 
-fun BaseAlertDelegate<*>.handleAlerts() {
+fun BaseAlertDelegate<*, *>.handleAlerts() {
     handleCommonAlertDialogs()
     handleSnackbarAlerts()
     handleToastAlerts()

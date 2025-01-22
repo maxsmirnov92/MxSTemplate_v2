@@ -4,12 +4,11 @@ import android.content.Context
 import android.widget.Toast
 import net.maxsmr.core.android.base.actions.ToastExtraData
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
 import net.maxsmr.core.ui.message.toast.createToast
 
 fun Alert.asToast(
     context: Context,
-): AlertRepresentation {
+): StandardAlertRepresentation {
     val message = title ?: message
     val extraData = extraData as ToastExtraData?
 

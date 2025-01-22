@@ -47,9 +47,6 @@ fun EmptyErrorContainer(
         Spacer(modifier = Modifier.size(10.dp))
         if (errorButtonResId != null) {
             TextButton(
-                colors = ButtonDefaults.buttonColors(
-                    contentColor = MaterialTheme.colors.onPrimary
-                ),
                 onClick = {
                     onClick?.invoke()
                 }) {

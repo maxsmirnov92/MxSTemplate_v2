@@ -7,19 +7,18 @@ import androidx.activity.compose.setContent
 import androidx.annotation.CallSuper
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.connection.ConnectionHandler
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.coroutines.collectEventsWithOwner
@@ -27,12 +26,14 @@ import net.maxsmr.core.android.coroutines.collectWithOwner
 import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
 import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.core.ui.R
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.alert.ConnectionHandler
+import net.maxsmr.core.ui.alert.representation.AlertRepresentation
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
-import net.maxsmr.core.ui.components.handleAlerts
 import net.maxsmr.core.ui.components.handleEvents
-import net.maxsmr.core.ui.compose.alert.ComposeActivityAlertDelegate
+import net.maxsmr.core.ui.compose.alert.delegate.ComposableActivityAlertDelegate
+import net.maxsmr.core.ui.compose.alert.representation.ComposableAlertRepresentation
 import net.maxsmr.core.ui.message.toast.ToastActorImpl
 import net.maxsmr.core.ui.navigation.NavigationActorImpl
 import net.maxsmr.designsystem.compose.component.AppBackground
@@ -84,7 +85,6 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
             ComposableDependencies(
                 rememberNavController(),
                 SnackbarHostState()
-
             ).apply {
                 RegisterActivityComponents(this)
                 AppBackground {
@@ -166,38 +166,59 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         // т.к. не по всем экранам VM известны на момент инициализации Activity
         val component = screenComponentsMap[route]
         if (component == null || component.viewModel != viewModel) {
-            LaunchedEffect(Unit) {
-                component?.unregister()
-                screenComponentsMap[route] = ScreenComponents(
-                    viewModel,
-                    getAlertDelegateForViewModel(viewModel, dependencies)
-                ).also {
-                    it.register(dependencies.navHostController)
-                }
+            component?.unregister()
+            screenComponentsMap[route] = ScreenComponents(
+                viewModel,
+                getAlertDelegateForViewModel(viewModel, lifecycleScope, dependencies.snackbarHostState),
+                getConnectionHandlerForViewModel(viewModel, lifecycleScope, dependencies.snackbarHostState)
+            ).also {
+                it.Register(dependencies.navHostController)
             }
             return true
         }
         return false
     }
 
-    protected open fun getAlertDelegateForActivityViewModel(dependencies: ComposableDependencies): ComposeActivityAlertDelegate<VM> {
-        return ComposeActivityAlertDelegate(
-            this@BaseComposeActivity, lifecycleScope, dependencies.snackbarHostState, viewModel
+    protected open fun getAlertDelegateForActivityViewModel(scope: CoroutineScope, hostState: SnackbarHostState): ComposableActivityAlertDelegate<VM> {
+        return ComposableActivityAlertDelegate(
+            this@BaseComposeActivity, viewModel, scope, hostState
         )
+    }
+
+    protected open fun getConnectionHandlerForActivityViewModel(scope: CoroutineScope, hostState: SnackbarHostState): ConnectionHandler<AlertRepresentation>? {
+        return null
     }
 
     protected open fun <VM : BaseViewModel> getAlertDelegateForViewModel(
         viewModel: VM,
-        dependencies: ComposableDependencies,
-    ): ComposeActivityAlertDelegate<VM> {
-        return ComposeActivityAlertDelegate(
-            this@BaseComposeActivity, lifecycleScope, dependencies.snackbarHostState, viewModel
+        scope: CoroutineScope,
+        hostState: SnackbarHostState
+    ): ComposableActivityAlertDelegate<VM> {
+        return ComposableActivityAlertDelegate(
+            this@BaseComposeActivity, viewModel, scope, hostState
         )
     }
 
+    protected open fun <VM : BaseViewModel> getConnectionHandlerForViewModel(
+        viewModel: VM,
+        scope: CoroutineScope,
+        hostState: SnackbarHostState
+    ): ConnectionHandler<AlertRepresentation>? {
+        return getConnectionHandlerForActivityViewModel(scope, hostState)
+    }
+
+    @Composable
     @CallSuper
-    protected open fun handleAlerts(viewModel: BaseViewModel, delegate: BaseAlertDelegate<*>) {
-        delegate.handleAlerts()
+    protected open fun HandleComposableAlerts(
+        viewModel: BaseViewModel,
+        delegate: ComposableActivityAlertDelegate<*>,
+    ) {
+        delegate.HandleCommonAlertDialogs()
+    }
+
+    protected open fun handleStandardAlerts(viewModel: BaseViewModel, delegate: ComposableActivityAlertDelegate<*>) {
+        delegate.handleSnackbarAlerts()
+        delegate.handleToastAlerts()
     }
 
     @CallSuper
@@ -245,21 +266,39 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     private fun getActivityScreenComponents(dependencies: ComposableDependencies): ScreenComponents {
         return ScreenComponents(
             viewModel,
-            getAlertDelegateForActivityViewModel(dependencies)
+            getAlertDelegateForActivityViewModel(lifecycleScope, dependencies.snackbarHostState),
+            getConnectionHandlerForActivityViewModel(lifecycleScope, dependencies.snackbarHostState)
         )
     }
 
-    private fun ScreenComponents.observeNetworkConnectionHandler() {
+    private fun ScreenComponents.observeNetworkConnectionHandlerState() {
         connectionHandler?.onNetworkStateChanged?.let { onStateChanged ->
             viewModel.connectionManager.asLiveData.observe {
                 onStateChanged(it)
             }
         }
+    }
+
+    @Composable
+    private fun ScreenComponents.ObserveNetworkConnectionHandlerAlerts() {
         connectionHandler?.alertsMapper?.let { mapper ->
             viewModel.connectionManager.queue?.let {
                 // queue разные: snackbarQueue вместо dialogQueue
-                alertDelegate.bindAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
-                    mapper(alert)
+                alertDelegate.BindComposableAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
+                    val result = mapper(alert)
+                    if (result is ComposableAlertRepresentation) {
+                        return@BindComposableAlert result
+                    } else {
+                        null
+                    }
+                }
+                alertDelegate.bindStandardAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) {  alert ->
+                    val result = mapper(alert)
+                    if (result is StandardAlertRepresentation) {
+                        return@bindStandardAlert result
+                    } else {
+                        null
+                    }
                 }
             }
         }
@@ -267,22 +306,23 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
 
     @Composable
     private fun RegisterActivityComponents(dependencies: ComposableDependencies) {
-        LaunchedEffect(Unit) {
-            with(activityScreenComponents) {
-                clear()
-                add(getActivityScreenComponents(dependencies))
-                addAll(getExtraActivityScreenComponents(dependencies))
-                forEach {
-                    it.register(dependencies.navHostController)
-                }
+        with(activityScreenComponents) {
+            clear()
+            add(getActivityScreenComponents(dependencies))
+            addAll(getExtraActivityScreenComponents(dependencies))
+            forEach {
+                it.Register(dependencies.navHostController)
             }
         }
     }
 
-    private fun ScreenComponents.register(navController: NavController) {
+    @Composable
+    private fun ScreenComponents.Register(navController: NavController) {
         // FIXME по остальным нет возможности отписаться
-        observeNetworkConnectionHandler()
-        handleAlerts(viewModel, alertDelegate)
+        ObserveNetworkConnectionHandlerAlerts()
+        observeNetworkConnectionHandlerState()
+        HandleComposableAlerts(viewModel, alertDelegate)
+        handleStandardAlerts(viewModel, alertDelegate)
         disposables.addAll(handleVmEvents(viewModel, navController))
     }
 
@@ -296,8 +336,8 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
 
     protected class ScreenComponents(
         val viewModel: BaseViewModel,
-        val alertDelegate: ComposeActivityAlertDelegate<*>,
-        val connectionHandler: ConnectionHandler? = null,
+        val alertDelegate: ComposableActivityAlertDelegate<*>,
+        val connectionHandler: ConnectionHandler<AlertRepresentation>? = null,
     ) {
 
         val disposables = mutableListOf<Job>()

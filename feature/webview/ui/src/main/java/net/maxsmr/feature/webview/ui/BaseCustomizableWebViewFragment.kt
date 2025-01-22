@@ -32,7 +32,8 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.isAnyResourceScheme
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
-import net.maxsmr.core.ui.view.alert.representation.DialogRepresentation
+import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
@@ -99,7 +100,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         }
     }
 
-    override fun handleAlerts(delegate: BaseAlertDelegate<VM>) {
+    override fun handleAlerts(delegate: BaseAlertDelegate<VM, StandardAlertRepresentation>) {
         super.handleAlerts(delegate)
         delegate.bindAlertDialog(BaseCustomizableWebViewModel.DIALOG_TAG_OPEN_URL) {
             val positiveAnswer =
@@ -137,7 +138,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
                 viewModel.urlField.value = EMPTY_STRING
             }
 
-            DialogRepresentation.Builder(requireContext(), it)
+            DialogViewAlertRepresentation.Builder(requireContext(), it)
                 .setCustomView(dialogBinding.root) {
                     viewModel.urlField.errorLive.observe { error ->
                         (this as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = error == null

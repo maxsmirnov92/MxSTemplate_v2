@@ -7,11 +7,10 @@ import androidx.core.content.ContextCompat
 import com.google.android.material.snackbar.Snackbar
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
-import net.maxsmr.core.ui.R
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.view.message.snackbar.createSnackbar
 
-fun Alert.asSnackbar(view: View): AlertRepresentation {
+fun Alert.asSnackbar(view: View): StandardAlertRepresentation {
     val message = title ?: message
     val extraData = extraData as SnackbarExtraData?
 

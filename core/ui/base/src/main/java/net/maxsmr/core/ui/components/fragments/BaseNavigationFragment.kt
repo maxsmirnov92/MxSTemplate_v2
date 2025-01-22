@@ -9,6 +9,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.navigation.fragment.findNavController
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.ui.R
+import net.maxsmr.core.ui.alert.representation.AlertRepresentation
 
 
 interface INavigationHost {
@@ -16,7 +17,7 @@ interface INavigationHost {
     /**
      * Вызов необходим на каждом фрагменте графа с Toolbar в разметке
      */
-    fun registerToolbarWithNavigation(toolbar: Toolbar, fragment: BaseNavigationFragment<*>)
+    fun registerToolbarWithNavigation(toolbar: Toolbar, fragment: BaseNavigationFragment<*, *>)
 }
 
 // TODO ?
@@ -25,7 +26,7 @@ interface INavigationDestination {
     fun onUserInteraction() {}
 }
 
-abstract class BaseNavigationFragment<VM : BaseViewModel> : BaseMenuFragment<VM>(),
+abstract class BaseNavigationFragment<VM : BaseViewModel, AR: AlertRepresentation> : BaseMenuFragment<VM, AR>(),
         INavigationDestination {
 
     private var navigationHost: INavigationHost? = null

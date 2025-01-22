@@ -1,11 +1,14 @@
-package net.maxsmr.core.android.base.alert
+package net.maxsmr.core.ui.view.alert
 
 import androidx.annotation.MainThread
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
-import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
+import net.maxsmr.core.ui.alert.AlertHandleInfoMap
+import net.maxsmr.core.ui.alert.doHandleStandard
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 
 /**
  * Обработчик алертов на стороне UI (фрагментов/активити).
@@ -14,12 +17,10 @@ import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
  * Также при попытке установки фрагмента в качестве LifecycleOwner переключается на его ViewLifecycleOwner.
  */
 @MainThread
-class AlertHandler(
-    lifecycleOwner: LifecycleOwner,
-) : DefaultLifecycleObserver {
+class ViewAlertHandler(lifecycleOwner: LifecycleOwner) : DefaultLifecycleObserver {
 
     private val representationsMap =
-        mutableMapOf<Pair<AlertQueue, String>, MutableList<Pair<Alert, AlertRepresentation>>>()
+        mutableMapOf<Pair<AlertQueue, String>, MutableList<Pair<Alert, StandardAlertRepresentation>>>()
 
     private var deferredHandles = mutableListOf<DeferredHandle>()
 
@@ -44,7 +45,7 @@ class AlertHandler(
                     override fun onCreate(owner: LifecycleOwner) {
                         lifecycleOwner.viewLifecycleOwnerLiveData.observe(lifecycleOwner) { viewLifecycleOwner ->
                             //получили ViewLifecycleOwner, повторяем отложенные handle
-                            this@AlertHandler.owner = viewLifecycleOwner
+                            this@ViewAlertHandler.owner = viewLifecycleOwner
                             viewLifecycleOwner.handleDeferred()
                         }
                     }
@@ -55,7 +56,7 @@ class AlertHandler(
         }
     }
 
-    fun handle(queue: AlertQueue, tag: String, representationFactory: (Alert) -> AlertRepresentation?) {
+    fun handle(queue: AlertQueue, tag: String, representationFactory: (Alert) -> StandardAlertRepresentation?) {
         val owner = this.owner
         if (owner == null) {
             //Пока не можем обработать, запоминаем для обработки позднее
@@ -73,34 +74,18 @@ class AlertHandler(
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun LifecycleOwner.doHandle(
         queue: AlertQueue,
         tag: String,
-        representationFactory: (Alert) -> AlertRepresentation?,
+        representationFactory: (Alert) -> StandardAlertRepresentation?,
     ) {
-        queue.asLiveData(tag).observe(this) { alertInfo ->
-            val key = Pair(queue, tag)
-            val representations = representationsMap[key] ?: mutableListOf()
-            if (alertInfo == null || alertInfo.isReplaceable) {
-                // верхний при данном тэге нульный
-                // или текущий alert предполагает удаление остальных с тем же тэгом
-                representations.forEach {
-                    it.second.hide()
-                }
-                representations.clear()
-            }
-            val newAlert = alertInfo?.alert
-            if (!representations.any { it.first === newAlert }) {
-                // в observer возможно попадание с последним алертом,
-                // по которому уже был вызван show в данном AlertHandler;
-                // проверка по ссылке, т.к. содержимое может совпадать
-                newAlert?.let(representationFactory)?.also {
-                    representations.add(Pair(newAlert, it))
-                    it.show()
-                }
-            }
-            representationsMap[key] = representations
-        }
+        (representationsMap as AlertHandleInfoMap).doHandleStandard(
+            this,
+            queue,
+            tag,
+            representationFactory
+        )
     }
 
     override fun onDestroy(owner: LifecycleOwner) {
@@ -115,6 +100,6 @@ class AlertHandler(
     private class DeferredHandle(
         val queue: AlertQueue,
         val tag: String,
-        val representationFactory: (Alert) -> AlertRepresentation?,
+        val representationFactory: (Alert) -> StandardAlertRepresentation?,
     )
 }

@@ -28,13 +28,13 @@ import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.network.Method
-import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.fields.bindValue
 import net.maxsmr.core.ui.fields.bindValueWithState
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.view.content.pick.chooser.HandlerContentPickerBuilder
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapter
@@ -44,7 +44,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), HeaderListener {
+class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel, StandardAlertRepresentation>(), HeaderListener {
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -68,7 +68,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(), He
 
     private val headerInfoAdapter by lazy { HeaderInfoAdapter(this) }
 
-    private val contentPicker: ContentPicker<BaseVmFragment<*>> = HandlerContentPickerBuilder<BaseVmFragment<*>>(this)
+    private val contentPicker: ContentPicker<DownloadsParamsFragment> = HandlerContentPickerBuilder(this)
         .addRequest(
             PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_BODY)
                 .addSafParams(SafPickerParams.any())

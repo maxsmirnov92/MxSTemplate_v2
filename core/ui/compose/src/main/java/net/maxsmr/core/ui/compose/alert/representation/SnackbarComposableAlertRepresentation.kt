@@ -8,13 +8,13 @@ import kotlinx.coroutines.CoroutineScope
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.actions.SnackbarExtraData.SnackbarLength
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.base.alert.representation.AlertRepresentation
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 
 fun Alert.asSnackbar(
     context: Context,
     scope: CoroutineScope,
     state: SnackbarHostState,
-): AlertRepresentation {
+): StandardAlertRepresentation {
     val textMessage = title ?: message
     val extraData = extraData as SnackbarExtraData?
 

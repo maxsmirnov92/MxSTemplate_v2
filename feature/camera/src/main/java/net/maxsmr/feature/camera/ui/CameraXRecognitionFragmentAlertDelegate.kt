@@ -1,7 +1,7 @@
 package net.maxsmr.feature.camera.ui
 
 import androidx.fragment.app.Fragment
-import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asOkDialog
 import net.maxsmr.feature.camera.ui.CameraXRecognitionViewModel.Companion.DIALOG_TAG_CAPTURE_RECOGNITION_RESULT
 

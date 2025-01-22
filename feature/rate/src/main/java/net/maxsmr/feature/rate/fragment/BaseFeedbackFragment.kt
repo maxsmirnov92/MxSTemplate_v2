@@ -6,13 +6,14 @@ import androidx.annotation.CallSuper
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.viewBinding
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.fields.bindHintError
-import net.maxsmr.core.ui.view.alert.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.feature.rate.R
 import net.maxsmr.feature.rate.databinding.FragmentFeedbackBinding
 
-abstract class BaseFeedbackFragment<VM : BaseFeedbackViewModel>: BaseVmFragment<VM>() {
+abstract class BaseFeedbackFragment<VM : BaseFeedbackViewModel>: BaseVmFragment<VM, StandardAlertRepresentation>() {
 
     override val layoutId: Int = R.layout.fragment_feedback
 

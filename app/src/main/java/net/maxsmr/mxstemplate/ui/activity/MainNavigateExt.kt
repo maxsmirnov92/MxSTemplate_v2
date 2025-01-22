@@ -19,7 +19,7 @@ internal fun NavController.navigateWithGraphFragmentsFromCaller(
     callerClass: Class<*>,
     lifecycleScope: LifecycleCoroutineScope,
     settingsRepo: SettingsDataStoreRepository,
-    currentNavFragment: BaseNavigationFragment<*>?,
+    currentNavFragment: BaseNavigationFragment<*, *>?,
 ) {
     if (callerClass.isAssignableFrom(DownloadService::class.java)) {
         navigateWithGraphFragments(
@@ -35,7 +35,7 @@ internal fun NavController.navigateWithGraphFragments(
     item: MenuItem,
     lifecycleScope: LifecycleCoroutineScope,
     settingsRepo: SettingsDataStoreRepository,
-    currentNavFragment: BaseNavigationFragment<*>?,
+    currentNavFragment: BaseNavigationFragment<*, *>?,
 ): Boolean {
     return navigateWithGraphFragments(
         item.itemId,
@@ -49,7 +49,7 @@ internal fun NavController.navigateWithGraphFragments(
     @IdRes destinationId: Int,
     lifecycleScope: LifecycleCoroutineScope,
     settingsRepo: SettingsDataStoreRepository,
-    currentNavFragment: BaseNavigationFragment<*>?,
+    currentNavFragment: BaseNavigationFragment<*, *>?,
 ): Boolean {
     val targetAction = {
         navigateWithGraphFragments(destinationId, lifecycleScope, settingsRepo)

@@ -1,12 +1,14 @@
-package net.maxsmr.core.ui.view.alert.representation
+package net.maxsmr.core.ui.compose.alert.representation
 
 import android.content.Context
 import android.content.DialogInterface
+import androidx.annotation.StringRes
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.ui.window.DialogProperties
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.ui.view.alert.dialog.CommonWrapBottomSheetDialog
-import net.maxsmr.core.ui.view.alert.dialog.ProgressDialog
 
-//Файл содержит различные варианты отображения [Alert] в UI.
+// Файл содержит различные варианты отображения [Alert] в Compose.
 
 @JvmOverloads
 fun Alert.asOkDialog(
@@ -14,14 +16,14 @@ fun Alert.asOkDialog(
     cancelable: Boolean = true,
     onCancel: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
-): DialogRepresentation {
+): ComposableAlertRepresentation {
     check(title != null || message != null) {
         "Alert must contain title or message for being displayed as ok dialog"
     }
     check(answers.size == 1) {
         "Alert must contain exactly 1 answer for being displayed as ok dialog"
     }
-    return DialogRepresentation.Builder(context, this)
+    return DialogComposableAlertRepresentationBuilder(context, this)
         .setCancelable(cancelable)
         .setOnCancelListener { onCancel?.invoke() }
         .setPositiveButton(answers[0]) { onClick?.invoke() }
@@ -31,35 +33,34 @@ fun Alert.asOkDialog(
 @JvmOverloads
 fun Alert.asMultiChoiceDialog(
     context: Context,
+    @StringRes confirmTextResId: Int = android.R.string.ok,
     cancelable: Boolean = true,
     isRadioButton: Boolean = false,
     onCancel: (() -> Unit)? = null,
-    onClick: ((index: Int) -> Unit)? = null,
-): DialogRepresentation {
+    onClick: ((answers: List<Alert.Answer>) -> Unit)? = null,
+): ComposableAlertRepresentation {
     check(title != null || message != null) {
         "Alert must contain title or message for being displayed as multi choice dialog"
     }
     check(answers.size > 1) {
         "Alert must contain more then 1 answer for being displayed as multi choice dialog"
     }
-    return DialogRepresentation.Builder(context, this)
+    return DialogComposableAlertRepresentationBuilder(context, this)
         .setCancelable(cancelable)
         .setOnCancelListener { onCancel?.invoke() }
         .setMultiChoiceAnswers(
-            DialogRepresentation.Builder.MultiChoiceAnswersData(
+            DialogComposableAlertRepresentationBuilder.MultiChoiceAnswersData(
                 answers,
-                if (isRadioButton) {
-                    net.maxsmr.core.ui.view.R.layout.item_dialog_choice_radio
-                } else {
-                    net.maxsmr.core.ui.view.R.layout.item_dialog_choice
-                },
-                if (isRadioButton) {
-                    net.maxsmr.core.ui.view.R.id.rbItem
-                } else {
-                    net.maxsmr.core.ui.view.R.id.tvItem
-                },
-            ), onClick
-        )
+                isRadioButton,
+            ),
+            onClick
+        ).apply {
+            if (!isRadioButton || answers.any { !it.closeAfterSelect }) {
+                setPositiveButton(
+                    Alert.Answer(confirmTextResId)
+                )
+            }
+        }
         .build()
 }
 
@@ -69,7 +70,7 @@ fun Alert.asYesNoDialog(
     cancelable: Boolean = true,
     onCancel: (() -> Unit)? = null,
     onClick: ((yes: Boolean) -> Unit)? = null,
-): DialogRepresentation {
+): ComposableAlertRepresentation {
     check(title != null || message != null) {
         "Alert must contain title or message for being displayed as yes/no dialog"
     }
@@ -77,7 +78,7 @@ fun Alert.asYesNoDialog(
         "Alert must contain exactly 2 answers for being displayed as yes/no dialog"
     }
 
-    return DialogRepresentation.Builder(context, this)
+    return DialogComposableAlertRepresentationBuilder(context, this)
         .setCancelable(cancelable)
         .setOnCancelListener { onCancel?.invoke() }
         .setPositiveButton(answers[0]) { onClick?.invoke(true) }
@@ -91,14 +92,14 @@ fun Alert.asYesNoNeutralDialog(
     cancelable: Boolean = true,
     onCancel: (() -> Unit)? = null,
     onClick: ((Int) -> Unit)? = null,
-): DialogRepresentation {
+): ComposableAlertRepresentation {
     check(title != null || message != null) {
         "Alert must contain title or message for being displayed as yes/no/neutral dialog"
     }
     check(answers.size == 3) {
         "Alert must contain exactly 3 answers for being displayed as yes/no/neutral dialog"
     }
-    return DialogRepresentation.Builder(context, this)
+    return DialogComposableAlertRepresentationBuilder(context, this)
         .setCancelable(cancelable)
         .setOnCancelListener { onCancel?.invoke() }
         .setPositiveButton(answers[0]) { onClick?.invoke(DialogInterface.BUTTON_POSITIVE) }
@@ -107,22 +108,31 @@ fun Alert.asYesNoNeutralDialog(
         .build()
 }
 
+
 @JvmOverloads
 fun Alert.asProgressDialog(
-    context: Context,
     cancelable: Boolean,
-    dimBackground: Boolean = !cancelable,
     onCancel: (() -> Unit)? = null,
-): DialogRepresentation {
+): ComposableAlertRepresentation {
     check(answers.isEmpty()) {
         "Alert must contain no answers for being displayed as progress dialog"
     }
-    return ProgressDialog(context, this, cancelable, dimBackground, onCancel).toRepresentation()
-}
+    return ComposableAlertRepresentation {
+        AlertDialog(
+            onDismissRequest = {
+                close()
+                onCancel?.invoke()
+            },
+            text = {
+                CircularProgressIndicator()
+            },
+            confirmButton = {
 
-fun Alert.asCommonWrapBottomSheetDialog(
-    context: Context,
-    cancelable: Boolean = true,
-): DialogRepresentation {
-    return CommonWrapBottomSheetDialog(context, this, cancelable).toRepresentation()
+            },
+            properties = DialogProperties(
+                dismissOnBackPress = cancelable,
+                dismissOnClickOutside = cancelable
+            )
+        )
+    }
 }
