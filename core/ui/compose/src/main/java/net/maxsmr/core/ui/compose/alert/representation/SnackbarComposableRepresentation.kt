@@ -1,8 +1,8 @@
 package net.maxsmr.core.ui.compose.alert.representation
 
-import androidx.compose.material.SnackbarDuration
-import androidx.compose.material.SnackbarHostState
-import androidx.compose.material.SnackbarResult
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation

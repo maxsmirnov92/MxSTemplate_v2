@@ -19,9 +19,6 @@ abstract class BaseDialogAlertRepresentationBuilder<AR: AlertRepresentation>(pro
 
     protected var negativeAnswer: Alert.Answer? = null
     protected var onNegativeClick: (() -> Unit)? = null
-
-    protected var neutralAnswer: Alert.Answer? = null
-    protected var onNeutralClick: (() -> Unit)? = null
     
     protected var onDismiss: (() -> Unit)? = null
 

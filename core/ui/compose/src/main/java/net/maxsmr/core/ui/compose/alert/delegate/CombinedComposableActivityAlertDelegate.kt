@@ -1,10 +1,8 @@
 package net.maxsmr.core.ui.compose.alert.delegate
 
-import android.content.Context
 import androidx.activity.ComponentActivity
-import androidx.compose.material.SnackbarHostState
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.CoroutineScope
 import net.maxsmr.core.android.base.BaseViewModel
 

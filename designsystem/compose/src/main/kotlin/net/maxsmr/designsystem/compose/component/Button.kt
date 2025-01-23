@@ -2,9 +2,9 @@ package net.maxsmr.designsystem.compose.component
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -21,10 +21,10 @@ fun ButtonSmallRounded(
     Button(
         shape = RoundedCornerShape(60.dp),
         colors = ButtonDefaults.buttonColors(
-            backgroundColor = AppColors.Black10
+            containerColor = AppColors.Black10
         ),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
-        elevation = ButtonDefaults.elevation(
+        elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 0.dp
         ),
         onClick = onClick,

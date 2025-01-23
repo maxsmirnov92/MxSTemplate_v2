@@ -17,7 +17,7 @@ class NavigationState(
 //        if (route != navHostController.currentDestination?.route) {
         navHostController.navigate(route) {
             // при переходах удаление экранов из бэкстэка до Home или того, что на нём
-            popUpTo(navHostController.graph.findStartDestination().id) {
+            popUpTo(navHostController.graph.findStartDestination().id) { // navHostController.graph.startDestinationId
                 saveState = true
             }
             launchSingleTop = true

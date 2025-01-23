@@ -22,9 +22,10 @@ class AndroidLibraryComposeConventionPlugin : Plugin<Project> {
                 add("implementation", platform(bom))
                 add("androidTestImplementation", platform(bom))
 
-                //Material Design 2
-                add("implementation", libs.findLibrary("androidx.compose.material").get())
+                // Material Design
+                add("implementation", libs.findLibrary("androidx.compose.material3").get())
                 add("implementation", libs.findLibrary("androidx.compose.material.icons.extended").get())
+//                add("implementation", libs.findLibrary("accompanist.navigation.material").get())
 
                 add("implementation", libs.findLibrary("androidx.constraintlayout.compose").get())
                 add("implementation", libs.findLibrary("androidx.activity.compose").get())

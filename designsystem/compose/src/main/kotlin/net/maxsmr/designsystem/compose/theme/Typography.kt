@@ -1,6 +1,6 @@
 package net.maxsmr.designsystem.compose.theme
 
-import androidx.compose.material.Typography
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
@@ -19,19 +19,7 @@ val robotoFontFamily = FontFamily(
 
 // Set of Material typography styles to start with
 val Typography = Typography(
-    body1 = bodyLgRegular
-    /* Other default text styles to override
-    button = TextStyle(
-        fontFamily = robotoFontFamily,
-        fontWeight = FontWeight.W500,
-        fontSize = 14.sp
-    ),
-    caption = TextStyle(
-        fontFamily = robotoFontFamily,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp
-    )
-    */
+    // TODO
 )
 
 @Immutable

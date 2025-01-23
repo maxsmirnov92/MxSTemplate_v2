@@ -3,8 +3,16 @@ package net.maxsmr.core.ui.compose.alert.representation
 import android.content.Context
 import android.content.DialogInterface
 import androidx.annotation.StringRes
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import net.maxsmr.core.android.base.alert.Alert
 
@@ -104,27 +112,50 @@ fun Alert.asYesNoNeutralDialog(
         .setOnCancelListener { onCancel?.invoke() }
         .setPositiveButton(answers[0]) { onClick?.invoke(DialogInterface.BUTTON_POSITIVE) }
         .setNegativeButton(answers[1]) { onClick?.invoke(DialogInterface.BUTTON_NEGATIVE) }
-        .setNeutralButton(answers[2]) { onClick?.invoke(DialogInterface.BUTTON_NEUTRAL) }
+//        .setNeutralButton(answers[2]) { onClick?.invoke(DialogInterface.BUTTON_NEUTRAL) }
         .build()
 }
 
 
 @JvmOverloads
 fun Alert.asProgressDialog(
+    context: Context,
     cancelable: Boolean,
     onCancel: (() -> Unit)? = null,
 ): ComposableAlertRepresentation {
     check(answers.isEmpty()) {
         "Alert must contain no answers for being displayed as progress dialog"
     }
+    val title = title?.get(context)?.toString().orEmpty()
+    val message = message?.get(context)?.toString().orEmpty()
     return ComposableAlertRepresentation {
         AlertDialog(
             onDismissRequest = {
                 close()
                 onCancel?.invoke()
             },
+            title = if (title.isNotEmpty()) {
+                {
+                    Text(title)
+                }
+            } else {
+                null
+            },
             text = {
-                CircularProgressIndicator()
+                if (message.isNotEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.size(10.dp))
+                        Text(
+                            text = message,
+                        )
+                    }
+                } else {
+                    CircularProgressIndicator()
+                }
             },
             confirmButton = {
 

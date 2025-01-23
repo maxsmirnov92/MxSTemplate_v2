@@ -71,11 +71,12 @@ hiltNavigationCompose = '1.2.0'
 androidxTestExtJunit = "1.2.1"
 
 #androidxCompose = '1.7.6'
-androidxComposeBom = "2024.12.01"
+androidxComposeBom = "2025.01.00"
 androidxConstraintLayoutCompose = "1.1.0"
-androidxActivityCompose = '1.9.3'
+androidxActivityCompose = '1.10.0'
 androidxNavigationCompose = '2.8.5'
 androidxLifecycleViewModelCompose = '2.8.7'
+#accompanistNavigationMaterial = '0.36.0'
 
 gridlayout = "1.0.0"
 r8 = "8.5.35"
@@ -137,7 +138,7 @@ androidx-datastore-preferences-core = { group = "androidx.datastore", name = "da
 androidx-startup-runtime = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidxAppStartup" }
 
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "androidxComposeBom" }
-androidx-compose-material = { group = "androidx.compose.material", name = "material" }
+androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-ui-viewbinding = { group = "androidx.compose.ui", name = "ui-viewbinding" }
@@ -210,6 +211,7 @@ flowlayout = { group = "com.nex3z", name = "flow-layout", version.ref = "flowLay
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 glide-compose = { group = "com.github.bumptech.glide", name = "compose", version.ref = "glideCompose" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+#accompanist-navigation-material = { group = "com.google.accompanist", name = "accompanist-navigation-material", version.ref = "accompanistNavigationMaterial" }
 #orbit-viewmodel = { group = "org.orbit-mvi", name = "orbit-viewmodel", version.ref = "orbit" }
 #orbit-compose = { group = "org.orbit-mvi", name = "orbit-compose", version.ref = "orbit" }
 stfalcon-imageviewer = { group = "com.github.stfalcon-studio", name = "StfalconImageViewer", version.ref = "stfalconImageViewer" }

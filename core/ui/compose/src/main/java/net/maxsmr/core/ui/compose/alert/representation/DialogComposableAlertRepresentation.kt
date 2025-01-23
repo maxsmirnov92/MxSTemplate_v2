@@ -4,20 +4,14 @@ import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import net.maxsmr.commonutils.ISpanInfo
@@ -63,11 +57,6 @@ class DialogComposableAlertRepresentationBuilder(
         onNegativeClick = onClick
     }
 
-    fun setNeutralButton(answer: Alert.Answer, onClick: (() -> Unit)? = null) = apply {
-        neutralAnswer = answer
-        onNeutralClick = onClick
-    }
-
     fun setMultiChoiceAnswers(
         answers: MultiChoiceAnswersData,
         onClick: ((answers: List<Alert.Answer>) -> Unit)? = null,
@@ -81,9 +70,9 @@ class DialogComposableAlertRepresentationBuilder(
     }
 
     override fun build(): ComposableAlertRepresentation {
+        // TODO neutral button
         val hasAnyAnswer = positiveAnswer != null
                 || negativeAnswer != null
-                || neutralAnswer != null
                 || multiChoiceAnswers.isNotEmpty()
         check(hasAnyAnswer || cancelable) {
             "Cannot create non cancelable dialog without answers. How to dismiss it?"
@@ -146,37 +135,26 @@ class DialogComposableAlertRepresentationBuilder(
 
                     }
                 },
+                confirmButton = {
+                    positiveAnswer?.AnswerTextButton {
+                        val checkedAnswers = multiChoiceAnswers?.answers.orEmpty().filter { it.isChecked == true }
+                        if (checkedAnswers.isNotEmpty()) {
+                            checkedAnswers.forEach {
+                                it.select?.invoke()
+                            }
+                            onMultiChoiceClick?.invoke(checkedAnswers)
+                        }
+                        onPositiveClick?.invoke()
+                    }
+                },
+                dismissButton = {
+                    negativeAnswer?.AnswerTextButton(onNegativeClick)
+                },
                 properties = DialogProperties(
                     dismissOnBackPress = cancelable,
                     dismissOnClickOutside = cancelable
                 ),
-                buttons = {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                vertical = 4.dp,
-                                horizontal = 6.dp,
-                            ),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        positiveAnswer?.AnswerTextButton {
-                            val checkedAnswers = multiChoiceAnswers?.answers.orEmpty().filter { it.isChecked == true }
-                            if (checkedAnswers.isNotEmpty()) {
-                                checkedAnswers.forEach {
-                                    it.select?.invoke()
-                                }
-                                onMultiChoiceClick?.invoke(checkedAnswers)
-                            }
-                            onPositiveClick?.invoke()
-                        }
-                        negativeAnswer?.AnswerTextButton(onNegativeClick)
-                        neutralAnswer?.let {
-                            Spacer(Modifier.size(20.dp))
-                            it.AnswerTextButton(onNeutralClick)
-                        }
-                    }
-                }
+
             )
         }
     }

@@ -1,6 +1,6 @@
 package net.maxsmr.core.ui.compose.components
 
-import androidx.compose.material.SnackbarHostState
+import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavHostController
 
 class ComposableDependencies(

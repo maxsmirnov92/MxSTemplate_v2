@@ -5,7 +5,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +39,7 @@ fun RoundedCornerGlideImage(
             .width(width)
             .height(height)
             .clickable(onClick = onClick),
-        elevation = 0.dp,
+        elevation = CardDefaults.cardElevation(0.dp),
 
     ) {
         GlideImage(

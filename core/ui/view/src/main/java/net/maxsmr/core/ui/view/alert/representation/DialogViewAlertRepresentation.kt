@@ -59,6 +59,9 @@ class DialogViewAlertRepresentation(
         private var customViewResId: Int? = null
         private var customViewConfigBlock: (Dialog.() -> Unit)? = null
 
+        protected var neutralAnswer: Alert.Answer? = null
+        protected var onNeutralClick: (() -> Unit)? = null
+
         private var multiChoiceAnswers: MultiChoiceAnswersData? = null
         private var onMultiChoiceClick: ((Int) -> Unit)? = null
 

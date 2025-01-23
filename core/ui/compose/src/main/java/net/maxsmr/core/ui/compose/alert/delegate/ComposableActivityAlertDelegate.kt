@@ -2,7 +2,7 @@ package net.maxsmr.core.ui.compose.alert.delegate
 
 
 import androidx.activity.ComponentActivity
-import androidx.compose.material.SnackbarHostState
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.CoroutineScope
 import net.maxsmr.core.android.base.BaseViewModel
@@ -111,7 +111,7 @@ open class ComposableActivityAlertDelegate<VM : BaseViewModel>(
         onCancel: (() -> Unit)? = null,
     ) {
         BindComposableAlert(viewModel.dialogQueue, tag) {
-            it.asProgressDialog(cancelable, onCancel)
+            it.asProgressDialog(activity, cancelable, onCancel)
         }
     }
 }
