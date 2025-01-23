@@ -4,6 +4,7 @@ import android.view.MenuItem
 import androidx.annotation.IdRes
 import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.navOptions
 import kotlinx.coroutines.launch
@@ -54,10 +55,11 @@ internal fun NavController.navigateWithGraphFragments(
     val targetAction = {
         navigateWithGraphFragments(destinationId, lifecycleScope, settingsRepo)
     }
-    val currentNavDestinationId = currentDestination?.id
-    return if (destinationId != currentNavDestinationId
-            && currentNavFragment?.canNavigate(targetAction) != false
-    ) {
+    val selected = currentBackStackEntry?.destination?.hierarchy?.any {
+        it.id == destinationId
+    } ?: false
+    return if (!selected
+            && currentNavFragment?.canNavigate(targetAction) != false) {
         targetAction.invoke()
         true
     } else {
