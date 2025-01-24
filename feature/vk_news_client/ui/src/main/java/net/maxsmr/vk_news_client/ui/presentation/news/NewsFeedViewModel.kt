@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import net.maxsmr.commonutils.gui.message.TextMessage
+import net.maxsmr.commonutils.gui.message.formatMessage
 import net.maxsmr.commonutils.live.pgnSuccessLoad
 import net.maxsmr.commonutils.states.PgnLoadState
 import net.maxsmr.core.android.base.BaseViewModel
@@ -17,6 +17,7 @@ import net.maxsmr.core.android.coroutines.execute.mapData
 import net.maxsmr.core.domain.entities.feature.vk_news_client.Statistics
 import net.maxsmr.vk_news_client.data.repository.NewsFeedRepository
 import net.maxsmr.vk_news_client.data.usecase.ChangeLikeStatusUseCase
+import net.maxsmr.vk_news_client.data.usecase.IgnorePostUseCase
 import net.maxsmr.vk_news_client.data.usecase.LoadRecommendationsUseCase
 import net.maxsmr.vk_news_client.ui.model.FeedPostUI
 import net.maxsmr.vk_news_client.ui.model.toFeedPost
@@ -27,6 +28,7 @@ import javax.inject.Inject
 class NewsFeedViewModel @Inject constructor(
     private val loadRecommendationsUseCase: LoadRecommendationsUseCase,
     private val changeLikeStatusUseCase: ChangeLikeStatusUseCase,
+    private val ignorePostUseCase: IgnorePostUseCase,
     private val repo: NewsFeedRepository,
     state: SavedStateHandle,
 ) : BaseViewModel(state) {
@@ -62,18 +64,19 @@ class NewsFeedViewModel @Inject constructor(
     }
 
     fun changeLikeStatus(feedPost: FeedPostUI) {
+        if (!checkStateSuccess()) {
+            return
+        }
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS) {
             setMessage(net.maxsmr.core.android.R.string.loading)
         }
         viewModelScope.launch {
             when (val result = changeLikeStatusUseCase(feedPost.toFeedPost())) {
                 is ExecuteResult.Error -> {
-                    showSnackbar(
-                        TextMessage(
-                            net.maxsmr.core.network.R.string.error_request_failed_format,
-                            result.errorMessage()
-                        )
-                    )
+                    showSnackbar(result.errorMessage().formatMessage(
+                        net.maxsmr.core.network.R.string.error_request_failed_format,
+                        net.maxsmr.core.network.R.string.error_request_failed,
+                    ))
                 }
 
                 else -> {
@@ -85,22 +88,52 @@ class NewsFeedViewModel @Inject constructor(
     }
 
     fun updateCount(id: Long, type: Statistics.StatsType) {
-        val currentState = screenState.value ?: return
-        if (!currentState.isSuccess) return
+        if (!checkStateSuccess()) {
+            return
+        }
         viewModelScope.launch {
             repo.updateCount(id, type)
         }
     }
 
     fun delete(item: FeedPostUI) {
-        val currentState = screenState.value ?: return
-        if (!currentState.isSuccess) return
+        if (!checkStateSuccess()) {
+            return
+        }
+        dialogQueue.toggle(true, DIALOG_TAG_PROGRESS) {
+            setMessage(net.maxsmr.core.android.R.string.loading)
+        }
         viewModelScope.launch {
-            repo.delete(item.toFeedPost())
+            when (val result = ignorePostUseCase(item.toFeedPost())) {
+                is ExecuteResult.Error -> {
+                    showSnackbar(result.errorMessage().formatMessage(
+                        net.maxsmr.core.network.R.string.error_request_failed_format,
+                        net.maxsmr.core.network.R.string.error_request_failed,
+                    ))
+                }
+
+                else -> {
+
+                }
+            }
+            dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
         }
     }
 
+    private fun checkStateSuccess(): Boolean {
+        val currentState = screenState.value ?: return false
+        return currentState.isSuccess
+    }
+
+    private fun checkStateNotLoading(): Boolean {
+        val currentState = screenState.value ?: return false
+        return !currentState.isLoading
+    }
+
     private fun loadRecommendations(shouldReload: Boolean) {
+        if (!checkStateNotLoading()) {
+            return
+        }
         viewModelScope.launch {
             loadRecommendationsUseCase(shouldReload).collect {
                 val mappedResult = it.mapData { data -> data.map { post -> post.toFeedPostUI() } }

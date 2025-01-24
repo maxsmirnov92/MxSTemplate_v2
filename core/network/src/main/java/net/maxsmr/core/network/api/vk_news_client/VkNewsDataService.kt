@@ -19,6 +19,13 @@ internal interface VkNewsDataService {
     ): GetRecommendedResponseDto
 
     @Authorization
+    @GET("method/newsfeed.ignoreItem?type=wall")
+    suspend fun ignorePost(
+        @Query("owner_id") ownerId: Long,
+        @Query("item_id") postId: Long
+    ): ResponseStatusDto
+
+    @Authorization
     @GET("method/likes.add?type=post")
     suspend fun addLikeForPost(
         @Query("owner_id") ownerId: Long,

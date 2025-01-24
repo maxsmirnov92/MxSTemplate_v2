@@ -88,7 +88,14 @@ class NewsFeedRepositoryImpl(
                 it
             }
         }
+        // нужна рекомпозиция, т.к. элемент уже был изменён
         feedPostsUpdateEvents.emit(newList to true)
+        try {
+            vkNewsDataSource.ignorePost(item)
+        } catch (e: Exception) {
+            feedPostsUpdateEvents.emit(currentList to true)
+            throw e
+        }
     }
 
     private suspend fun changeLikesCount(
