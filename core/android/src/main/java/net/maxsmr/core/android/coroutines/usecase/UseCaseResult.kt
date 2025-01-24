@@ -1,5 +1,6 @@
 package net.maxsmr.core.android.coroutines.usecase
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,6 +10,7 @@ import kotlinx.coroutines.flow.onStart
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.commonutils.states.PgnLoadState
 import net.maxsmr.core.network.NO_ERROR_API
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
@@ -37,11 +39,14 @@ sealed class UseCaseResult<out R> {
 
     object Loading : UseCaseResult<Nothing>()
 
+    object PgnLoading : UseCaseResult<Nothing>()
+
     override fun toString(): String {
         return when (this) {
             is Success<*> -> "Success[data=$data]"
             is Error -> "Error[exception=$exception]"
-            Loading -> "Loading"
+            is Loading -> "Loading"
+            is PgnLoading -> "PgnLoading"
         }
     }
 }
@@ -75,13 +80,33 @@ inline fun <reified T> UseCaseResult<T>.updateOnSuccess(stateFlow: MutableStateF
 }
 
 fun <T> ILoadState<T>.asUseCaseResult() = when {
-    isLoading -> UseCaseResult.Loading
+    isLoading -> {
+        if (this is PgnLoadState) {
+            if (this.loadingState is PgnLoadState.PgnLoading.PageLoad) {
+                UseCaseResult.PgnLoading
+            } else {
+                UseCaseResult.Loading
+            }
+        } else {
+            UseCaseResult.Loading
+        }
+    }
     isSuccess() -> UseCaseResult.Success(data)
     else -> UseCaseResult.Error(error?.error ?: Exception(), error?.message as? TextMessage)
 }
 
 fun <T, U> ILoadState<T>.asUseCaseResult(mapOnSuccess: (data: T) -> U) = when {
-    isLoading -> UseCaseResult.Loading
+    isLoading -> {
+        if (this is PgnLoadState) {
+            if (this.loadingState is PgnLoadState.PgnLoading.PageLoad) {
+                UseCaseResult.PgnLoading
+            } else {
+                UseCaseResult.Loading
+            }
+        } else {
+            UseCaseResult.Loading
+        }
+    }
     isSuccess() -> {
         val data = data
         if (data != null) {
@@ -94,14 +119,22 @@ fun <T, U> ILoadState<T>.asUseCaseResult(mapOnSuccess: (data: T) -> U) = when {
     else -> UseCaseResult.Error(error?.error ?: Exception(), error?.message as? TextMessage)
 }
 
-fun <T> UseCaseResult<T>.asState() = when (this) {
-    is UseCaseResult.Loading -> LoadState.loading()
+fun <T> UseCaseResult<T>.asState(data: T? = null): LoadState<T> = when (this) {
+    is UseCaseResult.Loading, is UseCaseResult.PgnLoading -> LoadState.loading(data)
     is UseCaseResult.Success -> LoadState.success(this.data)
-    is UseCaseResult.Error -> LoadState.error(errorData())
+    is UseCaseResult.Error -> LoadState.error(errorData(), data)
+}
+
+fun <T> UseCaseResult<T>.asPgnState(data: T? = null): PgnLoadState<T> = when (this) {
+    is UseCaseResult.Loading -> PgnLoadState.pgnLoading(PgnLoadState.PgnLoading.MainLoad, data)
+    is UseCaseResult.PgnLoading -> PgnLoadState.pgnLoading(PgnLoadState.PgnLoading.PageLoad, data)
+    is UseCaseResult.Success -> PgnLoadState.pgnSuccess(this.data, true)
+    is UseCaseResult.Error -> PgnLoadState.pgnError(errorData(), data)
 }
 
 fun <T, U> UseCaseResult<T>.mapData(mapData: (data: T) -> U): UseCaseResult<U> = when (this) {
     is UseCaseResult.Loading -> UseCaseResult.Loading
+    is UseCaseResult.PgnLoading -> UseCaseResult.PgnLoading
     is UseCaseResult.Success -> UseCaseResult.Success(mapData(this.data))
     is UseCaseResult.Error -> UseCaseResult.Error(this.exception, this.message)
 }
