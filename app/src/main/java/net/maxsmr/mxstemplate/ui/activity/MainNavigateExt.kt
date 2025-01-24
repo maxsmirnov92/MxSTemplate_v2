@@ -12,9 +12,9 @@ import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
-import net.maxsmr.feature.webview.ui.WebViewCustomizer.ExternalViewUrlStrategy
 import net.maxsmr.mxstemplate.R
 import net.maxsmr.mxstemplate.ui.fragment.MainDownloadsPagerFragmentDirections
+import net.maxsmr.mxstemplate.ui.getViewUrlStrategy
 
 internal fun NavController.navigateWithGraphFragmentsFromCaller(
     callerClass: Class<*>,
@@ -95,13 +95,7 @@ private fun NavController.navigateWithGraphFragments(
                 MainDownloadsPagerFragmentDirections.actionToWebViewFragment(
                     WebViewCustomizer.Builder()
                         .setUrl(settings.startPageUrl)
-                        .setViewUrlStrategy(
-                            if (settings.openLinksInExternalApps) {
-                                ExternalViewUrlStrategy.NonBrowserFirst
-                            } else {
-                                ExternalViewUrlStrategy.None
-                            }
-                        )
+                        .setViewUrlStrategy(settings.getViewUrlStrategy())
                         .build()
                 ),
                 navOptions = navOptions()

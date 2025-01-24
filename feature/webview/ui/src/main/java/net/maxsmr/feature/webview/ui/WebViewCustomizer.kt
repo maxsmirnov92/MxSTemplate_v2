@@ -7,6 +7,7 @@ import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.URL_PAGE_BLANK
 import net.maxsmr.core.network.equalsIgnoreSubDomain
 import net.maxsmr.core.network.isUrlValid
+import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient.ViewUrlMode
 import java.io.Serializable
 import java.nio.charset.Charset
 
@@ -21,8 +22,8 @@ class WebViewCustomizer private constructor(
     val data: WebViewDataArgs?,
     val reloadAfterConnectionError: Boolean,
     val changeTitleByState: Boolean,
-    val viewUrlStrategy: ExternalViewUrlStrategy
-): Serializable {
+    val viewUrlStrategy: ViewUrlStrategy,
+) : Serializable {
 
     fun buildUpon() = Builder()
         .setTitle(title)
@@ -67,11 +68,11 @@ class WebViewCustomizer private constructor(
     class Builder {
 
         private var title: String = EMPTY_STRING
-        private var url: String  = EMPTY_STRING
+        private var url: String = EMPTY_STRING
         private var data: WebViewDataArgs? = null
         private var reloadAfterConnectionError: Boolean = true
         private var changeTitleOnLoad: Boolean = true
-        private var viewUrlStrategy: ExternalViewUrlStrategy = ExternalViewUrlStrategy.NonBrowserFirst
+        private var viewUrlStrategy: ViewUrlStrategy = ViewUrlStrategy(ViewUrlMode.INTERNAL)
 
         fun setTitle(title: String): Builder {
             this.title = title
@@ -91,7 +92,7 @@ class WebViewCustomizer private constructor(
         /**
          * Выставить готовую [uri] без проверок
          */
-        fun setUri(uri: Uri) : Builder {
+        fun setUri(uri: Uri): Builder {
             this.url = uri.toString()
             return this
         }
@@ -111,7 +112,7 @@ class WebViewCustomizer private constructor(
             return this
         }
 
-        fun setViewUrlStrategy(strategy: ExternalViewUrlStrategy): Builder {
+        fun setViewUrlStrategy(strategy: ViewUrlStrategy): Builder {
             this.viewUrlStrategy = strategy
             return this
         }
@@ -130,55 +131,121 @@ class WebViewCustomizer private constructor(
         val data: String,
         val mimeType: String = FileFormat.HTML.mimeType,
         val charset: String = Charset.defaultCharset().name(),
-        val forceBase64: Boolean = true
-    ): Serializable
+        val forceBase64: Boolean = true,
+    ) : Serializable
 
-    sealed class ExternalViewUrlStrategy: Serializable {
+    class ViewUrlStrategy(
+        val targetUrlMode: ViewUrlMode,
+        private val matcher: UrlMatcher = UrlMatcher.AnyUrlMatcher,
+    ) : Serializable {
 
-        data object None : ExternalViewUrlStrategy() {
-
-            private fun readResolve(): Any = None
-        }
-
-        /**
-         * Соответствие текущей урлы по возможным
-         * схемам / хостам / параметрам
-         */
-        data class UrlMatch(
-            val schemes: List<String>,
-            val hosts: List<String>,
-            val queryParameters: List<String>,
-        ): ExternalViewUrlStrategy() {
-
-            fun match(uri: Uri): Boolean {
-                val schemePassed = if (schemes.any { it.isNotEmpty() }) {
-                    schemes.any {
-                        uri.scheme?.equals(it) == true
-                    }
-                } else {
-                    true
-                }
-                val hostPassed = if (hosts.any { it.isNotEmpty() }) {
-                    hosts.any {
-                        uri.host.equalsIgnoreSubDomain(it)
-                    }
-                } else {
-                    true
-                }
-                val parametersPassed = if (queryParameters.any { it.isNotEmpty() }) {
-                    uri.queryParameterNames.any { name ->
-                        queryParameters.any { name.equals(it, true) }
-                    }
-                } else {
-                    true
-                }
-                return schemePassed && hostPassed && parametersPassed
+        fun getMode(uri: Uri): ViewUrlMode {
+            return if (targetUrlMode == ViewUrlMode.INTERNAL
+                    || matcher.match(uri)
+            ) {
+                targetUrlMode
+            } else {
+                ViewUrlMode.INTERNAL
             }
         }
 
-        data object NonBrowserFirst : ExternalViewUrlStrategy() {
+        sealed interface UrlMatcher : Serializable {
 
-            private fun readResolve(): Any = NonBrowserFirst
+            abstract fun match(url: Uri): Boolean
+
+            data object AnyUrlMatcher : UrlMatcher {
+
+                override fun match(url: Uri): Boolean = true
+
+                private fun readResolve(): Any = AnyUrlMatcher
+            }
+
+            class CustomUrlMatcher(private val matchFunc: (Uri) -> Boolean) : UrlMatcher {
+
+                override fun match(url: Uri): Boolean {
+                    return matchFunc(url)
+                }
+            }
+
+            /**
+             * Соответствие текущей урлы по возможным
+             * схемам / хостам / параметрам
+             */
+            class PartsUrlMatcher private constructor(
+                private val scheme: MatchRule.SchemeMatchRule,
+                private val host: MatchRule.HostMatchRule,
+                private val queryParameters: MatchRule.QueryParametersMatchRule,
+            ) : UrlMatcher {
+
+                constructor(
+                    schemes: Pair<List<String>, Boolean> = listOf<String>() to true,
+                    hosts: Pair<List<String>, Boolean> = listOf<String>() to true,
+                    queryParameters: Pair<List<String>, Boolean> = listOf<String>() to true,
+                ) : this(
+                    MatchRule.SchemeMatchRule(schemes.first, schemes.second),
+                    MatchRule.HostMatchRule(hosts.first, hosts.second),
+                    MatchRule.QueryParametersMatchRule(queryParameters.first, queryParameters.second),
+                )
+
+                override fun match(url: Uri): Boolean {
+                    return scheme.match(url) && host.match(url) && queryParameters.match(url)
+                }
+
+                private sealed class MatchRule(
+                    private val variants: List<String>,
+                    private val shouldInclude: Boolean,
+                ) {
+
+                    abstract fun match(url: Uri, variant: String): Boolean
+
+                    fun match(url: Uri): Boolean {
+                        return if (variants.any { it.isNotEmpty() }) {
+                            if (shouldInclude) {
+                                // включительно - хотя бы один соответствует
+                                variants.any { match(url, it) }
+                            } else {
+                                // не включительно - ни один не соответствует
+                                variants.all { !match(url, it) }
+                            }
+                        } else {
+                            true
+                        }
+                    }
+
+
+                    class SchemeMatchRule(
+                        variants: List<String>,
+                        shouldInclude: Boolean,
+                    ) : MatchRule(variants, shouldInclude) {
+
+                        override fun match(url: Uri, variant: String): Boolean {
+                            return url.scheme?.equals(variant) == true
+                        }
+                    }
+
+                    class HostMatchRule(
+                        variants: List<String>,
+                        shouldInclude: Boolean,
+                    ) : MatchRule(variants, shouldInclude) {
+
+                        override fun match(url: Uri, variant: String): Boolean {
+                            return url.host.equalsIgnoreSubDomain(variant)
+                        }
+                    }
+
+                    class QueryParametersMatchRule(
+                        variants: List<String>,
+                        shouldInclude: Boolean,
+                    ) : MatchRule(variants, shouldInclude) {
+
+                        override fun match(url: Uri, variant: String): Boolean {
+                            return url.queryParameterNames.any { name ->
+                                name.equals(variant, true)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

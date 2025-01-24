@@ -6,15 +6,13 @@ import android.os.Bundle
 import androidx.core.net.toUri
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.runBlocking
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.ui.components.activities.BaseNavigationActivity
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
-import net.maxsmr.feature.webview.ui.WebViewCustomizer.ExternalViewUrlStrategy
-import net.maxsmr.mxstemplate.App
 import net.maxsmr.mxstemplate.R
 import net.maxsmr.mxstemplate.ui.BrowserWebViewModel.Companion.ARG_WEB_CUSTOMIZER
 import net.maxsmr.mxstemplate.ui.fragment.BrowserWebViewFragmentDirections
+import net.maxsmr.mxstemplate.ui.getViewUrlStrategy
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -56,13 +54,7 @@ class BrowserActivity : BaseNavigationActivity() {
         return if (uri != null) {
             WebViewCustomizer.Builder()
                 .setUri(uri)
-                .setViewUrlStrategy(
-                    if (settings.openLinksInExternalApps) {
-                        ExternalViewUrlStrategy.NonBrowserFirst
-                    } else {
-                        ExternalViewUrlStrategy.None
-                    }
-                )
+                .setViewUrlStrategy(settings.getViewUrlStrategy())
                 .build()
         } else {
             null

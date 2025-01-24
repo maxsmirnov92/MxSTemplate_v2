@@ -2,9 +2,12 @@ package net.maxsmr.feature.webview.data.client
 
 import android.content.Context
 import android.content.Intent
+import androidx.core.net.toUri
 import net.maxsmr.commonutils.isAtLeastS
 import net.maxsmr.commonutils.openViewUrl
 import net.maxsmr.commonutils.openViewUrlNonBrowser
+import net.maxsmr.core.network.URL_SCHEME_HTTP
+import net.maxsmr.core.network.URL_SCHEME_HTTPS
 import net.maxsmr.core.ui.openViewUrlWithToastError
 import net.maxsmr.feature.webview.data.client.interceptor.IWebViewInterceptor
 import net.maxsmr.feature.webview.data.client.interceptor.IWebViewInterceptor.InterceptedUrl
@@ -18,7 +21,7 @@ open class ExternalViewUrlWebViewClient @JvmOverloads constructor(
     context: Context,
     okHttpClient: OkHttpClient? = null,
     webViewInterceptor: IWebViewInterceptor = WebViewInterceptor(),
-    protected val defaultMode: ViewUrlMode = ViewUrlMode.EXTERNAL,
+    private val viewUrlModeForUrl: (String) -> ViewUrlMode = { ViewUrlMode.NON_BROWSER_EXTERNAL }
 ) : InterceptWebViewClient(context, okHttpClient, webViewInterceptor) {
 
     final override fun shouldInterceptFromOverrideUrl(url: String): InterceptedUrl? {
@@ -32,17 +35,13 @@ open class ExternalViewUrlWebViewClient @JvmOverloads constructor(
             }
 
             ViewUrlMode.NON_BROWSER -> {
-                if (isAtLeastS()) {
-                    context.openViewUrlNonBrowser(url)
-                } else {
-                    false
-                }
+                openViewUrlNonBrowserCompat(url)
             }
 
             ViewUrlMode.NON_BROWSER_EXTERNAL -> {
                 var handled = false
                 if (isAtLeastS()) {
-                    handled = context.openViewUrlNonBrowser(url)
+                    handled = openViewUrlNonBrowserCompat(url)
                 }
                 if (!handled) {
                     context.openViewUrl(url)
@@ -74,7 +73,23 @@ open class ExternalViewUrlWebViewClient @JvmOverloads constructor(
         }
     }
 
-    protected open fun getViewUrlMode(url: String): ViewUrlMode = defaultMode
+    protected open fun getViewUrlMode(url: String): ViewUrlMode = viewUrlModeForUrl(url)
+
+    private fun openViewUrlNonBrowserCompat(url: String): Boolean {
+        return if (isAtLeastS()) {
+            context.openViewUrlNonBrowser(url)
+        } else {
+            // если API ниже 31,
+            // пробуем открыть с обычным ACTION_VIEW,
+            // но только не для схем http/https
+            val uri = url.toUri()
+            if (uri.scheme !in listOf(URL_SCHEME_HTTP, URL_SCHEME_HTTPS)) {
+                context.openViewUrl(url)
+            } else {
+                false
+            }
+        }
+    }
 
     enum class ViewUrlMode {
 

@@ -35,10 +35,10 @@ import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient
+import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient.ViewUrlMode
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
 import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData
-import net.maxsmr.feature.webview.ui.WebViewCustomizer.ExternalViewUrlStrategy
 import net.maxsmr.feature.webview.ui.databinding.DialogInputUrlBinding
 import net.maxsmr.feature.webview.ui.databinding.FragmentWebviewBinding
 import okhttp3.OkHttpClient
@@ -222,31 +222,15 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
     override fun createWebViewClient(): InterceptWebViewClient {
         val context = requireContext()
-        return when (val strategy = webViewCustomizer.viewUrlStrategy) {
-            is ExternalViewUrlStrategy.None -> {
+
+        return when(webViewCustomizer.viewUrlStrategy.targetUrlMode) {
+            ViewUrlMode.INTERNAL -> {
                 InterceptWebViewClient(context, okHttpClient)
             }
-
-            is ExternalViewUrlStrategy.UrlMatch -> {
-                object : ExternalViewUrlWebViewClient(context, okHttpClient) {
-
-                    override fun getViewUrlMode(url: String): ViewUrlMode {
-                        // переход во внешний браузер при совпадении указанных критериев
-                        return if (strategy.match(url.toUri())) {
-                            ViewUrlMode.EXTERNAL
-                        } else {
-                            ViewUrlMode.INTERNAL
-                        }
-                    }
+            else -> {
+                ExternalViewUrlWebViewClient(context, okHttpClient) {
+                    webViewCustomizer.viewUrlStrategy.getMode(it.toUri())
                 }
-            }
-
-            is ExternalViewUrlStrategy.NonBrowserFirst -> {
-                ExternalViewUrlWebViewClient(
-                    context,
-                    okHttpClient,
-                    defaultMode = ExternalViewUrlWebViewClient.ViewUrlMode.NON_BROWSER
-                )
             }
         }
     }
