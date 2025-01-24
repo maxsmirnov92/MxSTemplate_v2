@@ -21,19 +21,31 @@ class NewsFeedRepositoryImpl(
 
     init {
         scope.launch {
-            feedPostsUpdateEvents.collectLatest {
-                feedPosts.value = it
+            feedPostsUpdateEvents.collectLatest { (data, fromStart) ->
+                if (fromStart) {
+                    feedPosts.value = data
+                } else {
+                    feedPosts.value += data
+                }
             }
         }
     }
 
-    override val feedPostsUpdateEvents = MutableSharedFlow<List<FeedPost>>()
+    override val feedPosts = MutableStateFlow<List<FeedPost>>(listOf())
 
-    private val feedPosts = MutableStateFlow<List<FeedPost>>(listOf())
+    override val feedPostsUpdateEvents = MutableSharedFlow<Pair<List<FeedPost>, Boolean>>()
+
+    override val hasNextPage get() = recommendationsNextFrom != null
+
+    private var recommendationsNextFrom: String? = null
 
     override suspend fun loadRecommendations(): List<FeedPost> {
-        return vkNewsDataSource.getRecommended().apply {
-            feedPostsUpdateEvents.emit(this)
+        val isFromStart = !hasNextPage
+//        if (!shouldReload && isFromStart) return feedPosts.value
+        return vkNewsDataSource.getRecommended(recommendationsNextFrom).let {
+            recommendationsNextFrom = it.second
+            feedPostsUpdateEvents.emit(it.first to isFromStart)
+            it.first
         }
     }
 
@@ -47,6 +59,36 @@ class NewsFeedRepositoryImpl(
         return vkNewsDataSource.deleteLike(feedPost).apply {
             changeLikesCount(feedPost, this, false)
         }
+    }
+
+    override suspend fun updateCount(id: Long, type: StatsType) {
+        val currentList = feedPosts.value
+        val newList = currentList.map {
+            if (it.id == id) {
+                it.copy(statisticsItems = it.statisticsItems.map { statsItem ->
+                    if (statsItem.type == type) {
+                        statsItem.copy(count = statsItem.count + 1)
+                    } else {
+                        statsItem
+                    }
+                })
+            } else {
+                it
+            }
+        }
+        feedPostsUpdateEvents.emit(newList to true)
+    }
+
+    override suspend fun delete(item: FeedPost) {
+        val currentList = feedPosts.value
+        val newList = currentList.mapNotNull {
+            if (it.id == item.id) {
+                null
+            } else {
+                it
+            }
+        }
+        feedPostsUpdateEvents.emit(newList to true)
     }
 
     private suspend fun changeLikesCount(
@@ -72,6 +114,6 @@ class NewsFeedRepositoryImpl(
             } else {
                 it
             }
-        })
+        } to true)
     }
 }

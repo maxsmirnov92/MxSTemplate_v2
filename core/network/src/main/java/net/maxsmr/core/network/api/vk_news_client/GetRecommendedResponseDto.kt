@@ -1,5 +1,6 @@
 package net.maxsmr.core.network.api.vk_news_client
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPost
@@ -13,6 +14,8 @@ import kotlin.math.absoluteValue
 data class GetRecommendedResponseDto(
     val items: List<ItemDto> = emptyList(),
     val groups: List<GroupDto> = emptyList(),
+    @SerialName("next_from")
+    val nextFrom: String? = null
 ) {
 
     fun asDomain(): List<FeedPost> {

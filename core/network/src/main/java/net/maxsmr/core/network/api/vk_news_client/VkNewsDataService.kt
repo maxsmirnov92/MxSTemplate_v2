@@ -9,7 +9,14 @@ internal interface VkNewsDataService {
 
     @Authorization
     @GET("method/newsfeed.getRecommended")
-    suspend fun getRecommended(): GetRecommendedResponseDto
+    suspend fun getRecommended(@Query("count") count: Int): GetRecommendedResponseDto
+
+    @Authorization
+    @GET("method/newsfeed.getRecommended")
+    suspend fun getRecommended(
+        @Query("start_from") startFrom: String,
+        @Query("count") count: Int
+    ): GetRecommendedResponseDto
 
     @Authorization
     @GET("method/likes.add?type=post")

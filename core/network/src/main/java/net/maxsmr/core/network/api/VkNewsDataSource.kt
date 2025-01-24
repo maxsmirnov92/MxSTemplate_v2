@@ -11,7 +11,7 @@ import kotlin.random.Random
 
 interface VkNewsDataSource {
 
-    suspend fun getRecommended(): List<FeedPost>
+    suspend fun getRecommended(startFrom: String?, count: Int = 10): Pair<List<FeedPost>, String?>
 
     suspend fun addLike(feedPost: FeedPost): Int
 
@@ -26,8 +26,9 @@ class VkNewsDataSourceImpl(
         VkNewsDataService.instance(retrofit)
     }
 
-    override suspend fun getRecommended(): List<FeedPost> = withContext(Dispatchers.IO) {
-        service.getRecommended().asDomain()
+    override suspend fun getRecommended(startFrom: String?, count: Int): Pair<List<FeedPost>, String?> = withContext(Dispatchers.IO) {
+        val response = startFrom?.let {  service.getRecommended(it, count) } ?: service.getRecommended(count)
+        return@withContext response.asDomain() to response.nextFrom
     }
 
     override suspend fun addLike(feedPost: FeedPost) : Int = withContext(Dispatchers.IO) {
@@ -41,9 +42,9 @@ class VkNewsDataSourceImpl(
 
 class MockVkNewsDataSourceImpl: VkNewsDataSource {
 
-    override suspend fun getRecommended(): List<FeedPost> {
+    override suspend fun getRecommended(startFrom: String?, count: Int): Pair<List<FeedPost>, String?> {
         delay(3000)
-        return listOf()
+        return listOf<FeedPost>() to null
     }
 
     override suspend fun addLike(feedPost: FeedPost): Int {

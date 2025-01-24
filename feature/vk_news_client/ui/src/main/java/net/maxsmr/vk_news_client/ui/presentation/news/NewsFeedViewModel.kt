@@ -8,12 +8,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.errorLoad
-import net.maxsmr.commonutils.live.loading
-import net.maxsmr.commonutils.live.successLoad
-import net.maxsmr.commonutils.states.LoadState
+import net.maxsmr.commonutils.live.pgnSuccessLoad
+import net.maxsmr.commonutils.states.PgnLoadState
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.coroutines.execute.ExecuteResult
+import net.maxsmr.core.android.coroutines.execute.asPgnState
+import net.maxsmr.core.android.coroutines.execute.mapData
 import net.maxsmr.core.domain.entities.feature.vk_news_client.Statistics
 import net.maxsmr.vk_news_client.data.repository.NewsFeedRepository
 import net.maxsmr.vk_news_client.data.usecase.ChangeLikeStatusUseCase
@@ -31,37 +31,34 @@ class NewsFeedViewModel @Inject constructor(
     state: SavedStateHandle,
 ) : BaseViewModel(state) {
 
-    private val _screenState = MutableLiveData<LoadState<List<FeedPostUI>>>(LoadState.initial())
+    private val _screenState = MutableLiveData<PgnLoadState<List<FeedPostUI>>>(PgnLoadState.pgnInitial())
 
-    val screenState = _screenState as LiveData<LoadState<List<FeedPostUI>>>
+    val screenState = _screenState as LiveData<PgnLoadState<List<FeedPostUI>>>
 
     override fun onInitialized() {
         super.onInitialized()
         if (screenState.value?.wasLoaded != true) {
-            loadRecommended()
+            reloadRecommendations()
         }
         viewModelScope.launch {
             repo.feedPostsUpdateEvents.collectLatest {
-                _screenState.successLoad(it.map { post ->
-                    post.toFeedPostUI()
-                }, setValue = false)
+                _screenState.pgnSuccessLoad(
+                    repo.feedPosts.value.map { post ->
+                        post.toFeedPostUI()
+                    },
+                    isComplete = !repo.hasNextPage,
+                    setValue = false
+                )
             }
         }
     }
 
-    fun loadRecommended() {
-        _screenState.loading()
-        viewModelScope.launch {
-            when (val result = loadRecommendationsUseCase(Unit)) {
-                is ExecuteResult.Error -> {
-                    _screenState.errorLoad(result.exception, setValue = false)
-                }
+    fun reloadRecommendations() {
+        loadRecommendations(true)
+    }
 
-                else -> {
-
-                }
-            }
-        }
+    fun loadNextRecommendations() {
+        loadRecommendations(false)
     }
 
     fun changeLikeStatus(feedPost: FeedPostUI) {
@@ -90,36 +87,29 @@ class NewsFeedViewModel @Inject constructor(
     fun updateCount(id: Long, type: Statistics.StatsType) {
         val currentState = screenState.value ?: return
         if (!currentState.isSuccess) return
-
-        val currentList = currentState.data.orEmpty()
-        val newList = currentList.map {
-            if (it.id == id) {
-                it.copy(statisticsItems = it.statisticsItems.map { statsItem ->
-                    if (statsItem.type == type) {
-                        statsItem.copy(count = statsItem.count + 1)
-                    } else {
-                        statsItem
-                    }
-                })
-            } else {
-                it
-            }
+        viewModelScope.launch {
+            repo.updateCount(id, type)
         }
-        _screenState.successLoad(newList)
     }
 
     fun delete(item: FeedPostUI) {
         val currentState = screenState.value ?: return
         if (!currentState.isSuccess) return
+        viewModelScope.launch {
+            repo.delete(item.toFeedPost())
+        }
+    }
 
-        val currentList = currentState.data.orEmpty()
-        val newList = currentList.mapNotNull {
-            if (it.id == item.id) {
-                null
-            } else {
-                it
+    private fun loadRecommendations(shouldReload: Boolean) {
+        viewModelScope.launch {
+            loadRecommendationsUseCase(shouldReload).collect {
+                val mappedResult = it.mapData { data -> data.map { post -> post.toFeedPostUI() } }
+                if (mappedResult !is ExecuteResult.Success) {
+                    _screenState.postValue(mappedResult.asPgnState(screenState.value?.data.orEmpty()))
+                } else {
+                    // при успехе ожидаем feedPostsUpdateEvents
+                }
             }
         }
-        _screenState.successLoad(newList)
     }
 }
