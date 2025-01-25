@@ -11,12 +11,12 @@ import net.maxsmr.core.android.base.BaseViewModel
  */
 interface IComposableViewModelsContainer {
 
-    fun <VM: BaseViewModel> getFactoryForViewModel(
+    fun <VM : BaseViewModel> getFactoryForViewModel(
         viewModelClass: Class<VM>,
-        args: IFactoryArgs<VM>?
+        args: IFactoryArgs<VM>?,
     ): ViewModelProvider.Factory?
 
-    fun <VM: BaseViewModel> getViewModelForRoute(route: String): VM?
+    fun <VM : BaseViewModel> getViewModelForRoute(route: String): VM?
 
     /**
      * @return true, если компонент был создан
@@ -25,8 +25,17 @@ interface IComposableViewModelsContainer {
     fun registerViewModelByRoute(
         route: String,
         viewModel: BaseViewModel,
-        dependencies: ComposableDependencies
+        dependencies: ComposableDependencies,
     ): Boolean
 
-    interface IFactoryArgs<VM: BaseViewModel>
+    fun <VM : BaseViewModel> getKeyForViewModel(
+        clazz: Class<VM>,
+        args: Any?
+    ): String? = if (args != null) {
+        clazz.name + ":$args"
+    } else {
+        null
+    }
+
+    interface IFactoryArgs<VM : BaseViewModel>
 }
