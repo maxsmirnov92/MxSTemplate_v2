@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -56,6 +57,7 @@ fun MainScreen(
         snackbarHost = { SnackbarHost(hostState = dependencies.snackbarHostState) },
         topBar = {
             TopAppBar(
+                modifier = Modifier.shadow(5.dp),
                 title = {
                     Text(text = stringResource(R.string.vk_news_client_feature_name))
                 },
@@ -143,6 +145,7 @@ fun MainScreen(
                     Screen.ROUTE_COMMENTS,
                     viewModelContainer,
                     dependencies,
+                    args = post.id,
                     factory = viewModelContainer.getFactoryForViewModel(
                         CommentsViewModel::class.java,
                         CommentsFactoryArgs(post)

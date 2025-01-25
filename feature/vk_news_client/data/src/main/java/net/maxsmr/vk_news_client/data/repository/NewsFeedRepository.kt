@@ -3,6 +3,7 @@ package net.maxsmr.vk_news_client.data.repository
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPost
+import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPostComment
 import net.maxsmr.core.domain.entities.feature.vk_news_client.Statistics
 
 interface NewsFeedRepository {
@@ -18,11 +19,13 @@ interface NewsFeedRepository {
 
     suspend fun loadRecommendations() : List<FeedPost>
 
-    suspend fun addLike(feedPost: FeedPost): Int
+    suspend fun addLike(post: FeedPost): Int
 
-    suspend fun deleteLike(feedPost: FeedPost): Int
+    suspend fun deleteLike(post: FeedPost): Int
 
     suspend fun updateCount(id: Long, type: Statistics.StatsType)
 
-    suspend fun delete(item: FeedPost)
+    suspend fun delete(post: FeedPost)
+
+    suspend fun loadComments(post: FeedPost): List<FeedPostComment>
 }

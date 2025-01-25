@@ -39,6 +39,14 @@ internal interface VkNewsDataService {
         @Query("item_id") postId: Long
     ): LikesCountResponseDto
 
+    @Authorization
+    @GET("method/wall.getComments/?extended=1&fields=photo_100")
+    suspend fun getCommentsForPost(
+        @Query("owner_id") ownerId: Long,
+        @Query("post_id") postId: Long,
+        @Query("need_likes") needLikes: Int
+    ): GetCommentsResponseDto
+
     companion object {
 
         @Volatile

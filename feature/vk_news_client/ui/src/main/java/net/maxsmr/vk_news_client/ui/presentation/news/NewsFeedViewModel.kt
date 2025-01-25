@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.message.formatMessage
 import net.maxsmr.commonutils.live.pgnSuccessLoad
 import net.maxsmr.commonutils.states.PgnLoadState
@@ -67,16 +68,19 @@ class NewsFeedViewModel @Inject constructor(
         if (!checkStateSuccess()) {
             return
         }
-        dialogQueue.toggle(true, DIALOG_TAG_PROGRESS) {
-            setMessage(net.maxsmr.core.android.R.string.loading)
-        }
+        dialogQueue.toggle(
+            true, DIALOG_TAG_PROGRESS,
+            TextMessage(net.maxsmr.core.android.R.string.loading)
+        )
         viewModelScope.launch {
             when (val result = changeLikeStatusUseCase(feedPost.toFeedPost())) {
                 is ExecuteResult.Error -> {
-                    showSnackbar(result.errorMessage().formatMessage(
-                        net.maxsmr.core.network.R.string.error_request_failed_format,
-                        net.maxsmr.core.network.R.string.error_request_failed,
-                    ))
+                    showSnackbar(
+                        result.errorMessage().formatMessage(
+                            net.maxsmr.core.network.R.string.error_request_failed_format,
+                            net.maxsmr.core.network.R.string.error_request_failed,
+                        )
+                    )
                 }
 
                 else -> {
@@ -100,16 +104,16 @@ class NewsFeedViewModel @Inject constructor(
         if (!checkStateSuccess()) {
             return
         }
-        dialogQueue.toggle(true, DIALOG_TAG_PROGRESS) {
-            setMessage(net.maxsmr.core.android.R.string.loading)
-        }
+        dialogQueue.toggle(true, DIALOG_TAG_PROGRESS, TextMessage(net.maxsmr.core.android.R.string.loading))
         viewModelScope.launch {
             when (val result = ignorePostUseCase(item.toFeedPost())) {
                 is ExecuteResult.Error -> {
-                    showSnackbar(result.errorMessage().formatMessage(
-                        net.maxsmr.core.network.R.string.error_request_failed_format,
-                        net.maxsmr.core.network.R.string.error_request_failed,
-                    ))
+                    showSnackbar(
+                        result.errorMessage().formatMessage(
+                            net.maxsmr.core.network.R.string.error_request_failed_format,
+                            net.maxsmr.core.network.R.string.error_request_failed,
+                        )
+                    )
                 }
 
                 else -> {

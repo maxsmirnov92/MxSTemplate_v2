@@ -3,7 +3,7 @@ package net.maxsmr.vk_news_client.ui.model
 import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPostComment
 
 data class FeedPostCommentUI(
-    val id: Int,
+    val id: Long,
     val authorName: String,
     val authorAvatarUrl: String,
     val commentText: String,

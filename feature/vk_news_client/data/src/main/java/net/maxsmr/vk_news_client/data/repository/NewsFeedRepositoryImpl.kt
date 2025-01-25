@@ -9,9 +9,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPost
+import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPostComment
 import net.maxsmr.core.domain.entities.feature.vk_news_client.Statistics
 import net.maxsmr.core.domain.entities.feature.vk_news_client.Statistics.StatsType
 import net.maxsmr.core.network.api.VkNewsDataSource
+import net.maxsmr.core.network.api.vk_news_client.CommentsDto
 
 class NewsFeedRepositoryImpl(
     private val vkNewsDataSource: VkNewsDataSource,
@@ -49,15 +51,15 @@ class NewsFeedRepositoryImpl(
         }
     }
 
-    override suspend fun addLike(feedPost: FeedPost): Int {
-        return vkNewsDataSource.addLike(feedPost).apply {
-            changeLikesCount(feedPost, this, true)
+    override suspend fun addLike(post: FeedPost): Int {
+        return vkNewsDataSource.addLike(post).apply {
+            changeLikesCount(post, this, true)
         }
     }
 
-    override suspend fun deleteLike(feedPost: FeedPost): Int {
-        return vkNewsDataSource.deleteLike(feedPost).apply {
-            changeLikesCount(feedPost, this, false)
+    override suspend fun deleteLike(post: FeedPost): Int {
+        return vkNewsDataSource.deleteLike(post).apply {
+            changeLikesCount(post, this, false)
         }
     }
 
@@ -79,10 +81,10 @@ class NewsFeedRepositoryImpl(
         feedPostsUpdateEvents.emit(newList to true)
     }
 
-    override suspend fun delete(item: FeedPost) {
+    override suspend fun delete(post: FeedPost) {
         val currentList = feedPosts.value
         val newList = currentList.mapNotNull {
-            if (it.id == item.id) {
+            if (it.id == post.id) {
                 null
             } else {
                 it
@@ -91,11 +93,15 @@ class NewsFeedRepositoryImpl(
         // нужна рекомпозиция, т.к. элемент уже был изменён
         feedPostsUpdateEvents.emit(newList to true)
         try {
-            vkNewsDataSource.ignorePost(item)
+            vkNewsDataSource.ignorePost(post)
         } catch (e: Exception) {
             feedPostsUpdateEvents.emit(currentList to true)
             throw e
         }
+    }
+
+    override suspend fun loadComments(post: FeedPost): List<FeedPostComment> {
+        return vkNewsDataSource.getComments(post)
     }
 
     private suspend fun changeLikesCount(

@@ -7,5 +7,7 @@ import kotlinx.serialization.Serializable
 data class LikesDto(
     val count: Int,
     @SerialName("user_likes")
-    val userLikes: Int
+    val userLikes: Int,
+    @SerialName("can_like")
+    val canLike: Int
 )

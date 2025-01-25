@@ -55,24 +55,6 @@ import net.maxsmr.vk_news_client.ui.model.FeedPostUI
 import net.maxsmr.vk_news_client.ui.model.StatisticsUI
 import net.maxsmr.vk_news_client.ui.model.StatisticsUI.Companion.getItemByType
 
-@Composable
-fun FeedPostCardLoading(
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxSize(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        CircularProgressIndicator()
-        Spacer(modifier = Modifier.size(10.dp))
-        Text(
-            text = stringResource(net.maxsmr.core.android.R.string.loading),
-            fontSize = 16.sp,
-            fontFamily = FontFamily.Default,
-        )
-    }
-}
 
 @Composable
 fun FeedPostCardList(

@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPost
+import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPostComment
 import net.maxsmr.core.network.api.vk_news_client.VkNewsDataService
 import net.maxsmr.core.network.api.vk_news_client.exceptions.IgnorePostFailedException
 import net.maxsmr.core.network.client.retrofit.VkRetrofitClient
@@ -18,6 +19,8 @@ interface VkNewsDataSource {
     suspend fun addLike(feedPost: FeedPost): Int
 
     suspend fun deleteLike(feedPost: FeedPost): Int
+
+    suspend fun getComments(feedPost: FeedPost, needLikes: Boolean = true): List<FeedPostComment>
 }
 
 class VkNewsDataSourceImpl(
@@ -48,6 +51,10 @@ class VkNewsDataSourceImpl(
     override suspend fun deleteLike(feedPost: FeedPost): Int = withContext(Dispatchers.IO) {
         service.deleteLikeForPost(feedPost.communityId, feedPost.id).count
     }
+
+    override suspend fun getComments(feedPost: FeedPost, needLikes: Boolean) = withContext(Dispatchers.IO) {
+        service.getCommentsForPost(feedPost.communityId, feedPost.id, if (needLikes) 1 else 0).asDomain()
+    }
 }
 
 class MockVkNewsDataSourceImpl: VkNewsDataSource {
@@ -69,5 +76,10 @@ class MockVkNewsDataSourceImpl: VkNewsDataSource {
     override suspend fun deleteLike(feedPost: FeedPost): Int {
         delay(3000)
         return Random.nextInt(1000)
+    }
+
+    override suspend fun getComments(feedPost: FeedPost, needLikes: Boolean): List<FeedPostComment> {
+        delay(3000)
+        return emptyList()
     }
 }

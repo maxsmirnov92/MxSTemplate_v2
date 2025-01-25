@@ -10,13 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import net.maxsmr.commonutils.gui.message.errorMessage
-import net.maxsmr.commonutils.gui.message.formatMessage
 import net.maxsmr.commonutils.states.PgnLoadState
-import net.maxsmr.designsystem.compose.component.EmptyErrorContainer
 import net.maxsmr.vk_news_client.ui.model.FeedPostUI
+import net.maxsmr.vk_news_client.ui.presentation.main.EmptyErrorScreen
+import net.maxsmr.vk_news_client.ui.presentation.main.LoadingScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +72,7 @@ fun NewsFeedScreen(
                 }
             }
         } else {
-            FeedPostCardLoading(modifier)
+            LoadingScreen(modifier)
         }
     } else {
         if (screenState.hasData { !it.isNullOrEmpty() }) {
@@ -96,22 +94,7 @@ fun NewsFeedScreen(
                 )
             }
         } else {
-            EmptyErrorContainer(
-                if (screenState.isError) {
-                    screenState.error?.errorMessage().formatMessage(
-                        net.maxsmr.core.android.R.string.error_format,
-                        net.maxsmr.core.network.R.string.error_unexpected_try_again
-                    ).get(LocalContext.current).toString()
-                } else {
-                    LocalContext.current.getString(net.maxsmr.core.android.R.string.no_data)
-                },
-                buttonResId = if (screenState.wasLoaded) {
-                    net.maxsmr.core.android.R.string.try_again
-                } else {
-                    null
-                },
-                modifier = modifier
-            ) {
+            EmptyErrorScreen(screenState, modifier) {
                 viewModel.reloadRecommendations()
             }
         }
