@@ -16,7 +16,6 @@ abstract class BaseRestOkHttpClientManager(
     callTimeout: Long = 0L,
     retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
     private val context: Context,
-    protected val exceptionHandler: IApiExceptionHandler? = null,
     private val connectivityChecker: ConnectivityChecker,
 ) : BaseOkHttpClientManager(connectTimeout, readTimeout, writeTimeout, callTimeout, retryOnConnectionFailure) {
 

@@ -106,12 +106,10 @@ class OkHttpModule {
     @[Provides Singleton RadarIoOkHttpClient]
     fun provideRadarIoOkHttpClient(
         @ApplicationContext context: Context,
-        handler: CombinedApiExceptionHandler,
     ): OkHttpClient {
         return RadarIoOkHttpClientManager(
             BuildConfig.AUTHORIZATION_RADAR_IO,
             context = context,
-            exceptionHandler = handler,
             connectivityChecker = NetworkConnectivityChecker,
         ).build()
     }
@@ -119,14 +117,12 @@ class OkHttpModule {
     @[Provides Singleton YandexSuggestOkHttpClient]
     fun provideYandexSuggestOkHttpClient(
         @ApplicationContext context: Context,
-        handler: CombinedApiExceptionHandler,
     ): OkHttpClient {
         return YandexOkHttpClientManager(
             BuildConfig.API_KEY_YANDEX_SUGGEST,
             YandexOkHttpClientManager.LocalizationField.LANG,
             "ru",
             context = context,
-            exceptionHandler = handler,
             connectivityChecker = NetworkConnectivityChecker,
         ).build()
     }
@@ -134,14 +130,12 @@ class OkHttpModule {
     @[Provides Singleton YandexGeocodeOkHttpClient]
     fun provideYandexGeocodeOkHttpClient(
         @ApplicationContext context: Context,
-        handler: CombinedApiExceptionHandler,
     ): OkHttpClient {
         return YandexOkHttpClientManager(
             BuildConfig.API_KEY_YANDEX_GEOCODE,
             YandexOkHttpClientManager.LocalizationField.LOCALE,
             "ru_RU",
             context = context,
-            exceptionHandler = handler,
             connectivityChecker = NetworkConnectivityChecker,
         ).build()
     }
@@ -149,12 +143,10 @@ class OkHttpModule {
     @[Provides Singleton DoubleGisRoutingOkHttpClient]
     fun provideDoubleGisRoutingOkHttpClient(
         @ApplicationContext context: Context,
-        handler: CombinedApiExceptionHandler,
         cacheRepo: CacheDataStoreRepository,
     ): OkHttpClient {
         return DoubleGisOkHttpClientManager(
             context = context,
-            exceptionHandler = handler,
             connectivityChecker = NetworkConnectivityChecker,
             apiKeyProvider = {
                 runBlocking { cacheRepo.getDoubleGisRoutingApiKey() }

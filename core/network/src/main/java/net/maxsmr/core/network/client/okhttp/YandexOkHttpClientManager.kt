@@ -18,12 +18,10 @@ class YandexOkHttpClientManager(
     private val defaultLangOrLocale: String = "ru",
     connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
     context: Context,
-    exceptionHandler: IApiExceptionHandler,
     connectivityChecker: ConnectivityChecker,
 ) : BaseRestOkHttpClientManager(
     connectTimeout,
     context = context,
-    exceptionHandler = exceptionHandler,
     connectivityChecker = connectivityChecker,
 ) {
 

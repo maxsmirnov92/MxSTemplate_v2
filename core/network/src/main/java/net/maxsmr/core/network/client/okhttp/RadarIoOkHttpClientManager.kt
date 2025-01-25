@@ -16,12 +16,10 @@ class RadarIoOkHttpClientManager(
     private val defaultCountry: String = "RU",
     connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
     context: Context,
-    exceptionHandler: IApiExceptionHandler,
     connectivityChecker: ConnectivityChecker,
 ) : BaseRestOkHttpClientManager(
     connectTimeout,
     context = context,
-    exceptionHandler = exceptionHandler,
     connectivityChecker = connectivityChecker,
 ) {
 
