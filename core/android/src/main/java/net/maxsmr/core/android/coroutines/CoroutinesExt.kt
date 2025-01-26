@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.android.asCoroutineDispatcher
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,6 +24,9 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 
+/**
+ * @return [MutableStateFlow] из исходного [Flow] по принципу Eagerly
+ */
 fun <T> Flow<T>.mutableStateIn(
     scope: CoroutineScope,
     initialValue: T,
@@ -35,11 +39,20 @@ fun <T> Flow<T>.mutableStateIn(
     return flow
 }
 
+/**
+ * @return [MutableSharedFlow] из исходного [Flow] по принципу Eagerly
+ */
 fun <T> Flow<T>.mutableSharedStateIn(
     scope: CoroutineScope,
+    replay: Int = 0,
+    extraBufferCapacity: Int = 0,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
     context: CoroutineContext = EmptyCoroutineContext,
 ): MutableSharedFlow<T> {
-    val flow = MutableSharedFlow<T>()
+    val flow = MutableSharedFlow<T>(replay,
+        extraBufferCapacity,
+        onBufferOverflow
+    )
     scope.launch(context) {
         collect { flow.emit(it) }
     }

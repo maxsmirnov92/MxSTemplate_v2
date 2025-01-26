@@ -22,12 +22,10 @@ object AddressSorterRepositoryModule {
     @[Provides Singleton]
     fun providesAddressRepository(
         dao: AddressDao,
-        cacheRepo: CacheDataStoreRepository,
         settingsRepo: SettingsDataStoreRepository,
     ): AddressRepo {
         return AddressRepoImpl(
             dao,
-            cacheRepo,
             settingsRepo
         )
     }

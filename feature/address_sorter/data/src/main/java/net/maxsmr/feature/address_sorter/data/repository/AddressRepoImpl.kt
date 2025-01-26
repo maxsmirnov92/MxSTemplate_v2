@@ -1,12 +1,11 @@
 package net.maxsmr.feature.address_sorter.data.repository
 
-import android.location.Location
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.collection.sort.BaseOptionalComparator
 import net.maxsmr.commonutils.collection.sort.ISortOption
@@ -15,7 +14,6 @@ import net.maxsmr.commonutils.compareLongs
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.coroutines.mutableStateIn
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
 import net.maxsmr.core.database.dao.UpsertDao.Companion.NO_ID
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
@@ -31,7 +29,6 @@ import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepositor
 
 class AddressRepoImpl(
     private val dao: AddressDao,
-    private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
 ) : AddressRepo {
 
@@ -39,69 +36,85 @@ class AddressRepoImpl(
 
     private val ioDispatcher = Dispatchers.IO
 
-    private val scope = CoroutineScope(ioDispatcher + Job())
+    private val scope = CoroutineScope(ioDispatcher)
 
-    override val resultAddresses: MutableStateFlow<List<Address>> = dao.get().map { list ->
-        list.map { it.toDomain() }
-    }.mutableStateIn(scope, listOf(), ioDispatcher)
+    override val lastAddresses = MutableSharedFlow<List<Address>>(
+        // как StateFlow только без distinctUntilChanged
+        replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
-    override val upsertCompletedEvent: MutableSharedFlow<Unit> = MutableSharedFlow()
+    init {
+        // transform нет возможности, т.к. нужно эмитить из других методов
+        scope.launch {
+            dao.get().map { list ->
+                list.map { it.toDomain() }
+            }.collect {
+                lastAddresses.emit(it)
+            }
+        }
+    }
 
-    override suspend fun addItems(items: List<AddressEntity>, rewrite: Boolean) {
+    override suspend fun add(items: List<Address>, rewrite: Boolean) {
         withContext(ioDispatcher) {
             if (items.isNotEmpty()) {
                 if (rewrite) {
                     dao.clear()
                 } else {
                     val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: 0
-                    items.forEachIndexed { i, item ->
-                        item.sortOrder = maxSortOrder + i
+                    items.mapIndexed { index, item -> item.toEntity(index) }.also {
+                        it.forEachIndexed { i, item ->
+                            item.sortOrder = maxSortOrder + i
+                        }
+                        dao.upsert(it)
                     }
                 }
-                dao.upsert(items)
             }
         }
     }
 
-    override suspend fun addNewItem(query: String): AddressEntity {
+    override suspend fun addNew(query: String): Address {
         return withContext(ioDispatcher) {
-             updateQuery(null, query)
+            updateQuery(null, query)
         }
     }
 
-    override suspend fun getItems(): List<AddressEntity> {
+    override suspend fun getAll(): List<Address> {
         return withContext(ioDispatcher) {
-            dao.getRaw()
+            dao.getRaw().map { it.toDomain() }
         }
     }
 
-    override suspend fun getItem(id: Long): AddressEntity? {
+    override suspend fun get(id: Long): Address? {
         return withContext(ioDispatcher) {
-            dao.getById(id)
+            dao.getById(id)?.toDomain()
         }
     }
 
-    override suspend fun deleteItem(id: Long) {
+    override suspend fun delete(id: Long) {
         withContext(ioDispatcher) {
             dao.deleteById(id)
         }
     }
 
-    override suspend fun updateItem(id: Long, updateFunc: (AddressEntity) -> AddressEntity) {
+    override suspend fun update(id: Long, updateFunc: (Address) -> Address) {
         withContext(ioDispatcher) {
-            val entity = dao.getById(id) ?: throw IllegalStateException("AddressEntity with id $id not exists")
-            val newEntity = updateFunc(entity)
-            if (newEntity.id != entity.id) {
-                throw IllegalStateException("AddressEntity id (${newEntity.id}) doesn't match source id (${entity.id})")
+            val currentEntity = dao.getById(id) ?: throw IllegalStateException("AddressEntity with id $id not exists")
+            val newAddress = updateFunc(currentEntity.toDomain())
+            if (newAddress.id != currentEntity.id) {
+                throw IllegalStateException("AddressEntity id (${newAddress.id}) doesn't match source id (${currentEntity.id})")
             }
-            dao.upsert(newEntity)
+            dao.upsert(newAddress.toEntity(currentEntity.sortOrder))
         }
     }
 
-    override suspend fun clearItems() {
+    override suspend fun clear() {
         withContext(ioDispatcher) {
             dao.clear()
         }
+    }
+
+    override suspend fun reload() {
+        lastAddresses.emit(getAll())
     }
 
     override suspend fun specifyFromSuggest(
@@ -133,24 +146,27 @@ class AddressRepoImpl(
         result.upsert()
     }
 
-    override suspend fun upsertItemsWithSort(items: MutableList<AddressEntity>) {
+    override suspend fun upsertItemsWithSort(items: MutableList<Address>) {
         return withContext(ioDispatcher) {
             if (items.isNotEmpty()) {
+                val entityItems = items.mapIndexed { index, item ->
+                    item.toEntity(index)
+                }.toMutableList()
                 val settings = settingsRepo.getSettings()
-                items.sortWith(AddressComparator(settings.sortPriority))
-                items.forEachIndexed { index, item ->
+                entityItems.sortWith(AddressComparator(settings.sortPriority))
+                entityItems.forEachIndexed { index, item ->
                     item.sortOrder = index.toLong()
                 }
-                items.upsert()
+                entityItems.upsert()
             }
         }
     }
 
-    override suspend fun updateQuery(id: Long?, query: String): AddressEntity {
+    override suspend fun updateQuery(id: Long?, query: String): Address {
         return withContext(ioDispatcher) {
             val maxSortOrder = dao.getRaw().maxOfOrNull { it.sortOrder } ?: -1
             val current = if (id != null && id > 0) dao.getById(id) else null
-            if (current != null && current.address == query) return@withContext current
+            if (current != null && current.address == query) return@withContext current.toDomain()
             val newEntity = current?.copy(
                 address = query,
                 isSuggested = false,
@@ -165,7 +181,7 @@ class AddressRepoImpl(
             dao.upsert(newEntity).also {
                 newEntity.id = it
             }
-            newEntity
+            newEntity.toDomain()
         }
     }
 
@@ -173,8 +189,8 @@ class AddressRepoImpl(
         // AddressEntity пишем в таблицу и ждём изменения в resultAddresses
         val resultIds = dao.upsert(this)
         if (resultIds.isEmpty() || resultIds.all { it == NO_ID }) {
-            // ивент нужен для случая, когда изменений в таблице нет - StateFlow не принимает без изменений
-            upsertCompletedEvent.emit(Unit)
+            // для случая, когда изменений в таблице нет
+            reload()
         }
     }
 

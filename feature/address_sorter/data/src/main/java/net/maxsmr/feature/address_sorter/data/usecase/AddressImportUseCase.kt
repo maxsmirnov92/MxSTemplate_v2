@@ -7,7 +7,6 @@ import net.maxsmr.commonutils.media.openInputStreamOrThrow
 import net.maxsmr.commonutils.stream.readStringOrThrow
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.UseCase
-import net.maxsmr.core.database.model.address_sorter.AddressEntity.Companion.toEntity
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.android.exceptions.EmptyResultException
@@ -26,11 +25,10 @@ class AddressImportUseCase @Inject constructor(
 
         val items = json.decodeFromString<List<Address>>(data)
             .filter { it.address.isNotEmpty() }
-            .mapIndexed { index, item -> item.toEntity(index) }
         if (items.isEmpty()) {
             throw EmptyResultException(baseApplicationContext, false)
         }
 
-        repository.addItems(items)
+        repository.add(items)
     }
 }

@@ -44,7 +44,7 @@ class AddressExportUseCase @Inject constructor(
     }
 
     override suspend fun execute(parameters: String): String {
-        val items = repository.getItems().map { it.toDomain() }.filter { it.address.isNotEmpty() }
+        val items = repository.getAll().filter { it.address.isNotEmpty() }
         if (items.isEmpty()) {
             throw EmptyResultException(baseApplicationContext, false)
         }

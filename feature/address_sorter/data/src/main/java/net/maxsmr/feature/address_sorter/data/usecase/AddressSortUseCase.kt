@@ -4,7 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.usecase.UseCase
-import net.maxsmr.core.database.model.address_sorter.AddressEntity
+import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.AddressRoute
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingMode
@@ -12,13 +12,12 @@ import net.maxsmr.core.network.api.RoutingDataSource
 import net.maxsmr.core.network.api.SuggestDataSource
 import net.maxsmr.core.network.api.doublegis.RoutingRequest
 import net.maxsmr.core.network.api.doublegis.RoutingResponse.Route
-import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.R
+import net.maxsmr.feature.address_sorter.data.getDirectDistanceByLocation
+import net.maxsmr.feature.address_sorter.data.getDisplayedMessageResId
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.MissingLocationException
 import net.maxsmr.feature.address_sorter.data.usecase.exceptions.RoutingFailedException
-import net.maxsmr.feature.address_sorter.data.getDirectDistanceByLocation
-import net.maxsmr.feature.address_sorter.data.getDisplayedMessageResId
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import javax.inject.Inject
 
@@ -27,10 +26,10 @@ class AddressSortUseCase @Inject constructor(
     private val settingsRepo: SettingsDataStoreRepository,
     private val routingDataSource: RoutingDataSource,
     private val suggestDataSource: SuggestDataSource,
-) : UseCase<Address.Location?, List<AddressEntity>>(Dispatchers.Default) {
+) : UseCase<Address.Location?, List<Address>>(Dispatchers.Default) {
 
-    override suspend fun execute(parameters: Address.Location?): List<AddressEntity> {
-        val entities = addressRepo.getItems()
+    override suspend fun execute(parameters: Address.Location?): List<Address> {
+        val addresses = addressRepo.getAll()
 
         val settings = settingsRepo.getSettings()
         val mode = settings.routingMode
@@ -39,7 +38,7 @@ class AddressSortUseCase @Inject constructor(
         val missingLocationIds = mutableListOf<Long>()
         val failRouteIds = mutableListOf<Pair<Long, Route.Status>>()
 
-        val newEntities = if (parameters != null) {
+        val newAddresses = if (parameters != null) {
 
             if (mode.isApi) {
 
@@ -48,7 +47,7 @@ class AddressSortUseCase @Inject constructor(
                 if (mode == RoutingMode.SUGGEST) {
                     routePairs = mutableMapOf()
                     routePairs as MutableMap<Int, Pair<AddressRoute?, Route.Status>>
-                    entities.forEach {
+                    addresses.forEach {
                         val distance =
                             suggestDataSource.suggest(it.address, parameters).getOrNull(0)?.distance
                         val routePair = if (distance != null) {
@@ -60,7 +59,7 @@ class AddressSortUseCase @Inject constructor(
                     }
                 } else {
 
-                    val points = entities.associateBy({
+                    val points = addresses.associateBy({
                         it.id
                     }) {
                         val location = it.location ?: return@associateBy null
@@ -113,39 +112,40 @@ class AddressSortUseCase @Inject constructor(
                     it.value.second != Route.Status.OK
                 }.map { it.key to it.value.second })
 
-                entities.map { entity ->
-                    val routePair = routePairs[entity.id]
+                addresses.map { address ->
+                    val newMap = address.errorMessagesMap
+                    val routePair = routePairs[address.id]
                     if (routePair != null) {
                         val route = routePair.first
                         if (routePair.second == Route.Status.OK && route != null) {
-                            entity.copy(
+                            newMap.remove(Address.ErrorType.ROUTING)
+                            address.copy(
                                 distance = route.distance,
                                 duration = route.duration,
-                                routingErrorMessage = null
+                                errorMessagesMap = newMap
                             )
                         } else {
-                            entity.copy(
-                                routingErrorMessage = baseApplicationContext.getString(routePair.second.getDisplayedMessageResId())
+                            newMap[Address.ErrorType.ROUTING] = baseApplicationContext.getString(routePair.second.getDisplayedMessageResId())
+                            address.copy(
+                                errorMessagesMap = newMap
                             )
-                        }.apply {
-                            this.id = entity.id
                         }
                     } else {
-                        // route из ответа скорее всего отсутствует по причине того, что этот entity был без location
-                        if (entity.isSuggested) {
+                        // route из ответа скорее всего отсутствует по причине того, что этот address был без location
+                        if (address.isSuggested) {
                             // предполагается быть с location
-                            missingLocationIds.add(entity.id)
-                            entity.copy(
-                                routingErrorMessage = baseApplicationContext.getString(R.string.address_sorter_error_missing_location)
-                            )
+                            missingLocationIds.add(address.id)
+                            newMap[Address.ErrorType.ROUTING] = baseApplicationContext.getString(R.string.address_sorter_error_missing_location)
+                            address.copy(errorMessagesMap =  newMap)
                         } else {
-                            entity
+                            address
                         }
                     }
                 }.toMutableList()
             } else {
                 if (mode == RoutingMode.DIRECT) {
-                    entities.map {
+                    addresses.map {
+                        val newMap = it.errorMessagesMap
                         val location = it.location
                         val distance = if (location != null) {
                             getDirectDistanceByLocation(location, parameters)
@@ -158,25 +158,24 @@ class AddressSortUseCase @Inject constructor(
                             }
                         }
                         if (distance != null) {
+                            newMap.remove(Address.ErrorType.ROUTING)
                             // актуализация пересчитанным валидным значением
                             it.copy(
                                 distance = distance,
                                 duration = null,
-                                routingErrorMessage = null
-                            ).apply {
-                                this.id = it.id
-                            }
+                                errorMessagesMap = newMap
+                            )
                         } else {
                             if (location != null) {
                                 failRouteIds.add(it.id to Route.Status.FAIL)
+                                newMap[Address.ErrorType.ROUTING] = baseApplicationContext.getString(Route.Status.FAIL.getDisplayedMessageResId())
                                 it.copy(
-                                    routingErrorMessage = baseApplicationContext.getString(Route.Status.FAIL.getDisplayedMessageResId())
+                                    errorMessagesMap = newMap
                                 )
                             } else {
                                 if (it.isSuggested) {
-                                    it.copy(
-                                        routingErrorMessage = baseApplicationContext.getString(R.string.address_sorter_error_missing_location)
-                                    )
+                                    newMap[Address.ErrorType.ROUTING] =baseApplicationContext.getString(R.string.address_sorter_error_missing_location)
+                                        it.copy(errorMessagesMap = newMap)
                                 } else {
                                     it
                                 }
@@ -184,15 +183,15 @@ class AddressSortUseCase @Inject constructor(
                         }
                     }.toMutableList()
                 } else {
-                    entities.toMutableList()
+                    addresses.toMutableList()
                 }
             }
         } else {
             // отсутствие последней известной геолокации не является поводом для отказа в сортировке
-            entities.toMutableList()
+            addresses.toMutableList()
         }
 
-        addressRepo.upsertItemsWithSort(newEntities)
+        addressRepo.upsertItemsWithSort(newAddresses)
 
         if (missingLocationIds.isNotEmpty()) {
             throw MissingLocationException(missingLocationIds)
@@ -202,6 +201,6 @@ class AddressSortUseCase @Inject constructor(
             throw RoutingFailedException(failRouteIds)
         }
 
-        return newEntities
+        return newAddresses
     }
 }

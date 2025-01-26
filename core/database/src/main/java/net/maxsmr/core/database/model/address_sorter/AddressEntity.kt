@@ -31,34 +31,6 @@ data class AddressEntity(
             return field
         }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is AddressEntity) return false
-
-        if (address != other.address) return false
-        if (location != other.location) return false
-        if (distance != other.distance) return false
-        if (duration != other.duration) return false
-        if (isSuggested != other.isSuggested) return false
-        if (locationErrorMessage != other.locationErrorMessage) return false
-        if (routingErrorMessage != other.routingErrorMessage) return false
-        if (id != other.id) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = address.hashCode()
-        result = 31 * result + (location?.hashCode() ?: 0)
-        result = 31 * result + (distance?.hashCode() ?: 0)
-        result = 31 * result + (duration?.hashCode() ?: 0)
-        result = 31 * result + isSuggested.hashCode()
-        result = 31 * result + (locationErrorMessage?.hashCode() ?: 0)
-        result = 31 * result + (routingErrorMessage?.hashCode() ?: 0)
-        result = 31 * result + id.hashCode()
-        return result
-    }
-
     fun toDomain(): Address {
         val exceptionsMap = hashMapOf<ErrorType, String?>()
         locationErrorMessage?.let {
@@ -81,7 +53,10 @@ data class AddressEntity(
     companion object {
 
         @JvmStatic
-        fun Address.toEntity(index: Int) = AddressEntity(
+        fun Address.toEntity(index: Int) = toEntity(index.toLong().takeIf { it >= 0 } ?: id)
+
+        @JvmStatic
+        fun Address.toEntity(sortOrder: Long) = AddressEntity(
             address = address,
             location = location,
             distance = distance,
@@ -91,7 +66,7 @@ data class AddressEntity(
             routingErrorMessage = errorMessagesMap[ErrorType.ROUTING],
         ).apply {
             this.id = this@toEntity.id.takeIf { it >= 0 } ?: 0
-            this.sortOrder = index.toLong().takeIf { it >= 0 } ?: id
+            this.sortOrder = sortOrder
         }
 
         @JvmStatic

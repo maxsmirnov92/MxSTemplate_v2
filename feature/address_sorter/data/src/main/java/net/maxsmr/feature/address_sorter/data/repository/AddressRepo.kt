@@ -1,35 +1,31 @@
 package net.maxsmr.feature.address_sorter.data.repository
 
-import android.location.Location
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
-import net.maxsmr.core.database.model.address_sorter.AddressEntity
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
-import java.io.InputStream
 
 interface AddressRepo {
 
-    val resultAddresses: StateFlow<List<Address>>
+    val lastAddresses: SharedFlow<List<Address>>
 
-    val upsertCompletedEvent: SharedFlow<Unit>
+    suspend fun add(items: List<Address>, rewrite: Boolean = false)
 
-    suspend fun addItems(items: List<AddressEntity>, rewrite: Boolean = false)
+    suspend fun addNew(query: String = EMPTY_STRING): Address
 
-    suspend fun addNewItem(query: String = EMPTY_STRING): AddressEntity
+    suspend fun getAll(): List<Address>
 
-    suspend fun getItems(): List<AddressEntity>
+    suspend fun get(id: Long): Address?
 
-    suspend fun getItem(id: Long): AddressEntity?
+    suspend fun delete(id: Long)
 
-    suspend fun deleteItem(id: Long)
+    suspend fun update(id: Long, updateFunc: (Address) -> Address)
 
-    suspend fun updateItem(id: Long, updateFunc: (AddressEntity) -> AddressEntity)
+    suspend fun clear()
 
-    suspend fun clearItems()
+    suspend fun reload()
 
     suspend fun specifyFromSuggest(
         id: Long,
@@ -39,10 +35,10 @@ interface AddressRepo {
 
     suspend fun updateSortOrder(ids: List<Long>)
 
-    suspend fun upsertItemsWithSort(items: MutableList<AddressEntity>)
+    suspend fun upsertItemsWithSort(items: MutableList<Address>)
 
     /**
      * Апдейт существующей Entity в таблице при вводе или создание новой при [id] null
      */
-    suspend fun updateQuery(id: Long?, query: String): AddressEntity
+    suspend fun updateQuery(id: Long?, query: String): Address
 }
