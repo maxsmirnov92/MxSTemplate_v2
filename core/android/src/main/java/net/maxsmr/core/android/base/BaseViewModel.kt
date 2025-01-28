@@ -346,17 +346,17 @@ abstract class BaseViewModel(
         }
     }
 
-    protected fun <T> LiveData<ILoadState<T>>.bindProgress(
+    protected fun <T, S: ILoadState<T>> LiveData<S>.bindProgress(
         tag: String = DIALOG_TAG_PROGRESS,
         message: TextMessage,
     ) = bindProgress(tag) {
         setMessage(message)
     }
 
-    protected fun <T> LiveData<ILoadState<T>>.bindProgress(
+    protected fun <T, S: ILoadState<T>> LiveData<S>.bindProgress(
         tag: String = DIALOG_TAG_PROGRESS,
         builderConfig: (AlertDialogBuilder.() -> Unit)? = null,
-    ): LiveData<ILoadState<T>> =
+    ): LiveData<S> =
         doOnNext {
             if (it?.isLoading == true) {
                 AlertDialogBuilder(tag).apply { builderConfig?.invoke(this) }.build()

@@ -157,8 +157,9 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     }
 
     @Composable
-    final override fun registerViewModelByRoute(
+    final override fun registerViewModelWithRoute(
         route: String,
+        key: String?,
         viewModel: BaseViewModel,
         dependencies: ComposableDependencies,
     ): Boolean {
@@ -169,6 +170,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
             component?.unregister()
             screenComponentsMap[route] = ScreenComponents(
                 viewModel,
+                key,
                 getAlertDelegateForViewModel(viewModel, lifecycleScope, dependencies.snackbarHostState),
                 getConnectionHandlerForViewModel(viewModel, lifecycleScope, dependencies.snackbarHostState)
             ).also {
@@ -177,6 +179,19 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
             return true
         }
         return false
+    }
+
+    override fun unregisterViewModelWithRoute(
+        route: String,
+        viewModel: BaseViewModel
+    ) {
+        screenComponentsMap[route]?.let {
+            it.key?.let { key ->
+                savedStateRegistry.unregisterSavedStateProvider(key)
+            }
+            it.unregister()
+            screenComponentsMap.remove(route)
+        }
     }
 
     protected open fun getAlertDelegateForActivityViewModel(scope: CoroutineScope, hostState: SnackbarHostState): ComposableActivityAlertDelegate<VM> {
@@ -266,6 +281,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     private fun getActivityScreenComponents(dependencies: ComposableDependencies): ScreenComponents {
         return ScreenComponents(
             viewModel,
+            getKeyForViewModel(viewModel::class.java),
             getAlertDelegateForActivityViewModel(lifecycleScope, dependencies.snackbarHostState),
             getConnectionHandlerForActivityViewModel(lifecycleScope, dependencies.snackbarHostState)
         )
@@ -336,6 +352,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
 
     protected class ScreenComponents(
         val viewModel: BaseViewModel,
+        val key: String?,
         val alertDelegate: ComposableActivityAlertDelegate<*>,
         val connectionHandler: ConnectionHandler<AlertRepresentation>? = null,
     ) {

@@ -22,15 +22,21 @@ interface IComposableViewModelsContainer {
      * @return true, если компонент был создан
      */
     @Composable
-    fun registerViewModelByRoute(
+    fun registerViewModelWithRoute(
         route: String,
+        key: String?,
         viewModel: BaseViewModel,
         dependencies: ComposableDependencies,
     ): Boolean
 
+    fun unregisterViewModelWithRoute(
+        route: String,
+        viewModel: BaseViewModel,
+    )
+
     fun <VM : BaseViewModel> getKeyForViewModel(
         clazz: Class<VM>,
-        args: Any?
+        args: Any? = null
     ): String? = if (args != null) {
         clazz.name + ":$args"
     } else {
