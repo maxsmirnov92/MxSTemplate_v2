@@ -30,6 +30,7 @@ import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInter
 import net.maxsmr.core.network.session.SessionStorage
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.mxstemplate.BuildConfig
+import net.maxsmr.vk_news_client.data.VkSessionStorage
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -138,7 +139,7 @@ class OkHttpModule {
 
     @[Provides Singleton VkOkHttpClient]
     fun provideVkOkHttpClient(
-        @net.maxsmr.core.di.SessionStorage(SessionStorageType.VK) sessionStorage: SessionStorage,
+        @net.maxsmr.core.di.SessionStorage(SessionStorageType.VK) sessionStorage: VkSessionStorage,
         apiLoggingInterceptor: ApiLoggingInterceptor,
         cachingInterceptor: BodyCachingInterceptor,
         connectionInterceptor: NetworkConnectionInterceptor,

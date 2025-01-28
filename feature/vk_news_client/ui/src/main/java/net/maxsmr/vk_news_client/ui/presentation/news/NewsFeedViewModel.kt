@@ -15,7 +15,11 @@ import net.maxsmr.commonutils.live.pgnSuccessLoad
 import net.maxsmr.commonutils.states.PgnLoadState
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.coroutines.execute.ExecuteResult
+import net.maxsmr.core.di.SessionStorageType
 import net.maxsmr.core.domain.entities.feature.vk_news_client.Statistics
+import net.maxsmr.core.network.exceptions.ApiException.Companion.isApiException
+import net.maxsmr.vk_news_client.data.VkApiErrorCodes
+import net.maxsmr.vk_news_client.data.VkSessionStorage
 import net.maxsmr.vk_news_client.data.repository.NewsFeedRepository
 import net.maxsmr.vk_news_client.data.usecase.ChangeLikeStatusUseCase
 import net.maxsmr.vk_news_client.data.usecase.IgnorePostUseCase
@@ -27,6 +31,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NewsFeedViewModel @Inject constructor(
+    @net.maxsmr.core.di.SessionStorage(SessionStorageType.VK)
+    private val vkSessionStorage: VkSessionStorage,
     private val loadRecommendationsUseCase: LoadRecommendationsUseCase,
     private val changeLikeStatusUseCase: ChangeLikeStatusUseCase,
     private val ignorePostUseCase: IgnorePostUseCase,
@@ -40,9 +46,17 @@ class NewsFeedViewModel @Inject constructor(
 
     override fun onInitialized() {
         super.onInitialized()
-        if (screenState.value?.wasLoaded != true) {
-            reloadRecommendations()
+
+        viewModelScope.launch {
+            vkSessionStorage.successRefreshTokenEvents.collectLatest {
+                screenState.value?.error?.error?.let { e ->
+                    if (e.isApiException(VkApiErrorCodes.ACCESS_TOKEN_EXPIRED.code)) {
+                        loadRecommendations(!repo.hasNextPage)
+                    }
+                }
+            }
         }
+
         viewModelScope.launch {
             repo.feedPostsLastPage.collectLatest {
                 _screenState.pgnSuccessLoad(
@@ -53,6 +67,10 @@ class NewsFeedViewModel @Inject constructor(
                     setValue = false
                 )
             }
+        }
+
+        if (screenState.value?.wasLoaded != true) {
+            reloadRecommendations()
         }
     }
 
@@ -145,7 +163,7 @@ class NewsFeedViewModel @Inject constructor(
                         _screenState.pgnLoading(isFromStart = true, setValue = false)
                     }
 
-                    is ExecuteResult.PgnLoading ->{
+                    is ExecuteResult.PgnLoading -> {
                         _screenState.pgnLoading(isFromStart = false, setValue = false)
                     }
 

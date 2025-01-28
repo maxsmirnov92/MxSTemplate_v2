@@ -20,16 +20,16 @@ import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.di.SessionStorageType
 import net.maxsmr.core.network.exceptions.ApiException.Companion.isApiException
 import net.maxsmr.core.network.exceptions.handler.CombinedCallExceptionHandler
-import net.maxsmr.core.network.session.SessionStorage
 import net.maxsmr.feature.vk_news_client.ui.R
 import net.maxsmr.vk_news_client.data.VkApiErrorCodes
+import net.maxsmr.vk_news_client.data.VkSessionStorage
 import net.maxsmr.vk_news_client.ui.presentation.login.AUTH_SCOPES
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
     @net.maxsmr.core.di.SessionStorage(SessionStorageType.VK)
-    private val vkSessionStorage: SessionStorage,
+    private val vkSessionStorage: VkSessionStorage,
     private val exceptionHandler: CombinedCallExceptionHandler,
     state: SavedStateHandle
 ) : BaseViewModel(state) {
@@ -41,9 +41,8 @@ class MainViewModel @Inject constructor(
 
     override fun onInitialized() {
         super.onInitialized()
-        val token = VKID.instance.accessToken
-        _authState.value = if (token != null) {
-            AuthState.Authorized(token.token)
+        _authState.value = if (vkSessionStorage.has()) {
+            AuthState.Authorized(vkSessionStorage.session.orEmpty())
         } else {
             AuthState.NotAuthorized
         }
@@ -51,7 +50,7 @@ class MainViewModel @Inject constructor(
             exceptionHandler.exceptionsFlow.collect {
                 if (it.isApiException(VkApiErrorCodes.ACCESS_TOKEN_EXPIRED.code)) {
                     showToast(TextMessage(R.string.vk_news_client_access_token_expired))
-                    VKID.instance.refreshToken(callback = object: VKIDRefreshTokenCallback {
+                    vkSessionStorage.refreshToken(callback = object: VKIDRefreshTokenCallback {
                         override fun onSuccess(token: AccessToken) {
                             showToast(TextMessage(R.string.vk_news_client_access_token_refreshed))
                         }

@@ -20,10 +20,14 @@ import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.coroutines.execute.ExecuteResult
 import net.maxsmr.core.android.coroutines.execute.asState
+import net.maxsmr.core.di.SessionStorageType
 import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPostComment
 import net.maxsmr.core.network.api.VkNewsDataSource
+import net.maxsmr.core.network.exceptions.ApiException.Companion.isApiException
 import net.maxsmr.core.ui.field.createTextField
 import net.maxsmr.feature.vk_news_client.ui.R
+import net.maxsmr.vk_news_client.data.VkApiErrorCodes
+import net.maxsmr.vk_news_client.data.VkSessionStorage
 import net.maxsmr.vk_news_client.data.repository.CommentsRepositoryImpl
 import net.maxsmr.vk_news_client.data.usecase.CreateCommentUseCase
 import net.maxsmr.vk_news_client.data.usecase.LoadCommentsUseCase
@@ -34,6 +38,8 @@ import net.maxsmr.vk_news_client.ui.model.toFeedPostCommentUI
 class CommentsViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val post: FeedPostUI,
+    @net.maxsmr.core.di.SessionStorage(SessionStorageType.VK)
+    private val vkSessionStorage: VkSessionStorage,
     vkNewsDataSource: VkNewsDataSource,
 ) : BaseViewModel(state) {
 
@@ -58,12 +64,22 @@ class CommentsViewModel @AssistedInject constructor(
         super.onInitialized()
 
         viewModelScope.launch {
+            vkSessionStorage.successRefreshTokenEvents.collectLatest {
+                screenState.value?.error?.error?.let { e ->
+                    if (e.isApiException(VkApiErrorCodes.ACCESS_TOKEN_EXPIRED.code)) {
+                        loadComments()
+                    }
+                }
+            }
+        }
+
+        viewModelScope.launch {
             repo.lastComments.collectLatest {
                 _screenState.successLoad(
                     CommentsScreenData(
                         post,
-                        repo.comments.value.map {
-                                comment -> comment.toFeedPostCommentUI()
+                        repo.comments.value.map { comment ->
+                            comment.toFeedPostCommentUI()
                         }
                     ),
                     setValue = false

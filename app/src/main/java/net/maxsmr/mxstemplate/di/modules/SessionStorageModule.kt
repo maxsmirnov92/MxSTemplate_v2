@@ -18,5 +18,5 @@ class SessionStorageModule {
     @[Provides Singleton net.maxsmr.core.di.SessionStorage(SessionStorageType.VK)]
     fun provideVkSessionStorage(
         @ApplicationContext context: Context,
-    ): SessionStorage = VkSessionStorage()
+    ): VkSessionStorage = VkSessionStorage()
 }
