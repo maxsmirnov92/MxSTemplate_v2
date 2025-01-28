@@ -9,12 +9,12 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.message.formatMessage
+import net.maxsmr.commonutils.live.pgnErrorLoad
+import net.maxsmr.commonutils.live.pgnLoading
 import net.maxsmr.commonutils.live.pgnSuccessLoad
 import net.maxsmr.commonutils.states.PgnLoadState
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.coroutines.execute.ExecuteResult
-import net.maxsmr.core.android.coroutines.execute.asPgnState
-import net.maxsmr.core.android.coroutines.execute.mapData
 import net.maxsmr.core.domain.entities.feature.vk_news_client.Statistics
 import net.maxsmr.vk_news_client.data.repository.NewsFeedRepository
 import net.maxsmr.vk_news_client.data.usecase.ChangeLikeStatusUseCase
@@ -44,7 +44,7 @@ class NewsFeedViewModel @Inject constructor(
             reloadRecommendations()
         }
         viewModelScope.launch {
-            repo.feedPostsUpdateEvents.collectLatest {
+            repo.feedPostsLastPage.collectLatest {
                 _screenState.pgnSuccessLoad(
                     repo.feedPosts.value.map { post ->
                         post.toFeedPostUI()
@@ -140,11 +140,22 @@ class NewsFeedViewModel @Inject constructor(
         }
         viewModelScope.launch {
             loadRecommendationsUseCase(shouldReload).collect {
-                val mappedResult = it.mapData { data -> data.map { post -> post.toFeedPostUI() } }
-                if (mappedResult !is ExecuteResult.Success) {
-                    _screenState.postValue(mappedResult.asPgnState(screenState.value?.data.orEmpty()))
-                } else {
-                    // при успехе ожидаем feedPostsUpdateEvents
+                when (it) {
+                    is ExecuteResult.Loading -> {
+                        _screenState.pgnLoading(isFromStart = true, setValue = false)
+                    }
+
+                    is ExecuteResult.PgnLoading ->{
+                        _screenState.pgnLoading(isFromStart = false, setValue = false)
+                    }
+
+                    is ExecuteResult.Error -> {
+                        _screenState.pgnErrorLoad(it.errorData(), isComplete = !repo.hasNextPage, setValue = false)
+                    }
+
+                    else -> {
+                        // при успехе ожидаем feedPostsLastPage
+                    }
                 }
             }
         }

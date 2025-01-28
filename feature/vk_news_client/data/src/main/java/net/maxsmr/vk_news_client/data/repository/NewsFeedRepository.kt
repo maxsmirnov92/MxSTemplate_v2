@@ -13,7 +13,7 @@ interface NewsFeedRepository {
     /**
      * Текущая порция загруженных данных + была ли загрузка с нуля или с определённого места
      */
-    val feedPostsUpdateEvents: SharedFlow<Pair<List<FeedPost>, Boolean>>
+    val feedPostsLastPage: SharedFlow<Pair<List<FeedPost>, Boolean>>
 
     val hasNextPage: Boolean
 
@@ -26,6 +26,4 @@ interface NewsFeedRepository {
     suspend fun updateCount(id: Long, type: Statistics.StatsType)
 
     suspend fun delete(post: FeedPost)
-
-    suspend fun loadComments(post: FeedPost): List<FeedPostComment>
 }

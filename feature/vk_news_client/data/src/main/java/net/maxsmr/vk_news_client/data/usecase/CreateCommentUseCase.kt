@@ -8,14 +8,15 @@ import net.maxsmr.core.android.coroutines.execute.usecase.FlowUseCase
 import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPostComment
 import net.maxsmr.vk_news_client.data.repository.CommentsRepository
 
-class LoadCommentsUseCase(
+class CreateCommentUseCase(
     private val repository: CommentsRepository
-) : FlowUseCase<Unit, List<FeedPostComment>>(Dispatchers.Default) {
+): FlowUseCase<String, FeedPostComment>(Dispatchers.IO) {
 
-    override fun execute(parameters: Unit): Flow<ExecuteResult<List<FeedPostComment>>> = channelFlow {
+    override fun execute(parameters: String): Flow<ExecuteResult<FeedPostComment>> = channelFlow {
         trySend(ExecuteResult.Loading)
         try {
-            val result = repository.loadComments()
+            val id = repository.createComment(parameters)
+            val result = repository.getComment(id)
             trySend(ExecuteResult.Success(result))
         } catch (e: Exception) {
             trySend(ExecuteResult.Error(e))

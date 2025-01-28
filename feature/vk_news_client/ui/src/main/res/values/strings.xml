@@ -9,4 +9,5 @@
     <string name="vk_news_client_access_token_expired">Access token expired, refreshing</string>
     <string name="vk_news_client_access_token_refreshed">Access token refreshed successfully</string>
     <string name="vk_news_client_screen_comments_title_format">Comments for post #%d</string>
+    <string name="vk_news_client_comment_hint">Your comment</string>
 </resources>

@@ -5,7 +5,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPost
 import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPostComment
+import net.maxsmr.core.network.api.vk_news_client.GetCommentResponseDto
 import net.maxsmr.core.network.api.vk_news_client.VkNewsDataService
+import net.maxsmr.core.network.api.vk_news_client.exceptions.CreateCommentFailedException
+import net.maxsmr.core.network.api.vk_news_client.exceptions.GetCommentFailedException
 import net.maxsmr.core.network.api.vk_news_client.exceptions.IgnorePostFailedException
 import net.maxsmr.core.network.client.retrofit.VkRetrofitClient
 import kotlin.random.Random
@@ -21,20 +24,25 @@ interface VkNewsDataSource {
     suspend fun deleteLike(feedPost: FeedPost): Int
 
     suspend fun getComments(feedPost: FeedPost, needLikes: Boolean = true): List<FeedPostComment>
+
+    suspend fun createComment(feedPost: FeedPost, message: String): Long
+
+    suspend fun getComment(feedPost: FeedPost, commentId: Long): FeedPostComment
 }
 
 class VkNewsDataSourceImpl(
-    private val retrofit: VkRetrofitClient
-): VkNewsDataSource {
+    private val retrofit: VkRetrofitClient,
+) : VkNewsDataSource {
 
     private val service by lazy {
         VkNewsDataService.instance(retrofit)
     }
 
-    override suspend fun getRecommended(startFrom: String?, count: Int): Pair<List<FeedPost>, String?> = withContext(Dispatchers.IO) {
-        val response = startFrom?.let {  service.getRecommended(it, count) } ?: service.getRecommended(count)
-        return@withContext response.asDomain() to response.nextFrom
-    }
+    override suspend fun getRecommended(startFrom: String?, count: Int): Pair<List<FeedPost>, String?> =
+        withContext(Dispatchers.IO) {
+            val response = startFrom?.let { service.getRecommended(it, count) } ?: service.getRecommended(count)
+            return@withContext response.asDomain() to response.nextFrom
+        }
 
     override suspend fun ignorePost(feedPost: FeedPost) {
         withContext(Dispatchers.IO) {
@@ -44,7 +52,7 @@ class VkNewsDataSourceImpl(
         }
     }
 
-    override suspend fun addLike(feedPost: FeedPost) : Int = withContext(Dispatchers.IO) {
+    override suspend fun addLike(feedPost: FeedPost): Int = withContext(Dispatchers.IO) {
         service.addLikeForPost(feedPost.communityId, feedPost.id).count
     }
 
@@ -55,31 +63,13 @@ class VkNewsDataSourceImpl(
     override suspend fun getComments(feedPost: FeedPost, needLikes: Boolean) = withContext(Dispatchers.IO) {
         service.getCommentsForPost(feedPost.communityId, feedPost.id, if (needLikes) 1 else 0).asDomain()
     }
-}
 
-class MockVkNewsDataSourceImpl: VkNewsDataSource {
-
-    override suspend fun getRecommended(startFrom: String?, count: Int): Pair<List<FeedPost>, String?> {
-        delay(3000)
-        return listOf<FeedPost>() to null
+    override suspend fun getComment(feedPost: FeedPost, commentId: Long) = withContext(Dispatchers.IO) {
+        service.getComment(feedPost.communityId, feedPost.id, commentId).asDomain() ?: throw GetCommentFailedException()
     }
 
-    override suspend fun ignorePost(feedPost: FeedPost) {
-        delay(3000)
-    }
-
-    override suspend fun addLike(feedPost: FeedPost): Int {
-        delay(3000)
-        return Random.nextInt(1000)
-    }
-
-    override suspend fun deleteLike(feedPost: FeedPost): Int {
-        delay(3000)
-        return Random.nextInt(1000)
-    }
-
-    override suspend fun getComments(feedPost: FeedPost, needLikes: Boolean): List<FeedPostComment> {
-        delay(3000)
-        return emptyList()
+    override suspend fun createComment(feedPost: FeedPost, message: String): Long = withContext(Dispatchers.IO) {
+        service.createComment(feedPost.communityId, feedPost.id, message)
+            .commentId.takeIf { it > 0 } ?: throw CreateCommentFailedException()
     }
 }

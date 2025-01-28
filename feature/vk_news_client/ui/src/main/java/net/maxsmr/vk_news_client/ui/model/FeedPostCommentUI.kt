@@ -5,7 +5,7 @@ import net.maxsmr.core.domain.entities.feature.vk_news_client.FeedPostComment
 data class FeedPostCommentUI(
     val id: Long,
     val authorName: String,
-    val authorAvatarUrl: String,
+    val authorAvatarUrl: String?,
     val commentText: String,
     val publicationDate: String
 )

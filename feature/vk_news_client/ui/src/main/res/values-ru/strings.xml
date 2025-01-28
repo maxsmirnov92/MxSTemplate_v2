@@ -8,4 +8,5 @@
     <string name="vk_news_client_access_token_expired">Токен авторизации истёк, обновление</string>
     <string name="vk_news_client_access_token_refreshed">Токен авторизации был успешно обновлён</string>
     <string name="vk_news_client_screen_comments_title_format">Комментарии для поста #%d</string>
+    <string name="vk_news_client_comment_hint">Ваш комментарий</string>
 </resources>

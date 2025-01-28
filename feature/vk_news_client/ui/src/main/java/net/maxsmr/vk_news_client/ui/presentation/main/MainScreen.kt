@@ -15,6 +15,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -31,6 +32,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.ui.compose.components.ComposableDependencies
 import net.maxsmr.core.ui.compose.components.IComposableViewModelsContainer
+import net.maxsmr.core.ui.compose.components.LocalViewModelStoreOwner
 import net.maxsmr.core.ui.compose.navigation.hiltViewModel
 import net.maxsmr.core.ui.compose.navigation.rememberNavigationState
 import net.maxsmr.core.ui.compose.navigation.viewModel
@@ -141,18 +143,32 @@ fun MainScreen(
                 }
             },
             commentsScreenContent = { post ->
-                val commentsViewModel = viewModel<CommentsViewModel>(
+                val viewModelStoreOwner = remember { LocalViewModelStoreOwner() }
+
+                val commentsVmResult = viewModel<CommentsViewModel>(
                     Screen.ROUTE_COMMENTS,
                     viewModelContainer,
                     dependencies,
+                    // здесь требуется отложенная регистрация, т.к. находится в отдельном Scaffold;
+                    // чтобы корректно отрабатывал observeAsState
+                    sameComposableHierarchy = false,
                     args = post.id,
+                    viewModelStoreOwner = viewModelStoreOwner,
                     factory = viewModelContainer.getFactoryForViewModel(
                         CommentsViewModel::class.java,
                         CommentsFactoryArgs(post)
                     )
                 )
-                CommentsScreen(commentsViewModel.viewModel, Modifier.padding(it), post = post) { // commentsToPost.value!!
+
+                CommentsScreen(commentsVmResult.viewModel,
+                    Modifier.padding(it),
+                    post,
+                    {
+                        commentsVmResult.registerer?.OnScreenCreated()
+                    },
+                ) { // commentsToPost.value!!
                     navigationState.navHostController.popBackStack()
+
                 }
             },
             favoriteScreenContent = {

@@ -65,7 +65,7 @@ class MainActivity : BaseComposeActivity<MainViewModel>() {
     ): ViewModelProvider.Factory? {
         return if (viewModelClass.isAssignableFrom(CommentsViewModel::class.java)) {
             AbstractSavedStateViewModelFactory(this) {
-                commentsVmFactory.create((args as CommentsFactoryArgs).feedPost, it)
+                commentsVmFactory.create(it, (args as CommentsFactoryArgs).feedPost)
             }
         } else {
             null
