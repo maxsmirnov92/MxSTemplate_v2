@@ -1,6 +1,7 @@
 package net.maxsmr.core.ui.compose.alert.representation
 
 import android.content.Context
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -12,6 +13,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import net.maxsmr.commonutils.ISpanInfo
@@ -95,7 +97,7 @@ class DialogComposableAlertRepresentationBuilder(
                         if (answers.isEmpty()) {
                             Text(message)
                         } else {
-                            val isRadioButton = multiChoiceAnswers?.isRadioButton ?: false
+                            val type = multiChoiceAnswers?.type ?: false
                             LazyColumn(
                                 contentPadding = PaddingValues(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -105,29 +107,44 @@ class DialogComposableAlertRepresentationBuilder(
                                 }) {
                                     val isChecked = it.isChecked ?: false
                                     val text = it.title.get(context).toString()
-                                    if (isRadioButton) {
-                                        RadioButtonWithText(isChecked, text, {
-                                            answersState.value = answers.map { a ->
-                                                if (a != it) {
-                                                    a.copy(isChecked = false)
-                                                } else {
-                                                    a.copy(isChecked = true)
+                                    when(type) {
+                                        MultiChoiceAnswersData.AnswerType.RADIO -> {
+                                            RadioButtonWithText(isChecked, text, {
+                                                answersState.value = answers.map { a ->
+                                                    if (a != it) {
+                                                        a.copy(isChecked = false)
+                                                    } else {
+                                                        a.copy(isChecked = true)
+                                                    }
                                                 }
-                                            }
-                                            if (it.closeAfterSelect) {
+                                                if (it.closeAfterSelect) {
+                                                    alert.doClose()
+                                                }
+                                            })
+                                        }
+                                        MultiChoiceAnswersData.AnswerType.CHECKBOX -> {
+                                            CheckBoxWithText(isChecked, text, { checked ->
+                                                answersState.value = answers.map { a ->
+                                                    if (a != it) {
+                                                        a
+                                                    } else {
+                                                        a.copy(isChecked = checked)
+                                                    }
+                                                }
+                                            })
+                                        }
+                                        else -> {
+                                            Text(text, Modifier.clickable {
+                                                answersState.value = answers.map { a ->
+                                                    if (a != it) {
+                                                        a
+                                                    } else {
+                                                        a.copy(isChecked = true)
+                                                    }
+                                                }
                                                 alert.doClose()
-                                            }
-                                        })
-                                    } else {
-                                        CheckBoxWithText(isChecked, text, { checked ->
-                                            answersState.value = answers.map { a ->
-                                                if (a != it) {
-                                                    a
-                                                } else {
-                                                    a.copy(isChecked = checked)
-                                                }
-                                            }
-                                        })
+                                            })
+                                        }
                                     }
                                 }
                             }
@@ -178,10 +195,17 @@ class DialogComposableAlertRepresentationBuilder(
 
     data class MultiChoiceAnswersData(
         val answers: List<Alert.Answer> = emptyList(),
-        val isRadioButton: Boolean,
+        val type: AnswerType,
     ) {
 
         val isEmpty = answers.isEmpty()
+
+        enum class AnswerType {
+
+            RADIO,
+            CHECKBOX,
+            TEXT
+        }
 
         companion object {
 

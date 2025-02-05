@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import net.maxsmr.core.android.base.alert.Alert
+import net.maxsmr.core.ui.compose.alert.representation.DialogComposableAlertRepresentationBuilder.MultiChoiceAnswersData.AnswerType
 
 // Файл содержит различные варианты отображения [Alert] в Compose.
 
@@ -43,7 +44,7 @@ fun Alert.asMultiChoiceDialog(
     context: Context,
     @StringRes confirmTextResId: Int = android.R.string.ok,
     cancelable: Boolean = true,
-    isRadioButton: Boolean = false,
+    type: AnswerType = AnswerType.TEXT,
     onCancel: (() -> Unit)? = null,
     onClick: ((answers: List<Alert.Answer>) -> Unit)? = null,
 ): ComposableAlertRepresentation {
@@ -59,11 +60,11 @@ fun Alert.asMultiChoiceDialog(
         .setMultiChoiceAnswers(
             DialogComposableAlertRepresentationBuilder.MultiChoiceAnswersData(
                 answers,
-                isRadioButton,
+                type,
             ),
             onClick
         ).apply {
-            if (!isRadioButton || answers.any { !it.closeAfterSelect }) {
+            if (type == AnswerType.CHECKBOX || answers.any { !it.closeAfterSelect }) {
                 setPositiveButton(
                     Alert.Answer(confirmTextResId)
                 )
