@@ -2,25 +2,24 @@ package net.maxsmr.feature.showcase
 
 import android.content.Context
 import android.view.View
+import androidx.activity.ComponentActivity
 import androidx.annotation.MainThread
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import net.maxsmr.commonutils.asContextOrThrow
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.ui.components.IComponentDelegate
 import smartdevelop.ir.eram.showcaseviewlib.GuideView
 
 @MainThread
 class GuideComponentDelegate @JvmOverloads constructor(
-    override val host: LifecycleOwner,
+    override val host: ComponentActivity,
     override val viewModel: BaseViewModel,
     private val checker: GuideChecker,
     private val shouldAutoStart: Boolean = true,
     private val onNextListener: ((GuideItem, Int) -> Unit)? = null,
     items: List<GuideItem> = emptyList(),
-) : IComponentDelegate<LifecycleOwner> {
+) : IComponentDelegate<ComponentActivity> {
 
-    override val context: Context by lazy { host.asContextOrThrow() }
+    override val context: Context by lazy { host }
 
     private val shownItems = mutableListOf<GuideItem>()
 

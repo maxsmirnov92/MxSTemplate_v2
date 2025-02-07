@@ -24,7 +24,7 @@ class GuideSettingsFragment : SettingsFragment(), GuideComponentDelegate.GuideCh
 
     private val guideDelegate: GuideComponentDelegate by lazy {
         GuideComponentDelegate(
-            this@GuideSettingsFragment,
+            requireActivity(),
             viewModel,
             this@GuideSettingsFragment,
             onNextListener = { item, _ ->
