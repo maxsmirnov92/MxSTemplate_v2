@@ -6,9 +6,8 @@ import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.WindowManager
 import android.widget.TextView
-import androidx.core.view.isVisible
+import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.ui.R
 
 class ProgressDialog(
     context: Context,
@@ -28,8 +27,7 @@ class ProgressDialog(
         }
         val title = findViewById<TextView>(net.maxsmr.core.ui.view.R.id.tvTitle)
         val text = alert.title?.get(context) ?: alert.message?.get(context)
-        title.text = text
-        title.isVisible = text != null
+        title.setTextOrGone(text)
 
         setCancelable(cancelable)
         setCanceledOnTouchOutside(cancelable)

@@ -3,6 +3,7 @@ package net.maxsmr.core.ui.navigation
 import android.app.Activity
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.android.base.actions.NavigationAction.NavigationCommand
@@ -39,6 +40,12 @@ class NavigationActorImpl(
                 command.navigatorExtras,
             )
 
+            is NavigationCommand.ToDirectionWithUri -> navController.navigate(
+                command.uri,
+                command.navOptions,
+                command.navigatorExtras
+            )
+
             is NavigationCommand.Back -> {
 //                activity.onBackPressed()
                 navigateUp()
@@ -53,6 +60,13 @@ class NavigationActorImpl(
     fun navigateUp() {
         if (!navController.navigateUp()) { // (requireActivity() as BaseNavigationActivity).appBarConfiguration
             activity.finish()
+        }
+    }
+
+    companion object {
+
+        fun NavController.navigateSafe(directions: NavDirections) {
+            currentDestination?.getAction(directions.actionId)?.let { navigate(directions) }
         }
     }
 }

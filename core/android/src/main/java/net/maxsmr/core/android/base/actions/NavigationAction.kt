@@ -1,5 +1,6 @@
 package net.maxsmr.core.android.base.actions
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.navigation.NavDirections
 import androidx.navigation.NavOptions
@@ -43,6 +44,12 @@ class NavigationAction(
 
         data class ToDirectionWithRoute(
             val route: String,
+            override val navOptions: NavOptions? = null,
+            override val navigatorExtras: Navigator.Extras? = null,
+        ) : ToDirection()
+
+        data class ToDirectionWithUri(
+            val uri: Uri,
             override val navOptions: NavOptions? = null,
             override val navigatorExtras: Navigator.Extras? = null,
         ) : ToDirection()
