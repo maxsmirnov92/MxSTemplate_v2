@@ -22,7 +22,7 @@ import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.di.YandexSuggestRetrofit
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
 import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
-import net.maxsmr.core.network.exceptions.handler.CombinedApiExceptionHandler
+import net.maxsmr.core.network.exceptions.handler.CombinedCallExceptionHandler
 import net.maxsmr.core.network.host.HostManager
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -37,7 +37,7 @@ class RetrofitModule {
     @[Provides Singleton RadarIoRetrofit]
     fun provideRadarIoRetrofit(
         @ApplicationContext context: Context,
-        exceptionHandler: CombinedApiExceptionHandler,
+        exceptionHandler: CombinedCallExceptionHandler,
         @RadarIoHostManager hostManager: HostManager,
         @RadarIoOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
@@ -58,7 +58,7 @@ class RetrofitModule {
     @[Provides Singleton YandexSuggestRetrofit]
     fun provideYandexSuggestRetrofit(
         @ApplicationContext context: Context,
-        exceptionHandler: CombinedApiExceptionHandler,
+        exceptionHandler: CombinedCallExceptionHandler,
         @YandexSuggestHostManager hostManager: HostManager,
         @YandexSuggestOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
@@ -79,7 +79,7 @@ class RetrofitModule {
     @[Provides Singleton YandexGeocodeRetrofit]
     fun provideYandexGeocodeRetrofit(
         @ApplicationContext context: Context,
-        exceptionHandler: CombinedApiExceptionHandler,
+        exceptionHandler: CombinedCallExceptionHandler,
         @YandexGeocodeHostManager hostManager: HostManager,
         @YandexGeocodeOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
@@ -100,7 +100,7 @@ class RetrofitModule {
     @[Provides Singleton DoubleGisRoutingRetrofit]
     fun provideDoubleGisRoutingRetrofit(
         @ApplicationContext context: Context,
-        exceptionHandler: CombinedApiExceptionHandler,
+        exceptionHandler: CombinedCallExceptionHandler,
         @DoubleGisRoutingHostManager hostManager: HostManager,
         @DoubleGisRoutingOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
@@ -119,8 +119,8 @@ class RetrofitModule {
     }
 
     @[Provides Singleton]
-    fun provideApiExceptionHandler(): CombinedApiExceptionHandler {
-        return CombinedApiExceptionHandler(listOf())
+    fun provideApiExceptionHandler(): CombinedCallExceptionHandler {
+        return CombinedCallExceptionHandler(listOf())
     }
 
     companion object {

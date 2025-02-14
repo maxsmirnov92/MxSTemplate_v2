@@ -1,7 +1,7 @@
 package net.maxsmr.core.network.client.retrofit
 
 import kotlinx.serialization.json.Json
-import net.maxsmr.core.network.exceptions.handler.IApiExceptionHandler
+import net.maxsmr.core.network.exceptions.handler.ICallExceptionHandler
 import net.maxsmr.core.network.retrofit.converters.ResponseObjectTypeConverter
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
@@ -13,7 +13,7 @@ class CommonRetrofitClient(
     cachePath: String,
     protocolVersion: Int,
     disableCache: Boolean,
-    exceptionHandler: IApiExceptionHandler,
+    exceptionHandler: ICallExceptionHandler,
     clientProvider: () -> OkHttpClient,
 ) : BaseRetrofitClient(baseUrl, json, cachePath, protocolVersion, disableCache, exceptionHandler, clientProvider) {
 

@@ -1,7 +1,7 @@
 package net.maxsmr.core.network.client.retrofit
 
 import kotlinx.serialization.json.Json
-import net.maxsmr.core.network.exceptions.handler.IApiExceptionHandler
+import net.maxsmr.core.network.exceptions.handler.ICallExceptionHandler
 import net.maxsmr.core.network.retrofit.converters.BaseEnvelopeWithObject
 import net.maxsmr.core.network.retrofit.converters.EnvelopeObjectTypeConverter
 import net.maxsmr.core.network.retrofit.converters.api.YandexGeocodeEnvelope
@@ -15,7 +15,7 @@ class YandexGeocodeRetrofitClient(
     cachePath: String,
     protocolVersion: Int,
     disableCache: Boolean,
-    exceptionHandler: IApiExceptionHandler,
+    exceptionHandler: ICallExceptionHandler,
     clientProvider: () -> OkHttpClient,
 ) : BaseRetrofitClient(baseUrl, json, cachePath, protocolVersion, disableCache, exceptionHandler, clientProvider) {
 

@@ -7,6 +7,7 @@ const val DI_NAME_IS_DEMO_BUILD = "is_demo_build"
 const val DI_NAME_DEMO_PERIOD = "demo_period"
 const val DI_NAME_VERSION_CODE = "version_code"
 const val DI_NAME_VERSION_NAME = "version_name"
+const val DI_NAME_APP_NAME = "app_name"
 const val DI_NAME_DATABASE_NAME = "database_name"
 const val DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD = "foreground_service_id_download"
 

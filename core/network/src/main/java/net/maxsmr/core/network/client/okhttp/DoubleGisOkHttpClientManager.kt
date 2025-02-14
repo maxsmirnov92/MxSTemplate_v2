@@ -4,7 +4,6 @@ import android.content.Context
 import net.maxsmr.core.network.appendValues
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
-import net.maxsmr.core.network.exceptions.handler.IApiExceptionHandler
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response

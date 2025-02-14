@@ -1,8 +1,12 @@
 package net.maxsmr.core.network.client.retrofit
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import net.maxsmr.core.network.client.okhttp.ResponseBodyCache
 import net.maxsmr.core.network.exceptions.ApiException
-import net.maxsmr.core.network.exceptions.handler.IApiExceptionHandler
+import net.maxsmr.core.network.exceptions.handler.ICallExceptionHandler
 import net.maxsmr.core.network.retrofit.converters.BaseResponse
 import okhttp3.ResponseBody
 import okio.Timeout
@@ -14,7 +18,9 @@ import retrofit2.HttpException
 import retrofit2.Retrofit
 import java.lang.reflect.Type
 
-class ExceptionHandlingCallAdapterFactory(private val exceptionHandler: IApiExceptionHandler) : CallAdapter.Factory() {
+class ExceptionHandlingCallAdapterFactory(private val exceptionHandler: ICallExceptionHandler) : CallAdapter.Factory() {
+
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     override fun get(returnType: Type, annotations: Array<Annotation>, retrofit: Retrofit): CallAdapter<*, *> {
         val delegate = retrofit.nextCallAdapter(this, returnType, annotations)
@@ -61,8 +67,10 @@ class ExceptionHandlingCallAdapterFactory(private val exceptionHandler: IApiExce
                             }
                         }
                         resultThrowable.let {
-                            if (it is ApiException) {
-                                exceptionHandler.onApiException(it)
+                            if (it is RuntimeException) {
+                                scope.launch {
+                                    exceptionHandler.onException(it)
+                                }
                             }
                         }
                         ResponseBodyCache.remove(request)?.close()
@@ -82,7 +90,7 @@ class ExceptionHandlingCallAdapterFactory(private val exceptionHandler: IApiExce
     private class WrappedCall<R>(
         private val delegate: Call<R>,
         private val onFailure: (Throwable) -> Throwable,
-        private val onSuccess: () -> Unit
+        private val onSuccess: () -> Unit,
     ) : Call<R> {
 
         override fun enqueue(callback: Callback<R>) {

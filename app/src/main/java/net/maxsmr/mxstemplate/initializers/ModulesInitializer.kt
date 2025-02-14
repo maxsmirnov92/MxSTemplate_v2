@@ -3,14 +3,14 @@ package net.maxsmr.mxstemplate.initializers
 import android.content.Context
 import androidx.startup.Initializer
 import net.maxsmr.core.android.initBaseAppName
-import net.maxsmr.core.android.initModuleCoreAndroidContext
+import net.maxsmr.core.android.initBaseApplicationContext
 import net.maxsmr.mxstemplate.R
 
 class ModulesInitializer : Initializer<Unit> {
 
     override fun create(context: Context) {
         // Инициализация модулей
-        initModuleCoreAndroidContext(context)
+        initBaseApplicationContext(context)
         initBaseAppName(context.getString(R.string.app_name))
         // #####################
     }

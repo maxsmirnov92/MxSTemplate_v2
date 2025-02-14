@@ -21,7 +21,7 @@ open class HttpProtocolException(
     val responseBodyString: String = EMPTY_STRING,
     val responseBodyHeaders: ArrayList<Pair<String, String>> = arrayListOf(),
     message: String = EMPTY_STRING,
-) : NetworkException(responseCode, message) {
+) : NetworkException(responseCode, null, message) {
 
     constructor(source: HttpProtocolException) : this(
         source.url,

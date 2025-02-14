@@ -17,7 +17,7 @@ class OkHttpException(cause: Throwable) : IOException(cause.message, cause) {
                 this.cause
             } else {
                 this
-            }) as? Exception ?: NetworkException(message = message)
+            }) as? Exception ?: NetworkException(cause = this.cause, message = message)
         }
     }
 }

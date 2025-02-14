@@ -7,19 +7,17 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import net.maxsmr.core.network.exceptions.ApiException
 
-class CombinedApiExceptionHandler(private val handlers: List<IApiExceptionHandler>) : IApiExceptionHandler {
+class CombinedCallExceptionHandler(
+    private val handlers: List<ICallExceptionHandler>
+) : ICallExceptionHandler {
 
-    private val scope = CoroutineScope(Dispatchers.Default)
-
-    private val _exceptionsFlow = MutableSharedFlow<ApiException>()
+    private val _exceptionsFlow = MutableSharedFlow<RuntimeException>()
     val exceptionsFlow = _exceptionsFlow.asSharedFlow()
 
-    override fun onApiException(e: ApiException) {
+    override suspend fun onException(e: RuntimeException) {
         handlers.forEach {
-            it.onApiException(e)
+            it.onException(e)
         }
-        scope.launch {
-            _exceptionsFlow.emit(e)
-        }
+        _exceptionsFlow.emit(e)
     }
 }

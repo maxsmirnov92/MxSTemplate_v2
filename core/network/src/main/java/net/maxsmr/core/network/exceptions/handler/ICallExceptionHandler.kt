@@ -2,7 +2,7 @@ package net.maxsmr.core.network.exceptions.handler
 
 import net.maxsmr.core.network.exceptions.ApiException
 
-interface IApiExceptionHandler {
+interface ICallExceptionHandler {
 
-    fun onApiException(e: ApiException)
+    suspend fun onException(e: RuntimeException)
 }

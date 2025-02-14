@@ -8,9 +8,11 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import net.maxsmr.commonutils.getSelfVersionCode
 import net.maxsmr.commonutils.getSelfVersionName
+import net.maxsmr.core.di.DI_NAME_APP_NAME
 import net.maxsmr.core.di.DI_NAME_VERSION_CODE
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.mxstemplate.BuildConfig
+import net.maxsmr.mxstemplate.R
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -25,4 +27,8 @@ class AppInfoModule {
     @[Provides Singleton Named(DI_NAME_VERSION_NAME)]
     fun provideVersionName(@ApplicationContext context: Context): String =
         context.getSelfVersionName().takeIf { it.isNotEmpty() } ?: BuildConfig.VERSION_NAME
+
+    @[Provides Singleton Named(DI_NAME_APP_NAME)]
+    fun provideAppName(@ApplicationContext context: Context): String =
+        context.getString(R.string.app_name)
 }

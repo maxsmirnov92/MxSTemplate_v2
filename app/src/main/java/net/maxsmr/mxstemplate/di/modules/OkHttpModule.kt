@@ -24,7 +24,6 @@ import net.maxsmr.core.network.client.okhttp.DownloadOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.RadarIoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.YandexOkHttpClientManager
-import net.maxsmr.core.network.exceptions.handler.CombinedApiExceptionHandler
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.CacheControl

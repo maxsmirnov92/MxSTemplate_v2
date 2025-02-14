@@ -1,9 +1,13 @@
 package net.maxsmr.core.network.client.okhttp.interceptors
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.network.exceptions.ApiException
-import net.maxsmr.core.network.exceptions.handler.IApiExceptionHandler
+import net.maxsmr.core.network.exceptions.handler.ICallExceptionHandler
 import net.maxsmr.core.network.retrofit.converters.BaseResponse
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -16,12 +20,14 @@ import retrofit2.Retrofit
  */
 @Deprecated("use ExceptionHandlingCallAdapterFactory")
 class HttpResponseErrorInterceptor(
-    private val handler: IApiExceptionHandler? = null,
+    private val handler: ICallExceptionHandler? = null,
     private val responseAnnotation: Annotation? = null,
     private val retrofitProvider: () -> Retrofit,
 ) : Interceptor {
 
     private val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("HttpResponseErrorInterceptor")
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
@@ -44,7 +50,11 @@ class HttpResponseErrorInterceptor(
                 // (например, если в теле не json),
                 if (e is ApiException) {
                     logger.w(e)
-                    handler?.onApiException(e)
+                    handler?.let {
+                        scope.launch {
+                            it.onException(e)
+                        }
+                    }
                     // проброс API exception не сработает,
                     // будет исходный retrofit2.HttpException,
                     // поэтому остаётся просто подменить сообщение в респонсе на внутреннее

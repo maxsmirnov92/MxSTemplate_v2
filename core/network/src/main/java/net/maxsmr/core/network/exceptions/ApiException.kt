@@ -1,8 +1,13 @@
 package net.maxsmr.core.network.exceptions
 
-import net.maxsmr.commonutils.text.EMPTY_STRING
-
 open class ApiException(
     val code: Int,
-    message: String = EMPTY_STRING,
-) : RuntimeException(message)
+    message: String? = null,
+) : RuntimeException(message) {
+
+    companion object {
+
+        @JvmStatic
+        fun Throwable.isApiException(code: Int) = this is ApiException && this.code == code
+    }
+}

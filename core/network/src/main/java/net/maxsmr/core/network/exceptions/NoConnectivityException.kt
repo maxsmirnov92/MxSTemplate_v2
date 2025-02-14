@@ -6,7 +6,7 @@ import net.maxsmr.core.network.R
 
 open class NoConnectivityException(message: String) : NetworkException(
     CustomErrorCode.NETWORK_OFFLINE.code,
-    message
+    message = message
 ) {
 
     constructor(context: Context) : this(

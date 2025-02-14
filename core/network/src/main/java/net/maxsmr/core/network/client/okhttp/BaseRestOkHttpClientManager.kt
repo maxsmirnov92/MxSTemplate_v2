@@ -6,7 +6,6 @@ import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.BodyCachingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
 import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
-import net.maxsmr.core.network.exceptions.handler.IApiExceptionHandler
 import okhttp3.OkHttpClient
 
 abstract class BaseRestOkHttpClientManager(

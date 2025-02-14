@@ -7,7 +7,7 @@ import net.maxsmr.core.network.exceptions.NetworkException
 open class WebResourceException(
     code: Int,
     message: String = EMPTY_STRING,
-) : NetworkException(code, message) {
+) : NetworkException(code, null, message) {
 
     val isConnectionError =
         code in listOf(WebViewClient.ERROR_HOST_LOOKUP,

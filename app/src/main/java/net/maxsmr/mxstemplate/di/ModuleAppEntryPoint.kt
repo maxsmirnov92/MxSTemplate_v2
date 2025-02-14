@@ -6,12 +6,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.di.BaseJson
-import net.maxsmr.core.di.DoubleGisRoutingRetrofit
-import net.maxsmr.core.di.RadarIoRetrofit
-import net.maxsmr.core.di.YandexGeocodeRetrofit
-import net.maxsmr.core.di.YandexSuggestRetrofit
-import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
-import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
 import net.maxsmr.mxstemplate.db.AppDataBase
 import net.maxsmr.mxstemplate.manager.UUIDManager
 
@@ -27,16 +21,4 @@ internal interface ModuleAppEntryPoint {
     fun picasso(): Picasso
 
     fun uuidManager(): UUIDManager
-
-    @RadarIoRetrofit
-    fun radarIoRetrofit(): CommonRetrofitClient
-
-    @YandexSuggestRetrofit
-    fun yandexSuggestRetrofit(): CommonRetrofitClient
-
-    @YandexGeocodeRetrofit
-    fun yandexGeocodeRetrofit(): YandexGeocodeRetrofitClient
-
-    @DoubleGisRoutingRetrofit
-    fun doubleGisRoutingRetrofit(): CommonRetrofitClient
 }
