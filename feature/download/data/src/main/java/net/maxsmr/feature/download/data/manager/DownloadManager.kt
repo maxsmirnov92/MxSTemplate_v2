@@ -3,7 +3,8 @@ package net.maxsmr.feature.download.data.manager
 import androidx.core.net.toUri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -65,8 +66,8 @@ class DownloadManager @Inject constructor(
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("DownloadManager")
 
-    private val scope =
-        CoroutineScope(Dispatchers.Default + Job()) // Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    // Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     private val downloadsPendingStorage = QueueFileStorage("download_pending_queue")
 
@@ -657,6 +658,9 @@ class DownloadManager @Inject constructor(
         }
     }
 
+    fun cancelAllJobs() {
+        scope.cancel()
+    }
 
     private fun <P> isPendingInternal(
         params: P,

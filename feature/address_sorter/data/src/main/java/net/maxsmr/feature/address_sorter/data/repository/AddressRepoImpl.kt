@@ -2,6 +2,7 @@ package net.maxsmr.feature.address_sorter.data.repository
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
@@ -36,7 +37,7 @@ class AddressRepoImpl(
 
     private val ioDispatcher = Dispatchers.IO
 
-    private val scope = CoroutineScope(ioDispatcher)
+    private val scope = CoroutineScope(ioDispatcher + SupervisorJob())
 
     override val lastAddresses = MutableSharedFlow<List<Address>>(
         // как StateFlow только без distinctUntilChanged

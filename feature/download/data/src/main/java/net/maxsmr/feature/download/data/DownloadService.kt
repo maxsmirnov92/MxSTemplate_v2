@@ -177,10 +177,8 @@ class DownloadService : Service() {
         )
     }
 
-    private val contextJob by lazy { Job() }
-
     private val coroutineScope: CoroutineScope by lazy {
-        CoroutineScope(Dispatchers.IO + contextJob)
+        CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     /**
@@ -218,10 +216,6 @@ class DownloadService : Service() {
     lateinit var notifier: DownloadStateNotifier
 
     @Inject
-    @ApplicationScope
-    lateinit var applicationScope: CoroutineScope
-
-    @Inject
     @Named(DI_NAME_MAIN_ACTIVITY_CLASS)
     lateinit var mainActivityClassName: String
 
@@ -250,7 +244,7 @@ class DownloadService : Service() {
             logger.d("Cancel downloads by user")
             // отмена всех загрузок через родительскую Job
             if (currentJobs.isNotEmpty()) {
-                contextJob.cancel()
+                coroutineScope.cancel()
                 currentJobs.clear()
             }
             stopIfAllLoaded()
@@ -360,7 +354,7 @@ class DownloadService : Service() {
 
             fun onException(e: Exception, localUri: Uri? = null) {
                 logger.e("onException: $e, localUri: $localUri")
-                applicationScope.launch(Dispatchers.IO) {
+                coroutineScope.launch {
                     // для перестраховки при любых исключениях suspend'ы
                     // запускаем в другом неотменённом скопе
                     val info = downloadInfo.copy(
@@ -879,7 +873,7 @@ class DownloadService : Service() {
     }
 
     override fun onDestroy() {
-        coroutineScope.coroutineContext.cancel()
+        coroutineScope.cancel()
         logger.d("onDestroy")
     }
 
