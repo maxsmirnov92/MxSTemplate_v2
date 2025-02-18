@@ -14,6 +14,7 @@ import net.maxsmr.core.di.DoubleGisRoutingRetrofit
 import net.maxsmr.core.di.RadarIoHostManager
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.RadarIoRetrofit
+import net.maxsmr.core.di.ResponseBodyCache
 import net.maxsmr.core.di.YandexGeocodeHostManager
 import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexGeocodeRetrofit
@@ -27,6 +28,7 @@ import net.maxsmr.core.network.host.HostManager
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.File
 import javax.inject.Singleton
 
@@ -41,6 +43,7 @@ class RetrofitModule {
         @RadarIoHostManager hostManager: HostManager,
         @RadarIoOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
@@ -48,7 +51,8 @@ class RetrofitModule {
             File(context.cacheDir, CACHE_DIR_NAME).path,
             BuildConfig.PROTOCOL_VERSION,
             false,
-            exceptionHandler
+            cache,
+            exceptionHandler,
             // cacheManager.getDisableCache()
         ) {
             okHttpClient
@@ -62,6 +66,7 @@ class RetrofitModule {
         @YandexSuggestHostManager hostManager: HostManager,
         @YandexSuggestOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
@@ -69,6 +74,7 @@ class RetrofitModule {
             File(context.cacheDir, CACHE_DIR_NAME).path,
             BuildConfig.PROTOCOL_VERSION,
             false,
+            cache,
             exceptionHandler
             // cacheManager.getDisableCache()
         ) {
@@ -83,6 +89,7 @@ class RetrofitModule {
         @YandexGeocodeHostManager hostManager: HostManager,
         @YandexGeocodeOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
     ): YandexGeocodeRetrofitClient {
         return YandexGeocodeRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
@@ -90,6 +97,7 @@ class RetrofitModule {
             File(context.cacheDir, CACHE_DIR_NAME).path,
             BuildConfig.PROTOCOL_VERSION,
             false,
+            cache,
             exceptionHandler
             // cacheManager.getDisableCache()
         ) {
@@ -104,6 +112,7 @@ class RetrofitModule {
         @DoubleGisRoutingHostManager hostManager: HostManager,
         @DoubleGisRoutingOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
@@ -111,6 +120,7 @@ class RetrofitModule {
             File(context.cacheDir, CACHE_DIR_NAME).path,
             BuildConfig.PROTOCOL_VERSION,
             false,
+            cache,
             exceptionHandler
             // cacheManager.getDisableCache()
         ) {

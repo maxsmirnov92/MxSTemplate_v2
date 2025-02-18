@@ -17,6 +17,7 @@ import net.maxsmr.core.di.DownloaderOkHttpClient
 import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
 import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
+import net.maxsmr.core.di.ResponseBodyCache
 import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.network.client.okhttp.DoubleGisOkHttpClientManager
@@ -29,6 +30,7 @@ import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.CacheControl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.logging.HttpLoggingInterceptor
 import java.io.File
 import javax.inject.Singleton
@@ -105,17 +107,20 @@ class OkHttpModule {
     @[Provides Singleton RadarIoOkHttpClient]
     fun provideRadarIoOkHttpClient(
         @ApplicationContext context: Context,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
     ): OkHttpClient {
         return RadarIoOkHttpClientManager(
             BuildConfig.AUTHORIZATION_RADAR_IO,
             context = context,
             connectivityChecker = NetworkConnectivityChecker,
+            cache = cache
         ).build()
     }
 
     @[Provides Singleton YandexSuggestOkHttpClient]
     fun provideYandexSuggestOkHttpClient(
         @ApplicationContext context: Context,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
     ): OkHttpClient {
         return YandexOkHttpClientManager(
             BuildConfig.API_KEY_YANDEX_SUGGEST,
@@ -123,12 +128,14 @@ class OkHttpModule {
             "ru",
             context = context,
             connectivityChecker = NetworkConnectivityChecker,
+            cache = cache
         ).build()
     }
 
     @[Provides Singleton YandexGeocodeOkHttpClient]
     fun provideYandexGeocodeOkHttpClient(
         @ApplicationContext context: Context,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
     ): OkHttpClient {
         return YandexOkHttpClientManager(
             BuildConfig.API_KEY_YANDEX_GEOCODE,
@@ -136,20 +143,30 @@ class OkHttpModule {
             "ru_RU",
             context = context,
             connectivityChecker = NetworkConnectivityChecker,
+            cache = cache
         ).build()
     }
 
     @[Provides Singleton DoubleGisRoutingOkHttpClient]
     fun provideDoubleGisRoutingOkHttpClient(
         @ApplicationContext context: Context,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>,
         cacheRepo: CacheDataStoreRepository,
     ): OkHttpClient {
         return DoubleGisOkHttpClientManager(
             context = context,
             connectivityChecker = NetworkConnectivityChecker,
+            cache = cache,
             apiKeyProvider = {
                 runBlocking { cacheRepo.getDoubleGisRoutingApiKey() }
             }
         ).build()
+    }
+
+    @[Provides Singleton ResponseBodyCache]
+    fun providesResponseBodyCache(): net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request> {
+        return net.maxsmr.core.network.client.okhttp.ResponseBodyCache {
+            this
+        }
     }
 }

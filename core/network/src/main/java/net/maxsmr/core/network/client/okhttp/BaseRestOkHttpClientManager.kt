@@ -16,13 +16,14 @@ abstract class BaseRestOkHttpClientManager(
     retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
     private val context: Context,
     private val connectivityChecker: ConnectivityChecker,
+    private val cache: ResponseBodyCache<*>,
 ) : BaseOkHttpClientManager(connectTimeout, readTimeout, writeTimeout, callTimeout, retryOnConnectionFailure) {
 
     @CallSuper
     override fun configureBuild(builder: OkHttpClient.Builder) {
         with(builder) {
             super.configureBuild(this)
-            addInterceptor(BodyCachingInterceptor())
+            addInterceptor(BodyCachingInterceptor(cache))
             val loggingInterceptor = ApiLoggingInterceptor { message: String ->
                 logger.d(message)
             }.apply {

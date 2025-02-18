@@ -1,6 +1,7 @@
 package net.maxsmr.core.network
 
 import android.text.TextUtils
+import android.util.Log
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.logger.BaseLogger
@@ -34,7 +35,6 @@ import java.io.OutputStream
 import java.nio.charset.Charset
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-
 
 private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("OkHttpExt")
 
@@ -85,10 +85,10 @@ suspend fun OkHttpClient.newCallSuspended(request: Request, checkSuccess: Boolea
 
 // region: Request
 
-fun Request?.path(): String? =
-    this?.let { TextUtils.join("/", it.url.pathSegments) }
+fun Request.path(): String? =
+    TextUtils.join("/", url.pathSegments)
 
-fun Request?.asString(charset: Charset = Charset.defaultCharset()): String? {
+fun Request.asString(charset: Charset = Charset.defaultCharset()): String? {
     return try {
         asStringOrThrow(charset)
     } catch (e: IOException) {
@@ -99,7 +99,7 @@ fun Request?.asString(charset: Charset = Charset.defaultCharset()): String? {
 
 @JvmOverloads
 @Throws(IOException::class)
-fun Request?.asStringOrThrow(charset: Charset = Charset.defaultCharset()): String? {
+fun Request.asStringOrThrow(charset: Charset = Charset.defaultCharset()): String? {
     this ?: return null
     val copy = newBuilder().build()
     val buffer = Buffer()
@@ -170,7 +170,7 @@ fun Request.appendValues(
 
 // region Response: READ
 
-fun Response?.asByteArray(previousDownloadedSize: Long? = null): ByteArray? = try {
+fun Response.asByteArray(previousDownloadedSize: Long? = null): ByteArray? = try {
     asByteArrayOrThrow(previousDownloadedSize)
 } catch (e: IOException) {
     logger.e("Read response body as ByteArray", e)
@@ -178,12 +178,12 @@ fun Response?.asByteArray(previousDownloadedSize: Long? = null): ByteArray? = tr
 }
 
 @Throws(IOException::class)
-fun Response?.asByteArrayOrThrow(previousDownloadedSize: Long? = null): ByteArray? {
+fun Response.asByteArrayOrThrow(previousDownloadedSize: Long? = null): ByteArray? {
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
-    return this?.body?.bytes()
+    return this.body?.bytes()
 }
 
-fun Response?.asString(previousDownloadedSize: Long? = null): String? = try {
+fun Response.asString(previousDownloadedSize: Long? = null): String? = try {
     asStringOrThrow(previousDownloadedSize)
 } catch (e: IOException) {
     logger.e("Read response body as String", e)
@@ -191,12 +191,12 @@ fun Response?.asString(previousDownloadedSize: Long? = null): String? = try {
 }
 
 @Throws(IOException::class)
-fun Response?.asStringOrThrow(previousDownloadedSize: Long? = null): String? {
+fun Response.asStringOrThrow(previousDownloadedSize: Long? = null): String? {
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
-    return this?.body?.string()
+    return this.body?.string()
 }
 
-fun Response?.write(
+fun Response.write(
     outputStream: OutputStream,
     previousDownloadedSize: Long? = null,
     notifier: IStreamNotifier? = null,
@@ -208,7 +208,7 @@ fun Response?.write(
 }
 
 @Throws(IOException::class)
-fun Response?.writeOrThrow(
+fun Response.writeOrThrow(
     outputStream: OutputStream,
     previousDownloadedSize: Long? = null,
     notifier: IStreamNotifier? = null,
@@ -219,7 +219,7 @@ fun Response?.writeOrThrow(
     return responseBody
 }
 
-fun Response?.writeBuffered(
+fun Response.writeBuffered(
     outputStream: OutputStream,
     previousDownloadedSize: Long? = null,
 ): ResponseBody? = try {
@@ -230,7 +230,7 @@ fun Response?.writeBuffered(
 }
 
 @Throws(IOException::class)
-fun Response?.writeBufferedOrThrow(
+fun Response.writeBufferedOrThrow(
     outputStream: OutputStream,
     previousDownloadedSize: Long? = null,
 ): ResponseBody {
@@ -246,10 +246,7 @@ fun Response?.writeBufferedOrThrow(
 
 // region Response: cloned
 
-/**
- * Вычитывает тело запроса в массив байт, не изменяя исходный [InputStream]
- */
-fun Response?.asByteArrayCloned(): ByteArray? = try {
+fun Response.asByteArrayCloned(): ByteArray? = try {
     asByteArrayClonedOrThrow()
 } catch (e: IOException) {
     logger.e("Clone response body to ByteArray", e)
@@ -257,27 +254,52 @@ fun Response?.asByteArrayCloned(): ByteArray? = try {
 }
 
 @Throws(IOException::class)
-fun Response?.asByteArrayClonedOrThrow(): ByteArray? {
-    this ?: return null
-    val source = body?.source() ?: return null
-    return source.cloneBufferOrThrow().use { it.readByteArray() }
+fun Response.asByteArrayClonedOrThrow(): ByteArray? {
+    return body?.asByteArrayClonedOrThrow()
+}
+
+/**
+ * Вычитывает тело запроса в массив байт, не изменяя исходный [InputStream]
+ */
+fun ResponseBody.asByteArrayCloned(): ByteArray? = try {
+    asByteArrayClonedOrThrow()
+} catch (e: IOException) {
+    logger.e("Clone response body to ByteArray", e)
+    null
+}
+
+@Throws(IOException::class)
+fun ResponseBody.asByteArrayClonedOrThrow(): ByteArray {
+    return source().cloneBufferOrThrow().use { it.readByteArray() }
+}
+
+fun Response.asStringCloned(): Pair<String, Charset>? = try {
+    asStringClonedOrThrow()
+} catch (e: IOException) {
+    Log.e("OkHttpExt", "Clone response body to String", e)
+    null
+}
+
+@Throws(IOException::class)
+fun Response.asStringClonedOrThrow(): Pair<String, Charset>? {
+    return body?.asStringClonedOrThrow()
 }
 
 /**
  * Вычитывает тело запроса в строку, не изменяя исходный [InputStream]
  */
-fun Response?.asStringCloned(): Pair<String, Charset>? = try {
-    asStringClonedOrThrow()
-} catch (e: IOException) {
-    logger.e("Clone response body to String", e)
-    null
-}
+fun ResponseBody.asStringCloned(): Pair<String, Charset>? =
+    try {
+        asStringClonedOrThrow()
+    } catch (e: IOException) {
+        Log.e("OkHttpExt", "Clone response body to String", e)
+        null
+    }
 
 @Throws(IOException::class)
-fun Response?.asStringClonedOrThrow(): Pair<String, Charset>? {
-    val body = this?.body ?: return null
-    val source = body.source()
+fun ResponseBody.asStringClonedOrThrow(): Pair<String, Charset> {
     val charset = getCharset()
+    val source = source()
     return source.cloneBufferOrThrow().use {
         Pair(it.readString(source.readBomAsCharset(charset)), charset)
     }
@@ -286,7 +308,7 @@ fun Response?.asStringClonedOrThrow(): Pair<String, Charset>? {
 /**
  * Вычитывает тело ответа в [OutputStream], не изменяя исходный [InputStream]
  */
-fun Response?.writeCloned(
+fun Response.writeCloned(
     outputStream: OutputStream?,
     notifier: IStreamNotifier? = null,
 ): ResponseBody? = try {
@@ -297,12 +319,12 @@ fun Response?.writeCloned(
 }
 
 @Throws(IOException::class)
-fun Response?.writeClonedOrThrow(
+fun Response.writeClonedOrThrow(
     outputStream: OutputStream?,
     notifier: IStreamNotifier? = null,
 ): ResponseBody? {
     outputStream ?: return null
-    val responseBody = this?.body ?: return null
+    val responseBody = this.body ?: return null
     val source = responseBody.source()
     val buffer = source.cloneBufferOrThrow() ?: return null
     buffer.inputStream().copyToOutputStreamOrThrow(outputStream, notifier, responseBody.contentLength())
@@ -311,7 +333,7 @@ fun Response?.writeClonedOrThrow(
 
 fun Response.toResponseBody(shouldClone: Boolean): ResponseBody {
     val bodyBytes = if (shouldClone) {
-        asByteArrayClonedOrThrow()
+        body?.asByteArrayClonedOrThrow()
     } else {
         asByteArrayOrThrow()
     } ?: ByteArray(0)
@@ -346,6 +368,11 @@ fun Response.getCharset(): Charset {
             it
         }
     }
+}
+
+fun ResponseBody.getCharset(): Charset {
+    val defaultCharset = Charset.defaultCharset()
+    return contentType()?.charset(defaultCharset) ?: defaultCharset
 }
 
 fun Response.getContentDispositionHeader() = header(HEADER_CONTENT_DISPOSITION).orEmpty()
@@ -389,13 +416,11 @@ private fun String?.hasContentDisposition(type: ContentDispositionType): Boolean
     return this?.startsWith(type.value) == true
 }
 
-fun Headers?.toPairs(): List<Pair<String, String>> {
+fun Headers.toPairs(): List<Pair<String, String>> {
     val result = mutableListOf<Pair<String, String>>()
-    if (this != null) {
-        for (i in 0 until size) {
-            val name = name(i)
-            result.add(Pair(name, this[name].orEmpty()))
-        }
+    for (i in 0 until size) {
+        val name = name(i)
+        result.add(Pair(name, this[name].orEmpty()))
     }
     return result
 }

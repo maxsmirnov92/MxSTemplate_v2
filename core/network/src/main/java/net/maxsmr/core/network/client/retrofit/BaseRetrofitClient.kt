@@ -3,6 +3,7 @@ package net.maxsmr.core.network.client.retrofit
 import androidx.annotation.CallSuper
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
+import net.maxsmr.core.network.client.okhttp.ResponseBodyCache
 import net.maxsmr.core.network.exceptions.handler.ICallExceptionHandler
 import net.maxsmr.core.network.retrofit.internal.cache.CacheWrapper
 import okhttp3.HttpUrl
@@ -18,6 +19,7 @@ abstract class BaseRetrofitClient(
     private val cachePath: String,
     private val protocolVersion: Int,
     private val disableCache: Boolean,
+    private val cache: ResponseBodyCache<*>,
     private val exceptionHandler: ICallExceptionHandler,
     private val clientProvider: () -> OkHttpClient,
 ) {
@@ -58,7 +60,11 @@ abstract class BaseRetrofitClient(
 
     private fun build() = Retrofit.Builder().apply {
         baseUrl?.let { baseUrl(it) }
-        addCallAdapterFactory(ExceptionHandlingCallAdapterFactory(exceptionHandler))
+        addCallAdapterFactory(ExceptionHandlingCallAdapterFactory(
+            cache,
+        ) {
+            exceptionHandler.onException(it)
+        })
         callFactory { clientProvider().newCall(it) }
         configureBuild(this, json)
     }.build()

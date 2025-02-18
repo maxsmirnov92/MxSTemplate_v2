@@ -18,7 +18,10 @@ import retrofit2.HttpException
 import retrofit2.Retrofit
 import java.lang.reflect.Type
 
-class ExceptionHandlingCallAdapterFactory(private val exceptionHandler: ICallExceptionHandler) : CallAdapter.Factory() {
+class ExceptionHandlingCallAdapterFactory(
+    private val cache: ResponseBodyCache<*>,
+    private val exceptionHandler: suspend (RuntimeException) -> Unit,
+) : CallAdapter.Factory() {
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -56,8 +59,8 @@ class ExceptionHandlingCallAdapterFactory(private val exceptionHandler: ICallExc
                                 // на этом этапе ответ уже был прочитан,
                                 // тело имеет тип "NoContentBody",
                                 // поэтому извлекаем из кэша склонированное
-                                ResponseBodyCache.get(request)?.let { responseBody ->
-                                    baseConverter.convert(responseBody)
+                                cache.get(request)?.let { body ->
+                                    baseConverter.convert(body)
                                 }
                             } catch (e: Exception) {
                                 // прочие возникшие здесь исключения игнорируются
@@ -69,15 +72,15 @@ class ExceptionHandlingCallAdapterFactory(private val exceptionHandler: ICallExc
                         resultThrowable.let {
                             if (it is RuntimeException) {
                                 scope.launch {
-                                    exceptionHandler.onException(it)
+                                    exceptionHandler(it)
                                 }
                             }
                         }
-                        ResponseBodyCache.remove(request)?.close()
+                        cache.removeWithClose(request)
                         resultThrowable
                     },
                     onSuccess = {
-                        ResponseBodyCache.remove(request)?.close()
+                        cache.removeWithClose(request)
                     }
                 )
 

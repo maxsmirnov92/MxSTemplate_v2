@@ -16,10 +16,12 @@ class RadarIoOkHttpClientManager(
     connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
     context: Context,
     connectivityChecker: ConnectivityChecker,
+    cache: ResponseBodyCache<*>
 ) : BaseRestOkHttpClientManager(
     connectTimeout,
     context = context,
     connectivityChecker = connectivityChecker,
+    cache = cache
 ) {
 
     override fun configureBuild(builder: OkHttpClient.Builder) {

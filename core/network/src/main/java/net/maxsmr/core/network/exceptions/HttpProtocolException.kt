@@ -42,12 +42,12 @@ open class HttpProtocolException(
     ) : this(
         response?.request?.url?.toString().orEmpty(),
         response?.request?.method.orEmpty(),
-        ArrayList(response?.request?.headers.toPairs()),
-        if (withBody) response?.request.asString().orEmpty() else EMPTY_STRING,
+        ArrayList(response?.request?.headers?.toPairs().orEmpty()),
+        if (withBody) response?.request?.asString().orEmpty() else EMPTY_STRING,
         response?.code ?: UNKNOWN_ERROR,
         response?.message.orEmpty(),
-            if (withBody) response.asStringCloned()?.first.orEmpty() else EMPTY_STRING,
-        ArrayList(response?.headers.toPairs()),
+        if (withBody) response?.asStringCloned()?.first.orEmpty() else EMPTY_STRING,
+        ArrayList(response?.headers?.toPairs().orEmpty()),
         exceptionMessage?.takeIf { it.isNotEmpty() } ?: response?.defaultMessage().orEmpty()
     )
 

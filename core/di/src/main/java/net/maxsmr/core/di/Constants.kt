@@ -82,6 +82,10 @@ annotation class DoubleGisRoutingOkHttpClient
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
+annotation class ResponseBodyCache
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
 annotation class DownloadHttpLoggingInterceptor
 
 @Qualifier
