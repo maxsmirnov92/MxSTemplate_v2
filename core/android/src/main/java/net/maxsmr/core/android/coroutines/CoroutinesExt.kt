@@ -125,15 +125,3 @@ fun HandlerThread.asDispatcher(): CoroutineDispatcher {
         .looper.let { Handler(it) }
         .asCoroutineDispatcher()
 }
-
-/**
- * @return холодный flow с периодическими эмитами
- * (задержка не фиксированная - меняется в зав-ти от времени, потраченного на обработку элемента)
- */
-fun tickerFlow(period: Duration, initialDelay: Duration = Duration.ZERO) = flow {
-    delay(initialDelay)
-    while (true) {
-        emit(Unit)
-        delay(period)
-    }
-}
