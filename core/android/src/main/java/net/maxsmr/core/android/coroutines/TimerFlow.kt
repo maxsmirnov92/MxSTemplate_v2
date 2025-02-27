@@ -23,67 +23,50 @@ fun tickerFlow(
 /**
  * @param direction направление отсчёта
  * @param initialDelay изначальная задержка
- * @param period Интервал обновления таймера.
- * @return холодный [Flow] со значением от начала отсчёта в единицах [targetUnit]
+ * @param period интервал обновления таймера.
+ * @return холодный [Flow] со значением от начала отсчёта в [Duration]
  * или `null`, когда таймер истек.
  */
 fun timerFlow(
-    targetUnit: TimeUnit,
+    duration: Duration,
     period: Duration,
-    direction: CountDirection,
     initialDelay: Duration = Duration.ZERO,
-): Flow<Long?> = flow {
+    direction: CountDirection = CountDirection.Up,
+): Flow<Duration?> = flow {
 
-    period.takeIf { it.isPositive() } ?: run {
-        emit(null)
-        return@flow
-    }
-
-    val periodUnits = period.toTimeUnit(targetUnit)
-
-    suspend fun Long.emit() {
-        emit(this)
-        delay(period)
-    }
+    require(period.isPositive()) { "period value must be positive" }
 
     initialDelay.takeIf {
         it.isPositive()
-    }?.toTimeUnit(targetUnit)?.emit()
+    }?.let {
+        delay(it)
+    }
 
-    when (direction) {
-        is CountDirection.Down -> {
-            val durationUnits = direction.duration.toTimeUnit(targetUnit)
-            val endUnits = direction.end.takeIf { it.isPositive() }?.toTimeUnit(targetUnit) ?: 0L
-            for (remaining in durationUnits downTo endUnits step periodUnits) {
-                remaining.emit()
+    val ticksCount = (duration / period).toInt()
+    val remainderDuration = duration - period * ticksCount
+
+    repeat(ticksCount) { tick ->
+        val value = when (direction) {
+            CountDirection.Down -> {
+                duration - period * tick
+            }
+
+            CountDirection.Up -> {
+                period * tick
             }
         }
+        emit(value)
+        delay(period)
+    }
 
-        is CountDirection.Up -> {
-            val durationUnits = direction.duration.toTimeUnit(targetUnit)
-            val startUnits =
-                direction.start.takeIf { it.isPositive() }?.toTimeUnit(targetUnit) ?: 0L
-            for (elapsed in startUnits..durationUnits step periodUnits) {
-                elapsed.emit()
-            }
-        }
-
-        else -> {
-            var current = 0L
-            while (true) {
-                current.emit()
-                current += periodUnits
-            }
-        }
+    if (remainderDuration != Duration.ZERO) {
+        delay(remainderDuration)
     }
 
     emit(null)
 }
 
-
-sealed interface CountDirection {
-
-    data class Up(val duration: Duration, val start: Duration = Duration.ZERO) : CountDirection
-    data class Down(val duration: Duration, val end: Duration = Duration.ZERO) : CountDirection
-    data object Indefinite : CountDirection
+enum class CountDirection {
+    Up,
+    Down
 }
