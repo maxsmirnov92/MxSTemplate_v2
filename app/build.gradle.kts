@@ -3,6 +3,9 @@ import com.android.build.api.dsl.ApplicationVariantDimension
 import com.android.build.api.dsl.VariantDimension
 import com.android.build.gradle.internal.api.ApkVariantOutputImpl
 import dagger.hilt.android.plugin.util.capitalize
+import net.maxsmr.mxstemplate.getPropertyNotNull
+import net.maxsmr.mxstemplate.getStringPropertyNotNull
+import net.maxsmr.mxstemplate.loadProperties
 //import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
 import java.io.FileInputStream
 import java.util.Locale
@@ -71,9 +74,8 @@ android {
             "IS_DEMO_BUILD",
             "${appVersion.isDemo}"
         )
+        val donateProperties = File(rootDir, "app/donate.properties").loadProperties()
 
-        val donateProperties = Properties()
-        donateProperties.load(FileInputStream(File(rootDir, "app/donate.properties")))
         val addressesMap = mutableMapOf<String, String>()
         donateProperties.entries.forEach {
             val key = it.key as String? ?: return@forEach
@@ -90,8 +92,6 @@ android {
             "DEV_PAYMENT_ADDRESSES",
             addressesString
         )
-
-
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -327,46 +327,43 @@ fun ApplicationVariantDimension.applySigningConfig(
 }
 
 fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
-    val appProperties = Properties()
-    appProperties.load(
-        FileInputStream(
-            File(
-                rootDir, "app/${
-                    if (isDebug) {
-                        "app_debug.properties"
-                    } else {
-                        "app_release.properties"
-                    }
-                }"
-            )
-        )
-    )
+    val appProperties = File(rootDir, "app/${
+            if (isDebug) {
+                "app_debug.properties"
+            } else {
+                "app_release.properties"
+            }
+        }").loadProperties()
     buildConfigField(
         "String",
         "AUTHORIZATION_RADAR_IO",
-        "\"${appProperties.getPropertyNotNull("authorizationRadarIo")}\""
+        appProperties.getStringPropertyNotNull("authorizationRadarIo")
     )
     buildConfigField(
         "String",
         "API_KEY_YANDEX_SUGGEST",
-        "\"${appProperties.getPropertyNotNull("apiKeyYandexSuggest")}\""
+        appProperties.getStringPropertyNotNull("apiKeyYandexSuggest")
     )
     buildConfigField(
         "String",
         "API_KEY_YANDEX_GEOCODE",
-        "\"${appProperties.getPropertyNotNull("apiKeyYandexGeocode")}\""
+        appProperties.getStringPropertyNotNull("apiKeyYandexGeocode")
     )
     buildConfigField(
         "String",
         "API_KEY_HUAWEI_ML_ANALYZER",
-        "\"${appProperties.getPropertyNotNull("apiKeyHuaweiMlAnalyzer")}\""
+        appProperties.getStringPropertyNotNull("apiKeyHuaweiMlAnalyzer")
     )
     buildConfigField(
         "String",
         "URL_DEMO_KEY_DOUBLE_GIS_ROUTING",
-        "\"${appProperties.getPropertyNotNull("urlDemoKeyDoubleGisRouting")}\""
+        appProperties.getStringPropertyNotNull("urlDemoKeyDoubleGisRouting")
     )
-    buildConfigField("String", "DEV_EMAIL_ADDRESS", "\"${appProperties.getPropertyNotNull("devEmailAddress")}\"")
+    buildConfigField(
+        "String",
+        "DEV_EMAIL_ADDRESS",
+        appProperties.getStringPropertyNotNull("devEmailAddress")
+    )
 }
 
 /**
@@ -457,5 +454,3 @@ fun getTasksMatcher(): Matcher {
     }
     return pattern.matcher(requests)
 }
-
-fun Properties.getPropertyNotNull(key: String): String = getProperty(key).takeIf { it != "null" }.orEmpty()
