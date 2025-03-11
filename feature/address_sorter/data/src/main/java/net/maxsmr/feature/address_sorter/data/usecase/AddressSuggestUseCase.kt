@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.coroutines.usecase.FlowUseCase
-import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
-import net.maxsmr.core.android.coroutines.usecase.asUseCaseResult
+import net.maxsmr.core.android.coroutines.execute.usecase.FlowUseCase
+import net.maxsmr.core.android.coroutines.execute.ExecuteResult
+import net.maxsmr.core.android.coroutines.execute.asExecuteResult
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.SuggestDataSource
@@ -25,7 +25,7 @@ class AddressSuggestUseCase @Inject constructor(
 ) : FlowUseCase<Flow<AddressSuggestUseCase.Parameters?>, List<AddressSuggest>>(Dispatchers.IO) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun execute(parameters: Flow<Parameters?>): Flow<UseCaseResult<List<AddressSuggest>>> =
+    override fun execute(parameters: Flow<Parameters?>): Flow<ExecuteResult<List<AddressSuggest>>> =
         parameters
             .mapNotNull { it?.let { it.copy(query = it.query.trim()) } }
             .debounce {
@@ -40,9 +40,9 @@ class AddressSuggestUseCase @Inject constructor(
                 flow {
                     if (p.query.length <= SUGGEST_THRESHOLD) {
                         addressRepo.updateQuery(p.id, p.query)
-                        emit(UseCaseResult.Success(emptyList()))
+                        emit(ExecuteResult.Success(emptyList()))
                     } else {
-                        emit(UseCaseResult.Loading)
+                        emit(ExecuteResult.Loading)
                         addressRepo.updateQuery(p.id, p.query)
 //                        delay(5000)
                         val result = try {
@@ -50,10 +50,10 @@ class AddressSuggestUseCase @Inject constructor(
                             if (result.isEmpty()) {
                                 throw EmptyResultException(baseApplicationContext, true)
                             } else {
-                                UseCaseResult.Success(result)
+                                ExecuteResult.Success(result)
                             }
                         } catch (e: Exception) {
-                            e.asUseCaseResult()
+                            e.asExecuteResult()
                         }
                         emit(result)
                     }

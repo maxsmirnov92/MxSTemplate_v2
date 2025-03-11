@@ -22,9 +22,9 @@ import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.delegates.persistableLiveData
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
-import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
-import net.maxsmr.core.android.coroutines.usecase.data
-import net.maxsmr.core.android.coroutines.usecase.succeeded
+import net.maxsmr.core.android.coroutines.execute.ExecuteResult
+import net.maxsmr.core.android.coroutines.execute.data
+import net.maxsmr.core.android.coroutines.execute.succeeded
 import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine.Companion.joinLines
@@ -236,7 +236,7 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
                     TextRecognitionResult.Failed(RuntimeException("Unknown result type: $r"))
                 }
             }
-        } else if (result is UseCaseResult.Error) {
+        } else if (result is ExecuteResult.Error) {
             val e = result.exception
             if (e is BaseTextMatcherUseCase.FailedRecognitionException) {
                 TextRecognitionResult.Failed(e, e.sourceText)

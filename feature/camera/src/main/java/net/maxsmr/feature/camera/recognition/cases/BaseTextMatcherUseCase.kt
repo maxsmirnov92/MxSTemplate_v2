@@ -1,7 +1,7 @@
 package net.maxsmr.feature.camera.recognition.cases
 
 import kotlinx.coroutines.Dispatchers
-import net.maxsmr.core.android.coroutines.usecase.UseCase
+import net.maxsmr.core.android.coroutines.execute.usecase.UseCase
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine.Companion.joinLines
 import java.io.Serializable

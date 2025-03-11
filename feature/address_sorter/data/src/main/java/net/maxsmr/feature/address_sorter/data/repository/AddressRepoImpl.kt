@@ -15,7 +15,7 @@ import net.maxsmr.commonutils.compareLongs
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
+import net.maxsmr.core.android.coroutines.execute.ExecuteResult
 import net.maxsmr.core.database.dao.UpsertDao.Companion.NO_ID
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
 import net.maxsmr.core.database.model.address_sorter.AddressEntity
@@ -25,7 +25,6 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
 
-import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 
 class AddressRepoImpl(
@@ -121,15 +120,15 @@ class AddressRepoImpl(
     override suspend fun specifyFromSuggest(
         id: Long,
         suggest: AddressSuggest,
-        geocodeResult: UseCaseResult<AddressGeocode>,
+        geocodeResult: ExecuteResult<AddressGeocode>,
     ) {
         withContext(ioDispatcher) {
             val entity = dao.getById(id) ?: return@withContext
             val result = suggest.toEntity(
                 id,
                 entity.sortOrder,
-                (geocodeResult as? UseCaseResult.Success)?.data?.location,
-                (geocodeResult as? UseCaseResult.Error)?.errorMessage()
+                (geocodeResult as? ExecuteResult.Success)?.data?.location,
+                (geocodeResult as? ExecuteResult.Error)?.errorMessage()
                     ?.get(baseApplicationContext)?.toString(),
             )
             dao.upsert(result)

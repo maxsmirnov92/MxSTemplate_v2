@@ -6,7 +6,7 @@ import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.media.openInputStreamOrThrow
 import net.maxsmr.commonutils.stream.readStringOrThrow
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.coroutines.usecase.UseCase
+import net.maxsmr.core.android.coroutines.execute.usecase.UseCase
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.android.exceptions.EmptyResultException

@@ -16,7 +16,7 @@ import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.content.storage.shared.SharedStorage
-import net.maxsmr.core.android.coroutines.usecase.UseCase
+import net.maxsmr.core.android.coroutines.execute.usecase.UseCase
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo

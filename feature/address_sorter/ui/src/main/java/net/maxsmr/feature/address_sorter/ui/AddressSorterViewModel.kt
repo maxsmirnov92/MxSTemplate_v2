@@ -37,11 +37,11 @@ import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
-import net.maxsmr.core.android.coroutines.usecase.asState
-import net.maxsmr.core.android.coroutines.usecase.data
-import net.maxsmr.core.android.coroutines.usecase.mapData
-import net.maxsmr.core.android.coroutines.usecase.succeeded
+import net.maxsmr.core.android.coroutines.execute.ExecuteResult
+import net.maxsmr.core.android.coroutines.execute.asState
+import net.maxsmr.core.android.coroutines.execute.data
+import net.maxsmr.core.android.coroutines.execute.mapData
+import net.maxsmr.core.android.coroutines.execute.succeeded
 import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
@@ -180,7 +180,7 @@ class AddressSorterViewModel @AssistedInject constructor(
             suspend fun doAddressSort() {
                 val result = addressSortUseCase.invoke(lastLocation.value)
                 val currentData = _resultItemsState.value?.data.orEmpty()
-                if (result is UseCaseResult.Error) {
+                if (result is ExecuteResult.Error) {
                     val e = result.exception
 
                     fun handleBaseError(showMessage: Boolean = true) {
@@ -220,7 +220,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                     } else {
                         handleBaseError()
                     }
-                } else if (result is UseCaseResult.Success && result.data.isEmpty()) {
+                } else if (result is ExecuteResult.Success && result.data.isEmpty()) {
                     // поскольку не будет выставления в items.observe {}
                     _resultItemsState.value = LoadState.success(currentData)
                 }
@@ -235,7 +235,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         viewModelScope.launch {
             val result = addressImportUseCase.invoke(uri)
             dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
-            if (result is UseCaseResult.Error) {
+            if (result is ExecuteResult.Error) {
                 showOkDialog(
                     DIALOG_TAG_IMPORT_FAILED,
                     result.errorMessage()?.let {
@@ -267,7 +267,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                     DIALOG_TAG_EXPORT_SUCCESS,
                     TextMessage(R.string.address_sorter_dialog_address_export_success_message_format, result.data)
                 )
-            } else if (result is UseCaseResult.Error) {
+            } else if (result is ExecuteResult.Error) {
                 showOkDialog(
                     DIALOG_TAG_EXPORT_FAILED,
                     result.errorMessage()?.let {
@@ -362,12 +362,12 @@ class AddressSorterViewModel @AssistedInject constructor(
             val result = reverseGeocodeUseCase.invoke(location)
             dialogQueue.toggle(false, DIALOG_TAG_PROGRESS)
             val geocode = when (result) {
-                is UseCaseResult.Error -> {
+                is ExecuteResult.Error -> {
                     showReverseGeocodeFailedMessage(result.exception, result.errorMessage())
                     null
                 }
 
-                is UseCaseResult.Success -> {
+                is ExecuteResult.Success -> {
                     result.data
                 }
 
@@ -486,7 +486,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                     )
 
                 val route = when (result) {
-                    is UseCaseResult.Error -> {
+                    is ExecuteResult.Error -> {
                         val e = result.exception
                         if (shouldDownloadRoutingKey(e) && !wasKeyDownloaded) {
                             downloadsViewModel.observeOnceDownloadByParams(enqueueDownloadRoutingKey()).observe {
@@ -523,7 +523,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                         null
                     }
 
-                    is UseCaseResult.Success -> {
+                    is ExecuteResult.Success -> {
                         result.data
                     }
 

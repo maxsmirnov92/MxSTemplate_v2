@@ -2,7 +2,7 @@ package net.maxsmr.feature.address_sorter.data.usecase
 
 import kotlinx.coroutines.Dispatchers
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.coroutines.usecase.UseCase
+import net.maxsmr.core.android.coroutines.execute.usecase.UseCase
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest

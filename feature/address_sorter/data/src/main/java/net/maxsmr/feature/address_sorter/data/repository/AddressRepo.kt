@@ -2,7 +2,7 @@ package net.maxsmr.feature.address_sorter.data.repository
 
 import kotlinx.coroutines.flow.SharedFlow
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.coroutines.usecase.UseCaseResult
+import net.maxsmr.core.android.coroutines.execute.ExecuteResult
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
@@ -30,7 +30,7 @@ interface AddressRepo {
     suspend fun specifyFromSuggest(
         id: Long,
         suggest: AddressSuggest,
-        geocodeResult: UseCaseResult<AddressGeocode>
+        geocodeResult: ExecuteResult<AddressGeocode>
     )
 
     suspend fun updateSortOrder(ids: List<Long>)

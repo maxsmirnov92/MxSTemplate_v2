@@ -3,7 +3,7 @@ package net.maxsmr.feature.address_sorter.data.usecase
 import kotlinx.coroutines.Dispatchers
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.coroutines.usecase.UseCase
+import net.maxsmr.core.android.coroutines.execute.usecase.UseCase
 import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.AddressRoute
