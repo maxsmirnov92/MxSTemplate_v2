@@ -355,7 +355,7 @@ class CameraXController(
         val resource = try {
             storage.openOutputStream(
                 resourceNameFunc(System.currentTimeMillis()).appendExtension("jpg")
-            ).get()
+            ).getOrThrow()
         } catch (e: Exception) {
             logger.e("Cannot take picture: openOutputStream failed", e)
             return LoadState.error<Uri>(e).just()

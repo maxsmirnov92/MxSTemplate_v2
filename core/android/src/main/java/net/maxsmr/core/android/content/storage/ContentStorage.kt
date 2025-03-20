@@ -2,15 +2,11 @@ package net.maxsmr.core.android.content.storage
 
 import android.content.Context
 import android.net.Uri
-import com.github.kittinunf.result.Result
-import com.github.kittinunf.result.flatMap
-import com.github.kittinunf.result.flatMapError
-import com.github.kittinunf.result.onSuccess
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.app_private.ExternalFileStorage
 import net.maxsmr.core.android.content.storage.app_private.InternalFileStorage
-import net.maxsmr.core.android.content.storage.shared.AbsSharedStorage
 import net.maxsmr.core.android.content.storage.shared.SharedStorage
+import net.maxsmr.core.utils.flatMap
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -21,8 +17,6 @@ import java.io.OutputStream
  * @param T прокси для доступа к ресурсу
  */
 interface ContentStorage<T> {
-
-    val context: Context
 
     val path: String
 
@@ -36,7 +30,7 @@ interface ContentStorage<T> {
      * 1. Result.Success(false) - если не существует
      * 1. Result.Failure - если при проверке возникло исключение
      */
-    fun exists(name: String, path: String? = null): Result<Boolean, Exception>
+    fun exists(name: String, path: String? = null): Result<Boolean>
 
     /**
      * **Физически** создает ресурс с именем [name] и возвращает объект для доступа к нему.
@@ -48,7 +42,7 @@ interface ContentStorage<T> {
      * 1. Result.Success - если ресурс с именем [name] успешно создан
      * 1. Result.Failure - если при создании возникло исключение
      */
-    fun create(name: String, path: String? = null): Result<T, Exception>
+    fun create(name: String, path: String? = null): Result<T>
 
     /**
      * Возвращает объект для доступа к ресурсу с именем [name]. Сам ресурс может не существовать.
@@ -59,7 +53,7 @@ interface ContentStorage<T> {
      * 1. Result.Success - если удалось получить объект для доступа к ресурсу с именем [name]
      * 1. Result.Failure - если возникло исключение
      */
-    fun get(name: String, path: String? = null): Result<T, Exception>
+    fun get(name: String, path: String? = null): Result<T>
 
     /**
      * Возвращает объект для доступа к ресурсу с именем [name]. Если ресурс не существует,
@@ -71,8 +65,16 @@ interface ContentStorage<T> {
      * 1. Result.Success - если удалось получить объект для доступа к ресурсу с именем [name], ресурс физически существует
      * 1. Result.Failure - если возникло исключение
      */
-    fun getOrCreate(name: String, path: String? = null): Result<T, Exception> =
-        exists(name, path).flatMap { get(name, path) }.flatMapError { create(name, path) }
+    fun getOrCreate(name: String, path: String? = null): Result<T> {
+        return exists(name, path).flatMap { exists ->
+            if (exists) {
+                get(name, path)
+            } else {
+                create(name, path)
+            }
+        }
+
+    }
 
     /**
      * Записывает данные [content] в ресурс с именем [name]. Если ресурс физически не существует,
@@ -84,9 +86,9 @@ interface ContentStorage<T> {
      * 1. Result.Success - если запись выполнена успешно
      * 1. Result.Failure - если возникло исключение
      */
-    fun write(content: String, name: String, path: String? = null): Result<Unit, Exception> =
+    fun write(content: String, name: String, path: String? = null): Result<Unit> =
         create(name, path)
-            .flatMap { write(it, content) }
+            .mapCatching { write(it, content) }
 
     /**
      * Записывает данные [content] в ресурс [resource]. Ресурс должен физически существовать, иначе возможно исключение
@@ -95,13 +97,13 @@ interface ContentStorage<T> {
      * 1. Result.Success - если запись выполнена успешно
      * 1. Result.Failure - если возникло исключение
      */
-    fun write(resource: T, content: String): Result<Unit, Exception>
+    fun write(resource: T, content: String): Result<Unit>
 
-    fun write(content: InputStream, name: String, path: String? = null): Result<Unit, Exception> =
+    fun write(content: InputStream, name: String, path: String? = null): Result<Unit> =
         create(name, path)
-            .flatMap { write(it, content) }
+            .mapCatching { write(it, content) }
 
-    fun write(resource: T, content: InputStream): Result<Unit, Exception>
+    fun write(resource: T, content: InputStream): Result<Unit>
 
     /**
      * Читает все данные из ресурса с именем [name].
@@ -112,7 +114,7 @@ interface ContentStorage<T> {
      * 1. Result.Success - если чтение прошло успешно
      * 1. Result.Failure - если возникло исключение
      */
-    fun read(name: String, path: String? = null): Result<String, Exception> =
+    fun read(name: String, path: String? = null): Result<String> =
         get(name, path).flatMap { read(it) }
 
     /**
@@ -122,9 +124,9 @@ interface ContentStorage<T> {
      * 1. Result.Success - если чтение прошло успешно
      * 1. Result.Failure - если возникло исключение
      */
-    fun read(resource: T): Result<String, Exception>
+    fun read(resource: T): Result<String>
 
-    fun read(resource: T, outputStream: OutputStream): Result<Unit, Exception>
+    fun read(resource: T, outputStream: OutputStream): Result<Unit>
 
     /**
      * Удаляет ресурс с именем [name]
@@ -136,7 +138,7 @@ interface ContentStorage<T> {
      * 1. Result.Success(false) - если не был удален (не существовал)
      * 1. Result.Failure - если возникло исключение
      */
-    fun delete(name: String, path: String? = null): Result<Boolean, Exception> =
+    fun delete(name: String, path: String? = null): Result<Boolean> =
         get(name, path).flatMap { delete(it) }
 
     /**
@@ -147,7 +149,7 @@ interface ContentStorage<T> {
      * 1. Result.Success(false) - если не был удален (не существовал)
      * 1. Result.Failure - если возникло исключение
      */
-    fun delete(resource: T): Result<Boolean, Exception>
+    fun delete(resource: T): Result<Boolean>
 
     /**
      * Открывает [InputStream] для ресурса с именем [name]
@@ -158,7 +160,7 @@ interface ContentStorage<T> {
      * 1. Result.Success - если [InputStream] успешно открыт
      * 1. Result.Failure - если возникло исключение
      */
-    fun openInputStream(name: String, path: String? = null): Result<InputStream, Exception> =
+    fun openInputStream(name: String, path: String? = null): Result<InputStream> =
         get(name, path).flatMap { openInputStream(it) }
 
     /**
@@ -168,7 +170,7 @@ interface ContentStorage<T> {
      * 1. Result.Success - если [InputStream] успешно открыт
      * 1. Result.Failure - если возникло исключение
      */
-    fun openInputStream(resource: T): Result<InputStream, Exception>
+    fun openInputStream(resource: T): Result<InputStream>
 
     /**
      * Открывает [OutputStream] для ресурса с именем [name]
@@ -179,7 +181,7 @@ interface ContentStorage<T> {
      * 1. Result.Success - если [OutputStream] успешно открыт
      * 1. Result.Failure - если возникло исключение
      */
-    fun openOutputStream(name: String, path: String? = null): Result<Pair<T, OutputStream>, Exception> =
+    fun openOutputStream(name: String, path: String? = null): Result<Pair<T, OutputStream>> =
         getOrCreate(name, path).flatMap { openOutputStream(it) }
 
     /**
@@ -189,7 +191,7 @@ interface ContentStorage<T> {
      * 1. Result.Success - если [OutputStream] успешно открыт
      * 1. Result.Failure - если возникло исключение
      */
-    fun openOutputStream(resource: T): Result<Pair<T, OutputStream>, Exception>
+    fun openOutputStream(resource: T): Result<Pair<T, OutputStream>>
 
     /**
      * Перемещает содержимое ресурса с именем [srcName] в хранилище [dstStorage] в ресурс с именем [dstName]
@@ -209,7 +211,7 @@ interface ContentStorage<T> {
         dstStorage: ContentStorage<*> = this,
         dstName: String,
         dstPath: String? = null,
-    ): Result<Unit, Exception> =
+    ): Result<Unit> =
         get(srcName, srcPath).flatMap { move(it, dstStorage, dstName, dstPath) }
 
     /**
@@ -228,7 +230,7 @@ interface ContentStorage<T> {
         dstStorage: ContentStorage<*> = this,
         dstName: String,
         dstPath: String? = null,
-    ): Result<Unit, Exception> =
+    ): Result<Unit> =
         copy(src, dstStorage, dstName, dstPath).onSuccess { delete(src) }
 
     /**
@@ -249,7 +251,7 @@ interface ContentStorage<T> {
         dstStorage: ContentStorage<*> = this,
         dstName: String,
         dstPath: String? = null,
-    ): Result<Unit, Exception> =
+    ): Result<Unit> =
         get(srcName, srcPath).flatMap { copy(it, dstStorage, dstName, dstPath) }
 
     /**
@@ -268,9 +270,9 @@ interface ContentStorage<T> {
         dstStorage: ContentStorage<*> = this,
         dstName: String,
         dstPath: String? = null,
-    ): Result<Unit, Exception> = Result.of {
-        val streamIn = openInputStream(src).get()
-        val streamOut = dstStorage.openOutputStream(dstName, dstPath).get()
+    ): Result<Unit> = runCatching {
+        val streamIn = openInputStream(src).getOrThrow()
+        val streamOut = dstStorage.openOutputStream(dstName, dstPath).getOrThrow()
         streamIn.copyTo(streamOut.second)
         streamIn.close()
         streamOut.second.close()
@@ -285,7 +287,7 @@ interface ContentStorage<T> {
      * 1. Result.Success - если uri сформирован
      * 1. Result.Failure - если возникло исключение
      */
-    fun shareUri(name: String, path: String? = null): Result<Uri?, Exception>
+    fun shareUri(name: String, path: String? = null): Result<Uri?>
 
     fun requiredPermissions(read: Boolean, write: Boolean): Array<String>
 
@@ -318,15 +320,21 @@ interface ContentStorage<T> {
             contentType: ContentType,
             context: Context,
         ): UriContentStorage = when (storageType) {
-                StorageType.INTERNAL ->
-                    UriStorageAdapter(InternalFileStorage(FileContentStorage.Type.PERSISTENT, context), context = context)
-                StorageType.EXTERNAL ->
-                    UriStorageAdapter(
-                        ExternalFileStorage(FileContentStorage.Type.PERSISTENT, contentType, context),
-                        context = context)
-                StorageType.SHARED ->
-                    SharedStorage.create(contentType, context)
-            }
+            StorageType.INTERNAL ->
+                UriStorageAdapter(
+                    InternalFileStorage(FileContentStorage.Type.PERSISTENT, context),
+                    context = context
+                )
+
+            StorageType.EXTERNAL ->
+                UriStorageAdapter(
+                    ExternalFileStorage(FileContentStorage.Type.PERSISTENT, contentType, context),
+                    context = context
+                )
+
+            StorageType.SHARED ->
+                SharedStorage.create(contentType, context)
+        }
     }
 
 }

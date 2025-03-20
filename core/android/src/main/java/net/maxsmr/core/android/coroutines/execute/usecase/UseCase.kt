@@ -6,7 +6,6 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.coroutines.execute.ExecuteResult
 import net.maxsmr.core.android.coroutines.execute.ExecuteResultWrapper
 
-
 abstract class UseCase<in P, R>(private val coroutineDispatcher: CoroutineDispatcher) {
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)

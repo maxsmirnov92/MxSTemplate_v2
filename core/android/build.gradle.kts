@@ -38,8 +38,6 @@ dependencies {
 
     implementation(libs.decoro)
 
-    api(libs.kittinunf.result)
-
     implementation(libs.androidx.datastore.preferences)
 
     // Добалено ля обработки HttpException

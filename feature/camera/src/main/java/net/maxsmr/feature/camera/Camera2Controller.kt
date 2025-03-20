@@ -275,7 +275,7 @@ class Camera2Controller(private val textureView: TextureView) {
                         storage.write(
                             ByteBufferBackedInputStream(buffer),
                             resourceNameFunc(System.currentTimeMillis()).appendExtension("jpg")
-                        ).get()
+                        ).getOrThrow()
                     }
                 } catch (e: Exception) {
                     logException(logger, e)

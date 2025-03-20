@@ -2,7 +2,6 @@ package net.maxsmr.core.android.content.storage
 
 import android.content.Context
 import android.net.Uri
-import com.github.kittinunf.result.Result
 import net.maxsmr.commonutils.media.toContentUri
 import net.maxsmr.commonutils.media.toFileUri
 import java.io.File
@@ -18,51 +17,51 @@ import java.io.OutputStream
 class UriStorageAdapter(
     private val fileStorage: FileContentStorage,
     private val contentUri: Boolean = true,
-    context: Context,
-) : UriContentStorage(context) {
+    protected val context: Context,
+) : UriContentStorage(context.contentResolver) {
 
     override val path: String = fileStorage.path
 
-    override fun create(name: String, path: String?): Result<Uri, Exception> = Result.of {
-        fileStorage.create(name, path).get().toUri(context)
+    override fun create(name: String, path: String?): Result<Uri> = runCatching {
+        fileStorage.create(name, path).getOrThrow().toUri(context)
     }
 
-    override fun get(name: String, path: String?): Result<Uri, Exception> = Result.of {
-        fileStorage.get(name, path).get().toUri(context)
+    override fun get(name: String, path: String?): Result<Uri> = runCatching {
+        fileStorage.get(name, path).getOrThrow().toUri(context)
     }
 
-    override fun getOrCreate(name: String, path: String?): Result<Uri, Exception> = Result.of {
-        fileStorage.getOrCreate(name, path).get().toUri(context)
+    override fun getOrCreate(name: String, path: String?): Result<Uri> = runCatching {
+        fileStorage.getOrCreate(name, path).getOrThrow().toUri(context)
     }
 
-    override fun delete(name: String, path: String?): Result<Boolean, Exception> {
+    override fun delete(name: String, path: String?): Result<Boolean> {
         return fileStorage.delete(name, path)
     }
 
-    override fun exists(name: String, path: String?): Result<Boolean, Exception> {
+    override fun exists(name: String, path: String?): Result<Boolean> {
         return fileStorage.exists(name, path)
     }
 
-    override fun write(content: String, name: String, path: String?): Result<Unit, Exception> {
+    override fun write(content: String, name: String, path: String?): Result<Unit> {
         return fileStorage.write(content, name, path)
     }
 
-    override fun read(name: String, path: String?): Result<String, Exception> {
+    override fun read(name: String, path: String?): Result<String> {
         return fileStorage.read(name, path)
     }
 
-    override fun openInputStream(name: String, path: String?): Result<InputStream, Exception> {
+    override fun openInputStream(name: String, path: String?): Result<InputStream> {
         return fileStorage.openInputStream(name, path)
     }
 
-    override fun openOutputStream(name: String, path: String?): Result<Pair<Uri, OutputStream>, Exception> {
-        return Result.of {
-            val result = fileStorage.openOutputStream(name, path).get()
+    override fun openOutputStream(name: String, path: String?): Result<Pair<Uri, OutputStream>> {
+        return runCatching {
+            val result = fileStorage.openOutputStream(name, path).getOrThrow()
             Pair(result.first.toUri(context), result.second)
         }
     }
 
-    override fun shareUri(name: String, path: String?): Result<Uri?, Exception> {
+    override fun shareUri(name: String, path: String?): Result<Uri?> {
         return fileStorage.shareUri(name, path)
     }
 

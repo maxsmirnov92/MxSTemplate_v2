@@ -222,7 +222,7 @@ jaredrummler-deviceNames = { group = "com.jaredrummler", name = "android-device-
 makeramen-roundedimageview = { group = "com.makeramen", name = "roundedimageview", version.ref = "roundedimageview" }
 hannesdorfmann-adapterdelegates4Kotlin = { group = "com.hannesdorfmann", name = "adapterdelegates4-kotlin-dsl", version.ref = "adapterdelegates4Kotlin" }
 socket-ioClient = { group = "io.socket", name = "socket.io-client", version.ref = "ioClient" }
-kittinunf-result = { group = "com.github.kittinunf.result", name = "result", version.ref = "kittinunfResult" }
+#kittinunf-result = { group = "com.github.kittinunf.result", name = "result", version.ref = "kittinunfResult" }
 leakCanary = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakCanary" }
 showcaseView = { group = "com.github.mreram", name = "showcaseview", version.ref = "showcaseView" }
 

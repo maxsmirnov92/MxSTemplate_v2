@@ -9,8 +9,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.annotation.RequiresApi
-import com.github.kittinunf.result.Result
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.contentUri
 import net.maxsmr.core.android.content.mediaStoreDisplayName
@@ -21,18 +19,17 @@ import java.io.File
 import java.io.IOException
 
 /**
- * Внещнее Shareable хранилище файлов. Характеристики:
+ * Внешнее Shareable хранилище файлов. Характеристики:
  *
- * 1. Объем хранилища - большой.
- * 1. Разрешения на доступ:
+ * Разрешения на доступ:
  *      1. Android 11 (API level 30) - не нужно для доступа к файлам, созданным этим приложением.
  *      Для доступа к файлам, созданным другими приложениями требуется READ_EXTERNAL_STORAGE.
- *      1. Android 10 (API level 29), Scoped Storage **enabled** - не нужно для доступа к файлам, созданным этим приложением.
+ *      2. Android 10 (API level 29), Scoped Storage **enabled** - не нужно для доступа к файлам, созданным этим приложением.
  *      Для доступа к файлам, созданным другими приложениями требуется READ_EXTERNAL_STORAGE или WRITE_EXTERNAL_STORAGE.
- *      1. Android 9- (API level pre 29) OR Scoped Storage **disabled** (requestLegacyExternalStorage флаг в манифесте) -
+ *      3. Android 9- (API level pre 29) OR Scoped Storage **disabled** (requestLegacyExternalStorage флаг в манифесте) -
  *      требуется READ_EXTERNAL_STORAGE или WRITE_EXTERNAL_STORAGE для доступа к **любым** файлам.
- * 1. Приватность данных - данные доступны другим приложениям с запросом READ_EXTERNAL_STORAGE разрешения.
- * 1. Доступность хранилища - всегда доступно.
+ * Приватность данных - данные доступны другим приложениям с запросом READ_EXTERNAL_STORAGE разрешения.
+ * Доступность хранилища - всегда доступно.
  */
 @TargetApi(Build.VERSION_CODES.Q)
 class SharedStorage private constructor(
@@ -48,7 +45,7 @@ class SharedStorage private constructor(
 
     override val path: String = "${contentType.rootDir}${File.separator}$appDir${File.separator}"
 
-    override fun get(name: String, path: String?): Result<Uri, Exception> = Result.of {
+    override fun get(name: String, path: String?): Result<Uri> = runCatching {
         val projection = arrayOf(contentType.mediaStoreId)
 
         val selection = "${contentType.mediaStoreDisplayName} = ? AND ${MediaStore.MediaColumns.RELATIVE_PATH} = ?"
@@ -67,13 +64,13 @@ class SharedStorage private constructor(
 
             if (cursor.moveToNext()) {
                 val id = cursor.getLong(idColumn)
-                return@of ContentUris.withAppendedId(contentType.mediaStoreExternalContentUri, id)
+                return@runCatching ContentUris.withAppendedId(contentType.mediaStoreExternalContentUri, id)
             }
         }
         throw IOException("Cannot get content with `$name`")
     }
 
-    override fun create(name: String, path: String?): Result<Uri, Exception> = Result.of {
+    override fun create(name: String, path: String?): Result<Uri> = runCatching {
         val pathHardcoded = this.path
         val values = ContentValues().apply {
             put(contentType.mediaStoreDisplayName, name)
@@ -88,6 +85,8 @@ class SharedStorage private constructor(
                 arrayOf(pathHardcoded, name)
             )
         }
+
+        val shouldDeleteBeforeCreate = shouldDeleteBeforeCreate
 
         if (shouldDeleteBeforeCreate) {
             delete()

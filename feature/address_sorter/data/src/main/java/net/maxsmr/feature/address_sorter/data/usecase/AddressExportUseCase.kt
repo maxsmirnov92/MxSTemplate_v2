@@ -1,8 +1,6 @@
 package net.maxsmr.feature.address_sorter.data.usecase
 
 import android.net.Uri
-import com.github.kittinunf.result.Result
-import com.github.kittinunf.result.getOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
@@ -53,11 +51,11 @@ class AddressExportUseCase @Inject constructor(
 
         val result = storage.create(
             (parameters.takeIf { it.isNotEmpty() } ?: EXPORT_FILE_NAME_DEFAULT)
-                .removeExtension().appendExtension(FileFormat.JSON.extension),
+                .appendExtension(FileFormat.JSON.extension),
             baseAppName
         )
-        if (result is Result.Failure) {
-            throw result.error
+        if (result.isFailure) {
+            throw result.exceptionOrNull() ?: RuntimeException()
         } else {
             return result.getOrNull()?.let {
                 it.writeStringsOrThrow(resolver, listOf(data))

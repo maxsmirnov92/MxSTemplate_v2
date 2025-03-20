@@ -6,7 +6,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.github.kittinunf.result.getOrNull
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -339,7 +338,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                             snackbarTextMessage = e.message.asTextMessage()
                         }
                     } ?: run {
-                        snackbarTextMessage = (resource.component2()?.message?.takeIf { it.isNotEmpty() }
+                        snackbarTextMessage = (resource.exceptionOrNull()?.message?.takeIf { it.isNotEmpty() }
                             ?: "Cannot create file").asTextMessage()
                     }
                 }

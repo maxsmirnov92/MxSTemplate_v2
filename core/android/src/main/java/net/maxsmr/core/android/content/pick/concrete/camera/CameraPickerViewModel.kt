@@ -3,16 +3,12 @@ package net.maxsmr.core.android.content.pick.concrete.camera
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
-import com.github.kittinunf.result.getOrNull
-import com.github.kittinunf.result.onSuccess
 import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.media.toContentUri
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.delegates.persistableValue
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.content.storage.ContentStorage.Companion.createUriStorage
-import net.maxsmr.core.android.content.storage.UriContentStorage
 import java.util.Date
 
 internal class CameraPickerViewModel(
