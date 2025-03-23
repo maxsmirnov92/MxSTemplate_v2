@@ -103,6 +103,8 @@ cameraX = "1.4.0"
 googleMlKit = "19.0.1"
 huaweiMl = "3.11.0.301"
 
+armCloudSdkV3 = "1.0.8"
+
 [libraries]
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }
@@ -253,6 +255,9 @@ google-mlkit-text-recognition = { group = "com.google.android.gms", name = "play
 #HMS ML kit
 huawei-ml-computer-vision-ocr = { group = "com.huawei.hms", name = "ml-computer-vision-ocr", version.ref = "huaweiMl" }
 huawei-ml-computer-vision-ocr-latin-model = { group = "com.huawei.hms", name = "ml-computer-vision-ocr-latin-model", version.ref = "huaweiMl" }
+
+# VmOsCloud
+armcloudsdk-armcloudsdkv3 = { group = "net.armcloud.armcloudsdk", name = "armcloudsdkv3", version.ref = "armCloudSdkV3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradle" }

@@ -18,6 +18,8 @@ import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
 import net.maxsmr.core.di.PicassoOkHttpClient
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.ResponseBodyCache
+import net.maxsmr.core.di.VmOsCloudHostManager
+import net.maxsmr.core.di.VmOsCloudOkHttpClient
 import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.network.client.okhttp.DoubleGisOkHttpClientManager
@@ -25,7 +27,9 @@ import net.maxsmr.core.network.client.okhttp.DownloadOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.RadarIoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.YandexOkHttpClientManager
+import net.maxsmr.core.network.client.okhttp.vmoscloud.VmOsCloudOkHttpClientManager
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
+import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.mxstemplate.BuildConfig
 import okhttp3.CacheControl
 import okhttp3.Interceptor
@@ -160,6 +164,24 @@ class OkHttpModule {
             apiKeyProvider = {
                 runBlocking { cacheRepo.getDoubleGisRoutingApiKey() }
             }
+        ).build()
+    }
+
+    @[Provides Singleton VmOsCloudOkHttpClient]
+    fun provideVmOsCloudOkHttpClient(
+        @ApplicationContext context: Context,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>,
+        settingsRepo: SettingsDataStoreRepository,
+        @VmOsCloudHostManager hostManager: net.maxsmr.mxstemplate.manager.host.VmOsCloudHostManager
+    ): OkHttpClient {
+        return VmOsCloudOkHttpClientManager(
+            host = hostManager.host,
+            // TODO SettingsDataStoreRepository
+            "",
+            "",
+            context = context,
+            connectivityChecker = NetworkConnectivityChecker,
+            cache = cache,
         ).build()
     }
 

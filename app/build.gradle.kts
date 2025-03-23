@@ -356,6 +356,16 @@ fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
     )
     buildConfigField(
         "String",
+        "API_VMOSCLOUD_ACCESS_KEY",
+        appProperties.getStringPropertyNotNull("apiVmOsCloudAccessKeyId")
+    )
+    buildConfigField(
+        "String",
+        "API_VMOSCLOUD_SECRET_ACCESS_KEY",
+        appProperties.getStringPropertyNotNull("apiVmOsCloudSecretAccessKey")
+    )
+    buildConfigField(
+        "String",
         "URL_DEMO_KEY_DOUBLE_GIS_ROUTING",
         appProperties.getStringPropertyNotNull("urlDemoKeyDoubleGisRouting")
     )

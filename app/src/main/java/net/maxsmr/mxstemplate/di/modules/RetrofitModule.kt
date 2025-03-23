@@ -15,6 +15,9 @@ import net.maxsmr.core.di.RadarIoHostManager
 import net.maxsmr.core.di.RadarIoOkHttpClient
 import net.maxsmr.core.di.RadarIoRetrofit
 import net.maxsmr.core.di.ResponseBodyCache
+import net.maxsmr.core.di.VmOsCloudHostManager
+import net.maxsmr.core.di.VmOsCloudOkHttpClient
+import net.maxsmr.core.di.VmOsCloudRetrofit
 import net.maxsmr.core.di.YandexGeocodeHostManager
 import net.maxsmr.core.di.YandexGeocodeOkHttpClient
 import net.maxsmr.core.di.YandexGeocodeRetrofit
@@ -22,6 +25,7 @@ import net.maxsmr.core.di.YandexSuggestHostManager
 import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.di.YandexSuggestRetrofit
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
+import net.maxsmr.core.network.client.retrofit.VmOsCloudRetrofitClient
 import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
 import net.maxsmr.core.network.exceptions.handler.CombinedCallExceptionHandler
 import net.maxsmr.core.network.host.HostManager
@@ -43,7 +47,7 @@ class RetrofitModule {
         @RadarIoHostManager hostManager: HostManager,
         @RadarIoOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
-        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
@@ -66,7 +70,7 @@ class RetrofitModule {
         @YandexSuggestHostManager hostManager: HostManager,
         @YandexSuggestOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
-        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
@@ -89,7 +93,7 @@ class RetrofitModule {
         @YandexGeocodeHostManager hostManager: HostManager,
         @YandexGeocodeOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
-        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>,
     ): YandexGeocodeRetrofitClient {
         return YandexGeocodeRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
@@ -112,9 +116,32 @@ class RetrofitModule {
         @DoubleGisRoutingHostManager hostManager: HostManager,
         @DoubleGisRoutingOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
-        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>,
     ): CommonRetrofitClient {
         return CommonRetrofitClient(
+            hostManager.baseUrl.toHttpUrl(),
+            json,
+            File(context.cacheDir, CACHE_DIR_NAME).path,
+            BuildConfig.PROTOCOL_VERSION,
+            false,
+            cache,
+            exceptionHandler
+            // cacheManager.getDisableCache()
+        ) {
+            okHttpClient
+        }
+    }
+
+    @[Provides Singleton VmOsCloudRetrofit]
+    fun provideVmOsCloudRetrofit(
+        @ApplicationContext context: Context,
+        exceptionHandler: CombinedCallExceptionHandler,
+        @VmOsCloudHostManager hostManager: HostManager,
+        @VmOsCloudOkHttpClient okHttpClient: OkHttpClient,
+        @BaseJson json: Json,
+        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>,
+    ): VmOsCloudRetrofitClient {
+        return VmOsCloudRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
             File(context.cacheDir, CACHE_DIR_NAME).path,

@@ -58,6 +58,10 @@ annotation class DoubleGisRoutingHostManager
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
+annotation class VmOsCloudHostManager
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
 annotation class DownloaderOkHttpClient
 
 @Qualifier
@@ -79,6 +83,10 @@ annotation class YandexGeocodeOkHttpClient
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DoubleGisRoutingOkHttpClient
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class VmOsCloudOkHttpClient
 
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
@@ -107,3 +115,7 @@ annotation class YandexGeocodeRetrofit
 @Qualifier
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DoubleGisRoutingRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.RUNTIME)
+annotation class VmOsCloudRetrofit
