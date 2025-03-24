@@ -99,8 +99,7 @@ fun Request.asString(charset: Charset = Charset.defaultCharset()): String? {
 
 @JvmOverloads
 @Throws(IOException::class)
-fun Request.asStringOrThrow(charset: Charset = Charset.defaultCharset()): String? {
-    this ?: return null
+fun Request.asStringOrThrow(charset: Charset = Charset.defaultCharset()): String {
     val copy = newBuilder().build()
     val buffer = Buffer()
     copy.body?.writeTo(buffer)
@@ -164,6 +163,12 @@ fun Request.appendValues(
     }
 
     return request
+}
+
+fun HttpUrl.toQueryMap(): Map<String, String> {
+    return this.queryParameterNames.associateWith { name ->
+        this.queryParameter(name).orEmpty()
+    }
 }
 
 // endregion

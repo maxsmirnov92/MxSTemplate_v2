@@ -1,10 +1,8 @@
 package net.maxsmr.core.network.client.okhttp
 
-import android.content.Context
 import androidx.annotation.CallSuper
 import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.BodyCachingInterceptor
-import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
 import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
 import okhttp3.OkHttpClient
 
@@ -14,23 +12,18 @@ abstract class BaseRestOkHttpClientManager(
     writeTimeout: Long = connectTimeout,
     callTimeout: Long = 0L,
     retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
-    private val context: Context,
-    private val connectivityChecker: ConnectivityChecker,
-    private val cache: ResponseBodyCache<*>,
+    private val apiLoggingInterceptor: ApiLoggingInterceptor,
+    private val cachingInterceptor: BodyCachingInterceptor,
+    private val connectionInterceptor: NetworkConnectionInterceptor
 ) : BaseOkHttpClientManager(connectTimeout, readTimeout, writeTimeout, callTimeout, retryOnConnectionFailure) {
 
     @CallSuper
     override fun configureBuild(builder: OkHttpClient.Builder) {
         with(builder) {
             super.configureBuild(this)
-            addInterceptor(BodyCachingInterceptor(cache))
-            val loggingInterceptor = ApiLoggingInterceptor { message: String ->
-                logger.d(message)
-            }.apply {
-                setLevel(ApiLoggingInterceptor.Level.HEADERS_AND_BODY)
-            }
-            addInterceptor(loggingInterceptor)
-            addInterceptor(NetworkConnectionInterceptor(context, connectivityChecker))
+            addInterceptor(apiLoggingInterceptor)
+            addInterceptor(cachingInterceptor)
+            addInterceptor(connectionInterceptor)
         }
     }
 }

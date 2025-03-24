@@ -15,8 +15,6 @@ abstract class BaseOkHttpClientManager(
     private val retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
 ) {
 
-    protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
-
     @CallSuper
     protected open fun configureBuild(builder: OkHttpClient.Builder) {
         builder.addInterceptor(OkHttpExceptionTransformInterceptor())

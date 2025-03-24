@@ -1,9 +1,10 @@
 package net.maxsmr.core.network.client.okhttp
 
-import android.content.Context
 import net.maxsmr.core.network.appendValues
+import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
-import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
+import net.maxsmr.core.network.client.okhttp.interceptors.BodyCachingInterceptor
+import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -15,14 +16,14 @@ class YandexOkHttpClientManager(
     private val localization: LocalizationField,
     private val defaultLangOrLocale: String = "ru",
     connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
-    context: Context,
-    connectivityChecker: ConnectivityChecker,
-    cache: ResponseBodyCache<*>
+    apiLoggingInterceptor: ApiLoggingInterceptor,
+    cachingInterceptor: BodyCachingInterceptor,
+    connectionInterceptor: NetworkConnectionInterceptor
 ) : BaseRestOkHttpClientManager(
     connectTimeout,
-    context = context,
-    connectivityChecker = connectivityChecker,
-    cache = cache
+    apiLoggingInterceptor = apiLoggingInterceptor,
+    cachingInterceptor = cachingInterceptor,
+    connectionInterceptor = connectionInterceptor
 ) {
 
     override fun configureBuild(builder: OkHttpClient.Builder) {
@@ -36,7 +37,7 @@ class YandexOkHttpClientManager(
         LANG, LOCALE
     }
 
-    internal inner class YandexInterceptor : Interceptor {
+    private inner class YandexInterceptor : Interceptor {
 
         override fun intercept(chain: Interceptor.Chain): Response {
             var request = chain.request()

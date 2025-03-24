@@ -7,10 +7,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.runBlocking
-import net.maxsmr.commonutils.logger.BaseLogger
-import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.network.NetworkConnectivityChecker
-import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.di.DoubleGisRoutingOkHttpClient
 import net.maxsmr.core.di.DownloadHttpLoggingInterceptor
 import net.maxsmr.core.di.DownloaderOkHttpClient
@@ -25,9 +22,11 @@ import net.maxsmr.core.network.client.okhttp.DownloadOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.PicassoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.RadarIoOkHttpClientManager
 import net.maxsmr.core.network.client.okhttp.YandexOkHttpClientManager
+import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
+import net.maxsmr.core.network.client.okhttp.interceptors.BodyCachingInterceptor
+import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.mxstemplate.BuildConfig
-import okhttp3.CacheControl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -43,44 +42,12 @@ private const val PICASSO_CACHE = "picasso-cache"
 InstallIn(SingletonComponent::class)]
 class OkHttpModule {
 
-    @[Provides Singleton]
-    fun provideForceCacheInterceptor(): Interceptor {
-        return Interceptor { chain ->
-            val builder = chain.request().newBuilder()
-            if (!NetworkStateManager.hasConnection()) {
-                builder.cacheControl(CacheControl.FORCE_CACHE)
-            }
-            chain.proceed(builder.build())
-        }
-    }
-
-    @[Provides Singleton DownloadHttpLoggingInterceptor]
-    fun provideDownloadHttpLoggingInterceptor(): HttpLoggingInterceptor {
-        val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("DownloadHttpLoggingInterceptor")
-        return HttpLoggingInterceptor { message -> logger.d("OkHttp $message") }.apply {
-            // логирование body при тяжёлых ответах будет приводить к OOM
-            level = HttpLoggingInterceptor.Level.HEADERS
-        }
-    }
-
-    @[Provides Singleton PicassoHttpLoggingInterceptor]
-    fun providePicassoHttpLoggingInterceptor(): HttpLoggingInterceptor {
-        val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("CommonHttpLoggingInterceptor")
-        return HttpLoggingInterceptor { message -> logger.d("OkHttp $message") }.apply {
-            level = if (BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BODY
-            } else {
-                HttpLoggingInterceptor.Level.HEADERS
-            }
-        }
-    }
-
     @[Provides Singleton PicassoOkHttpClient]
     fun providePicassoOkHttpClient(
-        @ApplicationContext context: Context,
-        forceCacheInterceptor: Interceptor,
         @PicassoHttpLoggingInterceptor
         httpLoggingInterceptor: HttpLoggingInterceptor,
+        @ApplicationContext context: Context,
+        forceCacheInterceptor: Interceptor,
     ): OkHttpClient {
         // Каталог кэша Picasso
         val cacheDir = File(context.cacheDir, PICASSO_CACHE)
@@ -88,75 +55,78 @@ class OkHttpModule {
             cacheDir.mkdirs()
         }
         return PicassoOkHttpClientManager(
-            forceCacheInterceptor,
             httpLoggingInterceptor,
+            forceCacheInterceptor,
         ).build()
     }
 
     @[Provides Singleton DownloaderOkHttpClient]
     fun provideDownloaderOkHttpClient(
-        @ApplicationContext context: Context,
         @DownloadHttpLoggingInterceptor
         httpLoggingInterceptor: HttpLoggingInterceptor,
+        connectionInterceptor: NetworkConnectionInterceptor,
     ): OkHttpClient = DownloadOkHttpClientManager(
-        context,
-        NetworkConnectivityChecker,
         httpLoggingInterceptor,
+        connectionInterceptor,
     ).build()
 
     @[Provides Singleton RadarIoOkHttpClient]
     fun provideRadarIoOkHttpClient(
-        @ApplicationContext context: Context,
-        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
+        apiLoggingInterceptor: ApiLoggingInterceptor,
+        cachingInterceptor: BodyCachingInterceptor,
+        connectionInterceptor: NetworkConnectionInterceptor,
     ): OkHttpClient {
         return RadarIoOkHttpClientManager(
             BuildConfig.AUTHORIZATION_RADAR_IO,
-            context = context,
-            connectivityChecker = NetworkConnectivityChecker,
-            cache = cache
+            apiLoggingInterceptor = apiLoggingInterceptor,
+            cachingInterceptor = cachingInterceptor,
+            connectionInterceptor = connectionInterceptor
         ).build()
     }
 
     @[Provides Singleton YandexSuggestOkHttpClient]
     fun provideYandexSuggestOkHttpClient(
-        @ApplicationContext context: Context,
-        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
+        apiLoggingInterceptor: ApiLoggingInterceptor,
+        cachingInterceptor: BodyCachingInterceptor,
+        connectionInterceptor: NetworkConnectionInterceptor,
     ): OkHttpClient {
         return YandexOkHttpClientManager(
             BuildConfig.API_KEY_YANDEX_SUGGEST,
             YandexOkHttpClientManager.LocalizationField.LANG,
             "ru",
-            context = context,
-            connectivityChecker = NetworkConnectivityChecker,
-            cache = cache
+            apiLoggingInterceptor = apiLoggingInterceptor,
+            cachingInterceptor = cachingInterceptor,
+            connectionInterceptor = connectionInterceptor
         ).build()
     }
 
     @[Provides Singleton YandexGeocodeOkHttpClient]
     fun provideYandexGeocodeOkHttpClient(
-        @ApplicationContext context: Context,
-        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
+        apiLoggingInterceptor: ApiLoggingInterceptor,
+        cachingInterceptor: BodyCachingInterceptor,
+        connectionInterceptor: NetworkConnectionInterceptor,
     ): OkHttpClient {
         return YandexOkHttpClientManager(
             BuildConfig.API_KEY_YANDEX_GEOCODE,
             YandexOkHttpClientManager.LocalizationField.LOCALE,
             "ru_RU",
-            context = context,
-            connectivityChecker = NetworkConnectivityChecker,
-            cache = cache
+            apiLoggingInterceptor = apiLoggingInterceptor,
+            cachingInterceptor = cachingInterceptor,
+            connectionInterceptor = connectionInterceptor
         ).build()
     }
 
     @[Provides Singleton DoubleGisRoutingOkHttpClient]
     fun provideDoubleGisRoutingOkHttpClient(
-        @ApplicationContext context: Context,
-        @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>,
+        apiLoggingInterceptor: ApiLoggingInterceptor,
+        cachingInterceptor: BodyCachingInterceptor,
+        connectionInterceptor: NetworkConnectionInterceptor,
         cacheRepo: CacheDataStoreRepository,
     ): OkHttpClient {
         return DoubleGisOkHttpClientManager(
-            context = context,
-            connectivityChecker = NetworkConnectivityChecker,
-            cache = cache,
+            apiLoggingInterceptor = apiLoggingInterceptor,
+            cachingInterceptor = cachingInterceptor,
+            connectionInterceptor = connectionInterceptor,
             apiKeyProvider = {
                 runBlocking { cacheRepo.getDoubleGisRoutingApiKey() }
             }

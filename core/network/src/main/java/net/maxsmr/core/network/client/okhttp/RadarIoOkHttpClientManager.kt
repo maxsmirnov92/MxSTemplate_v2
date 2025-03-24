@@ -1,9 +1,10 @@
 package net.maxsmr.core.network.client.okhttp
 
-import android.content.Context
 import net.maxsmr.core.network.appendValues
+import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
-import net.maxsmr.core.network.client.okhttp.interceptors.ConnectivityChecker
+import net.maxsmr.core.network.client.okhttp.interceptors.BodyCachingInterceptor
+import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -14,14 +15,14 @@ class RadarIoOkHttpClientManager(
     private val authorization: String,
     private val defaultCountry: String = "RU",
     connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
-    context: Context,
-    connectivityChecker: ConnectivityChecker,
-    cache: ResponseBodyCache<*>
+    apiLoggingInterceptor: ApiLoggingInterceptor,
+    cachingInterceptor: BodyCachingInterceptor,
+    connectionInterceptor: NetworkConnectionInterceptor
 ) : BaseRestOkHttpClientManager(
     connectTimeout,
-    context = context,
-    connectivityChecker = connectivityChecker,
-    cache = cache
+    apiLoggingInterceptor = apiLoggingInterceptor,
+    cachingInterceptor = cachingInterceptor,
+    connectionInterceptor = connectionInterceptor
 ) {
 
     override fun configureBuild(builder: OkHttpClient.Builder) {
@@ -31,7 +32,7 @@ class RadarIoOkHttpClientManager(
         }
     }
 
-    internal inner class RadarIoInterceptor : Interceptor {
+    private inner class RadarIoInterceptor : Interceptor {
 
         override fun intercept(chain: Interceptor.Chain): Response {
             var request = chain.request()
