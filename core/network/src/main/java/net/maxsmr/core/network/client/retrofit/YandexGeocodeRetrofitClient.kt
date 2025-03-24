@@ -19,14 +19,14 @@ class YandexGeocodeRetrofitClient(
     cache: ResponseBodyCache<*>,
     exceptionHandler: ICallExceptionHandler,
     clientProvider: () -> OkHttpClient,
-) : BaseRetrofitClient(baseUrl, json, cachePath, protocolVersion, disableCache, cache, exceptionHandler, clientProvider) {
+) : RetrofitClient(baseUrl, json, cachePath, protocolVersion, disableCache, cache, exceptionHandler, clientProvider) {
 
-    override fun configureBuild(builder: Retrofit.Builder, json: Json) {
+    override fun configureBuild(builder: Retrofit.Builder) {
         builder.addConverterFactory(
             EnvelopeObjectTypeConverter<YandexGeocodeEnvelope<*>, BaseEnvelopeWithObject<Any>>(
                 YandexGeocodeEnvelope::class.java
             )
         )
-        super.configureBuild(builder, json)
+        super.configureBuild(builder)
     }
 }

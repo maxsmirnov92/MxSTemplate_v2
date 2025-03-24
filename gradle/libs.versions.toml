@@ -202,6 +202,7 @@ treessence = { group = "com.github.bastienpaulfr", name = "Treessence", version.
 jodaTime = { group = "joda-time", name = "joda-time", version.ref = "jodaTime" }
 threeTenAbp = { group = "com.jakewharton.threetenabp", name = "threetenabp", version.ref = "threeTenAbp" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-converter-scalars = { group = "com.squareup.retrofit2", name = "converter-scalars", version.ref = "retrofit" }
 retrofit-kotlinx-serializationConverter = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "kotlinxSerializationConverter" }
 picasso = { group = "com.squareup.picasso", name = "picasso", version.ref = "picasso" }
 easypermissions = { group = "pub.devrel", name = "easypermissions", version.ref = "easyPermissions" }

@@ -19,6 +19,7 @@ dependencies {
     api(libs.okhttp)
 //    implementation(libs.volley)
     api(libs.retrofit)
+    api(libs.retrofit.converter.scalars)
     implementation(libs.retrofit.kotlinx.serializationConverter)
     implementation(libs.okhttp.loggingInterceptor)
 

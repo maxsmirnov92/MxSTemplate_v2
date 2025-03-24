@@ -1,10 +1,8 @@
 package net.maxsmr.mxstemplate.di.modules
 
-import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.di.BaseJson
@@ -22,14 +20,15 @@ import net.maxsmr.core.di.YandexSuggestHostManager
 import net.maxsmr.core.di.YandexSuggestOkHttpClient
 import net.maxsmr.core.di.YandexSuggestRetrofit
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
+import net.maxsmr.core.network.client.retrofit.RetrofitClient
 import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
 import net.maxsmr.core.network.exceptions.handler.CombinedCallExceptionHandler
 import net.maxsmr.core.network.host.HostManager
 import net.maxsmr.mxstemplate.BuildConfig
+import net.maxsmr.mxstemplate.manager.CacheManager
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.File
 import javax.inject.Singleton
 
 @[Module
@@ -38,22 +37,21 @@ class RetrofitModule {
 
     @[Provides Singleton RadarIoRetrofit]
     fun provideRadarIoRetrofit(
-        @ApplicationContext context: Context,
+        cacheManager: CacheManager,
         exceptionHandler: CombinedCallExceptionHandler,
         @RadarIoHostManager hostManager: HostManager,
         @RadarIoOkHttpClient okHttpClient: OkHttpClient,
         @BaseJson json: Json,
         @ResponseBodyCache cache: net.maxsmr.core.network.client.okhttp.ResponseBodyCache<Request>
-    ): CommonRetrofitClient {
-        return CommonRetrofitClient(
+    ): RetrofitClient {
+        return RetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            File(context.cacheDir, CACHE_DIR_NAME).path,
+            cacheManager.dirPath,
             BuildConfig.PROTOCOL_VERSION,
-            false,
+            cacheManager.disableCache,
             cache,
             exceptionHandler,
-            // cacheManager.getDisableCache()
         ) {
             okHttpClient
         }
@@ -61,7 +59,7 @@ class RetrofitModule {
 
     @[Provides Singleton YandexSuggestRetrofit]
     fun provideYandexSuggestRetrofit(
-        @ApplicationContext context: Context,
+        cacheManager: CacheManager,
         exceptionHandler: CombinedCallExceptionHandler,
         @YandexSuggestHostManager hostManager: HostManager,
         @YandexSuggestOkHttpClient okHttpClient: OkHttpClient,
@@ -71,12 +69,11 @@ class RetrofitModule {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            File(context.cacheDir, CACHE_DIR_NAME).path,
+            cacheManager.dirPath,
             BuildConfig.PROTOCOL_VERSION,
-            false,
+            cacheManager.disableCache,
             cache,
             exceptionHandler
-            // cacheManager.getDisableCache()
         ) {
             okHttpClient
         }
@@ -84,7 +81,7 @@ class RetrofitModule {
 
     @[Provides Singleton YandexGeocodeRetrofit]
     fun provideYandexGeocodeRetrofit(
-        @ApplicationContext context: Context,
+        cacheManager: CacheManager,
         exceptionHandler: CombinedCallExceptionHandler,
         @YandexGeocodeHostManager hostManager: HostManager,
         @YandexGeocodeOkHttpClient okHttpClient: OkHttpClient,
@@ -94,12 +91,11 @@ class RetrofitModule {
         return YandexGeocodeRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            File(context.cacheDir, CACHE_DIR_NAME).path,
+            cacheManager.dirPath,
             BuildConfig.PROTOCOL_VERSION,
-            false,
+            cacheManager.disableCache,
             cache,
             exceptionHandler
-            // cacheManager.getDisableCache()
         ) {
             okHttpClient
         }
@@ -107,7 +103,7 @@ class RetrofitModule {
 
     @[Provides Singleton DoubleGisRoutingRetrofit]
     fun provideDoubleGisRoutingRetrofit(
-        @ApplicationContext context: Context,
+        cacheManager: CacheManager,
         exceptionHandler: CombinedCallExceptionHandler,
         @DoubleGisRoutingHostManager hostManager: HostManager,
         @DoubleGisRoutingOkHttpClient okHttpClient: OkHttpClient,
@@ -117,12 +113,11 @@ class RetrofitModule {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            File(context.cacheDir, CACHE_DIR_NAME).path,
+            cacheManager.dirPath,
             BuildConfig.PROTOCOL_VERSION,
-            false,
+            cacheManager.disableCache,
             cache,
             exceptionHandler
-            // cacheManager.getDisableCache()
         ) {
             okHttpClient
         }
@@ -131,10 +126,5 @@ class RetrofitModule {
     @[Provides Singleton]
     fun provideApiExceptionHandler(): CombinedCallExceptionHandler {
         return CombinedCallExceptionHandler(listOf())
-    }
-
-    companion object {
-
-        private const val CACHE_DIR_NAME = "OkHttpCache"
     }
 }

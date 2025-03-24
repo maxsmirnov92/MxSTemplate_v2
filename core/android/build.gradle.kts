@@ -40,8 +40,5 @@ dependencies {
 
     implementation(libs.androidx.datastore.preferences)
 
-    // Добалено ля обработки HttpException
-    implementation(libs.retrofit)
-
     implementation(libs.easypermissions)
 }

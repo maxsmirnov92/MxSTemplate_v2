@@ -12,8 +12,9 @@ import okhttp3.OkHttpClient
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import retrofit2.Retrofit
+import retrofit2.converter.scalars.ScalarsConverterFactory
 
-abstract class BaseRetrofitClient(
+open class RetrofitClient(
     private val baseUrl: HttpUrl?,
     private val json: Json,
     private val cachePath: String,
@@ -24,20 +25,21 @@ abstract class BaseRetrofitClient(
     private val clientProvider: () -> OkHttpClient,
 ) {
 
+    private val cacheWrapper: CacheWrapper? by lazy {
+        if (!disableCache) {
+            CacheWrapper(json, cachePath.toPath(), FileSystem.SYSTEM, protocolVersion)
+        } else {
+            null
+        }
+    }
+
     @Volatile
     lateinit var instance: Retrofit
         private set
 
-    private var cacheWrapper: CacheWrapper? = null
-
     fun init() {
         synchronized(this) {
             if (!::instance.isInitialized) {
-                if (!disableCache) {
-                    cacheWrapper =
-                        CacheWrapper(json, cachePath.toPath(), FileSystem.SYSTEM, protocolVersion)
-                }
-
                 instance = build()
             }
         }
@@ -54,8 +56,9 @@ abstract class BaseRetrofitClient(
     }
 
     @CallSuper
-    protected open fun configureBuild(builder: Retrofit.Builder, json: Json) {
+    protected open fun configureBuild(builder: Retrofit.Builder) {
         builder.addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        builder.addConverterFactory(ScalarsConverterFactory.create())
     }
 
     private fun build() = Retrofit.Builder().apply {
@@ -66,6 +69,6 @@ abstract class BaseRetrofitClient(
             exceptionHandler.onException(it)
         })
         callFactory { clientProvider().newCall(it) }
-        configureBuild(this, json)
+        configureBuild(this)
     }.build()
 }

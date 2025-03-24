@@ -17,11 +17,11 @@ class CommonRetrofitClient(
     cache: ResponseBodyCache<*>,
     exceptionHandler: ICallExceptionHandler,
     clientProvider: () -> OkHttpClient,
-) : BaseRetrofitClient(baseUrl, json, cachePath, protocolVersion, disableCache, cache, exceptionHandler, clientProvider) {
+) : RetrofitClient(baseUrl, json, cachePath, protocolVersion, disableCache, cache, exceptionHandler, clientProvider) {
 
-    override fun configureBuild(builder: Retrofit.Builder, json: Json) {
+    override fun configureBuild(builder: Retrofit.Builder) {
         builder.addConverterFactory(ResponseObjectTypeConverter())
-        super.configureBuild(builder, json)
+        super.configureBuild(builder)
     }
 }
 
