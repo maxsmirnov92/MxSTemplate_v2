@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onStart
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.states.ILoadState
@@ -63,10 +64,26 @@ fun <D> ExecuteResult<D>.hasData(
     return data != null && (dataValidator == null || dataValidator(data))
 }
 
-fun <D> ExecuteResult<D>.successWithData(
+fun <D> ExecuteResult<D>.getData(
     dataValidator: ((D) -> Boolean)? = null
-): Boolean {
-    return succeeded && hasData(dataValidator)
+): D? {
+    return if (hasData(dataValidator)) {
+        data
+    } else {
+        null
+    }
+}
+
+fun <T> Flow<ExecuteResult<T>>.flattenData(
+    dataValidator: ((T) -> Boolean)? = null
+): Flow<T> {
+    return mapNotNull { it.getData(dataValidator) }
+}
+
+fun <T, U> Flow<ExecuteResult<T>>.flattenMapData(
+    mapData: (data: T) -> U,
+): Flow<U> {
+    return mapNotNull { it.getData() }.map { mapData(it) }
 }
 
 /**

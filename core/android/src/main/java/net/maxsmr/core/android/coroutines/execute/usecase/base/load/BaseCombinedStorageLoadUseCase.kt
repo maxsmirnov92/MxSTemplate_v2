@@ -1,9 +1,8 @@
-package net.maxsmr.core.android.coroutines.execute.usecase.load
+package net.maxsmr.core.android.coroutines.execute.usecase.base.load
 
 import android.content.Context
 import net.maxsmr.core.android.content.storage.FileContentStorage
 import net.maxsmr.core.android.content.storage.app_private.InternalFileStorage
-
 import java.io.File
 import java.io.FileOutputStream
 
@@ -12,9 +11,9 @@ import java.io.FileOutputStream
  * с последующим копированием в [File] из [InternalFileStorage]
  * (например, с целью дальнейшего использования в PdfRender)
  */
-abstract class BaseCombinedLoadFileUseCase(
+abstract class BaseCombinedStorageLoadUseCase(
     context: Context,
-) : BaseSharedLoadFileUseCase<File>(context) {
+) : BaseSharedStorageLoadUseCase<File>(context) {
 
     protected val internalStorage by lazy {
         InternalFileStorage(FileContentStorage.Type.PERSISTENT, context)

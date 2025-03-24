@@ -1,14 +1,11 @@
-package net.maxsmr.core.android.coroutines.execute.usecase.load
+package net.maxsmr.core.android.coroutines.execute.usecase.base.load
 
-import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import net.maxsmr.commonutils.text.appendExtension
-import net.maxsmr.core.android.coroutines.execute.usecase.UseCase
+import net.maxsmr.core.android.coroutines.execute.usecase.FlowResultUseCase
 import java.io.OutputStream
 
-abstract class BaseLoadFileUseCase<P : BaseLoadFileUseCase.IFileParams, Result>(
-    private val context: Context
-) : UseCase<P, Result>(Dispatchers.IO) {
+abstract class BaseFileLoadUseCase<P : BaseFileLoadUseCase.IFileParams, Result> : FlowResultUseCase<P, Result>(Dispatchers.IO) {
 
     abstract suspend fun writeTo(outputStream: OutputStream)
 

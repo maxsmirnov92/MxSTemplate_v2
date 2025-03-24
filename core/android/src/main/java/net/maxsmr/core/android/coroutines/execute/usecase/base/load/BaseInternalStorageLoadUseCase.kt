@@ -1,16 +1,16 @@
-package net.maxsmr.core.android.coroutines.execute.usecase.load
+package net.maxsmr.core.android.coroutines.execute.usecase.base.load
 
 import android.content.Context
 import net.maxsmr.core.android.content.storage.FileContentStorage
 import net.maxsmr.core.android.content.storage.app_private.InternalFileStorage
 import java.io.File
 
-/**
- * Базовый юзкейс для загрузки данных в [File] из [InternalFileStorage]
- */
-abstract class BaseInternalLoadFileUseCase(
-    context: Context
-): BaseLoadFileUseCase<BaseInternalLoadFileUseCase.FileParams, File>(context) {
+/*
+* Базовый юзкейс для загрузки данных в [File] из [InternalFileStorage]
+*/
+abstract class BaseInternalStorageLoadUseCase(
+    private val context: Context
+): BaseFileLoadUseCase<BaseInternalStorageLoadUseCase.FileParams, File>() {
 
     protected val internalStorage by lazy {
         InternalFileStorage(FileContentStorage.Type.PERSISTENT, context)

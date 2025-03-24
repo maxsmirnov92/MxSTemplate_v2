@@ -1,4 +1,4 @@
-package net.maxsmr.core.android.coroutines.execute.usecase.load
+package net.maxsmr.core.android.coroutines.execute.usecase.base.load
 
 import android.content.ContentResolver
 import android.content.Context
@@ -6,14 +6,14 @@ import android.net.Uri
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.content.storage.shared.SharedStorage
-import net.maxsmr.core.android.coroutines.execute.usecase.load.BaseSharedLoadFileUseCase.FileParams
+import net.maxsmr.core.android.coroutines.execute.usecase.base.load.BaseSharedStorageLoadUseCase.FileParams
 
 /**
  * Базовый юзкейс для загрузки данных в Shared [ContentStorage]
  */
-abstract class BaseSharedLoadFileUseCase<Result>(
+abstract class BaseSharedStorageLoadUseCase<Result>(
     context: Context,
-) : BaseLoadFileUseCase<FileParams, Result>(context) {
+) : BaseFileLoadUseCase<FileParams, Result>() {
 
     protected val sharedStorage: ContentStorage<Uri> by lazy {
         ContentStorage.createUriStorage(
