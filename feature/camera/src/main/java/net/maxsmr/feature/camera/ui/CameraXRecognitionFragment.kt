@@ -171,7 +171,7 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                 }
             }
 
-            viewModel.cameraFacingField.valueLive.observe {
+            viewModel.cameraFacingField.valueFlow.observeSafe {
                 if (it != null) {
                     spinnerCameraFacing.setSelection(it.ordinal + 1)
                 } else {

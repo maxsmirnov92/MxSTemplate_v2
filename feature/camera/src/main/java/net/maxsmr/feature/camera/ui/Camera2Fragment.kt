@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.feature.camera.Camera2Controller
 import net.maxsmr.feature.camera.Camera2Controller.CameraState
 import net.maxsmr.feature.camera.CameraFacing
@@ -68,7 +68,7 @@ class Camera2Fragment : BaseNavigationFragment<Camera2ViewModel, StandardAlertRe
 
                 override fun onNothingSelected(parent: AdapterView<*>?) {}
             }
-            viewModel.cameraFacingField.valueLive.observe {
+            viewModel.cameraFacingField.valueFlow.observeSafe {
                 if (it != null) {
                     spinnerCameraFacing.setSelection(it.ordinal + 1)
                 } else {

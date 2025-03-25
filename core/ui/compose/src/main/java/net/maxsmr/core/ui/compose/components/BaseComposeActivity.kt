@@ -17,12 +17,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import net.maxsmr.commonutils.flow.observe
+import net.maxsmr.commonutils.flow.observeEvents
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
-import net.maxsmr.core.android.coroutines.collectEventsWithOwner
-import net.maxsmr.core.android.coroutines.collectWithOwner
 import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
 import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.core.ui.R
@@ -250,12 +250,14 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     protected open fun getExtraActivityScreenComponents(dependencies: ComposableDependencies): List<ScreenComponents> =
         listOf()
 
+    @Deprecated("", replaceWith = ReplaceWith(expression = "StateFlow"))
     protected inline fun <T> LiveData<T>.observe(
         crossinline onNext: (T) -> Unit,
     ) {
         this.observe(this@BaseComposeActivity) { onNext(it) }
     }
 
+    @Deprecated("", replaceWith = ReplaceWith(expression = "StateFlow"))
     protected inline fun <T> LiveData<VmEvent<T>>.observeEvents(
         crossinline onNext: (T) -> Unit,
     ) {
@@ -264,18 +266,18 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         }
     }
 
-    protected inline fun <T : Any> Flow<T>.collectSafely(
+    protected inline fun <T : Any> Flow<T>.observeSafe(
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
         crossinline action: suspend (value: T) -> Unit,
     ) {
-        collectWithOwner(this@BaseComposeActivity, lifecycleState, action)
+        observe(this@BaseComposeActivity, lifecycleState, action)
     }
 
-    protected inline fun <T : Any> StateFlow<VmEvent<T>?>.collectEvent(
+    protected inline fun <T : Any> StateFlow<VmEvent<T>?>.observeEventsSafe(
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
         crossinline action: suspend (value: T) -> Unit,
     ) {
-        collectEventsWithOwner(this@BaseComposeActivity, lifecycleState, action)
+        observeEvents(this@BaseComposeActivity, lifecycleState, action)
     }
 
     private fun getActivityScreenComponents(dependencies: ComposableDependencies): ScreenComponents {

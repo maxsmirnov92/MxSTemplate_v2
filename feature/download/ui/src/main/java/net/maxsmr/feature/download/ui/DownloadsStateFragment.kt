@@ -32,15 +32,14 @@ import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
 import net.maxsmr.commonutils.media.path
 import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.commonutils.wrapChooserWithInitial
-import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
-import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.database.model.download.DownloadInfo
-import net.maxsmr.core.ui.view.alert.representation.asSnackbar
-import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
+import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
+import net.maxsmr.core.ui.view.alert.representation.asSnackbar
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
@@ -96,7 +95,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel, Standar
         touchHelper.attachToRecyclerView(binding.rvDownloads)
         infoAdapter.registerItemsEventsListener(this)
 
-        viewModel.queueNames.observe {
+        viewModel.queueNames.observeSafe {
             binding.tvQueueCount.text = String.format(
                 Locale.getDefault(), it.size.toString()
             )
@@ -105,10 +104,10 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel, Standar
             binding.tvQueuedNames.setTextOrGone("[ $mergedNames ]", isEmptyFunc = { mergedNames.isEmpty() })
             binding.ibClearQueue.isVisible = it.isNotEmpty()
         }
-        viewModel.allItems.observe {
+        viewModel.allItems.observeSafe {
             filterItem?.isVisible = it.isNotEmpty()
         }
-        viewModel.currentItems.observe { items ->
+        viewModel.currentItems.observeSafe { items ->
             if (items.isNotEmpty()) {
                 binding.rvDownloads.isVisible = true
                 binding.containerEmpty.isVisible = false
@@ -127,7 +126,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel, Standar
             binding.ibClearFinished.isVisible = items.any { item -> !item.downloadInfo.isLoading }
 
         }
-        viewModel.anyCanBeCancelled.observe {
+        viewModel.anyCanBeCancelled.observeSafe {
             binding.ibCancelAll.isVisible = it
         }
         binding.ibClearQueue.setOnClickListener {
@@ -214,7 +213,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel, Standar
 
     override fun handleVmEvents() {
         super.handleVmEvents()
-        viewModel.navigateUriEvent.collectEventsWithOwner(viewLifecycleOwner) { s ->
+        viewModel.navigateUriEvent.observeEventsSafe { s ->
             val context = requireContext()
             var intent = s.intent()
 

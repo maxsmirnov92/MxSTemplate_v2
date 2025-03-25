@@ -18,12 +18,12 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import net.maxsmr.commonutils.AppClickableSpan
 import net.maxsmr.commonutils.RangeSpanInfo
 import net.maxsmr.commonutils.copyToClipboard
+import net.maxsmr.commonutils.flow.field.observeFromText
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
-import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.text.charsetForNameOrNull
@@ -32,8 +32,8 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.isAnyResourceScheme
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
-import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient.ViewUrlMode
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
@@ -87,7 +87,10 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         with(binding) {
             setTitle(title)
             toolbar.navigationIcon =
-                ContextCompat.getDrawable(requireContext(), net.maxsmr.designsystem.shared_res.R.drawable.ic_close_clear_cancel_white)
+                ContextCompat.getDrawable(
+                    requireContext(),
+                    net.maxsmr.designsystem.shared_res.R.drawable.ic_close_clear_cancel_white
+                )
             errorContainer.btReload.setOnClickListener {
                 doReloadWebView()
             }
@@ -113,7 +116,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
             // бинд только хинта;
             // по текущему еррору (который здесь меняется при каждом инпуте)
             // еррор не выставляем - вместо этого дисейбл кнопки
-            viewModel.urlField.hintLive.observe { hint ->
+            viewModel.urlField.hintFlow.observeSafe { hint ->
                 dialogBinding.tilUrl.hint = hint?.get(requireContext())
             }
 
@@ -140,7 +143,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
 
             DialogViewAlertRepresentation.Builder(requireContext(), it)
                 .setCustomView(dialogBinding.root) {
-                    viewModel.urlField.errorLive.observe { error ->
+                    viewModel.urlField.errorFlow.observeSafe { error ->
                         (this as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = error == null
                     }
                 }
@@ -223,10 +226,11 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
     override fun createWebViewClient(): InterceptWebViewClient {
         val context = requireContext()
 
-        return when(webViewCustomizer.viewUrlStrategy.targetUrlMode) {
+        return when (webViewCustomizer.viewUrlStrategy.targetUrlMode) {
             ViewUrlMode.INTERNAL -> {
                 InterceptWebViewClient(context, okHttpClient)
             }
+
             else -> {
                 ExternalViewUrlWebViewClient(context, okHttpClient) {
                     webViewCustomizer.viewUrlStrategy.getMode(it.toUri())

@@ -3,20 +3,20 @@ package net.maxsmr.feature.download.ui
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
-import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.REG_EX_ALGORITHM_SHA1
+import net.maxsmr.commonutils.flow.field.Field
+import net.maxsmr.commonutils.flow.field.observeWithClearError
+import net.maxsmr.commonutils.flow.field.validateAndSetByRequiredFields
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.field.Field
-import net.maxsmr.commonutils.live.field.clearErrorOnChange
-import net.maxsmr.commonutils.live.field.validateAndSetByRequiredFields
 import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStreamOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
@@ -32,10 +32,13 @@ import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
-import net.maxsmr.core.ui.fields.BooleanFieldWithState
-import net.maxsmr.core.ui.fields.fileNameField
-import net.maxsmr.core.ui.fields.subDirNameField
-import net.maxsmr.core.ui.fields.urlField
+import net.maxsmr.core.ui.field.BooleanFieldWithState
+import net.maxsmr.core.ui.field.createNonEmptyField
+import net.maxsmr.core.ui.field.createField
+import net.maxsmr.core.ui.field.createTextField
+import net.maxsmr.core.ui.field.fileNameField
+import net.maxsmr.core.ui.field.subDirNameField
+import net.maxsmr.core.ui.field.urlField
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -47,61 +50,64 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val viewModel: DownloadsViewModel,
     private val cacheRepo: CacheDataStoreRepository,
-    private val settingsRepo: SettingsDataStoreRepository
+    private val settingsRepo: SettingsDataStoreRepository,
 ) : BaseViewModel(state) {
 
-    val urlField: Field<String> = state.urlField(
-        R.string.download_field_url_hint,
+    val urlField: Field<String> = urlField(
+        hintResId = R.string.download_field_url_hint,
         isRequired = true
     )
 
-    val methodField: Field<Method> = Field.Builder(Method.GET)
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_METHOD)
-        .build()
+    val methodField: Field<Method> = createNonEmptyField(
+        initialValue = Method.GET,
+        key = KEY_FIELD_METHOD
+    )
 
-    val bodyField: Field<UriBodyContainer> = Field.Builder(UriBodyContainer())
-        .emptyIf { it.isEmpty }
-        .persist(state, KEY_FIELD_BODY)
-        .build()
+    val bodyField: Field<UriBodyContainer> = createField(
+        initialValue = UriBodyContainer(),
+        key = KEY_FIELD_BODY
+    ) {
+        emptyIf { it.isEmpty }
+    }
 
-    val fileNameField: Field<String> = state.fileNameField()
+    val fileNameField: Field<String> = fileNameField()
 
-    val fileNameChangeStateField: Field<BooleanFieldWithState> = Field.Builder(BooleanFieldWithState(false))
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_FILE_NAME_CHANGE_STATE)
-        .build()
+    val fileNameChangeStateField: Field<BooleanFieldWithState> = createNonEmptyField(
+        initialValue = BooleanFieldWithState(false),
+        key = KEY_FIELD_FILE_NAME_CHANGE_STATE
+    )
 
-    val subDirNameField: Field<String> = state.subDirNameField()
+    val subDirNameField: Field<String> = subDirNameField()
 
-    val targetHashField: Field<String> = Field.Builder(EMPTY_STRING)
-        .emptyIf { it.isEmpty() }
-        .validators(Field.Validator(R.string.download_field_target_hash_error) {
+    val targetHashField: Field<String> = createTextField(
+        initialValue = EMPTY_STRING,
+        key = KEY_FIELD_TARGET_HASH
+    ) {
+        validators(Field.Validator(R.string.download_field_target_hash_error) {
             Regex(REG_EX_ALGORITHM_SHA1).matches(it)
         })
-        .hint(R.string.download_field_target_hash_hint)
-        .persist(state, KEY_FIELD_TARGET_HASH)
-        .build()
+        hint(R.string.download_field_target_hash_hint)
+    }
 
-    val ignoreServerErrorsField: Field<Boolean> = Field.Builder(false)
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_IGNORE_SERVER_ERRORS)
-        .build()
+    val ignoreServerErrorsField: Field<Boolean> = createNonEmptyField(
+        initialValue = false,
+        key = KEY_FIELD_IGNORE_SERVER_ERRORS
+    )
 
-    val ignoreAttachmentStateField: Field<BooleanFieldWithState> = Field.Builder(BooleanFieldWithState(false))
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_IGNORE_ATTACHMENT_STATE)
-        .build()
+    val ignoreAttachmentStateField: Field<BooleanFieldWithState> = createNonEmptyField(
+        initialValue = BooleanFieldWithState(false),
+        key = KEY_FIELD_IGNORE_ATTACHMENT_STATE
+    )
 
-    val replaceFileField: Field<Boolean> = Field.Builder(false)
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_REPLACE_FILE)
-        .build()
+    val replaceFileField: Field<Boolean> = createNonEmptyField(
+        initialValue = false,
+        key = KEY_FIELD_REPLACE_FILE
+    )
 
-    val deleteUnfinishedField: Field<Boolean> = Field.Builder(true)
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_DELETE_UNFINISHED)
-        .build()
+    val deleteUnfinishedField = createNonEmptyField(
+        initialValue = true,
+        key = KEY_FIELD_DELETE_UNFINISHED
+    )
 
     /**
      * Готовые итемы для отображения в адаптере
@@ -153,11 +159,15 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             }
         }
 
-        urlField.clearErrorOnChange(this)
-        methodField.valueLive.observe {
+        urlField.observeWithClearError(viewModelScope)
+        methodField.valueFlow.observe {
             var body = bodyField.value
             body = if (it == Method.POST) {
-                bodyField.setRequired(R.string.download_field_request_body_empty_error)
+                bodyField.setRequired(
+                    required = true,
+                    emptyMessageResId = R.string.download_field_request_body_empty_error,
+                    withAsterisk = true
+                )
                 body.copy(isEnabled = true)
             } else {
                 bodyField.setNonRequired()
@@ -165,14 +175,14 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             }
             bodyField.value = body
         }
-        bodyField.clearErrorOnChange(this)
-        fileNameField.clearErrorOnChange(this)
-        fileNameField.isEmptyLive.observe {
+        bodyField.observeWithClearError(viewModelScope)
+        fileNameField.observeWithClearError(viewModelScope)
+        fileNameField.isEmptyFlow.observe {
             fileNameChangeStateField.toggleState(it)
         }
-        targetHashField.clearErrorOnChange(this)
+        targetHashField.observeWithClearError(viewModelScope)
 
-        ignoreServerErrorsField.valueLive.observe {
+        ignoreServerErrorsField.valueFlow.observe {
             ignoreAttachmentStateField.toggleState(it)
         }
         headerItems.observe {
@@ -196,39 +206,34 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         val id = headerIdCounter++
 
         fun Field<String>.observe(isKey: Boolean): HeaderInfoFields.Info {
-            val valueObserver = Observer<String> { value ->
+            val valueObserveJob = valueFlow.observe { value ->
                 updateHeaderItem(id, isKey) {
                     HeaderInfoAdapterData.Info(value, it.hint, it.error)
                 }
                 clearError()
             }
-            valueLive.observe(this@DownloadsParamsViewModel, valueObserver)
-            val hintObserver = Observer<Field.Hint?> { hint ->
+            val hintObserveJob = hintFlow.observe { hint ->
                 updateHeaderItem(id, isKey) {
                     HeaderInfoAdapterData.Info(it.value, hint, it.error)
                 }
             }
-            hintLive.observe(this@DownloadsParamsViewModel, hintObserver)
-            val errorObserver = Observer<TextMessage?> { error ->
+            val errorObserveJob = errorFlow.observe { error ->
                 updateHeaderItem(id, isKey) {
                     HeaderInfoAdapterData.Info(it.value, it.hint, error)
                 }
             }
-            errorLive.observe(this@DownloadsParamsViewModel, errorObserver)
-            return HeaderInfoFields.Info(this, valueObserver, hintObserver, errorObserver)
+            return HeaderInfoFields.Info(this, valueObserveJob, hintObserveJob, errorObserveJob)
         }
 
-        val keyField = Field.Builder(EMPTY_STRING)
-            .emptyIf { it.isEmpty() }
-            .setRequired(R.string.download_field_header_key_empty_error)
-            .hint(R.string.download_field_header_key_hint)
-            .build()
+        val keyField = createTextField(EMPTY_STRING) {
+            setRequired(true, R.string.download_field_header_key_empty_error)
+            hint(R.string.download_field_header_key_hint)
+        }
         val keyInfo = keyField.observe(true)
-        val valueField = Field.Builder(EMPTY_STRING)
-            .emptyIf { it.isEmpty() }
-            .setRequired(R.string.download_field_header_value_empty_error)
-            .hint(R.string.download_field_header_value_hint)
-            .build()
+        val valueField = createTextField(EMPTY_STRING) {
+            setRequired(true, R.string.download_field_header_value_empty_error)
+            hint(R.string.download_field_header_value_hint)
+        }
         val valueInfo = valueField.observe(false)
 
         headerFields.add(
@@ -262,9 +267,9 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     fun onRemoveHeader(id: Int) {
 
         fun HeaderInfoFields.Info.removeObservers() {
-            field.valueLive.removeObserver(valueObserver)
-            field.hintLive.removeObserver(hintObserver)
-            field.errorLive.removeObserver(errorObserver)
+            valueObserveJob.cancel()
+            hintObserveJob.cancel()
+            errorObserveJob.cancel()
         }
 
         val iterator = headerFields.iterator()
@@ -449,9 +454,9 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
         data class Info(
             val field: Field<String>,
-            val valueObserver: Observer<String>,
-            val hintObserver: Observer<Field.Hint?>,
-            val errorObserver: Observer<TextMessage?>,
+            val valueObserveJob: Job,
+            val hintObserveJob: Job,
+            val errorObserveJob: Job,
         )
     }
 

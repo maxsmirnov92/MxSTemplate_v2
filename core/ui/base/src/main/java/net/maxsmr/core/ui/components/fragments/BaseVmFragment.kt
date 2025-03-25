@@ -20,6 +20,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.ResettableLazy
+import net.maxsmr.commonutils.flow.observe
+import net.maxsmr.commonutils.flow.observeEvents
+import net.maxsmr.commonutils.flow.observeLatest
+import net.maxsmr.commonutils.flow.repeatOnLifecycle
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.logger.BaseLogger
@@ -28,9 +32,6 @@ import net.maxsmr.commonutils.resettableLazy
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
-import net.maxsmr.core.android.coroutines.collectEventsWithOwner
-import net.maxsmr.core.android.coroutines.collectWithOwner
-import net.maxsmr.core.android.coroutines.repeatOnLifecycle
 import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
 import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.core.ui.R
@@ -160,6 +161,7 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
 
     protected open fun createFragmentDelegates(): List<IComponentDelegate<*>> = listOf()
 
+    @Deprecated("", replaceWith = ReplaceWith(expression = "StateFlow"))
     @JvmOverloads
     protected inline fun <T> LiveData<T>.observe(
         owner: LifecycleOwner = viewLifecycleOwner,
@@ -168,6 +170,7 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
         this.observe(owner) { onNext(it) }
     }
 
+    @Deprecated("", replaceWith = ReplaceWith(expression = "StateFlow"))
     @JvmOverloads
     protected inline fun <T> LiveData<VmEvent<T>>.observeEvents(
         owner: LifecycleOwner = viewLifecycleOwner,
@@ -219,29 +222,23 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
         } ?: targetAction.invoke(true)
     }
 
-    protected inline fun <T : Any> Flow<T>.collectSafely(
+    protected inline fun <T> Flow<T>.observeSafe(
         owner: LifecycleOwner = viewLifecycleOwner,
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
         crossinline action: suspend (value: T) -> Unit,
-    ) {
-        collectWithOwner(owner, lifecycleState, action)
-    }
+    ) = observeLatest(owner, lifecycleState, action)
 
-    protected inline fun <T : Any> StateFlow<VmEvent<T>?>.collectEvent(
+    protected inline fun <T> StateFlow<VmEvent<T>?>.observeEventsSafe(
         owner: LifecycleOwner = viewLifecycleOwner,
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
         crossinline action: suspend (value: T) -> Unit,
-    ) {
-        collectEventsWithOwner(owner, lifecycleState, action)
-    }
+    ) = observeEvents(owner, lifecycleState, action)
 
-    protected inline fun <T : Any> Flow<PagingData<T>>.collectPaging(
+    protected inline fun <T : Any> Flow<PagingData<T>>.observePaging(
         owner: LifecycleOwner = viewLifecycleOwner,
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
         crossinline action: suspend (value: PagingData<T>) -> Unit,
-    ) {
-        repeatOnLifecycle(owner, lifecycleState) { this.collectLatest { action(it) } }
-    }
+    ) = repeatOnLifecycle(owner, lifecycleState) { this.collectLatest { action(it) } }
 
     private fun observeNetworkConnectionHandler() {
         connectionHandler?.onNetworkStateChanged?.let { onStateChanged ->

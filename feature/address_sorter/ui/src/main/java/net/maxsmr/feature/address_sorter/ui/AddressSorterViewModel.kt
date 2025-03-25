@@ -20,12 +20,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.format.TimePluralFormat
 import net.maxsmr.commonutils.format.decomposeTimeFormatted
 import net.maxsmr.commonutils.gui.message.JoinTextMessage
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.message.errorMessage
-import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.media.readString
 import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
@@ -53,7 +53,7 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingTyp
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.network.HttpErrorCode
 import net.maxsmr.core.network.isUrlValid
-import net.maxsmr.core.ui.fields.fileNameField
+import net.maxsmr.core.ui.field.fileNameField
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.feature.address_sorter.data.getDisplayedMessageResId
 import net.maxsmr.feature.address_sorter.data.getDoubleGisRouteIntent
@@ -115,7 +115,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     private val suggestFlowMap = mutableMapOf<Long, FlowInfo>()
 
     val exportFileNameField: Field<String> =
-        state.fileNameField(isRequired = true, initialValue = EXPORT_FILE_NAME_DEFAULT)
+        fileNameField(isRequired = true, initialValue = EXPORT_FILE_NAME_DEFAULT)
 
     private val _resultItemsState = MutableLiveData<LoadState<List<AddressInputData>>>(LoadState.initial(emptyList()))
     val resultItemsState = _resultItemsState as LiveData<LoadState<List<AddressInputData>>>
@@ -142,7 +142,7 @@ class AddressSorterViewModel @AssistedInject constructor(
             }
         }
 
-        exportFileNameField.valueLive.observe {
+        exportFileNameField.valueFlow.observe {
             exportFileNameField.validateAndSetByRequired()
         }
     }

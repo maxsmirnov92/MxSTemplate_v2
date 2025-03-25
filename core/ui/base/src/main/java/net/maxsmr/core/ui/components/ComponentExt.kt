@@ -2,10 +2,10 @@ package net.maxsmr.core.ui.components
 
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.Job
+import net.maxsmr.commonutils.flow.observeEvents
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.android.base.actions.ToastAction
-import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 
 fun BaseAlertDelegate<*, *>.handleAlerts() {
@@ -20,11 +20,11 @@ fun BaseViewModel.handleEvents(
     toastActor: ToastAction.IToastActor,
 ): List<Job> {
     return mutableListOf<Job>().apply {
-        add(navigationCommands.collectEventsWithOwner(lifecycleOwner) {
+        add(navigationCommands.observeEvents(lifecycleOwner) {
             it.doAction(navigationActor)
         })
         // для совместимости с API 30 и ниже
-        add(toastCommands.collectEventsWithOwner(lifecycleOwner) {
+        add(toastCommands.observeEvents(lifecycleOwner) {
             it.doAction(toastActor)
         })
     }

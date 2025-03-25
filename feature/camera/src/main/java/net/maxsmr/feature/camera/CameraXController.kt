@@ -44,6 +44,7 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logException
 import net.maxsmr.commonutils.media.delete
+import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.appendExtension
 import net.maxsmr.core.android.content.ContentType
@@ -199,7 +200,7 @@ class CameraXController(
                     it.error?.let { error ->
                         logger.e("Camera error occurred: $error")
                         if (!isCameraOpened) {
-                            _cameraLoadState.errorLoad(error.cause ?: Exception())
+                            _cameraLoadState.errorLoad(ILoadState.ErrorData(error.cause ?: Exception()))
                         }
                         errorCallbacks?.onCameraStateError(error)
                     }

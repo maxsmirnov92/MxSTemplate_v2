@@ -8,10 +8,10 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
+import net.maxsmr.commonutils.flow.observeEvents
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.R
@@ -25,9 +25,7 @@ import net.maxsmr.core.android.content.pick.concrete.media.MediaPicker
 import net.maxsmr.core.android.content.pick.concrete.media.MediaPickerParams
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPicker
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
-import net.maxsmr.core.android.coroutines.collectEventsWithOwner
 import net.maxsmr.core.android.permissions.ICanAskPermissions
-import net.maxsmr.permissionchecker.PermissionsHelper
 
 /**
  * Фасад для взятия контента из разных источников и обработки разрешений.
@@ -131,7 +129,7 @@ class ContentPicker<T> private constructor(
     init {
         host.onViewLifecycleCreated {
             // Наблюдаем за выбором аппа пользователем, запускаем выбранное приложение либо запрашиваем необходимые разрешения
-            viewModel.appChoices.collectEventsWithOwner(host) { choice ->
+            viewModel.appChoices.observeEvents(host) { choice ->
                 val requiredPermissions = choice.requiredPermissions().toSet()
                 permissionHandler.handle(choice.requestCode, requiredPermissions,
                     onDenied = {
@@ -146,9 +144,9 @@ class ContentPicker<T> private constructor(
                 )
             }
             //Наблюдаем за результатом, вызываем соответствующие методы в случае успеха или неуспеха на нужном запросе
-            viewModel.pickResult.collectEventsWithOwner(host) { result ->
+            viewModel.pickResult.observeEvents(host) { result ->
                 val request = requests.find { it.requestCode == result.requestCode }
-                    ?: return@collectEventsWithOwner
+                    ?: return@observeEvents
                 when (result) {
                     is PickResult.Success -> request.onSuccess(result)
                     is PickResult.Error -> request.onError?.invoke(result)

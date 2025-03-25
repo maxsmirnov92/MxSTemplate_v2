@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.flow.observeLatest
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.isAtLeastR
 import net.maxsmr.commonutils.live.doOnNext
@@ -30,12 +31,10 @@ import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.base.alert.showOkAlert
 import net.maxsmr.core.android.base.alert.showYesNoAlert
 import net.maxsmr.core.android.base.connection.ConnectionManager
-import net.maxsmr.core.android.base.delegates.getPersistableKey
 import net.maxsmr.core.android.content.pick.PickResult
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.NetworkException
-import kotlin.reflect.KProperty
 
 /**
  * Базовая ViewModel для использования в приложении.
@@ -56,9 +55,6 @@ abstract class BaseViewModel(
 ) : ViewModel(), LifecycleOwner {
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
-
-    protected val KProperty<*>.persistableKey: String
-        get() = this@BaseViewModel.getPersistableKey(this)
 
     /**
      * Для навигации по фрагментам графа (в этом же модуле, иначе не будет сгенерированных Action),
@@ -114,7 +110,7 @@ abstract class BaseViewModel(
      */
     @CallSuper
     protected open fun onInitialized() {
-        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_START)
+        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
     }
 
     final override val lifecycle: LifecycleRegistry
@@ -346,14 +342,14 @@ abstract class BaseViewModel(
         }
     }
 
-    protected fun <T, S: ILoadState<T>> LiveData<S>.bindProgress(
+    protected fun <T, S : ILoadState<T>> LiveData<S>.bindProgress(
         tag: String = DIALOG_TAG_PROGRESS,
         message: TextMessage,
     ) = bindProgress(tag) {
         setMessage(message)
     }
 
-    protected fun <T, S: ILoadState<T>> LiveData<S>.bindProgress(
+    protected fun <T, S : ILoadState<T>> LiveData<S>.bindProgress(
         tag: String = DIALOG_TAG_PROGRESS,
         builderConfig: (AlertDialogBuilder.() -> Unit)? = null,
     ): LiveData<S> =
@@ -365,7 +361,7 @@ abstract class BaseViewModel(
             }
         }
 
-    @JvmOverloads
+    @Deprecated("", replaceWith = ReplaceWith(expression = "StateFlow"))
     protected inline fun <T> LiveData<T>.observe(
         owner: LifecycleOwner = this@BaseViewModel,
         crossinline onNext: (T) -> Unit,
@@ -375,18 +371,9 @@ abstract class BaseViewModel(
         return observer
     }
 
-    @Deprecated("use MutableStateFlow with VmEvent or MutableSharedFlow")
-    @JvmOverloads
-    inline fun <T> LiveData<VmEvent<T>>.observeEvents(
-        owner: LifecycleOwner = this@BaseViewModel,
-        crossinline onNext: (T) -> Unit,
-    ): Observer<VmEvent<T>> {
-        val observer = Observer<VmEvent<T>> {
-            it.get()?.let(onNext)
-        }
-        this.observe(owner, observer)
-        return observer
-    }
+    protected inline fun <T> Flow<T>.observe(
+        crossinline onNext: suspend (T) -> Unit,
+    ) = observeLatest(viewModelScope, onNext)
 
     /**
      * Нужен для того, чтобы создавать алерты можно было только во ViewModel, но не во фрагменте.

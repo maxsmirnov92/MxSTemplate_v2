@@ -7,22 +7,22 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
 import net.maxsmr.commonutils.copyToClipboard
+import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.getSendTextIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.network.URL_SCHEME_HTTPS
 import net.maxsmr.core.network.equalsIgnoreSubDomain
 import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.core.network.toValidUri
-import net.maxsmr.core.ui.fields.urlField
+import net.maxsmr.core.ui.field.urlField
 
 abstract class BaseCustomizableWebViewModel(
     state: SavedStateHandle,
 ) : BaseWebViewModel(state) {
 
-    val urlField: Field<String> = state.urlField(
+    val urlField: Field<String> = urlField(
         hintResId = R.string.webview_dialog_open_url_field_hint,
         withAsterisk = false,
         isRequired = true,
@@ -41,7 +41,7 @@ abstract class BaseCustomizableWebViewModel(
 
     override fun onInitialized() {
         super.onInitialized()
-        urlField.valueLive.observe {
+        urlField.valueFlow.observe {
             urlField.validateAndSetByRequired()
         }
         initialCustomizer.value = customizer
@@ -53,7 +53,8 @@ abstract class BaseCustomizableWebViewModel(
         }
         val newValue = urlField.value.toValidUri(orBlank = true, schemeIfEmpty = URL_SCHEME_HTTPS) ?: return false
         if (currentWebViewData.value?.isSuccess() == true
-                && currentUrl.value.equalsIgnoreSubDomain(newValue)) {
+                && currentUrl.value.equalsIgnoreSubDomain(newValue)
+        ) {
             return false
         }
         customizer = customizer.buildUpon().setUri(newValue).build()

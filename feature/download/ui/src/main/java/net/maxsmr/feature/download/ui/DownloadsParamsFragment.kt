@@ -13,6 +13,8 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.android.recyclerview.views.decoration.Divider
 import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
+import net.maxsmr.commonutils.flow.field.Field
+import net.maxsmr.commonutils.flow.field.observeFromText
 import net.maxsmr.commonutils.gui.addSoftInputStateListener
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.clearFocus
@@ -20,21 +22,19 @@ import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.gui.runOnceLayoutChanges
 import net.maxsmr.commonutils.gui.scrollToView
 import net.maxsmr.commonutils.gui.setTextOrGone
-import net.maxsmr.commonutils.live.field.Field
-import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.network.Method
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
-import net.maxsmr.core.ui.fields.bindHintError
-import net.maxsmr.core.ui.fields.bindValue
-import net.maxsmr.core.ui.fields.bindValueWithState
 import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.view.bindHintError
+import net.maxsmr.core.ui.view.bindValue
+import net.maxsmr.core.ui.view.bindValueWithState
 import net.maxsmr.core.ui.view.content.pick.chooser.HandlerContentPickerBuilder
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapter
@@ -44,7 +44,8 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel, StandardAlertRepresentation>(), HeaderListener {
+class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel, StandardAlertRepresentation>(),
+        HeaderListener {
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -143,11 +144,11 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel, Stand
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
-        viewModel.methodField.valueLive.observe {
+        viewModel.methodField.valueFlow.observeSafe {
             binding.spinnerMethod.setSelection(it.ordinal)
         }
 
-        viewModel.bodyField.valueLive.observe {
+        viewModel.bodyField.valueFlow.observeSafe {
             binding.containerSelectRequestBody.isEnabled = it.isEnabled
             binding.ibSelectRequestBody.isEnabled = it.isEnabled
             binding.ibClearRequestBody.isVisible = !it.isEmpty
@@ -160,7 +161,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel, Stand
                     }
                 )
         }
-        viewModel.bodyField.errorLive.observe {
+        viewModel.bodyField.errorFlow.observeSafe {
             binding.tvRequestBodyError.setTextOrGone(it?.get(requireContext()))
         }
 

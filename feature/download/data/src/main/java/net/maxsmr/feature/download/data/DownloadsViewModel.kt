@@ -20,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.ALGORITHM_SHA1
+import net.maxsmr.commonutils.flow.observe
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.unsubscribeIf
@@ -77,66 +78,60 @@ class DownloadsViewModel @Inject constructor(
     override fun onInitialized() {
         super.onInitialized()
 
-        viewModelScope.launch {
-            downloadManager.successAddedToQueueEvents.collect {
-                it.targetResourceName.takeIf { res -> res.isNotEmpty() }?.let { name ->
-                    showSnackbar(
-                        TextMessage(
-                            R.string.download_toast_success_add_to_queue_message_format,
-                            name
-                        )
+        downloadManager.successAddedToQueueEvents.observe {
+            it.targetResourceName.takeIf { res -> res.isNotEmpty() }?.let { name ->
+                showSnackbar(
+                    TextMessage(
+                        R.string.download_toast_success_add_to_queue_message_format,
+                        name
                     )
-                }
+                )
             }
         }
 
-        viewModelScope.launch {
-            downloadManager.failedAddedToQueueEvents.collect {
-                val name = it.first.targetResourceName
-                val reason = TextMessage.ResArg(
-                    when (it.second) {
-                        FailAddReason.NOT_VALID -> R.string.download_failed_add_to_queue_reason_not_valid
-                        FailAddReason.ALREADY_ADDED -> R.string.download_failed_add_to_queue_reason_already_added
-                        FailAddReason.ALREADY_LOADING -> R.string.download_failed_add_to_queue_reason_already_loading
-                    }
+        downloadManager.failedAddedToQueueEvents.observe {
+            val name = it.first.targetResourceName
+            val reason = TextMessage.ResArg(
+                when (it.second) {
+                    FailAddReason.NOT_VALID -> R.string.download_failed_add_to_queue_reason_not_valid
+                    FailAddReason.ALREADY_ADDED -> R.string.download_failed_add_to_queue_reason_already_added
+                    FailAddReason.ALREADY_LOADING -> R.string.download_failed_add_to_queue_reason_already_loading
+                }
+            )
+            val message: TextMessage? = if (name.isNotEmpty()) {
+                TextMessage(
+                    R.string.download_dialog_failed_add_to_queue_name_message_format,
+                    name,
+                    reason
                 )
-                val message: TextMessage? = if (name.isNotEmpty()) {
+            } else {
+                val url = it.first.url
+                if (url.isNotEmpty()) {
                     TextMessage(
-                        R.string.download_dialog_failed_add_to_queue_name_message_format,
+                        R.string.download_dialog_failed_add_to_queue_url_message_format,
                         name,
                         reason
                     )
                 } else {
-                    val url = it.first.url
-                    if (url.isNotEmpty()) {
-                        TextMessage(
-                            R.string.download_dialog_failed_add_to_queue_url_message_format,
-                            name,
-                            reason
-                        )
-                    } else {
-                        null
-                    }
+                    null
                 }
-                message?.let {
-                    showOkDialog(DIALOG_TAG_FAILED_ADD_TO_QUEUE, message)
-                }
+            }
+            message?.let {
+                showOkDialog(DIALOG_TAG_FAILED_ADD_TO_QUEUE, message)
             }
         }
 
-        viewModelScope.launch {
-            downloadManager.failedStartParamsEvents.collect {
-                showOkDialog(
-                    DIALOG_TAG_FAILED_START,
-                    TextMessage(
-                        R.string.download_dialog_failed_start_message_format,
-                        it.targetResourceName
-                    ),
-                    TextMessage(R.string.download_dialog_failed_start_title)
-                )
-            }
-        }
 
+        downloadManager.failedStartParamsEvents.observe {
+            showOkDialog(
+                DIALOG_TAG_FAILED_START,
+                TextMessage(
+                    R.string.download_dialog_failed_start_message_format,
+                    it.targetResourceName
+                ),
+                TextMessage(R.string.download_dialog_failed_start_title)
+            )
+        }
     }
 
     fun downloadFromJson(uri: Uri, contentResolver: ContentResolver) {

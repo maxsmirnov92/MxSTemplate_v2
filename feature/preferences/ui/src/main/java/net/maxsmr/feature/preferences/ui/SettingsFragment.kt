@@ -12,21 +12,21 @@ import androidx.fragment.app.viewModels
 import com.google.android.material.textfield.TextInputLayout
 import net.maxsmr.commonutils.conversion.toIntNotNull
 import net.maxsmr.commonutils.conversion.toLongNotNull
+import net.maxsmr.commonutils.flow.field.Field
+import net.maxsmr.commonutils.flow.field.observeFrom
+import net.maxsmr.commonutils.flow.field.observeFromText
 import net.maxsmr.commonutils.gui.bindTo
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.scrollToView
-import net.maxsmr.commonutils.live.field.Field
-import net.maxsmr.commonutils.live.field.observeFrom
-import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.fields.bindHintError
-import net.maxsmr.core.ui.fields.bindValue
-import net.maxsmr.core.ui.fields.bindValueWithState
-import net.maxsmr.core.ui.fields.setFieldValueIfEnabled
+import net.maxsmr.core.ui.field.setFieldValueIfEnabled
+import net.maxsmr.core.ui.view.bindHintError
+import net.maxsmr.core.ui.view.bindValue
+import net.maxsmr.core.ui.view.bindValueWithState
 import net.maxsmr.feature.preferences.ui.databinding.FragmentSettingsBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
@@ -63,12 +63,13 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
 
     private var saveMenuItem: MenuItem? = null
 
-    override fun createAlertDelegate(): BaseAlertDelegate<SettingsViewModel, StandardAlertRepresentation> = SettingsFragmentAlertDelegate(this, viewModel)
+    override fun createAlertDelegate(): BaseAlertDelegate<SettingsViewModel, StandardAlertRepresentation> =
+        SettingsFragmentAlertDelegate(this, viewModel)
 
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
         saveMenuItem = menu.findItem(R.id.actionSave)
-        refreshSaveMenuItem(viewModel.hasChanges.value == true)
+        refreshSaveMenuItem(viewModel.hasChanges.value)
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -107,7 +108,11 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
             binding.tilUpdateNotificationInterval
         )
 
-        viewModel.openLinksInExternalAppsField.bindValueWithState(viewLifecycleOwner, binding.switchOpenLinksInExternalApps, true)
+        viewModel.openLinksInExternalAppsField.bindValueWithState(
+            viewLifecycleOwner,
+            binding.switchOpenLinksInExternalApps,
+            true
+        )
 
         viewModel.startPageUrlField.observeTextWithBind(binding.tilStartPageUrl)
 
@@ -117,10 +122,10 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
             net.maxsmr.core.ui.view.R.id.tvSpinner,
             resources.getStringArray(R.array.settings_field_routing_app_values)
         )
-        viewModel.routingAppField.valueLive.observe {
+        viewModel.routingAppField.valueFlow.observeSafe {
             binding.spinnerRoutingApp.setSelection(RoutingApp.entries.indexOf(it))
         }
-        binding.spinnerRoutingApp.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
+        binding.spinnerRoutingApp.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 viewModel.routingAppField.value = RoutingApp.entries[position]
             }
@@ -131,13 +136,15 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
 
         viewModel.routingAppFromCurrentField.bindValue(viewLifecycleOwner, binding.switchRoutingAppFromCurrent)
 
-        viewModel.hasChanges.observe {
+        viewModel.hasChanges.observeSafe {
             refreshSaveMenuItem(it)
         }
     }
 
     override fun canNavigate(navigationAction: () -> Unit): Boolean {
-        return !viewModel.navigateWithAlert(errorFieldFunc, navigationAction)
+        return true
+        // navigateWithAlert убирается при навигации по итемам в графе, т.к. предусматривается saveState = true / restoreState = true
+        // return !viewModel.navigateWithAlert(errorFieldFunc, navigationAction)
     }
 
     override fun onUpPressed(): Boolean {
@@ -185,5 +192,4 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
         observeFrom(editText, viewLifecycleOwner, formatFunc = formatFunc)
         bindHintError(viewLifecycleOwner, til)
     }
-
 }

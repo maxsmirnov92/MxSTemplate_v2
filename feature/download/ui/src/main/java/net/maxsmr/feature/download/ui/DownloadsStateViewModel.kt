@@ -2,23 +2,22 @@ package net.maxsmr.feature.download.ui
 
 import android.content.DialogInterface
 import android.net.Uri
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.media.isEmpty
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.actions.NavigationAction
-import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ShareStrategy
@@ -36,13 +35,15 @@ class DownloadsStateViewModel @Inject constructor(
     private val manager: DownloadManager,
 ) : BaseViewModel(state) {
 
-    val queueNames = MutableLiveData<List<String>>()
+    val queueNames = MutableStateFlow<List<String>>(emptyList())
 
-    val allItems = MutableLiveData<List<DownloadInfoAdapterData>>()
+    val allItems = MutableStateFlow<List<DownloadInfoAdapterData>>(emptyList())
 
-    val currentItems = MutableLiveData<List<DownloadInfoAdapterData>>()
+    val currentItems = MutableStateFlow<List<DownloadInfoAdapterData>>(emptyList())
 
-    val anyCanBeCancelled = currentItems.map { it.any { item -> item.downloadInfo.isLoading } }
+    val anyCanBeCancelled = currentItems
+        .map { it.any { item -> item.downloadInfo.isLoading } }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     val queryNameFilter = MutableLiveData<String>()
 
@@ -51,17 +52,15 @@ class DownloadsStateViewModel @Inject constructor(
 
     override fun onInitialized() {
         super.onInitialized()
-        viewModelScope.launch {
-            manager.downloadsPendingParams.collect {
-                queueNames.postValue(it.map { params -> params.targetResourceName })
-            }
+
+        manager.downloadsPendingParams.observe {
+            queueNames.value = it.map { params -> params.targetResourceName }
         }
-        viewModelScope.launch {
-            manager.resultItems.collect {
-                allItems.postValue(it.map { item -> DownloadInfoAdapterData(item) })
-                currentItems.postValue(it.mapWithFilterByName(queryNameFilter.value.orEmpty()))
-            }
+        manager.resultItems.observe {
+            allItems.value = it.map { item -> DownloadInfoAdapterData(item) }
+            currentItems.value = it.mapWithFilterByName(queryNameFilter.value.orEmpty())
         }
+
         queueNames.observe {
             if (it.isEmpty()) {
                 dialogQueue.removeAllWithTag(DIALOG_TAG_CLEAR_QUEUE)
@@ -83,7 +82,7 @@ class DownloadsStateViewModel @Inject constructor(
     }
 
     fun onClearQueue() {
-        if (queueNames.value?.isNotEmpty() == true) {
+        if (queueNames.value.isNotEmpty()) {
             showYesNoDialog(
                 DIALOG_TAG_CLEAR_QUEUE,
                 TextMessage(R.string.download_dialog_clear_queue_message),
@@ -98,7 +97,7 @@ class DownloadsStateViewModel @Inject constructor(
     }
 
     fun onCancelAllDownloads() {
-        if (anyCanBeCancelled.value == true) {
+        if (anyCanBeCancelled.value) {
             showYesNoDialog(
                 DIALOG_TAG_CANCEL_ALL,
                 TextMessage(R.string.download_dialog_cancel_all_message),

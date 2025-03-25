@@ -8,7 +8,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.map
-import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.LoadState.Companion.copyOf
 import net.maxsmr.core.android.base.BaseViewModel

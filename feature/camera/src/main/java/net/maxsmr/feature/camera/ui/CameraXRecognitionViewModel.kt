@@ -13,10 +13,10 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.graphic.isBitmapValid
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.message.errorMessage
-import net.maxsmr.commonutils.live.field.Field
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logException
 import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.core.android.base.BaseViewModel
@@ -28,6 +28,7 @@ import net.maxsmr.core.android.coroutines.execute.succeeded
 import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine.Companion.joinLines
+import net.maxsmr.core.ui.field.createField
 import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.FrameCalculator
 import net.maxsmr.feature.camera.R
@@ -55,10 +56,12 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     /**
      * Целевой тип камеры (совпадёт с фактическим при успешном подключении)
      */
-    val cameraFacingField: Field<CameraFacing?> = Field.Builder<CameraFacing?>(CameraFacing.BACK)
-        .emptyIf { false }
-        .persist(state, KEY_FIELD_CAMERA_FACING)
-        .build()
+    val cameraFacingField: Field<CameraFacing?> = createField(
+        initialValue = CameraFacing.BACK,
+        key = KEY_FIELD_CAMERA_FACING
+    ) {
+        emptyIf { it == null }
+    }
 
     /**
      * Текущее состояние подсветки
@@ -101,8 +104,10 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
                 showOkDialog(
                     DIALOG_TAG_CAPTURE_RECOGNITION_RESULT,
                     TextMessage(R.string.camera_dialog_capture_recognition_result_title),
-                    TextMessage(R.string.camera_recognize_text_failed_format,
-                        it.exception.message)
+                    TextMessage(
+                        R.string.camera_recognize_text_failed_format,
+                        it.exception.message
+                    )
                 )
             }
         }
@@ -134,7 +139,7 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
         viewModelScope.launch(dispatcher) {
 
             val recognizedLines = try {
-               textRecognition.processFrame(frame, rotationDegrees)
+                textRecognition.processFrame(frame, rotationDegrees)
             } catch (e: Exception) {
                 logException(logger, e, "processFrame")
                 realtimeResultsLiveData.postValue(TextRecognitionResult.Failed(e))
@@ -213,25 +218,58 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     private suspend fun BaseTextMatcherUseCase<*>.invokeWithLines(lines: List<RecognizedLine>): TextRecognitionResult {
         val result = this.invoke(lines)
         return if (result.succeeded) {
-            when(val r = result.data?.result) {
+            when (val r = result.data?.result) {
                 is DocTypeTextMatcherUseCase.DocumentResult -> {
-                    TextRecognitionResult.Success(TextMessage(R.string.camera_recognize_text_type_doc_type_format, r.number, r.type.name))
+                    TextRecognitionResult.Success(
+                        TextMessage(
+                            R.string.camera_recognize_text_type_doc_type_format,
+                            r.number,
+                            r.type.name
+                        )
+                    )
                 }
+
                 is GrzTextMatcherUseCase.GrzResult -> {
-                    TextRecognitionResult.Success(TextMessage(R.string.camera_recognize_text_type_grz_format, r.number, r.type.name))
+                    TextRecognitionResult.Success(
+                        TextMessage(
+                            R.string.camera_recognize_text_type_grz_format,
+                            r.number,
+                            r.type.name
+                        )
+                    )
                 }
+
                 is BankCardTextMatcherNumberUseCase.CardNumberResult -> {
-                    TextRecognitionResult.Success(TextMessage(R.string.camera_recognize_text_type_bank_card_format, result.data?.sourceText))
+                    TextRecognitionResult.Success(
+                        TextMessage(
+                            R.string.camera_recognize_text_type_bank_card_format,
+                            result.data?.sourceText
+                        )
+                    )
                 }
+
                 is EmailTextMatcherUseCase.EmailResult -> {
-                    TextRecognitionResult.Success(TextMessage(R.string.camera_recognize_text_type_email_format, r.email))
+                    TextRecognitionResult.Success(
+                        TextMessage(
+                            R.string.camera_recognize_text_type_email_format,
+                            r.email
+                        )
+                    )
                 }
+
                 is RusPhoneTextMatcherUseCase.RusPhoneResult -> {
-                    TextRecognitionResult.Success(TextMessage(R.string.camera_recognize_text_type_rus_phone_format, r.phone))
+                    TextRecognitionResult.Success(
+                        TextMessage(
+                            R.string.camera_recognize_text_type_rus_phone_format,
+                            r.phone
+                        )
+                    )
                 }
+
                 is String -> {
                     TextRecognitionResult.Success(TextMessage(r))
                 }
+
                 else -> {
                     TextRecognitionResult.Failed(RuntimeException("Unknown result type: $r"))
                 }
@@ -254,11 +292,11 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
         fun create(
             state: SavedStateHandle,
             imageAnalyzerExecutor: Executor,
-            textRecognitionUseCases: List<BaseTextMatcherUseCase<*>>
+            textRecognitionUseCases: List<BaseTextMatcherUseCase<*>>,
         ): CameraXRecognitionViewModel
     }
 
-    sealed interface TextRecognitionResult: Serializable {
+    sealed interface TextRecognitionResult : Serializable {
 
         data class Success(val message: TextMessage) : TextRecognitionResult
 

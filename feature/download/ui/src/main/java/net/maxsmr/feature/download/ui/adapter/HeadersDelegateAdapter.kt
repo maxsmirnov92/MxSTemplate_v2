@@ -10,7 +10,7 @@ import net.maxsmr.commonutils.gui.listeners.AfterTextChangeListener
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setInputError
 import net.maxsmr.commonutils.gui.setTextWithSelectionToEnd
-import net.maxsmr.commonutils.live.field.Field
+import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.feature.download.ui.R

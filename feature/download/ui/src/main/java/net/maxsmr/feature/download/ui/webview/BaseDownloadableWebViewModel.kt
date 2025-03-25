@@ -3,13 +3,13 @@ package net.maxsmr.feature.download.ui.webview
 import android.webkit.CookieManager
 import android.webkit.URLUtil
 import androidx.lifecycle.SavedStateHandle
+import kotlinx.coroutines.flow.combine
+import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.field.Field
-import net.maxsmr.commonutils.live.zip
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
-import net.maxsmr.core.ui.fields.fileNameField
-import net.maxsmr.core.ui.fields.subDirNameField
+import net.maxsmr.core.ui.field.fileNameField
+import net.maxsmr.core.ui.field.subDirNameField
 import net.maxsmr.feature.download.ui.R
 import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewModel
 
@@ -17,20 +17,20 @@ typealias ParamsModelWithType = Pair<DownloadParamsModel, String?>
 
 abstract class BaseDownloadableWebViewModel(state: SavedStateHandle) : BaseCustomizableWebViewModel(state) {
 
-    val fileNameField: Field<String> = state.fileNameField(isRequired = true)
+    val fileNameField: Field<String> = fileNameField(isRequired = true)
 
-    val subDirNameField: Field<String> = state.subDirNameField()
+    val subDirNameField: Field<String> = subDirNameField()
 
-    val canStartDownload = zip(fileNameField.errorLive, subDirNameField.errorLive) { e1, e2 ->
+    val canStartDownload = combine(fileNameField.errorFlow, subDirNameField.errorFlow) { e1, e2 ->
         e1 == null && e2 == null
     }
 
     override fun onInitialized() {
         super.onInitialized()
-        fileNameField.valueLive.observe {
+        fileNameField.valueFlow.observe {
             fileNameField.validateAndSetByRequired()
         }
-        subDirNameField.valueLive.observe {
+        subDirNameField.valueFlow.observe {
             subDirNameField.validateAndSetByRequired()
         }
     }

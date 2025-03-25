@@ -18,17 +18,14 @@ import net.maxsmr.commonutils.wrapChooser
 fun Context.openEmailIntentWithToastError(
     address: String?,
     sendAction: SendAction = SendAction.SENDTO,
-    sendIntentFunc: ((Intent) -> Unit)? = null,
-    chooserIntentFunc: ((Intent) -> Unit)? = null,
+    sendIntentFunc: (Intent.() -> Unit)? = null,
     flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
     options: Bundle? = null,
 ): Boolean {
     return openEmailIntent(
         address,
         sendAction,
-        getString(R.string.chooser_title_send_email),
         sendIntentFunc,
-        chooserIntentFunc,
         flags,
         options
     ) {
@@ -47,7 +44,6 @@ fun Context.openEmailIntentWithToastError(
     addresses: List<String>? = null,
     sendAction: SendAction = SendAction.SENDTO,
     sendIntentFunc: ((Intent) -> Unit)? = null,
-    chooserIntentFunc: ((Intent) -> Unit)? = null,
     flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
     options: Bundle? = null,
 ): Boolean {
@@ -55,9 +51,7 @@ fun Context.openEmailIntentWithToastError(
         uri,
         addresses,
         sendAction,
-        getString(R.string.chooser_title_send_email),
         sendIntentFunc,
-        chooserIntentFunc,
         flags,
         options
     ) {
@@ -69,11 +63,10 @@ fun Context.openEmailIntentWithToastError(
 fun Context.openSendDataIntentWithToastError(
     sendAction: SendAction = SendAction.SEND,
     sendIntentFunc: (Intent) -> Unit,
-    chooserIntentFunc: ((Intent) -> Unit)? = null,
     flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
     options: Bundle? = null,
 ): Boolean {
-    return openSendDataIntent(sendAction, getString(R.string.chooser_title_send), sendIntentFunc, chooserIntentFunc, flags, options) {
+    return openSendDataIntent(sendAction, sendIntentFunc, flags, options) {
         Toast.makeText(this, getString(R.string.error_intent_send), Toast.LENGTH_SHORT).show()
     }
 }

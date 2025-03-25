@@ -3,17 +3,17 @@ package net.maxsmr.feature.rate.fragment
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.CallSuper
+import net.maxsmr.commonutils.flow.field.observeFromText
 import net.maxsmr.commonutils.gui.bindToTextNotNull
-import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
-import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.bindHintError
 import net.maxsmr.feature.rate.R
 import net.maxsmr.feature.rate.databinding.FragmentFeedbackBinding
 
-abstract class BaseFeedbackFragment<VM : BaseFeedbackViewModel>: BaseVmFragment<VM, StandardAlertRepresentation>() {
+abstract class BaseFeedbackFragment<VM : BaseFeedbackViewModel> : BaseVmFragment<VM, StandardAlertRepresentation>() {
 
     override val layoutId: Int = R.layout.fragment_feedback
 
@@ -30,7 +30,7 @@ abstract class BaseFeedbackFragment<VM : BaseFeedbackViewModel>: BaseVmFragment<
         viewModel.textField.observeFromText(binding.etText, viewLifecycleOwner)
         viewModel.textField.bindHintError(viewLifecycleOwner, binding.etText)
 
-        viewModel.isSendEnabled.observe {
+        viewModel.isSendEnabled.observeSafe {
             binding.btSend.isEnabled = it
         }
 

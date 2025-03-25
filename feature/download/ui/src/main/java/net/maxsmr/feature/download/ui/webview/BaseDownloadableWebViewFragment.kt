@@ -7,15 +7,15 @@ import android.view.inputmethod.EditorInfo.IME_ACTION_DONE
 import android.webkit.WebSettings
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.activityViewModels
+import net.maxsmr.commonutils.flow.field.observeFromText
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.hideKeyboard
-import net.maxsmr.commonutils.live.field.observeFromText
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.components.handleAlerts
 import net.maxsmr.core.ui.components.handleEvents
-import net.maxsmr.core.ui.fields.bindHintError
 import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.view.bindHintError
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.DownloadsFragmentAlertDelegate
 import net.maxsmr.feature.download.ui.databinding.DialogSaveAsBinding
@@ -78,7 +78,7 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
 
             DialogViewAlertRepresentation.Builder(requireContext(), it)
                 .setCustomView(dialogBinding.root) {
-                    viewModel.canStartDownload.observe {isEnabled ->
+                    viewModel.canStartDownload.observeSafe {isEnabled ->
                         (this as AlertDialog).getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = isEnabled
                     }
                 }
