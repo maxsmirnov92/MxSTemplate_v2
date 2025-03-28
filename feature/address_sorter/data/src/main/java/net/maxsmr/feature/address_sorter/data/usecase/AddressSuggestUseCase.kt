@@ -1,74 +1,44 @@
 package net.maxsmr.feature.address_sorter.data.usecase
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.mapNotNull
 import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.coroutines.execute.usecase.FlowUseCase
-import net.maxsmr.core.android.coroutines.execute.ExecuteResult
-import net.maxsmr.core.android.coroutines.execute.asExecuteResult
+import net.maxsmr.core.android.coroutines.execute.usecase.base.BaseInputSearchUseCase
+import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.SuggestDataSource
-import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.feature.address_sorter.data.repository.AddressRepo
 import javax.inject.Inject
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class AddressSuggestUseCase @Inject constructor(
     private val addressRepo: AddressRepo,
     private val suggestDataSource: SuggestDataSource,
-) : FlowUseCase<Flow<AddressSuggestUseCase.Parameters?>, List<AddressSuggest>>(Dispatchers.IO) {
+) : BaseInputSearchUseCase<AddressSuggestUseCase.Parameters, List<AddressSuggest>>() {
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun execute(parameters: Flow<Parameters?>): Flow<ExecuteResult<List<AddressSuggest>>> =
-        parameters
-            .mapNotNull { it?.let { it.copy(query = it.query.trim()) } }
-            .debounce {
-                if (it.query.length < SUGGEST_THRESHOLD) {
-                    0
-                } else {
-                    SUGGEST_DELAY
-                }
-            }
-            .distinctUntilChanged()
-            .flatMapLatest { p ->
-                flow {
-                    if (p.query.length <= SUGGEST_THRESHOLD) {
-                        addressRepo.updateQuery(p.id, p.query)
-                        emit(ExecuteResult.Success(emptyList()))
-                    } else {
-                        emit(ExecuteResult.Loading)
-                        addressRepo.updateQuery(p.id, p.query)
-//                        delay(5000)
-                        val result = try {
-                            val result = suggestDataSource.suggest(p.query, p.lastLocation)
-                            if (result.isEmpty()) {
-                                throw EmptyResultException(baseApplicationContext, true)
-                            } else {
-                                ExecuteResult.Success(result)
-                            }
-                        } catch (e: Exception) {
-                            e.asExecuteResult()
-                        }
-                        emit(result)
-                    }
-                }
-            }
+    override val inputDelay: Duration = 1300.milliseconds
+
+    override fun getInputThreshold(input: String): Int = 2
+
+    override suspend fun doAction(params: Parameters): List<AddressSuggest> {
+        addressRepo.updateQuery(params.id, params.input)
+        val result = suggestDataSource.suggest(params.input, params.lastLocation)
+        if (result.isEmpty()) {
+            throw EmptyResultException(baseApplicationContext, true)
+        }
+        return result
+    }
+
+    override suspend fun doActionNoSearch(params: Parameters): List<AddressSuggest> {
+        addressRepo.updateQuery(params.id, params.input)
+        return listOf()
+    }
+
+    override fun Parameters.copy(input: String): Parameters = copy(input = input)
 
     data class Parameters(
+        override val input: String,
         val id: Long,
-        val query: String,
         val lastLocation: Address.Location?
-    )
-
-    companion object {
-
-        private const val SUGGEST_THRESHOLD = 2
-        private const val SUGGEST_DELAY = 1300L
-    }
+    ): SearchParameters
 }

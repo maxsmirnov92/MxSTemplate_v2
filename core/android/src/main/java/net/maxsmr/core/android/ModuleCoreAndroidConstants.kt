@@ -5,6 +5,7 @@ import android.content.Context
 /**
  * Контекст приложения.
  */
+// TODO удалить
 lateinit var baseApplicationContext: Context
     private set
 

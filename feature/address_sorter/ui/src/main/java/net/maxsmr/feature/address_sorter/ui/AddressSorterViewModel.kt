@@ -15,8 +15,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -102,11 +106,26 @@ class AddressSorterViewModel @AssistedInject constructor(
     private val addressRoutingUseCase: AddressRoutingUseCase,
 ) : BaseViewModel(state) {
 
-    private val items: Flow<List<AddressItem>> = repo.lastAddresses.transform {
-        emit(it.map { address ->
-            address.toUi()
-        })
+    val exportFileNameField: Field<String> =
+        fileNameField(isRequired = true, initialValue = EXPORT_FILE_NAME_DEFAULT)
+
+    val resultItemsState: StateFlow<LoadState<List<AddressInputData>>> by lazy {
+        _resultItemsState.asStateFlow()
     }
+
+    val lastLocation by lazy {
+        _lastLocation.asStateFlow()
+    }
+
+    val resultLocationsState: StateFlow<LoadState<List<Address.Location>>> by lazy {
+        _resultItemsState.map {
+            it.copyOf(it.data?.mapNotNull { data -> data.item.location })
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.initial(emptyList()))
+    }
+
+    private val _resultItemsState = MutableStateFlow<LoadState<List<AddressInputData>>>(LoadState.initial(emptyList()))
+
+    private val _lastLocation =  MutableStateFlow<Address.Location?>(null)
 
 //    private val suggestsLiveData = MutableLiveData<Map<Int, LoadState<List<AddressSuggestItem>>>>(mapOf())
 
@@ -114,17 +133,11 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     private val suggestFlowMap = mutableMapOf<Long, FlowInfo>()
 
-    val exportFileNameField: Field<String> =
-        fileNameField(isRequired = true, initialValue = EXPORT_FILE_NAME_DEFAULT)
-
-    private val _resultItemsState = MutableLiveData<LoadState<List<AddressInputData>>>(LoadState.initial(emptyList()))
-    val resultItemsState = _resultItemsState as LiveData<LoadState<List<AddressInputData>>>
-
-    val resultLocationsState = _resultItemsState.map {
-        it.copyOf(it.data?.mapNotNull { data -> data.item.location })
+    private val items: Flow<List<AddressItem>> = repo.lastAddresses.transform {
+        emit(it.map { address ->
+            address.toUi()
+        })
     }
-
-    val lastLocation = MutableLiveData<Address.Location?>()
 
     override fun onInitialized() {
         super.onInitialized()
@@ -138,7 +151,7 @@ class AddressSorterViewModel @AssistedInject constructor(
 
         locationViewModel.currentLocation.observe {
             it?.let {
-                lastLocation.value = it.toAddressLocation()
+                _lastLocation.value = it.toAddressLocation()
             }
         }
 
@@ -148,7 +161,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun clearLastLocation() {
-        lastLocation.value = null
+        _lastLocation.value = null
     }
 
     fun onAddClick() {
@@ -165,7 +178,7 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     fun onTextChanged(id: Long, value: String) {
         suggestFlowMap[id]?.let {
-            it.parameters.value = AddressSuggestUseCase.Parameters(id, value, lastLocation.value)
+            it.parameters.value = AddressSuggestUseCase.Parameters(value, id, lastLocation.value)
         }
     }
 
@@ -622,7 +635,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                 it
             }
         }.orEmpty()
-        _resultItemsState.postValue(resultState.copyOf(newItems))
+        _resultItemsState.value = resultState.copyOf(newItems)
     }
 
     private fun onRemoveSuggests(id: Long, isFromMapOnly: Boolean) {
@@ -638,7 +651,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                     it
                 }
             }
-            _resultItemsState.postValue(resultState.copyOf(newItems))
+            _resultItemsState.value = resultState.copyOf(newItems)
         }
     }
 
@@ -728,28 +741,30 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     private fun List<AddressItem>.refreshFlows() {
-        this.forEach {
+        this.forEach { item ->
             // актуализация flow'ов по текущему списку итемов
-            if (!suggestFlowMap.containsKey(it.id)) {
-                val flow = MutableStateFlow(
-                    if (!it.isSuggested) {
-                        AddressSuggestUseCase.Parameters(it.id, it.address, lastLocation.value)
+            if (!suggestFlowMap.containsKey(item.id)) {
+                val flow =
+                    if (!item.isSuggested) {
+                        MutableStateFlow(AddressSuggestUseCase.Parameters(item.address, item.id, lastLocation.value))
                     } else {
                         null
                     }
-                )
+
+                flow?.let {
 //                val resultMap = suggestsLiveData.value?.toMutableMap() ?: mutableMapOf()
-                val startedJob = viewModelScope.launch {
-                    addressSuggestUseCase(flow).map { result ->
-                        result.mapData { addresses ->
-                            addresses.map { a -> a.toUi() }
-                        }
-                    }.collect { result ->
-                        onNewSuggests(it.id, result.asState(), flow.value?.query.orEmpty())
+                    val startedJob = viewModelScope.launch {
+                        addressSuggestUseCase(flow).map { result ->
+                            result.mapData { data ->
+                                data.data.map { a -> a.toUi() }
+                            }
+                        }.collect { result ->
+                            onNewSuggests(item.id, result.asState(), flow.value.input)
 //                        suggestsLiveData.value = resultMap
+                        }
                     }
-                }
-                suggestFlowMap[it.id] = FlowInfo(flow, startedJob)
+                    suggestFlowMap[item.id] = FlowInfo(flow, startedJob)
+                } ?: suggestFlowMap.remove(item.id)
             }
         }
         suggestFlowMap.toMap().entries.forEach {
@@ -774,7 +789,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     class FlowInfo(
-        val parameters: MutableStateFlow<AddressSuggestUseCase.Parameters?>,
+        val parameters: MutableStateFlow<AddressSuggestUseCase.Parameters>,
         val startedJob: Job,
     )
 

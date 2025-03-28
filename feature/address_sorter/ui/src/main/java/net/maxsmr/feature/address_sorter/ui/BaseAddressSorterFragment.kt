@@ -178,7 +178,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
                 viewModel.doRefresh()
             }
 
-            viewModel.resultItemsState.observe { state ->
+            viewModel.resultItemsState.observeSafe { state ->
                 swipeLayout.isEnabled = state.isLoading
                 swipeLayout.isRefreshing = state.isLoading
                 adapter.isMovementEnabled = !state.isLoading
@@ -201,10 +201,10 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
                 }
                 refreshStateMenuItems(state)
             }
-            viewModel.resultLocationsState.observe {
+            viewModel.resultLocationsState.observeSafe {
                 refreshBuildRouteAppMenuItem(it)
             }
-            viewModel.lastLocation.observe {
+            viewModel.lastLocation.observeSafe {
                 refreshLastLocationInfoMenuItem(it)
             }
         }
