@@ -236,7 +236,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             with(viewModel) {
                 // используем инфу о состоянии для последнего ресурса с той же урлой
                 val currentResource = currentWebViewData.value
-                (if (currentResource != null && currentResource.isError()) {
+                (if (currentResource != null && currentResource.isError) {
                     // если до этого в onPageLoadError выставлялся еррор - оставляем статус
                     currentResource.copyOf(data)
                 } else {
@@ -289,14 +289,14 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         } else {
             progress?.isVisible = false
             swipeRefresh?.isRefreshing = false
-            if (resource.isSuccess() && hasData) {
+            if (resource.isSuccess && hasData) {
                 swipeRefresh?.isEnabled = true
                 webView.isVisible = true
                 errorContainer?.isVisible = false
                 onResourceSuccess(url, data)
             } else {
                 val webResourceException = resource.error?.error as? WebResourceException
-                val shouldShowError = resource.isError()
+                val shouldShowError = resource.isError
                         // не отображаем стейт с ошибкой, если это http-ошибка (>400),
                         // и должно иметь свою обработку в WebView
                         // (а если контент отсутвует - заглушки на этот случай нет)

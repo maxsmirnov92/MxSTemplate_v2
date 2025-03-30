@@ -200,7 +200,9 @@ class CameraXController(
                     it.error?.let { error ->
                         logger.e("Camera error occurred: $error")
                         if (!isCameraOpened) {
-                            _cameraLoadState.errorLoad(ILoadState.ErrorData(error.cause ?: Exception()))
+                            _cameraLoadState.errorLoad(
+                                error.cause as? Exception? ?: Exception(error.cause)
+                            )
                         }
                         errorCallbacks?.onCameraStateError(error)
                     }

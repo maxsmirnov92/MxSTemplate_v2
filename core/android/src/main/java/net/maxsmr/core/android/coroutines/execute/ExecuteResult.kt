@@ -20,7 +20,7 @@ sealed class ExecuteResult<out R> {
 
     data class Success<out T>(val data: T) : ExecuteResult<T>()
 
-    data class Error(val exception: Throwable, val message: TextMessage? = null) : ExecuteResult<Nothing>() {
+    data class Error(val exception: Exception, val message: TextMessage? = null) : ExecuteResult<Nothing>() {
 
         /**
          * @return [TextMessage] ошибки, либо null
@@ -116,7 +116,7 @@ fun <T> ILoadState<T>.asExecuteResult() = when {
             ExecuteResult.Loading
         }
     }
-    isSuccess() -> ExecuteResult.Success(data)
+    isSuccess -> ExecuteResult.Success(data)
     else -> ExecuteResult.Error(error?.error ?: Exception(), error?.message as? TextMessage)
 }
 
@@ -132,7 +132,7 @@ fun <T, U> ILoadState<T>.asExecuteResult(mapOnSuccess: (data: T) -> U) = when {
             ExecuteResult.Loading
         }
     }
-    isSuccess() -> {
+    isSuccess -> {
         val data = data
         if (data != null) {
             ExecuteResult.Success(mapOnSuccess(data))

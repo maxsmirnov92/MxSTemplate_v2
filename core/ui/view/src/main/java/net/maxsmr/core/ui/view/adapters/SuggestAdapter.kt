@@ -31,7 +31,7 @@ open class SuggestAdapter(
 
     fun setData(state: LoadState<List<String>>) {
         this.state = state
-        if (state.isLoading || state.hasData() || state.isError()) {
+        if (state.isLoading || state.hasData() || state.isError) {
             notifyDataSetChanged()
         } else {
             notifyDataSetInvalidated()
@@ -45,18 +45,19 @@ open class SuggestAdapter(
 
     override fun getCount(): Int {
         val state = state ?: return 0
-        return if (state.isLoading || state.isError()) 1 else state.data?.size ?: 0
+        return if (state.isLoading || state.isError) 1 else state.data?.size ?: 0
     }
 
     override fun getItem(position: Int): String {
         val state = state ?: return EMPTY_STRING
+        val data = state.getData { data -> !data.isNullOrEmpty() }
         return when {
             state.isLoading -> {
                 context.getString(net.maxsmr.core.android.R.string.loading)
             }
 
-            state.isSuccessWithData { data -> !data.isNullOrEmpty() } -> {
-                state.data?.getOrNull(position).orEmpty()
+            data != null -> {
+                data.getOrNull(position).orEmpty()
             }
 
             else -> {
@@ -79,7 +80,7 @@ open class SuggestAdapter(
                 pbSuggest.isVisible = state.isLoading
                 tvItemSuggest.setTextColor(
                     ContextCompat.getColor(
-                        context, if (state.isError() && state.error?.error !is EmptyResultException) {
+                        context, if (state.isError && state.error?.error !is EmptyResultException) {
                             net.maxsmr.designsystem.shared_res.R.color.textColorError
                         } else {
                             net.maxsmr.designsystem.shared_res.R.color.textColorPrimary
@@ -89,7 +90,7 @@ open class SuggestAdapter(
                 root.setOnClickListener {
                     onItemSelect(position)
                 }
-                root.isEnabled = state.isSuccessWithData { data -> !data.isNullOrEmpty() }
+                root.isEnabled = state.hasData { data -> !data.isNullOrEmpty() }
             }
         }
     }

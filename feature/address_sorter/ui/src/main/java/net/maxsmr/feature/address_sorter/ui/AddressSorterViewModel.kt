@@ -212,9 +212,10 @@ class AddressSorterViewModel @AssistedInject constructor(
                                     handleBaseError(false)
                                 }
 
-                                if (it.isSuccessWithData()) {
+                                val data = it.getData()
+                                if (data != null) {
                                     val key = withContext(Dispatchers.IO) {
-                                        it.data?.downloadInfo?.localUri?.readString(baseApplicationContext.contentResolver)
+                                        data.downloadInfo?.localUri?.readString(baseApplicationContext.contentResolver)
                                             .orEmpty()
                                     }
                                     if (key.isNotEmpty()) {
@@ -505,9 +506,10 @@ class AddressSorterViewModel @AssistedInject constructor(
                             downloadsViewModel.observeOnceDownloadByParams(enqueueDownloadRoutingKey()).observe {
                                 viewModelScope.launch {
                                     var isHandled = false
-                                    if (it.isSuccessWithData()) {
+                                    val data = it.getData()
+                                    if (data != null) {
                                         val key = withContext(Dispatchers.IO) {
-                                            it.data?.downloadInfo?.localUri?.readString(baseApplicationContext.contentResolver)
+                                            data.downloadInfo?.localUri?.readString(baseApplicationContext.contentResolver)
                                                 .orEmpty()
                                         }
                                         if (key.isNotEmpty()) {

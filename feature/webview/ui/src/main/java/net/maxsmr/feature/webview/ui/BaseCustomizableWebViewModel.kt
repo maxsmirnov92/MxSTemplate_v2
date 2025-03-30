@@ -52,7 +52,7 @@ abstract class BaseCustomizableWebViewModel(
             return false
         }
         val newValue = urlField.value.toValidUri(orBlank = true, schemeIfEmpty = URL_SCHEME_HTTPS) ?: return false
-        if (currentWebViewData.value?.isSuccess() == true
+        if (currentWebViewData.value?.isSuccess == true
                 && currentUrl.value.equalsIgnoreSubDomain(newValue)
         ) {
             return false

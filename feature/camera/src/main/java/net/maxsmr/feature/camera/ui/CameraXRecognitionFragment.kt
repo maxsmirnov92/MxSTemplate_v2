@@ -204,8 +204,9 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                     btCameraTakePicture.setShowProgress(it.isLoading, defaultDrawableResId = R.drawable.ic_capture)
                     btCameraTakePicture.isEnabled = !it.isLoading && controller.isCameraOpened
                     if (!it.isLoading) {
-                        if (it.isSuccessWithData()) {
-                            createBitmapFromUri(it.data!!, requireContext().contentResolver)?.let { bitmap ->
+                        val data = it.getData()
+                        if (data != null) {
+                            createBitmapFromUri(data, requireContext().contentResolver)?.let { bitmap ->
                                 viewModel.onImageCaptured(bitmap)
                             }
                         } else {
@@ -225,7 +226,7 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                     containerError.root.isVisible = false
                 } else {
                     pbPreview.isVisible = false
-                    if (it.isSuccess()) {
+                    if (it.isSuccess) {
                         containerPreview.previewView.isVisible = true
                         containerError.root.isVisible = false
                     } else {
