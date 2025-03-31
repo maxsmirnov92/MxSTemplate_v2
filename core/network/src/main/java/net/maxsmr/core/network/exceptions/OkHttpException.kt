@@ -12,12 +12,13 @@ class OkHttpException(cause: Throwable) : IOException(cause.message, cause) {
 
         @JvmStatic
         @JvmOverloads
-        fun Throwable.orNetworkCause(message: String = EMPTY_STRING): Exception {
+        internal fun Throwable.orNetworkCause(message: String = EMPTY_STRING): RuntimeException {
             return (if (this is OkHttpException) {
                 this.cause
             } else {
                 this
-            }) as? Exception ?: NetworkException(cause = this.cause, message = message)
+            }) as? RuntimeException
+                ?: NetworkException(cause = this.cause, message = message)
         }
     }
 }

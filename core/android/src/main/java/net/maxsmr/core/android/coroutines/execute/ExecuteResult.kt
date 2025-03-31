@@ -3,24 +3,24 @@ package net.maxsmr.core.android.coroutines.execute
 import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.onStart
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.PgnLoadState
 import net.maxsmr.core.network.NO_ERROR_API
 import net.maxsmr.core.network.exceptions.NetworkException
-import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
 import net.maxsmr.core.network.getErrorCode
 
 sealed class ExecuteResult<out R> {
 
     data class Success<out T>(val data: T) : ExecuteResult<T>()
 
-    data class Error(val exception: Exception, val message: TextMessage? = null) : ExecuteResult<Nothing>() {
+    data class Error(
+        val exception: Exception,
+        private val message: TextMessage? = null
+    ) : ExecuteResult<Nothing>() {
 
         /**
          * @return [TextMessage] ошибки, либо null
@@ -33,7 +33,7 @@ sealed class ExecuteResult<out R> {
         }
 
         fun errorData(): ILoadState.ErrorData {
-            return ILoadState.ErrorData(this.exception, this.message)
+            return ILoadState.ErrorData(this.exception, this.errorMessage())
         }
     }
 
@@ -169,7 +169,7 @@ fun <T, U> ExecuteResult<T>.mapData(
             ExecuteResult.Error(e)
         }
     }
-    is ExecuteResult.Error -> ExecuteResult.Error(this.exception, this.message)
+    is ExecuteResult.Error -> ExecuteResult.Error(this.exception, this.errorMessage())
 }
 
 fun <T> ExecuteResult<T>?.isNetworkError(): Boolean {
@@ -179,17 +179,4 @@ fun <T> ExecuteResult<T>?.isNetworkError(): Boolean {
 fun <T> ExecuteResult<T>.getErrorCode(): Int = when (this) {
     is ExecuteResult.Error -> exception.getErrorCode()
     else -> NO_ERROR_API
-}
-
-fun <T> Flow<T>.asExecuteResult(): Flow<ExecuteResult<T>> {
-    return this
-        .map<T, ExecuteResult<T>> {
-            ExecuteResult.Success(it)
-        }
-        .onStart { emit(ExecuteResult.Loading) }
-        .catch { emit(it.asExecuteResult()) }
-}
-
-fun <T> Throwable.asExecuteResult(): ExecuteResult<T> {
-    return ExecuteResult.Error(orNetworkCause())
 }

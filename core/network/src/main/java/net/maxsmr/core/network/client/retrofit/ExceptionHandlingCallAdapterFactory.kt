@@ -6,7 +6,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import net.maxsmr.core.network.client.okhttp.ResponseBodyCache
 import net.maxsmr.core.network.exceptions.ApiException
-import net.maxsmr.core.network.exceptions.handler.ICallExceptionHandler
+import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
 import net.maxsmr.core.network.retrofit.converters.BaseResponse
 import okhttp3.ResponseBody
 import okio.Timeout
@@ -51,7 +51,8 @@ class ExceptionHandlingCallAdapterFactory(
                 WrappedCall(
                     delegateCall,
                     onFailure = { e ->
-                        var resultThrowable: Throwable = e
+                        val cause = e.orNetworkCause()
+                        var resultThrowable = cause
                         if (e is HttpException) {
                             // исходное исключение от http, но надо проверить json-тело
                             // для возможной подмены на ApiException
@@ -70,10 +71,8 @@ class ExceptionHandlingCallAdapterFactory(
                             }
                         }
                         resultThrowable.let {
-                            if (it is RuntimeException) {
-                                scope.launch {
-                                    exceptionHandler(it)
-                                }
+                            scope.launch {
+                                exceptionHandler(it)
                             }
                         }
                         cache.removeWithClose(request)

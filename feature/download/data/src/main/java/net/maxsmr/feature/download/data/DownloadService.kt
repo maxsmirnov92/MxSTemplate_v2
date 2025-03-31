@@ -54,7 +54,6 @@ import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
-import net.maxsmr.core.di.ApplicationScope
 import net.maxsmr.core.di.DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
 import net.maxsmr.core.di.DownloaderOkHttpClient
@@ -72,7 +71,6 @@ import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.w
 import net.maxsmr.core.network.exceptions.IncorrectAttachmentException
 import net.maxsmr.core.network.exceptions.IncorrectContentTypeException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType
-import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
 import net.maxsmr.core.network.getContentTypeHeader
 import net.maxsmr.core.network.getFileNameFromAttachmentHeader
 import net.maxsmr.core.network.hasBytesAcceptRanges
@@ -363,7 +361,7 @@ class DownloadService : Service() {
                     if (e.isCancelled()) {
                         onDownloadCancelled(info, params, oldParams)
                     } else {
-                        onDownloadFailed(info, params, oldParams, e.orNetworkCause())
+                        onDownloadFailed(info, params, oldParams, e)
                     }
                 }
             }

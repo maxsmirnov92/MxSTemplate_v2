@@ -2,13 +2,17 @@ package net.maxsmr.core.android.coroutines.execute
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.cancellation.CancellationException
 
 object ExecuteResultWrapper {
 
@@ -19,21 +23,22 @@ object ExecuteResultWrapper {
         doExecute: suspend () -> T,
     ): ExecuteResult<T> {
         return try {
-            // Moving all use case's executions to the injected dispatcher
-            // In production code, this is usually the Default dispatcher (background thread)
-            // In tests, this becomes a TestCoroutineDispatcher
             withContext(coroutineContext) {
                 ExecuteResult.Success(doExecute())
             }
-        } catch (e: Throwable) {
-            logger.e("wrapResult failed", e)
-            e.asExecuteResult()
+        } catch (e: Exception) {
+            logger.e("invoke failed", e)
+            if (e is CancellationException) {
+                // переброс по стандартным правилам
+                throw e
+            }
+            ExecuteResult.Error(e)
         }
     }
 
     fun <T> wrapFlowResult(
         coroutineContext: CoroutineContext = Dispatchers.IO,
-        doExecute: suspend () -> T,
+        doExecute: suspend () -> T
     ): Flow<ExecuteResult<T>> {
         return wrapFlow(coroutineContext,
             flow {
@@ -41,19 +46,41 @@ object ExecuteResultWrapper {
                 try {
                     emit(ExecuteResult.Success(doExecute()))
                 } catch (e: Exception) {
+                    if (e is CancellationException) {
+                        throw e
+                    }
                     emit(ExecuteResult.Error(e))
                 }
             })
+    }
+
+    fun <T> Flow<T>.wrapResult(
+        coroutineContext: CoroutineContext = Dispatchers.IO,
+    ): Flow<ExecuteResult<T>> {
+        return this
+            .map<T, ExecuteResult<T>> {
+                ExecuteResult.Success(it)
+            }
+            .onStart { emit(ExecuteResult.Loading) }
+            .catch { wrapCause(it) }
+            .flowOn(coroutineContext)
     }
 
     internal fun <T> wrapFlow(
         coroutineContext: CoroutineContext = Dispatchers.IO,
         flow: Flow<ExecuteResult<T>>,
     ): Flow<ExecuteResult<T>> = flow
-        .catch { e ->
-            logger.e("wrapFlow catch exception", e)
-            emit(e.asExecuteResult())
+        .catch {
+            logger.e("flow failed", it)
+            wrapCause(it)
         }
         .flowOn(coroutineContext)
 
+    private suspend fun <T> FlowCollector<ExecuteResult<T>>.wrapCause(cause: Throwable) {
+        if (cause is java.lang.Error) {
+            throw cause
+        }
+        val exception = cause as? Exception ?: Exception(cause)
+        emit(ExecuteResult.Error(exception))
+    }
 }
