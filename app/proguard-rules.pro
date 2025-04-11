@@ -203,7 +203,6 @@
 -keepclassmembers class <2>$<3> {
     kotlinx.serialization.KSerializer serializer(...);
 }
--keep class kotlinx.serialization.** { *; }
 
 # Keep `INSTANCE.serializer()` of serializable objects.
 -if @kotlinx.serialization.Serializable class ** {
@@ -213,6 +212,15 @@
     public static <1> INSTANCE;
     kotlinx.serialization.KSerializer serializer(...);
 }
+-keepclassmembers class kotlinx.serialization.json.** {
+    *** Companion;
+}
+-if @kotlinx.serialization.Serializable class **
+ -keep, allowshrinking, allowoptimization, allowobfuscation class <1>
+
+ -keep class kotlinx.serialization.** { *; }
+ #-keep @kotlinx.serialization.Serializable class * {*;}
+ -keep @kotlinx.serialization.Serializable class **
 
 -keep class kotlin.** { *; }
 -keepclassmembers class kotlin.** { *; }
