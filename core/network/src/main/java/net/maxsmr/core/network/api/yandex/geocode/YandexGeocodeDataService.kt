@@ -5,7 +5,7 @@ import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-interface YandexGeocodeDataService {
+internal interface YandexGeocodeDataService {
 
     /**
      * Позволяет узнать координаты объекта по его адресу или названию, либо в обратную сторону — узнать адрес объекта по его кординатам.

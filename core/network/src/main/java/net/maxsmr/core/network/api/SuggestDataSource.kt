@@ -1,7 +1,5 @@
 package net.maxsmr.core.network.api
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 import net.maxsmr.core.network.api.radar_io.RadarIoDataService
@@ -23,11 +21,11 @@ class RadarIoSuggestDataSource(
     override suspend fun suggest(
         query: String,
         location: Address.Location?,
-    ): List<AddressSuggest> = withContext(Dispatchers.IO) {
+    ): List<AddressSuggest> {
         val locationText = location?.let {
             "${it.latitude},${it.longitude}"
         }
-        RadarIoDataService.instance(retrofit).suggest(query, locationText).asDomain()
+        return RadarIoDataService.instance(retrofit).suggest(query, locationText).asDomain()
     }
 }
 
@@ -38,11 +36,11 @@ class YandexSuggestDataSource(
     override suspend fun suggest(
         query: String,
         location: Address.Location?,
-    ): List<AddressSuggest> = withContext(Dispatchers.IO) {
+    ): List<AddressSuggest> {
         val locationText = location?.let {
             "${it.longitude},${it.latitude}"
         }
-        YandexSuggestDataService.instance(retrofit).suggest(query, locationText).asDomain()
+        return YandexSuggestDataService.instance(retrofit).suggest(query, locationText).asDomain()
     }
 }
 

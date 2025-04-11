@@ -410,7 +410,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     fun onBuildRouteInApp(navigateFunc: (Intent, RoutingApp) -> Unit) {
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
-            val locations = resultLocationsState.value?.data?.toSet().orEmpty()
+            val locations = resultLocationsState.value.data?.toSet().orEmpty()
             val settings = settingsRepo.getSettings()
             withContext(Dispatchers.IO) {
                 when (settings.routingApp) {

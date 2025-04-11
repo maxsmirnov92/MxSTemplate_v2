@@ -181,12 +181,14 @@ class DownloadsStateViewModel @Inject constructor(
                 AlertDialogBuilder(DIALOG_TAG_PROGRESS).build()
             }
             if (downloadUri.isEmpty(baseApplicationContext.contentResolver)) {
-                showSnackbar(
-                    TextMessage(
-                        R.string.download_snackbar_action_view_error_format,
-                        downloadUri.toString()
+                withContext(Dispatchers.Main.immediate) {
+                    showSnackbar(
+                        TextMessage(
+                            R.string.download_snackbar_action_view_error_format,
+                            downloadUri.toString()
+                        )
                     )
-                )
+                }
             } else {
                 _navigateUriEvent.emit(VmEvent(strategy))
             }

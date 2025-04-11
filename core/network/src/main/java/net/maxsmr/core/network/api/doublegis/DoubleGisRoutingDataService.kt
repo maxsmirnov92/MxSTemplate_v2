@@ -6,7 +6,7 @@ import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
 import retrofit2.http.Body
 import retrofit2.http.POST
 
-interface DoubleGisRoutingDataService {
+internal interface DoubleGisRoutingDataService {
 
     /**
      * Distance Matrix API позволяет получить информацию о расстоянии и времени в пути между точками на карте.
