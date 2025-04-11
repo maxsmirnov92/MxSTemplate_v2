@@ -21,8 +21,6 @@ class MediaStoreStorage(
     context: Context,
 ) : DownloadServiceStorage(context, Type.SHARED) {
 
-    private val resolver get() = context.contentResolver
-
     private val idColumn: String = MediaStore.Downloads._ID
     private val nameColumn: String = MediaStore.Downloads.DISPLAY_NAME
     private val pathColumn: String = MediaStore.Downloads.RELATIVE_PATH
@@ -39,7 +37,7 @@ class MediaStoreStorage(
     ): Uri {
 
         fun Uri.tryUpdate(values: ContentValues): Uri? = try {
-            resolver.update(this, values, null, null)
+            contentResolver.update(this, values, null, null)
             this
         } catch (e: Exception) {
             null
@@ -47,10 +45,10 @@ class MediaStoreStorage(
 
         var uri: Uri? = null
         try {
-            val dirPath = type.dirPath(context, params.subDirPath)
+            val dirPath = type.dirPath(context, baseAppDir, params.subDirPath)
 
             fun delete(name: String) {
-                resolver.delete(
+                contentResolver.delete(
                     uriWritable,
                     "$pathColumn = ? AND $nameColumn = ?",
                     arrayOf(dirPath, name)
@@ -75,13 +73,13 @@ class MediaStoreStorage(
                 put(pathColumn, dirPath)
                 put(MediaStore.Downloads.IS_PENDING, 1)
             }
-            uri = targetUri?.tryUpdate(values) ?: resolver.insert(uriWritable, values)
+            uri = targetUri?.tryUpdate(values) ?: contentResolver.insert(uriWritable, values)
             if (uri == null) {
                 delete(targetName)
-                uri = resolver.insert(uriWritable, values)
+                uri = contentResolver.insert(uriWritable, values)
             }
             uri ?: throw RuntimeException("Cannot insert uri ($uriWritable) to MediaStore")
-            writeStreamFunc(uri, uri.openOutputStreamOrThrow(contentResolver), uri.lengthOrThrow(resolver))
+            writeStreamFunc(uri, uri.openOutputStreamOrThrow(contentResolver), uri.lengthOrThrow(contentResolver))
             val pendingValues = ContentValues().apply {
                 put(MediaStore.Downloads.IS_PENDING, 0)
             }
@@ -100,7 +98,7 @@ class MediaStoreStorage(
             ?: "$pathColumn = ?"
         val selectionArgs = arrayOf(fullDirPath)
 
-        val query = resolver.query(
+        val query = contentResolver.query(
             uriWritable,
             projection,
             selection,
@@ -119,7 +117,7 @@ class MediaStoreStorage(
                 if (length > 0) {
                     names.add(UriAndName(uri, name))
                 } else {
-                    resolver.delete(
+                    contentResolver.delete(
                         uriWritable,
                         "$pathColumn = ? AND $nameColumn = ?",
                         arrayOf(fullDirPath, name)

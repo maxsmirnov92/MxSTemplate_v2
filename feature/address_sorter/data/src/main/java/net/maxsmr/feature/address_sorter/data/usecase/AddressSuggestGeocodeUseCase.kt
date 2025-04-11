@@ -1,7 +1,8 @@
 package net.maxsmr.feature.address_sorter.data.usecase
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.execute.usecase.UseCase
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressGeocode
@@ -16,6 +17,7 @@ import javax.inject.Inject
  */
 class AddressSuggestGeocodeUseCase @Inject constructor(
     private val geocodeDataSource: GeocodeDataSource,
+    @ApplicationContext private val context: Context,
 ) : UseCase<AddressSuggestGeocodeUseCase.Parameters, AddressGeocode>(Dispatchers.Default) {
 
     override suspend fun execute(parameters: Parameters): AddressGeocode {
@@ -39,7 +41,7 @@ class AddressSuggestGeocodeUseCase @Inject constructor(
                 requestAddress.trim()
             }
             if (geocode.isEmpty()) {
-                throw EmptyResultException(baseApplicationContext, false)
+                throw EmptyResultException(context, false)
             }
             geocodeDataSource.directGeocode(geocode, parameters.lastLocation?.let { lastLocation ->
                 {
@@ -49,7 +51,7 @@ class AddressSuggestGeocodeUseCase @Inject constructor(
                 parameters.suggest.displayedAddress.takeIf { it.isNotEmpty() }?.let {
                     result.copy(name = it)
                 } ?: result
-            } ?: throw EmptyResultException(baseApplicationContext, true)
+            } ?: throw EmptyResultException(context, true)
 
         } else {
             // если координаты есть от другого API

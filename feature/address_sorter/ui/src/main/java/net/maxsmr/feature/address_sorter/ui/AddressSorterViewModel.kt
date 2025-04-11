@@ -1,16 +1,15 @@
 package net.maxsmr.feature.address_sorter.ui
 
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.Uri
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +39,6 @@ import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.execute.ExecuteResult
 import net.maxsmr.core.android.coroutines.execute.asState
 import net.maxsmr.core.android.coroutines.execute.data
@@ -104,7 +102,8 @@ class AddressSorterViewModel @AssistedInject constructor(
     private val reverseGeocodeUseCase: ReverseGeocodeUseCase,
     private val addressSortUseCase: AddressSortUseCase,
     private val addressRoutingUseCase: AddressRoutingUseCase,
-) : BaseViewModel(state) {
+    @ApplicationContext private val context: Context,
+) : BaseViewModel(state, context) {
 
     val exportFileNameField: Field<String> =
         fileNameField(isRequired = true, initialValue = EXPORT_FILE_NAME_DEFAULT)
@@ -113,7 +112,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         _resultItemsState.asStateFlow()
     }
 
-    val lastLocation by lazy {
+    val lastLocation: StateFlow<Address.Location?> by lazy {
         _lastLocation.asStateFlow()
     }
 
@@ -123,9 +122,10 @@ class AddressSorterViewModel @AssistedInject constructor(
         }.stateIn(viewModelScope, SharingStarted.Eagerly, LoadState.initial(emptyList()))
     }
 
-    private val _resultItemsState = MutableStateFlow<LoadState<List<AddressInputData>>>(LoadState.initial(emptyList()))
+    private val _resultItemsState =
+        MutableStateFlow<LoadState<List<AddressInputData>>>(LoadState.initial(emptyList()))
 
-    private val _lastLocation =  MutableStateFlow<Address.Location?>(null)
+    private val _lastLocation = MutableStateFlow<Address.Location?>(null)
 
 //    private val suggestsLiveData = MutableLiveData<Map<Int, LoadState<List<AddressSuggestItem>>>>(mapOf())
 
@@ -133,10 +133,10 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     private val suggestFlowMap = mutableMapOf<Long, FlowInfo>()
 
-    private val items: Flow<List<AddressItem>> = repo.lastAddresses.transform {
-        emit(it.map { address ->
+    private val items: Flow<List<AddressItem>> = repo.lastAddresses.map {
+        it.map { address ->
             address.toUi()
-        })
+        }
     }
 
     override fun onInitialized() {
@@ -184,7 +184,7 @@ class AddressSorterViewModel @AssistedInject constructor(
 
     fun doRefresh() {
         removeSnackbarsFromQueue()
-        _resultItemsState.value = LoadState.loading(_resultItemsState.value?.data.orEmpty())
+        _resultItemsState.value = LoadState.loading(_resultItemsState.value.data.orEmpty())
 
         viewModelScope.launch {
 
@@ -192,7 +192,7 @@ class AddressSorterViewModel @AssistedInject constructor(
 
             suspend fun doAddressSort() {
                 val result = addressSortUseCase.invoke(lastLocation.value)
-                val currentData = _resultItemsState.value?.data.orEmpty()
+                val currentData = _resultItemsState.value.data.orEmpty()
                 if (result is ExecuteResult.Error) {
                     val e = result.exception
 
@@ -215,7 +215,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                                 val data = it.getData()
                                 if (data != null) {
                                     val key = withContext(Dispatchers.IO) {
-                                        data.downloadInfo?.localUri?.readString(baseApplicationContext.contentResolver)
+                                        data.downloadInfo?.localUri?.readString(context.contentResolver)
                                             .orEmpty()
                                     }
                                     if (key.isNotEmpty()) {
@@ -509,7 +509,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                                     val data = it.getData()
                                     if (data != null) {
                                         val key = withContext(Dispatchers.IO) {
-                                            data.downloadInfo?.localUri?.readString(baseApplicationContext.contentResolver)
+                                            data.downloadInfo?.localUri?.readString(context.contentResolver)
                                                 .orEmpty()
                                         }
                                         if (key.isNotEmpty()) {
@@ -718,7 +718,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     private fun enqueueDownloadRoutingKey(): DownloadService.Params {
-        val params = DownloadParamsModel(routingKeyUrl).toParams()
+        val params = DownloadParamsModel(routingKeyUrl).toParams(context)
         DownloadService.Params(
             params.requestParams,
             null,

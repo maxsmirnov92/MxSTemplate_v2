@@ -42,7 +42,7 @@ class FileStorage(
             var tempLock: FileLockInfo? = null
             var uri: Uri? = null
             try {
-                val dirPath = type.dirPath(context, params.subDirPath)
+                val dirPath = type.dirPath(context, baseAppDir, params.subDirPath)
                 val targetName = if (!params.replaceFile) {
                     uniqueNameFor(dirPath, params.targetResourceName)
                 } else {
@@ -62,7 +62,7 @@ class FileStorage(
                 // (или с номером, если уже существует)
                 val newFile = renameFileOrThrow(
                     tempFile,
-                    tempFile.parent,
+                    tempFile.parent.orEmpty(),
                     targetName,
                     params.replaceFile,
                     false

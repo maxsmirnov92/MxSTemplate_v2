@@ -28,7 +28,10 @@ internal class CameraPicker(viewModelStoreOwner: ViewModelStoreOwner) : Concrete
         intent.putExtra(MediaStore.EXTRA_OUTPUT, viewModel.createCameraBox(params, context))
     }
 
-    override fun requiredPermissions(params: CameraPickerParams, context: Context): Array<String> {
+    override fun requiredPermissions(
+        params: CameraPickerParams,
+        context: Context,
+    ): Array<String> {
         return viewModel.requiredPermissions(params, context)
     }
 
@@ -36,7 +39,7 @@ internal class CameraPicker(viewModelStoreOwner: ViewModelStoreOwner) : Concrete
         params: CameraPickerParams,
         uri: Uri?,
         needPersistableAccess: Boolean,
-        context: Context
+        context: Context,
     ): Uri? {
         return viewModel.onPickResult(params, uri)
     }

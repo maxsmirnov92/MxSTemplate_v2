@@ -12,9 +12,9 @@ import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepositor
 import java.net.SocketException
 import java.net.SocketTimeoutException
 
-fun SettingsDataStoreRepository.observeNetworkStateWithSettings(): Flow<NetworkStateWithSettings> {
+fun SettingsDataStoreRepository.observeNetworkStateWithSettings(networkStateManager: NetworkStateManager): Flow<NetworkStateWithSettings> {
     return combine(
-        NetworkStateManager.asFlow(),
+        networkStateManager.asFlow(),
         settingsFlow
     ) { connectionInfo: NetworkStateManager.ConnectionInfo, settings: AppSettings ->
         NetworkStateWithSettings(connectionInfo, settings.retryDownloads, settings.loadByWiFiOnly)
@@ -22,9 +22,12 @@ fun SettingsDataStoreRepository.observeNetworkStateWithSettings(): Flow<NetworkS
 }
 
 @Throws(NoPreferableConnectivityException::class)
-fun Context.checkPreferableConnection(preferredConnectionTypes: Set<PreferableType>) {
+fun Context.checkPreferableConnection(
+    networkStateManager: NetworkStateManager,
+    preferredConnectionTypes: Set<PreferableType>,
+) {
     var hasPreferableConnection = true
-    val connectionInfo = NetworkStateManager.getConnectionInfo()
+    val connectionInfo = networkStateManager.getConnectionInfo()
     if (connectionInfo.has &&
             (connectionInfo.hasWiFi != null || connectionInfo.hasCellular != null)
             && preferredConnectionTypes.isNotEmpty()

@@ -5,9 +5,7 @@ import dagger.hilt.android.EntryPointAccessors
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.NavigationAction
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.ui.R
-import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.rate.BaseRateAppComponentDelegate
 import net.maxsmr.mobile_services.IMobileServicesAvailability
@@ -26,7 +24,7 @@ class MainRateAppComponentDelegate(
 
     override fun navigateToMarket() {
         if (!EntryPointAccessors.fromApplication(
-                    baseApplicationContext,
+                    host,
                     MobileServicesFeatureEntryPoint::class.java
                 ).marketIntentLauncher.startActivityMarketIntent(host)
         ) {

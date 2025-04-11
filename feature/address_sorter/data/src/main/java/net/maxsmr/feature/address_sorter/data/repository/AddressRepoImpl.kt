@@ -1,5 +1,6 @@
 package net.maxsmr.feature.address_sorter.data.repository
 
+import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,7 +15,6 @@ import net.maxsmr.commonutils.compareFloats
 import net.maxsmr.commonutils.compareLongs
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.execute.ExecuteResult
 import net.maxsmr.core.database.dao.UpsertDao.Companion.NO_ID
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
@@ -28,11 +28,10 @@ import net.maxsmr.core.domain.entities.feature.address_sorter.SortPriority
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 
 class AddressRepoImpl(
+    private val context: Context,
     private val dao: AddressDao,
     private val settingsRepo: SettingsDataStoreRepository,
 ) : AddressRepo {
-
-    private val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("AddressRepoImpl")
 
     private val ioDispatcher = Dispatchers.IO
 
@@ -129,7 +128,7 @@ class AddressRepoImpl(
                 entity.sortOrder,
                 (geocodeResult as? ExecuteResult.Success)?.data?.location,
                 (geocodeResult as? ExecuteResult.Error)?.errorMessage()
-                    ?.get(baseApplicationContext)?.toString(),
+                    ?.get(context)?.toString(),
             )
             dao.upsert(result)
         }

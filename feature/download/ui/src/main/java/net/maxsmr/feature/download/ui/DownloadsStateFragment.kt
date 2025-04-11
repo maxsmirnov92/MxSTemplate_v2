@@ -299,7 +299,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel, Standar
                                 append(path)
                             }
                             if (state is DownloadStateNotifier.DownloadState.Success) {
-                                formatSizeSingle(state.resourceLength, SizeUnit.BYTES, precision = 2)?.let { size ->
+                                formatSizeSingle(state.getResourceLength(requireContext()), SizeUnit.BYTES, precision = 2)?.let { size ->
                                     appendSeparator(2)
                                     append(size.get(context))
                                 }

@@ -1,5 +1,6 @@
 package net.maxsmr.feature.webview.ui
 
+import android.content.Context
 import android.net.Uri
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -15,7 +16,7 @@ import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
 import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData.Companion.fromWebViewData
 
-open class BaseWebViewModel(state: SavedStateHandle) : BaseViewModel(state) {
+open class BaseWebViewModel(state: SavedStateHandle, context: Context) : BaseViewModel(state, context) {
 
     /**
      * Первые данные в WebView с состоянием загрузки/ошибки - после очередного вызова loadUrl/loadData

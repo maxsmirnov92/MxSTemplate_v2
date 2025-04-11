@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -26,15 +27,14 @@ import net.maxsmr.core.android.base.actions.SnackbarExtraData.SnackbarLength
 import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.android.baseAppName
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.ContentType
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.field.BooleanFieldWithState
-import net.maxsmr.core.ui.field.createNonEmptyField
 import net.maxsmr.core.ui.field.createField
+import net.maxsmr.core.ui.field.createNonEmptyField
 import net.maxsmr.core.ui.field.createTextField
 import net.maxsmr.core.ui.field.fileNameField
 import net.maxsmr.core.ui.field.subDirNameField
@@ -51,7 +51,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     @Assisted private val viewModel: DownloadsViewModel,
     private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
-) : BaseViewModel(state) {
+    @ApplicationContext private val context: Context,
+) : BaseViewModel(state, context) {
 
     val urlField: Field<String> = urlField(
         hintResId = R.string.download_field_url_hint,
@@ -122,7 +123,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         ContentStorage.createUriStorage(
             ContentStorage.StorageType.SHARED,
             ContentType.DOCUMENT,
-            baseApplicationContext
+            context
         )
     }
 

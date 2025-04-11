@@ -20,7 +20,8 @@ import net.maxsmr.core.ui.field.urlField
 
 abstract class BaseCustomizableWebViewModel(
     state: SavedStateHandle,
-) : BaseWebViewModel(state) {
+    context: Context
+) : BaseWebViewModel(state, context) {
 
     val urlField: Field<String> = urlField(
         hintResId = R.string.webview_dialog_open_url_field_hint,

@@ -1,11 +1,11 @@
 package net.maxsmr.core.ui.components.activities
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.di.EXTRA_CALLER_CLASS_NAME
 import net.maxsmr.core.ui.components.BaseApplication
 import net.maxsmr.permissionchecker.PermissionsCallbacks
@@ -15,10 +15,11 @@ open class BaseActivity : AppCompatActivity() {
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
-    open val canUseComponentDelegates: Boolean get() {
-        val app = baseApplicationContext as BaseApplication
-        return app.isActivityFirstAndSingle(javaClass)
-    }
+    open val canUseComponentDelegates: Boolean
+        get() {
+            val app = application as BaseApplication
+            return app.isActivityFirstAndSingle(javaClass)
+        }
 
     protected val callerClass: Class<*>?
         get() = intent?.getStringExtra(EXTRA_CALLER_CLASS_NAME)?.takeIf { it.isNotEmpty() }?.let {
@@ -36,6 +37,7 @@ open class BaseActivity : AppCompatActivity() {
      */
     private val permissionResultListeners = mutableMapOf<Int, PermissionsHelper.ResultListener?>()
 
+    @SuppressLint("MissingSuperCall")
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)

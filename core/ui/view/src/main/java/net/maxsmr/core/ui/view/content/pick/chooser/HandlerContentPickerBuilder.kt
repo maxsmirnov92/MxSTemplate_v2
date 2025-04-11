@@ -6,7 +6,10 @@ import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.permissions.ICanAskPermissions
 
-class HandlerContentPickerBuilder<T>(host: T) : ContentPicker.Builder<T>(host,
+class HandlerContentPickerBuilder<T>(
+    host: T,
+) : ContentPicker.Builder<T>(
+    host,
     object : ContentPicker.PermissionHandler {
 
         override fun handle(

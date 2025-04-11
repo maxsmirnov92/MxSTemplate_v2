@@ -15,12 +15,12 @@ import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.ALGORITHM_SHA1
-import net.maxsmr.commonutils.flow.observe
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.unsubscribeIf
@@ -29,7 +29,6 @@ import net.maxsmr.commonutils.media.takePersistableReadPermission
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
@@ -57,8 +56,9 @@ class DownloadsViewModel @Inject constructor(
     private val downloadRepo: DownloadsRepo,
     private val downloadManager: DownloadManager,
     @BaseJson private val json: Json,
+    @ApplicationContext private val context: Context,
     state: SavedStateHandle,
-) : BaseViewModel(state) {
+) : BaseViewModel(state, context) {
 
     val downloadsInfos: LiveData<List<DownloadInfo>> = downloadRepo.get().asLiveData()
 
@@ -142,7 +142,7 @@ class DownloadsViewModel @Inject constructor(
                         list.forEach {
                             it.bodyUri?.toUri()?.takePersistableReadPermission(contentResolver)
                             // тип заранее неизвестен, не игнорируем из ответа
-                            downloadManager.enqueueDownloadSuspended(it.toParams())
+                            downloadManager.enqueueDownloadSuspended(it.toParams(context))
                             // delay необходим из-за особенности кривых suspend'ов:
                             // следом за незавершённым enqueueDownloadSuspended пойдёт ещё один
                             delay(500)
@@ -163,7 +163,7 @@ class DownloadsViewModel @Inject constructor(
         mimeType: String? = null,
         mimeTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
     ): DownloadService.Params {
-        val params = paramsModel.toParams(mimeType, mimeTypeRule)
+        val params = paramsModel.toParams(context, mimeType, mimeTypeRule)
         enqueueDownload(params)
         return params
     }
@@ -282,6 +282,7 @@ class DownloadsViewModel @Inject constructor(
 
         @JvmStatic
         fun DownloadParamsModel.toParams(
+            context: Context,
             mimeType: String? = null,
             mimeTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
         ): DownloadService.Params = with(this) {
@@ -292,7 +293,7 @@ class DownloadsViewModel @Inject constructor(
             } ?: HashInfo(ALGORITHM_SHA1, EMPTY_STRING) // если не указан - считаем в итоге по тому же алгоритму
 
             val notificationParams = DownloadService.NotificationParams(
-                successActions = defaultSuccessNotificationActions(baseApplicationContext)
+                successActions = defaultSuccessNotificationActions(context)
             )
 
             // не спрашивать из ответа тип, если он известен заранее
@@ -303,6 +304,7 @@ class DownloadsViewModel @Inject constructor(
                     url,
                     fileName,
                     DownloadService.RequestParams.Body(
+                        context,
                         DownloadService.RequestParams.Body.Uri(bodyUri),
                     ),
                     ignoreAttachment = ignoreAttachment,

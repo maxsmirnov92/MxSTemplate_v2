@@ -74,7 +74,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
-    private val adapter = AddressInputAdapter(this)
+    private val adapter by lazy { AddressInputAdapter(this) }
 
     private val touchHelper: ItemTouchHelper = ItemTouchHelper(DragAndDropTouchHelperCallback(adapter)).also {
         adapter.startDragListener = object : OnStartDragHelperListener(it) {

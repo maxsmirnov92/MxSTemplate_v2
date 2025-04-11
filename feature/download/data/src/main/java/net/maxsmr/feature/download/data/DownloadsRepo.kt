@@ -20,8 +20,9 @@ import kotlin.random.Random
 @Singleton
 class DownloadsRepo @Inject constructor(
     private val dao: DownloadsDao,
-    private val cacheRepo: CacheDataStoreRepository
-    ) {
+    private val cacheRepo: CacheDataStoreRepository,
+    private val hashManager: DownloadsHashManager
+) {
 
     private val intentSenderFlow = MutableStateFlow<VmEvent<IntentSenderParams>?>(null)
 
@@ -100,7 +101,7 @@ class DownloadsRepo @Inject constructor(
         val downloaded = getByNameAndExt(resourceName, ext) ?: return null
         val success = downloaded.statusAsSuccess ?: return null
         val initialHashInfo = success.initialHashInfo
-        if (initialHashInfo != null && DownloadsHashManager.checkHash(success.localUri, initialHashInfo)) {
+        if (initialHashInfo != null && hashManager.checkHash(success.localUri, initialHashInfo)) {
             return downloaded
         }
         return null

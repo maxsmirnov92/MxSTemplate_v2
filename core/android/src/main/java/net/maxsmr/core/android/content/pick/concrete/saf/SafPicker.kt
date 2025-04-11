@@ -12,12 +12,17 @@ import net.maxsmr.core.android.content.pick.concrete.ConcretePicker
  */
 internal class SafPicker : ConcretePicker<SafPickerParams> {
 
-    override fun intent(params: SafPickerParams, context: Context): Intent =
-        getOpenDocumentIntent(params.intentType, params.mimeTypes).apply {
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
+    override fun intent(
+        params: SafPickerParams,
+        context: Context,
+    ): Intent = getOpenDocumentIntent(params.intentType, params.mimeTypes).apply {
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
 
-    override fun requiredPermissions(params: SafPickerParams, context: Context): Array<String> = params.requiredPermissions
+    override fun requiredPermissions(
+        params: SafPickerParams,
+        context: Context,
+    ): Array<String> = params.requiredPermissions
 
     override fun onPickResult(
         params: SafPickerParams,

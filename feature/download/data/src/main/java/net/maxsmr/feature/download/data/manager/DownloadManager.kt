@@ -1,6 +1,8 @@
 package net.maxsmr.feature.download.data.manager
 
+import android.content.Context
 import androidx.core.net.toUri
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,8 +35,8 @@ import net.maxsmr.commonutils.openOutputStream
 import net.maxsmr.commonutils.readObject
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.writeObject
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.appendToSet
+import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
 import net.maxsmr.core.domain.entities.feature.network.Method
@@ -62,6 +64,9 @@ class DownloadManager @Inject constructor(
     private val downloadsRepo: DownloadsRepo,
     private val settingsRepo: SettingsDataStoreRepository,
     private val notifier: DownloadStateNotifier,
+    @ApplicationContext
+    private val context: Context,
+    private val networkStateManager: NetworkStateManager,
 ) {
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("DownloadManager")
@@ -69,11 +74,11 @@ class DownloadManager @Inject constructor(
     // Executors.newSingleThreadExecutor().asCoroutineDispatcher()
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
-    private val downloadsPendingStorage = QueueFileStorage("download_pending_queue")
+    private val downloadsPendingStorage = QueueFileStorage(context, "download_pending_queue")
 
-    private val downloadsStorage = QueueFileStorage("download_queue")
+    private val downloadsStorage = QueueFileStorage(context, "download_queue")
 
-    private val downloadsFinishedStorage = QueueFileStorage("download_finished_queue")
+    private val downloadsFinishedStorage = QueueFileStorage(context, "download_finished_queue")
 
     /**
      * Очередь загрузок, ожидающая запуска: итемы удаляются после старта сервиса с любым результатом
@@ -215,7 +220,7 @@ class DownloadManager @Inject constructor(
                 settingsRepo.settingsFlow
             ) { v1, v2, v3, _ ->
                 DownloadState(v1, v2, v3)
-            }.collectLatest {
+            }.collect {
                 refreshQueue()
             }
         }
@@ -384,7 +389,7 @@ class DownloadManager @Inject constructor(
         }
 
         scope.launch {
-            settingsRepo.observeNetworkStateWithSettings().collect { stateWithSettings ->
+            settingsRepo.observeNetworkStateWithSettings(networkStateManager).collect { stateWithSettings ->
                 if (!stateWithSettings.shouldRetry) return@collect
 
                 val retryDownloads = downloadsRepo.getRaw().filter {
@@ -613,7 +618,7 @@ class DownloadManager @Inject constructor(
             // непустой id есть только на стадии, когда загрузка в downloadsQueue
             if (downloadsQueue.value.any { it.downloadId == downloadId }) {
                 logger.i("Cancel downloadId $downloadId with DownloadService")
-                DownloadService.cancel(downloadId)
+                DownloadService.cancel(downloadId, context)
             }
         }
     }
@@ -632,7 +637,7 @@ class DownloadManager @Inject constructor(
             downloadsQueue.value.forEach {
                 it.downloadId?.let { downloadId ->
                     logger.i("Cancel downloadId $downloadId with DownloadService")
-                    DownloadService.cancel(downloadId)
+                    DownloadService.cancel(downloadId, context)
                 }
             }
         }
@@ -715,7 +720,7 @@ class DownloadManager @Inject constructor(
             downloadsQueue.value.find { it.params.isSameFunc(params) }?.let {
                 it.downloadId?.let { id ->
                     // есть в downloadsQueue - значит выполняется в сервисе
-                    DownloadService.cancel(id)
+                    DownloadService.cancel(id, context)
                 }
             }
         }
@@ -812,7 +817,7 @@ class DownloadManager @Inject constructor(
         }
         if (withUri) {
             downloadsRepo.getById(downloadId)?.takeIf { it.isSuccess }?.let {
-                it.localUri?.delete(baseApplicationContext.contentResolver)
+                it.localUri?.delete(context.contentResolver)
             }
         }
         if (withDb) {
@@ -869,7 +874,7 @@ class DownloadManager @Inject constructor(
                                 updateNotificationInterval = settings.updateNotificationInterval
                             ) /*?: DownloadService.NotificationParams(
                                 updateNotificationInterval = settings.updateNotificationInterval,
-                                successActions = DownloadsViewModel.defaultNotificationActions(baseApplicationContext)
+                                successActions = DownloadsViewModel.defaultNotificationActions(context)
                             )*/
                         },
                         resourceName,
@@ -885,7 +890,7 @@ class DownloadManager @Inject constructor(
                 }
 
                 // пропуск, если уже есть в запущенных через start сервиса
-                if (!DownloadService.start(item.params.getActualParams())) {
+                if (!DownloadService.start(item.params.getActualParams(), context)) {
                     // при размере буфера 0 и BufferOverflow.SUSPEND tryEmit не сработает
                     logger.e("DownloadService start failed with item $item")
                     _failedStartParamsEvents.emit(item.params)
@@ -970,8 +975,9 @@ class DownloadManager @Inject constructor(
     }
 
     private class QueueFileStorage(
+        context: Context,
         path: String,
-        parentPath: String = baseApplicationContext.filesDir.absolutePath,
+        parentPath: String = context.filesDir.absolutePath,
     ) {
 
         private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("QueueFileStorage.$path")

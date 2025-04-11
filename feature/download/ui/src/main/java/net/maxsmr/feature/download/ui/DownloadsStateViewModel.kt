@@ -1,11 +1,13 @@
 package net.maxsmr.feature.download.ui
 
+import android.content.Context
 import android.content.DialogInterface
 import android.net.Uri
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -18,7 +20,6 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.media.isEmpty
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
@@ -31,9 +32,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DownloadsStateViewModel @Inject constructor(
-    state: SavedStateHandle,
     private val manager: DownloadManager,
-) : BaseViewModel(state) {
+    @ApplicationContext private val context: Context,
+    state: SavedStateHandle,
+) : BaseViewModel(state, context) {
 
     val queueNames = MutableStateFlow<List<String>>(emptyList())
 
@@ -104,7 +106,7 @@ class DownloadsStateViewModel @Inject constructor(
                 TextMessage(R.string.download_dialog_confirm_title),
                 onSelect = {
                     if (it == DialogInterface.BUTTON_POSITIVE) {
-                        DownloadService.cancelAll()
+                        DownloadService.cancelAll(context)
                     }
                 }
             )
@@ -180,7 +182,7 @@ class DownloadsStateViewModel @Inject constructor(
             withContext(Dispatchers.Main.immediate) {
                 AlertDialogBuilder(DIALOG_TAG_PROGRESS).build()
             }
-            if (downloadUri.isEmpty(baseApplicationContext.contentResolver)) {
+            if (downloadUri.isEmpty(context.contentResolver)) {
                 withContext(Dispatchers.Main.immediate) {
                     showSnackbar(
                         TextMessage(

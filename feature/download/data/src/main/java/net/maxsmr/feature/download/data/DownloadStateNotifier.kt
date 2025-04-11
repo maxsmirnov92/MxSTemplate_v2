@@ -1,5 +1,6 @@
 package net.maxsmr.feature.download.data
 
+import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -8,7 +9,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.media.length
 import net.maxsmr.core.ProgressListener
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.database.model.download.DownloadInfo
 import java.io.Serializable
 import javax.inject.Inject
@@ -95,7 +95,7 @@ class DownloadStateNotifier @Inject constructor() {
         val params: DownloadService.Params,
         val isStarted: Boolean,
         val downloadInfo: DownloadInfo? = null,
-    ): Serializable {
+    ) : Serializable {
 
         override fun toString(): String {
             return "DownloadStartInfo(params=$params, isStarted=$isStarted, downloadInfo=$downloadInfo)"
@@ -165,7 +165,7 @@ class DownloadStateNotifier @Inject constructor() {
             oldParams: DownloadService.Params,
         ) : DownloadState(downloadInfo, params, oldParams) {
 
-            val resourceLength get() = downloadInfo.localUri?.length(baseApplicationContext.contentResolver) ?: 0
+            fun getResourceLength(context: Context) = downloadInfo.localUri?.length(context.contentResolver) ?: 0
 
             override fun toString(): String {
                 return "DownloadState.Success(downloadInfo=$downloadInfo, params=$params, oldParams=$oldParams)"

@@ -1,8 +1,9 @@
 package net.maxsmr.feature.address_sorter.data.usecase
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.execute.usecase.UseCase
 import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
@@ -25,6 +26,7 @@ class AddressRoutingUseCase @Inject constructor(
     private val settingsRepo: SettingsDataStoreRepository,
     private val routingDataSource: RoutingDataSource,
     private val suggestDataSource: SuggestDataSource,
+    @ApplicationContext private val context: Context,
 ) : UseCase<AddressRoutingUseCase.Params, AddressRoute>(Dispatchers.Default) {
 
     override suspend fun execute(parameters: Params): AddressRoute {
@@ -42,14 +44,14 @@ class AddressRoutingUseCase @Inject constructor(
 
         // в этом UseCase не апдейтится routingErrorMessage в итеме
         return if (lastLocation == null || mode == RoutingMode.NO_CHANGE) {
-            val item = addressRepo.get(parameters.id) ?: throw EmptyResultException(baseApplicationContext, false)
+            val item = addressRepo.get(parameters.id) ?: throw EmptyResultException(context, false)
             val distance = item.distance ?: throw RoutingFailedException(listOf(parameters.id to Route.Status.FAIL))
             AddressRoute(parameters.id, distance, item.duration)
         } else if (mode.isApi) {
 
             if (mode == RoutingMode.SUGGEST) {
-                val item = addressRepo.get(parameters.id) ?: throw EmptyResultException(baseApplicationContext, false)
-                val distance = suggestDataSource.suggest(item.address, lastLocation).getOrNull(0)?.distance ?: throw EmptyResultException(baseApplicationContext, true)
+                val item = addressRepo.get(parameters.id) ?: throw EmptyResultException(context, false)
+                val distance = suggestDataSource.suggest(item.address, lastLocation).getOrNull(0)?.distance ?: throw EmptyResultException(context, true)
                 AddressRoute(parameters.id, distance, null)
             } else {
 
@@ -73,7 +75,7 @@ class AddressRoutingUseCase @Inject constructor(
                         } else {
                             -1
                         }
-                    }[parameters.id] ?: throw EmptyResultException(baseApplicationContext, true)
+                    }[parameters.id] ?: throw EmptyResultException(context, true)
                 } catch (e: Exception) {
                     logger.e(formatException(e, "getDistanceMatrix"))
                     throw e

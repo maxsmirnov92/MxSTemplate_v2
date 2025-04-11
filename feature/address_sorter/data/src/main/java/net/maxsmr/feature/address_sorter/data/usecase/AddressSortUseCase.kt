@@ -1,8 +1,9 @@
 package net.maxsmr.feature.address_sorter.data.usecase
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.execute.usecase.UseCase
 import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
@@ -26,6 +27,7 @@ class AddressSortUseCase @Inject constructor(
     private val settingsRepo: SettingsDataStoreRepository,
     private val routingDataSource: RoutingDataSource,
     private val suggestDataSource: SuggestDataSource,
+    @ApplicationContext private val context: Context,
 ) : UseCase<Address.Location?, List<Address>>(Dispatchers.Default) {
 
     override suspend fun execute(parameters: Address.Location?): List<Address> {
@@ -98,7 +100,7 @@ class AddressSortUseCase @Inject constructor(
                             routingDataSource.getDistanceMatrix(request) {
                                 points.getOrNull(it.toInt())?.key ?: -1
                             }.takeIf { it.isNotEmpty() }
-                                ?: throw EmptyResultException(baseApplicationContext, true)
+                                ?: throw EmptyResultException(context, true)
                         } catch (e: Exception) {
                             logger.e(formatException(e, "getDistanceMatrix"))
                             throw e
@@ -125,7 +127,8 @@ class AddressSortUseCase @Inject constructor(
                                 errorMessagesMap = newMap
                             )
                         } else {
-                            newMap[Address.ErrorType.ROUTING] = baseApplicationContext.getString(routePair.second.getDisplayedMessageResId())
+                            newMap[Address.ErrorType.ROUTING] =
+                                context.getString(routePair.second.getDisplayedMessageResId())
                             address.copy(
                                 errorMessagesMap = newMap
                             )
@@ -135,8 +138,9 @@ class AddressSortUseCase @Inject constructor(
                         if (address.isSuggested) {
                             // предполагается быть с location
                             missingLocationIds.add(address.id)
-                            newMap[Address.ErrorType.ROUTING] = baseApplicationContext.getString(R.string.address_sorter_error_missing_location)
-                            address.copy(errorMessagesMap =  newMap)
+                            newMap[Address.ErrorType.ROUTING] =
+                                context.getString(R.string.address_sorter_error_missing_location)
+                            address.copy(errorMessagesMap = newMap)
                         } else {
                             address
                         }
@@ -168,14 +172,16 @@ class AddressSortUseCase @Inject constructor(
                         } else {
                             if (location != null) {
                                 failRouteIds.add(it.id to Route.Status.FAIL)
-                                newMap[Address.ErrorType.ROUTING] = baseApplicationContext.getString(Route.Status.FAIL.getDisplayedMessageResId())
+                                newMap[Address.ErrorType.ROUTING] =
+                                    context.getString(Route.Status.FAIL.getDisplayedMessageResId())
                                 it.copy(
                                     errorMessagesMap = newMap
                                 )
                             } else {
                                 if (it.isSuggested) {
-                                    newMap[Address.ErrorType.ROUTING] =baseApplicationContext.getString(R.string.address_sorter_error_missing_location)
-                                        it.copy(errorMessagesMap = newMap)
+                                    newMap[Address.ErrorType.ROUTING] =
+                                        context.getString(R.string.address_sorter_error_missing_location)
+                                    it.copy(errorMessagesMap = newMap)
                                 } else {
                                     it
                                 }

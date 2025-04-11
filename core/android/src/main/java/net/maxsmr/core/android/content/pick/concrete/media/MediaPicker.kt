@@ -12,13 +12,19 @@ import net.maxsmr.core.android.content.pick.concrete.ConcretePicker
  */
 internal class MediaPicker : ConcretePicker<MediaPickerParams> {
 
-    override fun intent(params: MediaPickerParams, context: Context): Intent {
+    override fun intent(
+        params: MediaPickerParams,
+        context: Context,
+    ): Intent {
         return Intent(Intent.ACTION_PICK, params.contentType.mediaStoreExternalContentUri).apply {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     }
 
-    override fun requiredPermissions(params: MediaPickerParams, context: Context): Array<String> = params.requiredPermissions
+    override fun requiredPermissions(
+        params: MediaPickerParams,
+        context: Context,
+    ): Array<String> = params.requiredPermissions
 
     override fun onPickResult(
         params: MediaPickerParams,

@@ -9,7 +9,6 @@ import dagger.hilt.components.SingletonComponent
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.network.NetworkConnectivityChecker
-import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.di.DownloadHttpLoggingInterceptor
 import net.maxsmr.core.di.PicassoHttpLoggingInterceptor
 import net.maxsmr.core.di.ResponseBodyCache
@@ -59,10 +58,10 @@ class InterceptorModule {
     }
 
     @[Provides Singleton]
-    fun provideForceCacheInterceptor(): Interceptor {
+    fun provideForceCacheInterceptor(connectivityChecker: NetworkConnectivityChecker): Interceptor {
         return Interceptor { chain ->
             val builder = chain.request().newBuilder()
-            if (!NetworkStateManager.hasConnection()) {
+            if (!connectivityChecker.isConnected()) {
                 builder.cacheControl(CacheControl.FORCE_CACHE)
             }
             chain.proceed(builder.build())
@@ -79,7 +78,8 @@ class InterceptorModule {
     @[Provides Singleton]
     fun provideNetworkConnectionInterceptor(
         @ApplicationContext context: Context,
+        connectivityChecker: NetworkConnectivityChecker
     ): NetworkConnectionInterceptor {
-        return NetworkConnectionInterceptor(context, NetworkConnectivityChecker)
+        return NetworkConnectionInterceptor(context, connectivityChecker)
     }
 }

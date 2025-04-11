@@ -1,8 +1,10 @@
 package net.maxsmr.feature.address_sorter.data.di
 
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.database.dao.address_sorter.AddressDao
@@ -21,10 +23,12 @@ object AddressSorterRepositoryModule {
 
     @[Provides Singleton]
     fun providesAddressRepository(
+        @ApplicationContext context: Context,
         dao: AddressDao,
         settingsRepo: SettingsDataStoreRepository,
     ): AddressRepo {
         return AddressRepoImpl(
+            context,
             dao,
             settingsRepo
         )

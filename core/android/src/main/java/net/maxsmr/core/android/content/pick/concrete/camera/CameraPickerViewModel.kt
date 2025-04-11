@@ -3,6 +3,8 @@ package net.maxsmr.core.android.content.pick.concrete.camera
 import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.media.toContentUri
 import net.maxsmr.core.android.base.BaseViewModel
@@ -10,10 +12,13 @@ import net.maxsmr.core.android.base.delegates.persistableValue
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.android.content.storage.ContentStorage.Companion.createUriStorage
 import java.util.Date
+import javax.inject.Inject
 
-internal class CameraPickerViewModel(
+@HiltViewModel
+internal class CameraPickerViewModel @Inject constructor(
     state: SavedStateHandle,
-) : BaseViewModel(state) {
+    @ApplicationContext context: Context,
+) : BaseViewModel(state, context) {
 
     private var photoResultUri: Uri? by persistableValue()
     private var videoResultUri: Uri? by persistableValue()
@@ -21,7 +26,10 @@ internal class CameraPickerViewModel(
     private var storage: ContentStorage<Uri>? = null
     private var storageType: ContentStorage.StorageType? = null
 
-    fun init(params: CameraPickerParams, context: Context) {
+    fun init(
+        params: CameraPickerParams,
+        context: Context,
+    ) {
         if (storageType != null && storageType == params.storageType) return
         storageType = params.storageType
         val contentType = params.pickType.toContentType()
@@ -51,7 +59,10 @@ internal class CameraPickerViewModel(
         }
     }
 
-    fun requiredPermissions(params: CameraPickerParams, context: Context): Array<String> {
+    fun requiredPermissions(
+        params: CameraPickerParams,
+        context: Context,
+    ): Array<String> {
         if (storage == null) {
             init(params, context)
         }

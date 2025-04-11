@@ -1,5 +1,6 @@
 package net.maxsmr.core.android.base.connection
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import net.maxsmr.commonutils.live.zipNotNull
@@ -12,10 +13,10 @@ import net.maxsmr.core.android.network.NetworkStateManager
 /**
  * Класс определяет логику обработки состояния сети. Хранится во ViewModel
  */
-class ConnectionManager() {
+class ConnectionManager(private val context: Context) {
 
     private val manualCheck: MutableLiveData<Boolean> by lazy { MutableLiveData<Boolean>() }
-    private val networkStateManager by lazy { NetworkStateManager }
+    private val networkStateManager by lazy { NetworkStateManager(context) }
 
     /**
      * Эмитит признак доступности соединения
@@ -45,7 +46,11 @@ class ConnectionManager() {
      * @param queue очередь сообщений, куда помещаются алерты об отсутствии сети. Null, если алерты не нужны
      * @param builder опциональный билдер на случай нестандартного алерта
      */
-    constructor(queue: AlertQueue, builder: AlertQueueItem.Builder? = null) : this() {
+    constructor(
+        context: Context,
+        queue: AlertQueue,
+        builder: AlertQueueItem.Builder? = null
+    ) : this(context) {
         this.queue = queue
         asLiveData.observeForever {
             if (it) {

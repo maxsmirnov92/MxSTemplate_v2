@@ -1,5 +1,6 @@
 package net.maxsmr.feature.download.ui.webview
 
+import android.content.Context
 import android.webkit.CookieManager
 import android.webkit.URLUtil
 import androidx.lifecycle.SavedStateHandle
@@ -15,7 +16,7 @@ import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewModel
 
 typealias ParamsModelWithType = Pair<DownloadParamsModel, String?>
 
-abstract class BaseDownloadableWebViewModel(state: SavedStateHandle) : BaseCustomizableWebViewModel(state) {
+abstract class BaseDownloadableWebViewModel(state: SavedStateHandle, context: Context) : BaseCustomizableWebViewModel(state, context) {
 
     val fileNameField: Field<String> = fileNameField(isRequired = true)
 

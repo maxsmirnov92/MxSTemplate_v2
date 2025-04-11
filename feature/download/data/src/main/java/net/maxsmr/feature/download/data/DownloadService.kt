@@ -43,17 +43,16 @@ import net.maxsmr.commonutils.service.startNoCheck
 import net.maxsmr.commonutils.service.stopForegroundCompat
 import net.maxsmr.commonutils.service.withMutabilityFlag
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.commonutils.toFile
 import net.maxsmr.commonutils.wrapChooserWithInitial
 import net.maxsmr.core.ProgressListener
-import net.maxsmr.core.android.baseAppName
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ShareStrategy
 import net.maxsmr.core.android.content.ViewStrategy
+import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
+import net.maxsmr.core.di.DI_NAME_APP_NAME
 import net.maxsmr.core.di.DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
 import net.maxsmr.core.di.DownloaderOkHttpClient
@@ -214,12 +213,16 @@ class DownloadService : Service() {
     lateinit var notifier: DownloadStateNotifier
 
     @Inject
-    @Named(DI_NAME_MAIN_ACTIVITY_CLASS)
+    lateinit var networkStateManager: NetworkStateManager
+
+    @Inject
+    lateinit var hashManager: DownloadsHashManager
+
+    @[Inject Named(DI_NAME_MAIN_ACTIVITY_CLASS)]
     lateinit var mainActivityClassName: String
 
     @JvmField
-    @Inject
-    @Named(DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD)
+    @[Inject Named(DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD)]
     var foregroundNotificationId: Int = -1
 
     override fun onCreate() {
@@ -391,7 +394,10 @@ class DownloadService : Service() {
             }
 
             try {
-                context.checkPreferableConnection(params.requestParams.preferredConnectionTypes)
+                context.checkPreferableConnection(
+                    networkStateManager,
+                    params.requestParams.preferredConnectionTypes
+                )
 
                 val client = okHttpClient.newBuilder().apply {
                     withTimeouts(params.requestParams.connectTimeout.takeIf { it >= 0 } ?: CONNECT_TIMEOUT_DEFAULT)
@@ -476,7 +482,7 @@ class DownloadService : Service() {
                 val thisHashInfo: HashInfo? = if (targetHashInfo != null) {
                     // есть алгоритм и целевой хэш
                     logger.i("Checking hash of \"$localUri\" with $targetHashInfo...")
-                    if (!DownloadsHashManager.checkHash(localUri, targetHashInfo)) {
+                    if (!hashManager.checkHash(localUri, targetHashInfo)) {
                         throw StoreException(
                             localUri.toString(),
                             message = "Loaded resource hash doesn't match with expected"
@@ -488,7 +494,7 @@ class DownloadService : Service() {
                     params.targetHashInfo?.algorithm?.takeIf { it.isNotEmpty() }?.let { algorithm ->
                         // считаем и запоминаем только если есть такое намерение в парамсах
                         logger.i("Calculating $algorithm hash for \"$localUri\"...")
-                        DownloadsHashManager.getHash(
+                        hashManager.getHash(
                             localUri,
                             algorithm
                         ).also {
@@ -554,7 +560,7 @@ class DownloadService : Service() {
             // В прошлой загрузке могли не запомнить хэш
             if (expectedHash != null) {
                 logger.d("Checking it hash with $expectedHash...")
-                if (DownloadsHashManager.checkHash(it.localUri, expectedHash)) {
+                if (hashManager.checkHash(it.localUri, expectedHash)) {
                     logger.d("Previous success download match: $prevDownload")
                     return prevDownload
                 }
@@ -568,7 +574,7 @@ class DownloadService : Service() {
         logger.d("Checking hashes with $expectedHash of other ${alreadyLoadedUris.count()} URIs...")
 
         return alreadyLoadedUris
-            .find { DownloadsHashManager.checkHash(it, expectedHash) }
+            .find { hashManager.checkHash(it, expectedHash) }
             ?.let {
                 DownloadInfo(
                     id = prevDownload?.id ?: 0,
@@ -678,7 +684,7 @@ class DownloadService : Service() {
                         it.iconResId,
                         it.notificationActionName.takeIf { it.isNotEmpty() }
                             ?: getString(R.string.download_notification_success_view_button),
-                        it.intent(uri, mimeType).toPendingIntent())
+                        it.intent(this@DownloadService, uri, mimeType).toPendingIntent())
 
                 }
                 notificationParams.actionIntent<NotificationParams.SuccessAction.Share>()?.let {
@@ -686,7 +692,7 @@ class DownloadService : Service() {
                         it.iconResId,
                         it.notificationActionName.takeIf { it.isNotEmpty() }
                             ?: getString(R.string.download_notification_success_share_button),
-                        it.intent(uri, mimeType).toPendingIntent())
+                        it.intent(this@DownloadService, uri, mimeType).toPendingIntent())
 
                 }
                 setContentIntent()
@@ -975,7 +981,6 @@ class DownloadService : Service() {
                 deleteUnfinished: Boolean = true,
                 notificationParams: NotificationParams,
             ): Params {
-                val baseSubDir = baseAppName
                 val fileName: String
                 val targetIgnoreFileName: Boolean
                 if (preferredFileName.isNullOrEmpty()) {
@@ -1002,7 +1007,7 @@ class DownloadService : Service() {
                     notificationParams,
                     fileName,
                     DownloadServiceStorage.Type.SHARED,
-                    if (subDir.isNullOrEmpty()) baseSubDir else toFile(subDir, baseSubDir)?.absolutePath,
+                    subDir,
                     targetHashInfo,
                     targetHashInfo != null,
                     replaceFile = replaceFile,
@@ -1034,7 +1039,6 @@ class DownloadService : Service() {
                 deleteUnfinished: Boolean = true,
                 notificationParams: NotificationParams,
             ): Params {
-                val baseSubDir = baseAppName
                 val fileName: String
                 val targetIgnoreFileName: Boolean
                 if (preferredFileName.isNullOrEmpty()) {
@@ -1060,7 +1064,7 @@ class DownloadService : Service() {
                     notificationParams,
                     fileName,
                     DownloadServiceStorage.Type.SHARED,
-                    if (subDir.isNullOrEmpty()) baseSubDir else toFile(subDir, baseSubDir)?.absolutePath,
+                    subDir,
                     targetHashInfo,
                     targetHashInfo != null,
                     replaceFile = replaceFile,
@@ -1113,12 +1117,16 @@ class DownloadService : Service() {
                     "connectTimeout=$connectTimeout)"
         }
 
-        class Body(val content: Serializable, val mimeType: String? = null) : Serializable {
+        class Body(
+            val context: Context,
+            val content: Serializable,
+            val mimeType: String? = null,
+        ) : Serializable {
 
             // не бросает исключения
             val isEmpty: Boolean
                 get() = when (content) {
-                    is Uri -> content.toUri()?.isEmpty(baseApplicationContext.contentResolver) != false
+                    is Uri -> content.toUri()?.isEmpty(context.contentResolver) != false
                     is File -> getFileLength(content) == 0L
                     is ByteArray -> content.isEmpty()
                     is String -> content.isEmpty()
@@ -1130,7 +1138,11 @@ class DownloadService : Service() {
                 val type = mimeType?.toMediaTypeOrNull()
                 return when (content) {
                     is Uri -> {
-                        ResourceUriRequestBody(content.toUriOrThrow(), mimeType)
+                        ResourceUriRequestBody(
+                            context,
+                            content.toUriOrThrow(),
+                            mimeType
+                        )
                     }
 
                     is File -> content.asRequestBody(
@@ -1294,9 +1306,9 @@ class DownloadService : Service() {
         val successActions: MutableSet<SuccessAction> = mutableSetOf(),
     ) : Serializable {
 
-//        val successSoundUri: Uri? get() = successSoundResId?.let { baseApplicationContext.rawResourceToUri(it) }
+//        val successSoundUri: Uri? get() = successSoundResId?.let { context.rawResourceToUri(it) }
 //
-//        val errorSoundUri: Uri? get() = errorSoundResId?.let { baseApplicationContext.rawResourceToUri(it) }
+//        val errorSoundUri: Uri? get() = errorSoundResId?.let { context.rawResourceToUri(it) }
 
         override fun toString(): String {
             return "NotificationParams(actions=$successActions)"
@@ -1323,10 +1335,14 @@ class DownloadService : Service() {
 
             abstract val notificationActionName: String
 
-            fun intent(uri: Uri, mimeType: String): Intent {
+            fun intent(
+                context: Context,
+                uri: Uri,
+                mimeType: String,
+            ): Intent {
                 logger.d("Success mimeType: $mimeType, action: $this")
                 // chooser title может не сработать для SEND/SEND_MULTIPLE
-                return createIntent(uri, mimeType).wrapChooserWithInitial(baseApplicationContext, chooserTitle)
+                return createIntent(uri, mimeType).wrapChooserWithInitial(context, chooserTitle)
             }
 
             protected abstract fun createIntent(uri: Uri, mimeType: String): Intent
@@ -1381,20 +1397,21 @@ class DownloadService : Service() {
     }
 
     private class ResourceUriRequestBody(
+        private val context: Context,
         private val uri: Uri,
         private val type: String? = null,
     ) : RequestBody() {
 
         override fun contentType(): MediaType? {
-            val contentType = type ?: uri.mimeTypeOrThrow(baseApplicationContext.contentResolver)
+            val contentType = type ?: uri.mimeTypeOrThrow(context.contentResolver)
             return contentType.toMediaTypeOrNull()
         }
 
-        override fun contentLength(): Long = uri.lengthOrThrow(baseApplicationContext.contentResolver)
+        override fun contentLength(): Long = uri.lengthOrThrow(context.contentResolver)
 
         @Throws(IOException::class)
         override fun writeTo(sink: BufferedSink) {
-            val inputStream = uri.openInputStreamOrThrow(baseApplicationContext.contentResolver)
+            val inputStream = uri.openInputStreamOrThrow(context.contentResolver)
             inputStream.source().use { source ->
                 sink.writeAll(source)
             }
@@ -1422,8 +1439,7 @@ class DownloadService : Service() {
          * Стартует сервис для загрузки 1 файла
          */
         @JvmStatic
-        @JvmOverloads
-        fun start(params: Params, context: Context = baseApplicationContext): Boolean {
+        fun start(params: Params, context: Context): Boolean {
             return startNoCheck(
                 context,
                 DownloadService::class.java,
@@ -1433,8 +1449,7 @@ class DownloadService : Service() {
         }
 
         @JvmStatic
-        @JvmOverloads
-        fun cancel(id: Long, context: Context = baseApplicationContext): Boolean {
+        fun cancel(id: Long, context: Context): Boolean {
             return startNoCheck(
                 context,
                 DownloadService::class.java,
@@ -1444,8 +1459,7 @@ class DownloadService : Service() {
         }
 
         @JvmStatic
-        @JvmOverloads
-        fun cancelAll(context: Context = baseApplicationContext): Boolean {
+        fun cancelAll(context: Context): Boolean {
             return startNoCheck(
                 context,
                 DownloadService::class.java,
@@ -1457,7 +1471,7 @@ class DownloadService : Service() {
         @JvmStatic
         @JvmOverloads
         fun getViewAction(
-            context: Context = baseApplicationContext,
+            context: Context,
             @StringRes chooserTitleRes: Int = net.maxsmr.core.ui.R.string.chooser_title_view,
             @StringRes notificationActionRes: Int = R.string.download_notification_success_view_button,
             @DrawableRes iconResId: Int = android.R.drawable.ic_menu_view,
@@ -1470,7 +1484,7 @@ class DownloadService : Service() {
         @JvmStatic
         @JvmOverloads
         fun getShareAction(
-            context: Context = baseApplicationContext,
+            context: Context,
             @StringRes chooserTitleRes: Int = net.maxsmr.core.ui.R.string.chooser_title_send,
             @StringRes notificationActionRes: Int = R.string.download_notification_success_share_button,
             @DrawableRes iconResId: Int = android.R.drawable.ic_menu_share,

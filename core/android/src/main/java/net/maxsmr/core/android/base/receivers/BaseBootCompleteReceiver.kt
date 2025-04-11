@@ -8,7 +8,6 @@ import androidx.annotation.CallSuper
 import androidx.annotation.RequiresApi
 import net.maxsmr.commonutils.isAtLeastNougat
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logException
-import net.maxsmr.core.android.baseApplicationContext
 
 abstract class BaseBootCompleteReceiver : BaseBroadcastReceiver() {
 

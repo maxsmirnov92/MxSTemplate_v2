@@ -112,7 +112,10 @@ class SharedStorage private constructor(
     companion object {
 
         @JvmStatic
-        fun create(type: ContentType, context: Context): AbsSharedStorage {
+        fun create(
+            type: ContentType,
+            context: Context,
+        ): AbsSharedStorage {
             return if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
                     || Build.VERSION.SDK_INT == Build.VERSION_CODES.Q && Environment.isExternalStorageLegacy()
             ) {

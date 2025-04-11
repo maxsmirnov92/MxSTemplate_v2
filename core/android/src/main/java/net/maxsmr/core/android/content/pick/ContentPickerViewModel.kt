@@ -1,7 +1,10 @@
 package net.maxsmr.core.android.content.pick
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
@@ -10,10 +13,13 @@ import net.maxsmr.core.android.base.delegates.persistableValue
 import net.maxsmr.core.android.content.pick.concrete.ConcretePicker
 import net.maxsmr.core.android.content.pick.concrete.ConcretePickerParams
 import net.maxsmr.core.android.content.pick.concrete.ConcretePickerType
+import javax.inject.Inject
 
-class ContentPickerViewModel(
+@HiltViewModel
+class ContentPickerViewModel @Inject constructor(
     state: SavedStateHandle,
-) : BaseViewModel(state) {
+    @ApplicationContext context: Context,
+) : BaseViewModel(state, context) {
 
     /**
      * Эмитит результаты взятия контента

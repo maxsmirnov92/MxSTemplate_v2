@@ -1,5 +1,6 @@
 package net.maxsmr.core.android.base
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.CallSuper
@@ -32,7 +33,6 @@ import net.maxsmr.core.android.base.alert.showOkAlert
 import net.maxsmr.core.android.base.alert.showYesNoAlert
 import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.content.pick.PickResult
-import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.NetworkException
 
@@ -52,6 +52,7 @@ import net.maxsmr.core.network.exceptions.NetworkException
  */
 abstract class BaseViewModel(
     val state: SavedStateHandle,
+    context: Context
 ) : ViewModel(), LifecycleOwner {
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
@@ -90,7 +91,7 @@ abstract class BaseViewModel(
     /**
      * Определяет логику обработки событий состояния сети. Переопределите, если требуется обработка.
      */
-    val connectionManager: ConnectionManager by lazy { ConnectionManager(snackbarQueue) }
+    val connectionManager: ConnectionManager by lazy { ConnectionManager(context, snackbarQueue) }
 
     private val lifecycleRegistry: LifecycleRegistry by lazy { LifecycleRegistry(this) }
 
@@ -219,13 +220,13 @@ abstract class BaseViewModel(
             .build()
     }
 
-    fun <T : Any> checkConnectionAndRun(targetAction: () -> T?): T? {
-        return if (checkConnection()) targetAction() else null
-    }
-
-    fun checkConnection(): Boolean = NetworkStateManager.hasConnection().also {
-        if (!it) showNoInternetDialog()
-    }
+//    fun <T : Any> checkConnectionAndRun(targetAction: () -> T?): T? {
+//        return if (checkConnection()) targetAction() else null
+//    }
+//
+//    fun checkConnection(): Boolean = NetworkStateManager.hasConnection().also {
+//        if (!it) showNoInternetDialog()
+//    }
 
     fun navigate(command: NavigationCommand.ToDirection) {
         _navigationCommands.tryEmit(VmEvent(NavigationAction(command)))

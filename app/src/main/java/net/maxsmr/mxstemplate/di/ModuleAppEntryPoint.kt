@@ -6,8 +6,10 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.di.BaseJson
+import net.maxsmr.core.di.DI_NAME_APP_NAME
 import net.maxsmr.mxstemplate.db.AppDataBase
 import net.maxsmr.mxstemplate.manager.UUIDManager
+import javax.inject.Named
 
 @[EntryPoint
 InstallIn(SingletonComponent::class)]
@@ -21,4 +23,7 @@ internal interface ModuleAppEntryPoint {
     fun picasso(): Picasso
 
     fun uuidManager(): UUIDManager
+
+    @Named(DI_NAME_APP_NAME)
+    fun appName(): String
 }

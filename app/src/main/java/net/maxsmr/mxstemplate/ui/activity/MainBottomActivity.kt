@@ -4,10 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.ui.components.activities.BaseBottomNavigationActivity
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import net.maxsmr.mxstemplate.App
 import net.maxsmr.mxstemplate.R
 import javax.inject.Inject
 

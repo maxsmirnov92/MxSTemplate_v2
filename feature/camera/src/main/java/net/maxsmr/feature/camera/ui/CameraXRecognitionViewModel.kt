@@ -1,6 +1,7 @@
 package net.maxsmr.feature.camera.ui
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.camera.core.CameraState
 import androidx.camera.core.ImageProxy
@@ -10,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
@@ -51,7 +53,8 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     @Assisted val imageAnalyzerExecutor: Executor,
     @Assisted val textMatcherUseCases: List<BaseTextMatcherUseCase<*>>,
     private val textRecognition: ITextRecognition,
-) : BaseViewModel(state) {
+    @ApplicationContext context: Context,
+) : BaseViewModel(state, context) {
 
     /**
      * Целевой тип камеры (совпадёт с фактическим при успешном подключении)

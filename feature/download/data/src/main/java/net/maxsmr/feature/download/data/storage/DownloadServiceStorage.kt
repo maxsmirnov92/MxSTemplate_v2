@@ -1,11 +1,14 @@
 package net.maxsmr.feature.download.data.storage
 
+import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.text.getExtension
+import net.maxsmr.commonutils.toFile
+import net.maxsmr.core.android.baseAppName
 import net.maxsmr.feature.download.data.DownloadService
 import java.io.File
 import java.io.OutputStream
@@ -15,7 +18,11 @@ abstract class DownloadServiceStorage(
     protected val type: Type,
 ) {
 
-    protected val contentResolver = context.contentResolver
+    protected open val baseAppDir: String = baseAppName
+
+    protected val contentResolver: ContentResolver by lazy {
+        context.contentResolver
+    }
 
     /**
      * Сохраняет загруженный файл в память девайса
@@ -30,12 +37,14 @@ abstract class DownloadServiceStorage(
         writeStreamFunc: (Uri, OutputStream, Long) -> Unit,
     ): Uri
 
+    protected abstract fun namesAt(fullDirPath: String, startsWith: String?): Set<UriAndName>
+
     /**
      * Возвращает список uri файлов, префикс названий которых совпадает с префиксом [DownloadService.Params.resourceName].
      * Префикс - это название ресурса до уникальной цифры (1) либо до расширения файла.
      */
     fun alreadyLoadedUris(params: DownloadService.Params): List<Uri> {
-        val dirPath = type.dirPath(context, params.subDirPath)
+        val dirPath = type.dirPath(context, baseAppDir, params.subDirPath)
         val baseNamePart = baseNamePart(params.targetResourceName)
         return namesAt(dirPath, baseNamePart).map { it.uri }
     }
@@ -81,9 +90,7 @@ abstract class DownloadServiceStorage(
         return if (existingNames.isEmpty() || index == null) srcName else appendIndexTo(srcName, index)
     }
 
-    protected abstract fun namesAt(fullDirPath: String, startsWith: String?): Set<UriAndName>
-
-    protected fun baseNamePart(name: String): String {
+    private fun baseNamePart(name: String): String {
         name.lastIndexOf(UNIQUE_NAME_PREFIX).takeIf { it != -1 }?.let {
             return name.substring(0, it)
         }
@@ -137,9 +144,14 @@ abstract class DownloadServiceStorage(
             }
         };
 
-        fun dirPath(context: Context, subDirPath: String?): String {
+        fun dirPath(
+            context: Context,
+            baseAppDir: String,
+            subDirPath: String?,
+        ): String {
             val rootPath = rootDirPath(context)
-            return subDirPath?.removePrefix(File.separator)?.takeIf { it.isNotBlank() }?.let {
+            val dirPath = if (subDirPath.isNullOrEmpty()) baseAppDir else baseAppDir + File.separator + subDirPath
+            return dirPath.removePrefix(File.separator).takeIf { it.isNotBlank() }?.let {
                 rootPath + File.separator + it + File.separator
             } ?: (rootPath + File.separator)
         }
@@ -147,13 +159,15 @@ abstract class DownloadServiceStorage(
         protected abstract fun rootDirPath(context: Context): String
     }
 
-
     companion object {
 
         const val UNIQUE_NAME_PREFIX = '('
         const val UNIQUE_NAME_SUFFIX = ')'
 
-        fun create(context: Context, type: Type): DownloadServiceStorage {
+        fun create(
+            context: Context,
+            type: Type,
+        ): DownloadServiceStorage {
             return if (useMediaStore() && type == Type.SHARED) {
                 MediaStoreStorage(context)
             } else {

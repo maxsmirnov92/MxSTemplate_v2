@@ -1,11 +1,13 @@
 package net.maxsmr.feature.about
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.text.style.CharacterStyle
 import android.util.Size
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.SavedStateHandle
+import dagger.hilt.android.qualifiers.ApplicationContext
 import net.maxsmr.commonutils.RangeSpanInfo
 import net.maxsmr.commonutils.createSpanText
 import net.maxsmr.commonutils.gui.message.TextMessage
@@ -15,7 +17,7 @@ import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import java.io.Serializable
 
-open class AboutViewModel(state: SavedStateHandle) : BaseViewModel(state) {
+open class AboutViewModel(state: SavedStateHandle, context: Context) : BaseViewModel(state, context) {
 
     val animatedLogoState by persistableLiveDataInitial(false)
 

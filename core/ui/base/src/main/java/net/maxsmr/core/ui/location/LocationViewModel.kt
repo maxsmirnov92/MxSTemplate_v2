@@ -1,6 +1,7 @@
 package net.maxsmr.core.ui.location
 
 import android.Manifest
+import android.content.Context
 import android.content.DialogInterface
 import android.location.Location
 import android.os.HandlerThread
@@ -11,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +21,6 @@ import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.live.postValueIfNew
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.android.coroutines.asDispatcher
 import net.maxsmr.core.android.location.LocationCallback
 import net.maxsmr.core.android.location.receiver.ILocationReceiver
@@ -31,7 +32,8 @@ class LocationViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted private val mockLocationReceiver: ILocationReceiver?,
     private val locationReceiver: ILocationReceiver,
-) : BaseViewModel(state), LocationCallback {
+    @ApplicationContext private val context: Context
+) : BaseViewModel(state, context), LocationCallback {
 
     private val _currentLocation: MutableLiveData<Location?> = MutableLiveData()
     val currentLocation: LiveData<Location?> = _currentLocation
@@ -88,7 +90,7 @@ class LocationViewModel @AssistedInject constructor(
     fun getLastKnownLocation(isGpsOnly: Boolean = false): Location? {
         val location = (mockLocationReceiver ?: locationReceiver).lastKnownPosition
         if (location == null) {
-            checkLocationEnabled(baseApplicationContext, isGpsOnly)
+            checkLocationEnabled(context, isGpsOnly)
         }
         return location
     }

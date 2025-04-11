@@ -8,27 +8,29 @@ import android.net.NetworkRequest
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.map
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.core.android.baseApplicationContext
-import net.maxsmr.core.android.network.NetworkStateManager.asStateLiveData
-import net.maxsmr.core.android.network.NetworkStateManager.hasConnection
 import java.io.Serializable
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Менеджер доступности сетевого подключения.
  * Получение текущего значения - [hasConnection], подписка - [asStateLiveData]
  */
-object NetworkStateManager {
+@Singleton
+class NetworkStateManager @Inject constructor(@ApplicationContext context: Context) {
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(NetworkStateManager::class.java)
 
-    private val connectivityManager =
-        baseApplicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private val connectivityManager by lazy {
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    }
 
     private val connectionLiveData: ConnectionLiveData = ConnectionLiveData()
 
@@ -98,7 +100,7 @@ object NetworkStateManager {
         constructor() : this(false, false, false)
     }
 
-    private class ConnectionLiveData : MutableLiveData<ConnectionInfo>(getConnectionInfo()) {
+    private inner class ConnectionLiveData : MutableLiveData<ConnectionInfo>(getConnectionInfo()) {
 
         private val callback = object : BaseNetworkCallback() {
 
@@ -142,7 +144,7 @@ object NetworkStateManager {
         }
     }
 
-    private abstract class BaseNetworkCallback : ConnectivityManager.NetworkCallback() {
+    private abstract inner class BaseNetworkCallback : ConnectivityManager.NetworkCallback() {
 
         val activeNetworks: MutableSet<Network> = mutableSetOf()
 

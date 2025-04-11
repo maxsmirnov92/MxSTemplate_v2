@@ -1,6 +1,7 @@
 package net.maxsmr.feature.address_sorter.data.usecase
 
-import net.maxsmr.core.android.baseApplicationContext
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import net.maxsmr.core.android.coroutines.execute.usecase.base.BaseInputSearchUseCase
 import net.maxsmr.core.android.exceptions.EmptyResultException
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
@@ -14,6 +15,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class AddressSuggestUseCase @Inject constructor(
     private val addressRepo: AddressRepo,
     private val suggestDataSource: SuggestDataSource,
+    @ApplicationContext private val context: Context,
 ) : BaseInputSearchUseCase<AddressSuggestUseCase.Parameters, List<AddressSuggest>>() {
 
     override val inputDelay: Duration = 1300.milliseconds
@@ -24,7 +26,7 @@ class AddressSuggestUseCase @Inject constructor(
         addressRepo.updateQuery(params.id, params.input)
         val result = suggestDataSource.suggest(params.input, params.lastLocation)
         if (result.isEmpty()) {
-            throw EmptyResultException(baseApplicationContext, true)
+            throw EmptyResultException(context, true)
         }
         return result
     }
@@ -39,6 +41,6 @@ class AddressSuggestUseCase @Inject constructor(
     data class Parameters(
         override val input: String,
         val id: Long,
-        val lastLocation: Address.Location?
-    ): SearchParameters
+        val lastLocation: Address.Location?,
+    ) : SearchParameters
 }
