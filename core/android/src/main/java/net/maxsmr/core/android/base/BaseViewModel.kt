@@ -62,13 +62,13 @@ abstract class BaseViewModel(
      * привязанного к NavHostFragment,
      * в котором имеется данный [BaseNavigationFragment], кто будет обозревать ивенты
      */
-    private val _navigationCommands = MutableStateFlow<VmEvent<NavigationAction>?>(null)
+    private val _navigationCommand = MutableStateFlow<VmEvent<NavigationAction>?>(null)
 
-    val navigationCommands = _navigationCommands.asStateFlow()
+    val navigationCommand = _navigationCommand.asStateFlow()
 
-    private val _toastCommands = MutableStateFlow<VmEvent<ToastAction>?>(null)
+    private val _toastCommand = MutableStateFlow<VmEvent<ToastAction>?>(null)
 
-    val toastCommands = _toastCommands.asStateFlow()
+    val toastCommand = _toastCommand.asStateFlow()
 
     // MutableStateFlow подходит лучше, чем MutableSharedFlow, т.к. гарантированно будет хранить последнее значение;
     // в то время как tryEmit у MutableSharedFlow может не сработать при переполнении буфера, т.к. не является suspend-функцией
@@ -229,15 +229,15 @@ abstract class BaseViewModel(
 //    }
 
     fun navigate(command: NavigationCommand.ToDirection) {
-        _navigationCommands.tryEmit(VmEvent(NavigationAction(command)))
+        _navigationCommand.tryEmit(VmEvent(NavigationAction(command)))
     }
 
     fun navigate(command: NavigationCommand.ToDirectionWithNavDirections) {
-        _navigationCommands.tryEmit(VmEvent(NavigationAction(command)))
+        _navigationCommand.tryEmit(VmEvent(NavigationAction(command)))
     }
 
     fun navigateBack() {
-        _navigationCommands.tryEmit(VmEvent(NavigationAction(NavigationCommand.Back)))
+        _navigationCommand.tryEmit(VmEvent(NavigationAction(NavigationCommand.Back)))
     }
 
     /**
@@ -286,7 +286,7 @@ abstract class BaseViewModel(
             // для API ниже 30 addCallback отсутствует,
             // соот-но тосты будут оставаться в очереди после скрытия;
             // пользуем способ с VmEvent
-            _toastCommands.tryEmit(VmEvent(ToastAction(message, data)))
+            _toastCommand.tryEmit(VmEvent(ToastAction(message, data)))
         }
     }
 

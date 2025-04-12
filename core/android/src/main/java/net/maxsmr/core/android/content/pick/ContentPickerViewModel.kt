@@ -6,6 +6,8 @@ import androidx.lifecycle.SavedStateHandle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.base.BaseViewModel
@@ -21,15 +23,23 @@ class ContentPickerViewModel @Inject constructor(
     @ApplicationContext context: Context,
 ) : BaseViewModel(state, context) {
 
+    val pickResultEvent: StateFlow<VmEvent<PickResult>?> by lazy {
+        _pickResultEvent.asStateFlow()
+    }
+
+    val appChoicesEvent: StateFlow<VmEvent<AppChoice>?> by lazy {
+        _appChoicesEvent.asStateFlow()
+    }
+
     /**
      * Эмитит результаты взятия контента
      */
-    val pickResult = MutableStateFlow<VmEvent<PickResult>?>(null)
+    private val _pickResultEvent = MutableStateFlow<VmEvent<PickResult>?>(null)
 
     /**
      * Эмитит события выбора юзером конкретного приложения для взятия контента
      */
-    val appChoices = MutableStateFlow<VmEvent<AppChoice>?>(null)
+    private val _appChoicesEvent = MutableStateFlow<VmEvent<AppChoice>?>(null)
 
     /**
      * Хранит тип [ConcretePickerType], используемого для взятия контента. При получении результата
@@ -38,11 +48,15 @@ class ContentPickerViewModel @Inject constructor(
     var selectedPickerType: ConcretePickerType? by persistableValue()
 
     fun onSuccess(requestCode: Int, uri: Uri, pickerType: ConcretePickerType) {
-        pickResult.tryEmit(VmEvent(PickResult.Success(requestCode, uri, pickerType)))
+        _pickResultEvent.tryEmit(VmEvent(PickResult.Success(requestCode, uri, pickerType)))
     }
 
     fun onError(requestCode: Int, errorMessage: TextMessage, exception: Throwable? = null) {
-        pickResult.tryEmit(VmEvent(PickResult.Error(requestCode, errorMessage, exception)))
+        _pickResultEvent.tryEmit(VmEvent(PickResult.Error(requestCode, errorMessage, exception)))
+    }
+
+    fun onAppChoice(choice: AppChoice) {
+        _appChoicesEvent.tryEmit(VmEvent(choice))
     }
 
     /**

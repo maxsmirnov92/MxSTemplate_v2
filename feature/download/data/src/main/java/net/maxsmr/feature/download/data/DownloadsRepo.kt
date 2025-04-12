@@ -1,11 +1,10 @@
 package net.maxsmr.feature.download.data
 
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
-import net.maxsmr.commonutils.live.event.VmEvent
-import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.commonutils.states.ILoadState.Status
 import net.maxsmr.core.database.dao.download.DownloadsDao
 import net.maxsmr.core.database.model.download.DownloadInfo
@@ -21,10 +20,10 @@ import kotlin.random.Random
 class DownloadsRepo @Inject constructor(
     private val dao: DownloadsDao,
     private val cacheRepo: CacheDataStoreRepository,
-    private val hashManager: DownloadsHashManager
+    private val hashManager: DownloadsHashManager,
 ) {
 
-    private val intentSenderFlow = MutableStateFlow<VmEvent<IntentSenderParams>?>(null)
+    private val _intentSenderEvents = MutableSharedFlow<IntentSenderParams>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private val notificationRequestCode = AtomicInteger(Random.nextInt(Int.MAX_VALUE / 2))
 
@@ -108,13 +107,11 @@ class DownloadsRepo @Inject constructor(
     }
 
     fun notifyIntentSender(params: IntentSenderParams) {
-        intentSenderFlow.tryEmit(VmEvent(params))
+        _intentSenderEvents.tryEmit(params)
     }
 
-    fun getIntentSenderListFiltered(resourceNames: Collection<String>): Flow<VmEvent<IntentSenderParams>?> {
-        return intentSenderFlow.filter {
-            it?.get(false)?.let { it.resourceName in resourceNames } == true
-        }
+    fun getIntentSenderParamsFiltered(resourceNames: Collection<String>): Flow<IntentSenderParams> {
+        return _intentSenderEvents.filter { it.resourceName in resourceNames }
     }
 
     fun nextNotificationRequestCode(): Int = notificationRequestCode.incrementAndGet()

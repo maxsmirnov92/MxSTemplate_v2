@@ -20,11 +20,11 @@ fun BaseViewModel.handleEvents(
     toastActor: ToastAction.IToastActor,
 ): List<Job> {
     return mutableListOf<Job>().apply {
-        add(navigationCommands.observeEvents(lifecycleOwner) {
+        add(navigationCommand.observeEvents(lifecycleOwner) {
             it.doAction(navigationActor)
         })
         // для совместимости с API 30 и ниже
-        add(toastCommands.observeEvents(lifecycleOwner) {
+        add(toastCommand.observeEvents(lifecycleOwner) {
             it.doAction(toastActor)
         })
     }

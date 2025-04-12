@@ -13,7 +13,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
 import net.maxsmr.commonutils.flow.observeEvents
 import net.maxsmr.commonutils.gui.message.TextMessage
-import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.R
 import net.maxsmr.core.android.base.delegates.FragmentViewBindingDelegate.Companion.onViewLifecycleCreated
 import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
@@ -129,7 +128,7 @@ class ContentPicker<T> private constructor(
     init {
         host.onViewLifecycleCreated {
             // Наблюдаем за выбором аппа пользователем, запускаем выбранное приложение либо запрашиваем необходимые разрешения
-            viewModel.appChoices.observeEvents(host) { choice ->
+            viewModel.appChoicesEvent.observeEvents(host) { choice ->
                 val requiredPermissions = choice.requiredPermissions().toSet()
                 permissionHandler.handle(choice.requestCode, requiredPermissions,
                     onDenied = {
@@ -144,7 +143,7 @@ class ContentPicker<T> private constructor(
                 )
             }
             //Наблюдаем за результатом, вызываем соответствующие методы в случае успеха или неуспеха на нужном запросе
-            viewModel.pickResult.observeEvents(host) { result ->
+            viewModel.pickResultEvent.observeEvents(host) { result ->
                 val request = requests.find { it.requestCode == result.requestCode }
                     ?: return@observeEvents
                 when (result) {
@@ -190,7 +189,7 @@ class ContentPicker<T> private constructor(
             showChooserAction(requestCode, request.chooserTitle, intents)
         } else {
             flatIntents.first().let { (params, intent) ->
-                viewModel.appChoices.value = VmEvent(ContentPickerViewModel.AppChoice(requestCode, params, intent))
+                viewModel.onAppChoice(ContentPickerViewModel.AppChoice(requestCode, params, intent))
             }
         }
     }

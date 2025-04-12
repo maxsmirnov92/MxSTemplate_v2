@@ -18,6 +18,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.ALGORITHM_SHA1
@@ -60,6 +61,7 @@ class DownloadsViewModel @Inject constructor(
     state: SavedStateHandle,
 ) : BaseViewModel(state, context) {
 
+    // TODO убрать LiveData
     val downloadsInfos: LiveData<List<DownloadInfo>> = downloadRepo.get().asLiveData()
 
     val downloadItems: LiveData<List<DownloadInfoResultData>> = downloadManager.resultItems.asLiveData()
@@ -70,7 +72,7 @@ class DownloadsViewModel @Inject constructor(
      * случае у пользователя надо запросить доступ к таким файлам через intent.
      */
     val recoverableExceptions: LiveData<VmEvent<IntentSenderParams>?> = downloadsInfos.switchMap { list ->
-        downloadRepo.getIntentSenderListFiltered(list.map { it.name }).asLiveData()
+        downloadRepo.getIntentSenderParamsFiltered(list.map { it.name }).map { VmEvent(it) }.asLiveData()
     }
 
     val failedStartParams = downloadManager.failedStartParamsFlow.asLiveData()

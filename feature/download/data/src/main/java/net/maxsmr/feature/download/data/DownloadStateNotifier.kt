@@ -1,12 +1,9 @@
 package net.maxsmr.feature.download.data
 
 import android.content.Context
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.media.length
 import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.database.model.download.DownloadInfo
@@ -17,36 +14,31 @@ import javax.inject.Singleton
 @Singleton
 class DownloadStateNotifier @Inject constructor() {
 
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-
-    private val _downloadStartEvents = MutableSharedFlow<DownloadStartInfo>()
+    private val _downloadStartEvents =
+        MutableSharedFlow<DownloadStartInfo>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     val downloadStartEvents = _downloadStartEvents.asSharedFlow()
 
-    private val _downloadRetryEvents = MutableSharedFlow<DownloadService.Params>()
+    private val _downloadRetryEvents =
+        MutableSharedFlow<DownloadService.Params>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     val downloadRetryEvents = _downloadRetryEvents.asSharedFlow()
 
-    private val _downloadStateEvents = MutableSharedFlow<DownloadState>()
+    private val _downloadStateEvents =
+        MutableSharedFlow<DownloadState>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     val downloadStateEvents = _downloadStateEvents.asSharedFlow()
 
     fun onDownloadNotStarted(params: DownloadService.Params) {
-        scope.launch {
-            _downloadStartEvents.emit(DownloadStartInfo(params, false))
-        }
+        _downloadStartEvents.tryEmit(DownloadStartInfo(params, false))
     }
 
     fun onDownloadStarting(downloadInfo: DownloadInfo, params: DownloadService.Params) {
-        scope.launch {
-            _downloadStartEvents.emit(DownloadStartInfo(params, true, downloadInfo))
-        }
+        _downloadStartEvents.tryEmit(DownloadStartInfo(params, true, downloadInfo))
     }
 
     fun onDownloadRetry(params: DownloadService.Params) {
-        scope.launch {
-            _downloadRetryEvents.emit(params)
-        }
+        _downloadRetryEvents.tryEmit(params)
     }
 
     fun onDownloadProcessing(
@@ -55,9 +47,7 @@ class DownloadStateNotifier @Inject constructor() {
         downloadInfo: DownloadInfo,
         params: DownloadService.Params,
     ) {
-        scope.launch {
-            _downloadStateEvents.emit(DownloadState.Loading(type, stateInfo, downloadInfo, params))
-        }
+        _downloadStateEvents.tryEmit(DownloadState.Loading(type, stateInfo, downloadInfo, params))
     }
 
     fun onDownloadSuccess(
@@ -65,9 +55,7 @@ class DownloadStateNotifier @Inject constructor() {
         params: DownloadService.Params,
         oldParams: DownloadService.Params,
     ) {
-        scope.launch {
-            _downloadStateEvents.emit(DownloadState.Success(downloadInfo, params, oldParams))
-        }
+        _downloadStateEvents.tryEmit(DownloadState.Success(downloadInfo, params, oldParams))
     }
 
     fun onDownloadFailed(
@@ -76,9 +64,7 @@ class DownloadStateNotifier @Inject constructor() {
         oldParams: DownloadService.Params,
         e: Exception,
     ) {
-        scope.launch {
-            _downloadStateEvents.emit(DownloadState.Failed(e, downloadInfo, params, oldParams))
-        }
+        _downloadStateEvents.tryEmit(DownloadState.Failed(e, downloadInfo, params, oldParams))
     }
 
     fun onDownloadCancelled(
@@ -86,9 +72,7 @@ class DownloadStateNotifier @Inject constructor() {
         params: DownloadService.Params,
         oldParams: DownloadService.Params,
     ) {
-        scope.launch {
-            _downloadStateEvents.emit(DownloadState.Cancelled(downloadInfo, params, oldParams))
-        }
+        _downloadStateEvents.tryEmit(DownloadState.Cancelled(downloadInfo, params, oldParams))
     }
 
     class DownloadStartInfo(

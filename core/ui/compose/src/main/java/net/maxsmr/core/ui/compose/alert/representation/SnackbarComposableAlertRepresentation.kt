@@ -43,6 +43,7 @@ fun Alert.asSnackbar(
                 answer.select?.invoke()
                 if (answer.closeAfterSelect) {
                     state.currentSnackbarData?.dismiss()
+                    close()
                 }
             }
         } else {

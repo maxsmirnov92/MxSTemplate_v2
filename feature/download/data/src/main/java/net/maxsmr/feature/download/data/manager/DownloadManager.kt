@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -113,15 +114,15 @@ class DownloadManager @Inject constructor(
 
     val resultItems = _resultItems.asStateFlow()
 
-    private val _failedStartParamsEvents = MutableSharedFlow<DownloadService.Params>()
+    private val _failedStartParamsEvents = MutableSharedFlow<DownloadService.Params>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     val failedStartParamsEvents: SharedFlow<DownloadService.Params> = _failedStartParamsEvents.asSharedFlow()
 
-    private val _successAddedToQueueEvents = MutableSharedFlow<DownloadService.Params>()
+    private val _successAddedToQueueEvents = MutableSharedFlow<DownloadService.Params>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     val successAddedToQueueEvents: SharedFlow<DownloadService.Params> = _successAddedToQueueEvents.asSharedFlow()
 
-    private val _failedAddedToQueueEvents = MutableSharedFlow<Pair<DownloadService.Params, FailAddReason>>()
+    private val _failedAddedToQueueEvents = MutableSharedFlow<Pair<DownloadService.Params, FailAddReason>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     val failedAddedToQueueEvents: SharedFlow<Pair<DownloadService.Params, FailAddReason>> =
         _failedAddedToQueueEvents.asSharedFlow()

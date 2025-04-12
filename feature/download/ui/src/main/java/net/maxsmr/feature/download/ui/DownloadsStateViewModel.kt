@@ -11,7 +11,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -19,6 +19,7 @@ import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.media.isEmpty
+import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ShareStrategy
@@ -37,33 +38,37 @@ class DownloadsStateViewModel @Inject constructor(
     state: SavedStateHandle,
 ) : BaseViewModel(state, context) {
 
-    val queueNames = MutableStateFlow<List<String>>(emptyList())
+    private val _queueNames = MutableStateFlow<List<String>>(emptyList())
+    val queueNames = _queueNames.asStateFlow()
 
-    val allItems = MutableStateFlow<List<DownloadInfoAdapterData>>(emptyList())
+    private val _allItems = MutableStateFlow<List<DownloadInfoAdapterData>>(emptyList())
+    val allItems = _allItems.asStateFlow()
 
-    val currentItems = MutableStateFlow<List<DownloadInfoAdapterData>>(emptyList())
+    private val _currentItems = MutableStateFlow<List<DownloadInfoAdapterData>>(emptyList())
+    val currentItems = _currentItems.asStateFlow()
 
-    val anyCanBeCancelled = currentItems
+    val anyCanBeCancelled = _currentItems
         .map { it.any { item -> item.downloadInfo.isLoading } }
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    val queryNameFilter = MutableLiveData<String>()
+    private val _queryNameFilter = MutableStateFlow(EMPTY_STRING)
+    val queryNameFilter = _queryNameFilter.asStateFlow()
 
     private val _navigateUriEvent = MutableStateFlow<VmEvent<IntentWithUriProvideStrategy<*>>?>(null)
-    val navigateUriEvent = _navigateUriEvent as StateFlow<VmEvent<IntentWithUriProvideStrategy<*>>?>
+    val navigateUriEvent = _navigateUriEvent.asStateFlow()
 
     override fun onInitialized() {
         super.onInitialized()
 
         manager.downloadsPendingParams.observe {
-            queueNames.value = it.map { params -> params.targetResourceName }
+            _queueNames.value = it.map { params -> params.targetResourceName }
         }
         manager.resultItems.observe {
-            allItems.value = it.map { item -> DownloadInfoAdapterData(item) }
-            currentItems.value = it.mapWithFilterByName(queryNameFilter.value.orEmpty())
+            _allItems.value = it.map { item -> DownloadInfoAdapterData(item) }
+            _currentItems.value = it.mapWithFilterByName(queryNameFilter.value)
         }
 
-        queueNames.observe {
+        _queueNames.observe {
             if (it.isEmpty()) {
                 dialogQueue.removeAllWithTag(DIALOG_TAG_CLEAR_QUEUE)
             }
@@ -73,18 +78,18 @@ class DownloadsStateViewModel @Inject constructor(
                 dialogQueue.removeAllWithTag(DIALOG_TAG_CANCEL_ALL)
             }
         }
-        currentItems.observe { list ->
+        _currentItems.observe { list ->
             if (!list.any { it.state is DownloadStateNotifier.DownloadState.Success }) {
                 dialogQueue.removeAllWithTag(DIALOG_TAG_RETRY_IF_SUCCESS)
             }
         }
         queryNameFilter.observe {
-            currentItems.value = manager.resultItems.value.mapWithFilterByName(it)
+            _currentItems.value = manager.resultItems.value.mapWithFilterByName(it)
         }
     }
 
     fun onClearQueue() {
-        if (queueNames.value.isNotEmpty()) {
+        if (_queueNames.value.isNotEmpty()) {
             showYesNoDialog(
                 DIALOG_TAG_CLEAR_QUEUE,
                 TextMessage(R.string.download_dialog_clear_queue_message),
@@ -147,7 +152,7 @@ class DownloadsStateViewModel @Inject constructor(
     }
 
     fun onNameQueryFilterChanged(value: String?) {
-        queryNameFilter.value = value.orEmpty()/*.trim()*/
+        _queryNameFilter.value = value.orEmpty()/*.trim()*/
     }
 
     fun onDeleteResource(downloadId: Long, name: String) {

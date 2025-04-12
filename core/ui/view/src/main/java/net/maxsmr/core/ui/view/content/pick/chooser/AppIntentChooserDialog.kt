@@ -1,6 +1,5 @@
 package net.maxsmr.core.ui.view.content.pick.chooser
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,7 +21,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.commonutils.getAppSettingsIntent
 import net.maxsmr.commonutils.getParcelableCompat
-import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPickerViewModel
 import net.maxsmr.core.android.content.pick.IntentWithPermissions
@@ -79,8 +77,9 @@ internal class AppIntentChooserDialog : BottomSheetDialogFragment() {
             adapterData,
             itemWidth,
             { params, intent ->
-                viewModel.appChoices.value =
-                    VmEvent(ContentPickerViewModel.AppChoice(data.requestCode, params, intent))
+                viewModel.onAppChoice(
+                    ContentPickerViewModel.AppChoice(data.requestCode, params, intent)
+                )
                 dismiss()
             },
             {
