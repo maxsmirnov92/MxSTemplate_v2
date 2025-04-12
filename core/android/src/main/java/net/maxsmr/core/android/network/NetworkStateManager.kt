@@ -21,7 +21,7 @@ import javax.inject.Singleton
 
 /**
  * Менеджер доступности сетевого подключения.
- * Получение текущего значения - [hasConnection], подписка - [asStateLiveData]
+ * Получение текущего значения - [hasConnection], подписка - [asStatusLiveData]
  */
 @Singleton
 class NetworkStateManager @Inject constructor(@ApplicationContext context: Context) {
@@ -32,11 +32,7 @@ class NetworkStateManager @Inject constructor(@ApplicationContext context: Conte
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     }
 
-    private val connectionLiveData: ConnectionLiveData = ConnectionLiveData()
-
-    fun asLiveData(): LiveData<ConnectionInfo> = connectionLiveData
-
-    fun asStateLiveData() = connectionLiveData.map { it.has }
+    private val connectionLiveData: ConnectionLiveData by lazy { ConnectionLiveData() }
 
     fun asFlow(): Flow<ConnectionInfo> = callbackFlow {
 
@@ -63,7 +59,13 @@ class NetworkStateManager @Inject constructor(@ApplicationContext context: Conte
         }
     }/*.stateIn(scope, SharingStarted.WhileSubscribed(5_000), getConnectionInfo())*/
 
-    fun asStateFlow(): Flow<Boolean> = asFlow().map { it.has }
+    fun asStatusFlow(): Flow<Boolean> = asFlow().map { it.has }
+
+    @Deprecated("", replaceWith = ReplaceWith(expression = "asFlow"))
+    fun asLiveData(): LiveData<ConnectionInfo> = connectionLiveData
+
+    @Deprecated("", replaceWith = ReplaceWith(expression = "asStatusFlow"))
+    fun asStatusLiveData() = connectionLiveData.map { it.has }
 
     /**
      * Принудительно обновить LD. **Не использовать** - см. описание класса.
@@ -80,8 +82,7 @@ class NetworkStateManager @Inject constructor(@ApplicationContext context: Conte
         val hasInternet = capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
         val hasCellular = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
         val hasWifi = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-        val has = hasInternet && (hasCellular || hasWifi)
-        return ConnectionInfo(has, has && hasCellular, has && hasWifi)
+        return ConnectionInfo(hasInternet, hasInternet && hasCellular, hasInternet && hasWifi)
     }
 
     private fun ConnectivityManager.unregisterNetworkCallbackSafe(callback: ConnectivityManager.NetworkCallback) {

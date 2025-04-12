@@ -1,9 +1,14 @@
 package net.maxsmr.core.android.base.connection
 
 import android.content.Context
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import net.maxsmr.commonutils.live.zipNotNull
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.flow.observe
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
@@ -13,29 +18,32 @@ import net.maxsmr.core.android.network.NetworkStateManager
 /**
  * Класс определяет логику обработки состояния сети. Хранится во ViewModel
  */
-class ConnectionManager(private val context: Context) {
-
-    private val manualCheck: MutableLiveData<Boolean> by lazy { MutableLiveData<Boolean>() }
-    private val networkStateManager by lazy { NetworkStateManager(context) }
+class ConnectionManager(
+    private val context: Context,
+    private val scope: CoroutineScope,
+) {
 
     /**
      * Эмитит признак доступности соединения
      */
-    val asLiveData: LiveData<Boolean> by lazy {
-        zipNotNull(
-            manualCheck,
-            networkStateManager.asStateLiveData()
+    val asStateFlow: StateFlow<Boolean> by lazy {
+        combine(
+            _manualCheck,
+            networkStateManager.asStatusFlow()
         ) { manual, status ->
-            manual == true || status == true
-        }
+            manual || status
+        }.stateIn(scope, SharingStarted.Eagerly, false)
     }
 
     /**
      * Признак доступности соединения
      */
     val has: Boolean
-        get() = asLiveData.value == true
+        get() = asStateFlow.value
 
+    private val _manualCheck by lazy { MutableStateFlow(false) }
+
+    private val networkStateManager by lazy { NetworkStateManager(context) }
 
     var queue: AlertQueue? = null
         private set
@@ -48,11 +56,12 @@ class ConnectionManager(private val context: Context) {
      */
     constructor(
         context: Context,
+        scope: CoroutineScope,
         queue: AlertQueue,
-        builder: AlertQueueItem.Builder? = null
-    ) : this(context) {
+        builder: AlertQueueItem.Builder? = null,
+    ) : this(context, scope) {
         this.queue = queue
-        asLiveData.observeForever {
+        asStateFlow.observe(scope) {
             if (it) {
                 queue.removeAllWithTag(SNACKBAR_TAG_CONNECTIVITY)
             } else {
@@ -73,9 +82,10 @@ class ConnectionManager(private val context: Context) {
      * Запускает проверку доступности соединения
      */
     fun check() {
-        manualCheck.postValue(networkStateManager.hasConnection())
+        scope.launch {
+            _manualCheck.tryEmit(networkStateManager.hasConnection())
+        }
     }
-
 
     companion object {
 

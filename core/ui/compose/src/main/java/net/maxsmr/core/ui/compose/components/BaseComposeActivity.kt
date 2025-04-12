@@ -183,7 +183,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
 
     override fun unregisterViewModelWithRoute(
         route: String,
-        viewModel: BaseViewModel
+        viewModel: BaseViewModel,
     ) {
         screenComponentsMap[route]?.let {
             it.key?.let { key ->
@@ -194,20 +194,26 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         }
     }
 
-    protected open fun getAlertDelegateForActivityViewModel(scope: CoroutineScope, hostState: SnackbarHostState): ComposableActivityAlertDelegate<VM> {
+    protected open fun getAlertDelegateForActivityViewModel(
+        scope: CoroutineScope,
+        hostState: SnackbarHostState,
+    ): ComposableActivityAlertDelegate<VM> {
         return ComposableActivityAlertDelegate(
             this@BaseComposeActivity, viewModel, scope, hostState
         )
     }
 
-    protected open fun getConnectionHandlerForActivityViewModel(scope: CoroutineScope, hostState: SnackbarHostState): ConnectionHandler<AlertRepresentation>? {
+    protected open fun getConnectionHandlerForActivityViewModel(
+        scope: CoroutineScope,
+        hostState: SnackbarHostState,
+    ): ConnectionHandler<AlertRepresentation>? {
         return null
     }
 
     protected open fun <VM : BaseViewModel> getAlertDelegateForViewModel(
         viewModel: VM,
         scope: CoroutineScope,
-        hostState: SnackbarHostState
+        hostState: SnackbarHostState,
     ): ComposableActivityAlertDelegate<VM> {
         return ComposableActivityAlertDelegate(
             this@BaseComposeActivity, viewModel, scope, hostState
@@ -217,7 +223,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     protected open fun <VM : BaseViewModel> getConnectionHandlerForViewModel(
         viewModel: VM,
         scope: CoroutineScope,
-        hostState: SnackbarHostState
+        hostState: SnackbarHostState,
     ): ConnectionHandler<AlertRepresentation>? {
         return getConnectionHandlerForActivityViewModel(scope, hostState)
     }
@@ -291,7 +297,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
 
     private fun ScreenComponents.observeNetworkConnectionHandlerState() {
         connectionHandler?.onNetworkStateChanged?.let { onStateChanged ->
-            viewModel.connectionManager.asLiveData.observe {
+            viewModel.connectionManager.asStateFlow.observeSafe {
                 onStateChanged(it)
             }
         }
@@ -310,7 +316,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
                         null
                     }
                 }
-                alertDelegate.bindStandardAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) {  alert ->
+                alertDelegate.bindStandardAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
                     val result = mapper(alert)
                     if (result is StandardAlertRepresentation) {
                         return@bindStandardAlert result

@@ -52,7 +52,7 @@ import net.maxsmr.core.network.exceptions.NetworkException
  */
 abstract class BaseViewModel(
     val state: SavedStateHandle,
-    context: Context
+    context: Context,
 ) : ViewModel(), LifecycleOwner {
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
@@ -62,13 +62,10 @@ abstract class BaseViewModel(
      * привязанного к NavHostFragment,
      * в котором имеется данный [BaseNavigationFragment], кто будет обозревать ивенты
      */
-    private val _navigationCommand = MutableStateFlow<VmEvent<NavigationAction>?>(null)
+    val navigationCommand by lazy { _navigationCommand.asStateFlow() }
 
-    val navigationCommand = _navigationCommand.asStateFlow()
 
-    private val _toastCommand = MutableStateFlow<VmEvent<ToastAction>?>(null)
-
-    val toastCommand = _toastCommand.asStateFlow()
+    val toastCommand by lazy { _toastCommand.asStateFlow() }
 
     // MutableStateFlow подходит лучше, чем MutableSharedFlow, т.к. гарантированно будет хранить последнее значение;
     // в то время как tryEmit у MutableSharedFlow может не сработать при переполнении буфера, т.к. не является suspend-функцией
@@ -91,7 +88,11 @@ abstract class BaseViewModel(
     /**
      * Определяет логику обработки событий состояния сети. Переопределите, если требуется обработка.
      */
-    val connectionManager: ConnectionManager by lazy { ConnectionManager(context, snackbarQueue) }
+    val connectionManager: ConnectionManager by lazy { ConnectionManager(context, viewModelScope, snackbarQueue) }
+
+    private val _navigationCommand = MutableStateFlow<VmEvent<NavigationAction>?>(null)
+
+    private val _toastCommand = MutableStateFlow<VmEvent<ToastAction>?>(null)
 
     private val lifecycleRegistry: LifecycleRegistry by lazy { LifecycleRegistry(this) }
 

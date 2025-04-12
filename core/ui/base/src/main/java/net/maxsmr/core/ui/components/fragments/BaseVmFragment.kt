@@ -140,47 +140,6 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
         }
     }
 
-    /**
-     * Основной коллбек, в котором можно делать подписки на VM и инициализацию View в производных классах
-     */
-    protected abstract fun onViewCreated(
-        view: View,
-        savedInstanceState: Bundle?,
-        viewModel: VM,
-    )
-
-    @CallSuper
-    protected open fun handleAlerts(delegate: BaseAlertDelegate<VM, AR>) {
-        delegate.handleAlerts()
-    }
-
-    @CallSuper
-    protected open fun handleVmEvents() {
-        viewModel.handleEvents(this@BaseVmFragment, navigationActor, toastActor)
-    }
-
-    protected open fun createFragmentDelegates(): List<IComponentDelegate<*>> = listOf()
-
-    @Deprecated("", replaceWith = ReplaceWith(expression = "StateFlow"))
-    @JvmOverloads
-    protected inline fun <T> LiveData<T>.observe(
-        owner: LifecycleOwner = viewLifecycleOwner,
-        crossinline onNext: (T) -> Unit,
-    ) {
-        this.observe(owner) { onNext(it) }
-    }
-
-    @Deprecated("", replaceWith = ReplaceWith(expression = "StateFlow"))
-    @JvmOverloads
-    protected inline fun <T> LiveData<VmEvent<T>>.observeEvents(
-        owner: LifecycleOwner = viewLifecycleOwner,
-        crossinline onNext: (T) -> Unit,
-    ) {
-        this.observe(owner) {
-            it.get()?.let(onNext)
-        }
-    }
-
     override fun doOnPermissionsResult(
         code: Int,
         permissions: Collection<String>,
@@ -222,6 +181,47 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
         } ?: targetAction.invoke(true)
     }
 
+    /**
+     * Основной коллбек, в котором можно делать подписки на VM и инициализацию View в производных классах
+     */
+    protected abstract fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?,
+        viewModel: VM,
+    )
+
+    @CallSuper
+    protected open fun handleAlerts(delegate: BaseAlertDelegate<VM, AR>) {
+        delegate.handleAlerts()
+    }
+
+    @CallSuper
+    protected open fun handleVmEvents() {
+        viewModel.handleEvents(this@BaseVmFragment, navigationActor, toastActor)
+    }
+
+    protected open fun createFragmentDelegates(): List<IComponentDelegate<*>> = listOf()
+
+    @Deprecated("", replaceWith = ReplaceWith(expression = "StateFlow"))
+    @JvmOverloads
+    protected inline fun <T> LiveData<T>.observe(
+        owner: LifecycleOwner = viewLifecycleOwner,
+        crossinline onNext: (T) -> Unit,
+    ) {
+        this.observe(owner) { onNext(it) }
+    }
+
+    @Deprecated("", replaceWith = ReplaceWith(expression = "StateFlow"))
+    @JvmOverloads
+    protected inline fun <T> LiveData<VmEvent<T>>.observeEvents(
+        owner: LifecycleOwner = viewLifecycleOwner,
+        crossinline onNext: (T) -> Unit,
+    ) {
+        this.observe(owner) {
+            it.get()?.let(onNext)
+        }
+    }
+
     protected inline fun <T> Flow<T>.observeSafe(
         owner: LifecycleOwner = viewLifecycleOwner,
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
@@ -242,7 +242,7 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
 
     private fun observeNetworkConnectionHandler() {
         connectionHandler?.onNetworkStateChanged?.let { onStateChanged ->
-            viewModel.connectionManager.asLiveData.observe {
+            viewModel.connectionManager.asStateFlow.observeSafe {
                 onStateChanged(it)
             }
         }
