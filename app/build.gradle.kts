@@ -407,7 +407,11 @@ fun getVersionName(versionCode: Int, isDemo: Boolean): String {
         "prod"
     }
     val buildType = getCurrentBuildType()
-    val result = StringBuilder("1.0$versionCode.${postfix}")
+    var versionCodeText = versionCode.toString()
+    if (versionCodeText.length == 1) {
+        versionCodeText = "0$versionCodeText"
+    }
+    val result = StringBuilder("1.$versionCodeText.${postfix}")
     if (buildType.isNotEmpty()) {
         result.append(buildType.capitalize())
     }
