@@ -27,8 +27,8 @@ fun notificationsAdapterDelegate(onRetryFailedClick: (NotificationsAdapterData) 
     with(binding) {
         bind {
             tvNotificationId.setTextOrGone(item.id.takeIf { it > 0 }?.let { "#$it" })
-            tvNotificationPackageName.text = item.packageName.takeIf { it.isNotEmpty() }
-                ?: getString(R.string.notification_reader_package_name_unknown)
+            tvNotificationAppInfo.text = item.appInfo.takeIf { it.isNotEmpty() }
+                ?: getString(R.string.notification_reader_app_unknown)
             tvNotificationStatus.setText(item.statusTextResId)
             tvNotificationStatus.setTextColor(
                 ContextCompat.getColor(context, item.statusColorResId)
@@ -99,10 +99,25 @@ data class NotificationsAdapterData(
     val id: Long,
     val contentText: String,
     val packageName: String,
+    val appName: String,
     val formattedTime: String,
     val status: Status,
     val isRunning: Boolean
 ) : BaseAdapterData, Serializable {
+
+    val appInfo: String by lazy {
+        val result = StringBuilder()
+        if (packageName.isNotEmpty()) {
+            result.append(packageName)
+        }
+        if (appName.isNotEmpty()) {
+            if (result.isNotEmpty()) {
+                result.append(" ~ ")
+            }
+            result.append("\"$appName\"")
+        }
+        result.toString()
+    }
 
     @StringRes
     val statusTextResId = when (status) {

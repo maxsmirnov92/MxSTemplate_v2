@@ -322,8 +322,8 @@ fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
     )
     buildConfigField(
         "String",
-        "URL_PACKAGE_LIST",
-        "\"${appProperties.getPropertyNotNull("urlPackageList")}\""
+        "URL_APPS_LIST",
+        "\"${appProperties.getPropertyNotNull("urlAppsList")}\""
     )
 }
 

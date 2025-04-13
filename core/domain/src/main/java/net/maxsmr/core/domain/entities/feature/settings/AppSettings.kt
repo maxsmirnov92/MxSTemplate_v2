@@ -13,8 +13,8 @@ data class AppSettings(
     val updateNotificationInterval: Long = UPDATE_NOTIFICATION_INTERVAL_DEFAULT,
     val canDrawOverlays: Boolean = true,
     val notificationsUrl: String = "",
-    val packageListUrl: String = "",
-    val isWhitePackageList: Boolean = true,
+    val appsListUrl: String = "",
+    val isWhiteAppsList: Boolean = true,
     val notificationsApiKey: String = "",
     val failedNotificationsWatcherInterval: Long = 15L,
     val successNotificationsLifeTime: Long = 60L

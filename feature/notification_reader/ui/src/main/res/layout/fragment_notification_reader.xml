@@ -86,7 +86,7 @@
                 </LinearLayout>
 
                 <FrameLayout
-                    android:id="@+id/containerPackageListState"
+                    android:id="@+id/containerAppsListState"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:padding="@dimen/halfOfDefaultPadding"
@@ -94,7 +94,7 @@
                     tools:visibility="visible">
 
                     <LinearLayout
-                        android:id="@+id/containerPackageListLoading"
+                        android:id="@+id/containerAppsListLoading"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
@@ -110,7 +110,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="12dp"
-                            android:text="@string/notification_reader_package_list_loading"
+                            android:text="@string/notification_reader_apps_list_loading"
                             android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                             android:textColor="@color/textColorHint"
                             app:fontFamily="@font/roboto_regular" />
@@ -118,7 +118,7 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:id="@+id/containerPackageNames"
+                        android:id="@+id/containerAppsList"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:animateLayoutChanges="true"
@@ -127,7 +127,7 @@
                         tools:visibility="visible">
 
                         <TextView
-                            android:id="@+id/tvPackageNamesSubtitle"
+                            android:id="@+id/tvAppsListSubtitle"
                             style="@style/Selectable.Normal"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -136,10 +136,10 @@
                             android:textSize="@dimen/textSizeExtraMiniMini"
                             app:drawableEndCompat="@drawable/ic_arrow_up"
                             app:fontFamily="@font/roboto_medium"
-                            tools:text="@string/notification_reader_package_list_white_subtitle" />
+                            tools:text="@string/notification_reader_apps_list_white_subtitle" />
 
                         <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/rvPackageNames"
+                            android:id="@+id/rvAppList"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="@dimen/halfOfDefaultPadding"
@@ -149,7 +149,7 @@
                     </LinearLayout>
 
                     <include
-                        android:id="@+id/containerPackageListError"
+                        android:id="@+id/containerAppsListError"
                         layout="@layout/layout_error_container" />
 
                 </FrameLayout>

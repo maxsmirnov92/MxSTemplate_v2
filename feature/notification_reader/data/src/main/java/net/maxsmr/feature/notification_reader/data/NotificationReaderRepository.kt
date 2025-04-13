@@ -2,8 +2,6 @@ package net.maxsmr.feature.notification_reader.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import net.maxsmr.commonutils.logger.BaseLogger
-import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.database.dao.notification_reader.NotificationReaderDao
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
@@ -47,18 +45,21 @@ class NotificationReaderRepository @Inject constructor(
     suspend fun insertNewNotification(
         content: String,
         packageName: String,
+        appName: String,
         timestamp: Long,
     ) {
-        if (cacheRepo.isPackageInList(
+        if (cacheRepo.isAppInList(
                     baseApplicationContext,
                     packageName,
-                    settingsRepo.getSettings().isWhitePackageList
+                    appName,
+                    settingsRepo.getSettings().isWhiteAppsList
                 )
         ) {
             dao.upsert(
                 NotificationReaderEntity(
                     contentText = content,
                     packageName = packageName,
+                    appName = appName,
                     timestamp = timestamp.takeIf { it > 0 } ?: System.currentTimeMillis(),
                     status = NotificationReaderEntity.New
                 )

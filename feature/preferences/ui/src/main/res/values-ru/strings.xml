@@ -3,8 +3,8 @@
     <string name="settings_feature_title">Настройки</string>
 
     <string name="settings_field_notifications_url_hint">URL для отправки уведомлений</string>
-    <string name="settings_field_package_list_url_hint">URL со списком имён пакетов</string>
-    <string name="settings_field_white_list_packages">Белый список с именами пакетов</string>
+    <string name="settings_field_apps_list_url_hint">URL со списком имён пакетов/приложений</string>
+    <string name="settings_field_white_apps_list">Белый список с именами пакетов/приложений</string>
     <string name="settings_field_notifications_api_key_hint">Ключ API для отправки уведомлений</string>
     <string name="settings_field_notifications_api_key_error">Некорректный API ключ</string>
     <string name="settings_field_failed_notifications_watcher_interval_hint">Интервал для повторных попыток отправки неудавшихся уведомлений (секунды, 0 - отключить)</string>

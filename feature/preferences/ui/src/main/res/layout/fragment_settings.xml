@@ -50,26 +50,26 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilPackageListUrl"
+                android:id="@+id/tilAppsListUrl"
                 style="@style/TextInputOutlinedWithCorners"
                 android:layout_width="match_parent"
                 android:layout_marginTop="@dimen/defaultPadding"
                 android:layout_height="wrap_content"
-                tools:hint="@string/settings_field_package_list_url_hint">
+                tools:hint="@string/settings_field_apps_list_url_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etPackageListUrl"
+                    android:id="@+id/etAppsListUrl"
                     style="@style/SingleLineInputText"
                     android:inputType="textUri" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
             <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switchWhitePackageList"
+                android:id="@+id/switchWhiteAppsList"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="@dimen/defaultPadding"
-                android:text="@string/settings_field_white_list_packages"
+                android:text="@string/settings_field_white_apps_list"
                 android:textAppearance="@style/TextAppearance.AppCompat.Small"
                 app:switchPadding="4dp" />
 

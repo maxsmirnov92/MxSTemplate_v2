@@ -23,7 +23,7 @@ import kotlinx.coroutines.sync.withLock
 import net.maxsmr.commonutils.isPackageNameValid
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.commonutils.media.readStrings
+import net.maxsmr.commonutils.media.readString
 import net.maxsmr.commonutils.service.StartResult
 import net.maxsmr.commonutils.service.canStartForegroundService
 import net.maxsmr.commonutils.states.LoadState
@@ -33,6 +33,7 @@ import net.maxsmr.core.database.dao.UpsertDao.Companion.NO_ID
 import net.maxsmr.core.database.model.notification_reader.NotificationReaderEntity
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
+import net.maxsmr.core.network.api.notification_reader.AppInfo
 import net.maxsmr.core.network.equalsIgnoreSubDomain
 import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
@@ -80,7 +81,7 @@ class NotificationReaderSyncManager @Inject constructor(
 
     private val pendingStartMode = AtomicReference(StartMode.JOBS)
 
-    private val lastPackageListState = MutableStateFlow<LoadState<Set<String>>?>(null)
+    private val lastAppsListState = MutableStateFlow<LoadState<Set<AppInfo>>?>(null)
     private val lastSettings = MutableStateFlow<AppSettings?>(null)
     private val lastNetworkStateWithSettings = MutableStateFlow<NetworkStateWithSettings?>(null)
 
@@ -100,11 +101,11 @@ class NotificationReaderSyncManager @Inject constructor(
     }
 
     @MainThread
-    fun doStart(context: Context, ignoreBackground: Boolean = false): ManagerStartResult {
+    fun doStart(ignoreBackground: Boolean = false): ManagerStartResult {
         logger.d("doStart, ignoreBackground: $ignoreBackground")
         if (ignoreBackground || canStartForegroundService(context)) {
             if (isNotificationAccessGranted(context)) {
-                val state = lastPackageListState.value
+                val state = lastAppsListState.value
                 if (state != null && !state.isLoading) {
                     // начиная с Android 8 стартовать foreground сервис из бэкграунда нельзя
                     val result = NotificationReaderListenerService.start(context)
@@ -138,7 +139,7 @@ class NotificationReaderSyncManager @Inject constructor(
      * false - в противном случае
      */
     @MainThread
-    fun doStop(context: Context, navigateToSettings: Boolean = true): ManagerStopResult {
+    fun doStop(navigateToSettings: Boolean = true): ManagerStopResult {
         logger.d("doStop, navigateToSettings: $navigateToSettings")
         _isRunning.value = false
 
@@ -183,7 +184,7 @@ class NotificationReaderSyncManager @Inject constructor(
     fun doLaunchDownloadJobIfNeeded(mode: StartMode): Boolean {
         if (!isRunning.value) return false
         pendingStartMode.set(mode)
-        if (lastPackageListState.value?.isLoading != true) {
+        if (lastAppsListState.value?.isLoading != true) {
             // если в настоящее время файл не грузится,
             // то можно запустить (или перезапустить с отменой) Job
             launchDownloadJob()
@@ -195,10 +196,11 @@ class NotificationReaderSyncManager @Inject constructor(
     suspend fun onNewNotification(
         text: String,
         packageName: String,
+        appName: String,
         timestamp: Long,
     ): Boolean {
         if (!isRunning.value) return false
-        notificationReaderRepo.insertNewNotification(text, packageName, timestamp)
+        notificationReaderRepo.insertNewNotification(text, packageName, appName, timestamp)
         return true
     }
 
@@ -242,7 +244,7 @@ class NotificationReaderSyncManager @Inject constructor(
                         || status is NotificationReaderEntity.Loading
             }
             // 2. убираем New, которые не попадают в загруженный список (newWatcherJob об этом не знает)
-            removeNotifications { status is NotificationReaderEntity.New && !isPackageInList() }
+            removeNotifications { status is NotificationReaderEntity.New && !isAppInList() }
 
             val mode = pendingStartMode.get()
             if (mode in arrayOf(StartMode.JOBS_AND_SERVICE, StartMode.JOBS)) {
@@ -270,26 +272,26 @@ class NotificationReaderSyncManager @Inject constructor(
             }
         }
 
-        suspend fun doWithoutDownload(state: LoadState<Set<String>>?) {
-            lastPackageListState.value = state
+        fun doWithoutDownload(state: LoadState<Set<AppInfo>>?) {
+            lastAppsListState.value = state
             downloadJob.set(scope.launch {
                 doAfterDownload()
             })
         }
 
         scope.launch {
-            val packageListUrl = settingsRepo.getSettings().packageListUrl
-            if (packageListUrl.isNotEmpty()) {
+            val appsListUrl = settingsRepo.getSettings().appsListUrl
+            if (appsListUrl.isNotEmpty()) {
                 if (canStartForegroundService(context)) {
                     // забираем актуальный список пакетов
                     downloadJob.set(scope.launch {
-                        downloadManager.observeDownloadByParams(enqueueDownloadPackageList(packageListUrl), true)
+                        downloadManager.observeDownloadByParams(enqueueDownloadAppsList(appsListUrl), true)
                             .stateIn(scope, SharingStarted.WhileSubscribed(), null)
                             .collect {
 
                                 if (!isActive) {
                                     logger.w("State is $it, but downloadJob is not active")
-                                    lastPackageListState.value = null
+                                    lastAppsListState.value = null
                                     return@collect
                                 }
 
@@ -298,30 +300,29 @@ class NotificationReaderSyncManager @Inject constructor(
 
                                     if (!isRunning.value) {
                                         logger.w("Download complete, but manager is not running")
-                                        lastPackageListState.value = null
+                                        lastAppsListState.value = null
                                         downloadJob.cancel()
                                         return@collect
                                     }
 
-                                    val currentUrl = settingsRepo.getSettings().packageListUrl
-                                    if (!packageListUrl.toUri().equalsIgnoreSubDomain(currentUrl.toUri())) {
-                                        logger.w("Download complete, but packageListUrl changed from \"$packageListUrl\" to \"$currentUrl\"")
+                                    val currentUrl = settingsRepo.getSettings().appsListUrl
+                                    if (!appsListUrl.toUri().equalsIgnoreSubDomain(currentUrl.toUri())) {
+                                        logger.w("Download complete, but appsListUrl changed from \"$appsListUrl\" to \"$currentUrl\"")
                                         // за время пока шла загрузка (сейчас скорее всего была отменена из observeSettingsJob),
                                         // урла изменилась - требуется перезапуск
-                                        lastPackageListState.value = null
+                                        lastAppsListState.value = null
                                         launchDownloadJob()
                                         return@collect
                                     }
 
-                                    lastPackageListState.value = if (it.isSuccessWithData()) {
-                                        val packageList =
-                                            it.data?.downloadInfo?.localUri?.readStrings(context.contentResolver)
+                                    lastAppsListState.value = if (it.isSuccessWithData()) {
+                                        val data =
+                                            it.data?.downloadInfo?.localUri?.readString(context.contentResolver)
                                                 .orEmpty()
-                                        val result = packageList.filter { name ->
+                                        val appInfoList = cacheRepo.setAppInfoList(data) { name ->
                                             isPackageNameValid(name) || name == "android"
-                                        }.toSet()
-                                        cacheRepo.setPackageList(result)
-                                        LoadState.success(result)
+                                        }
+                                        LoadState.success(appInfoList)
                                     } else {
                                         LoadState.error(it.error?.error ?: NetworkException())
                                     }
@@ -330,7 +331,7 @@ class NotificationReaderSyncManager @Inject constructor(
 
                                     downloadJob.cancel()
                                 } else {
-                                    lastPackageListState.value = LoadState.loading()
+                                    lastAppsListState.value = LoadState.loading()
                                 }
                             }
                     })
@@ -338,17 +339,17 @@ class NotificationReaderSyncManager @Inject constructor(
                     doWithoutDownload(LoadState.error(RuntimeException("App is not in foreground")))
                 }
             } else {
-                cacheRepo.setPackageList(emptySet())
+                cacheRepo.setAppInfoList(emptySet())
                 doWithoutDownload(LoadState.success(null))
             }
         }
     }
 
     private fun cancelDownload() {
-        val isPending = downloadManager.isPending(DOWNLOAD_TAG_PACKAGE_LIST)
-        val isDownloading = downloadManager.isDownloading(DOWNLOAD_TAG_PACKAGE_LIST)
+        val isPending = downloadManager.isPending(DOWNLOAD_TAG_APPS_LIST)
+        val isDownloading = downloadManager.isDownloading(DOWNLOAD_TAG_APPS_LIST)
         if (isPending || isDownloading) {
-            downloadManager.cancelDownload(DOWNLOAD_TAG_PACKAGE_LIST)
+            downloadManager.cancelDownload(DOWNLOAD_TAG_APPS_LIST)
         }
         if (!isDownloading) {
             // если файл сейчас по факту грузится,
@@ -356,7 +357,7 @@ class NotificationReaderSyncManager @Inject constructor(
             // убирания загрузки из finished в observeDownload,
             downloadJob.cancel()
             // при перезапуске манагера надо перезапросить список
-            lastPackageListState.value = null
+            lastAppsListState.value = null
         }
     }
 
@@ -373,16 +374,16 @@ class NotificationReaderSyncManager @Inject constructor(
                     if (lastSettings == null) {
                         lastSettings = it
                     }
-                    if (lastSettings.isWhitePackageList != it.isWhitePackageList) {
-                        logger.d("setting 'isWhitePackageList' changed to ${it.isWhitePackageList}")
+                    if (lastSettings.isWhiteAppsList != it.isWhiteAppsList) {
+                        logger.d("setting 'isWhiteAppsList' changed to ${it.isWhiteAppsList}")
                         sendOrRemoveNotifications {
                             status is NotificationReaderEntity.Failed
                                     || status is NotificationReaderEntity.Cancelled
                                     || status is NotificationReaderEntity.New
                         }
                     }
-                    if (!lastSettings.packageListUrl.toUri().equalsIgnoreSubDomain(it.packageListUrl.toUri())) {
-                        logger.d("setting 'packageListUrl' changed to ${it.packageListUrl}")
+                    if (!lastSettings.appsListUrl.toUri().equalsIgnoreSubDomain(it.appsListUrl.toUri())) {
+                        logger.d("setting 'appsListUrl' changed to ${it.appsListUrl}")
                         cancelDownload()
                         doLaunchDownloadJobIfNeeded(StartMode.JOBS)
                     }
@@ -467,7 +468,7 @@ class NotificationReaderSyncManager @Inject constructor(
                             lastNetworkStateWithSettings.value = it
                             logger.d("Network state or settings changed: '$it'")
                             if (!it.shouldRetry) return@collect
-                            val state = lastPackageListState.value
+                            val state = lastAppsListState.value
                             if (it.shouldReload(state?.error?.error)) {
                                 // DownloadManager подхватит это изменение, но ранее были отписаны от observeDownload
                                 launchDownloadJob()
@@ -510,7 +511,7 @@ class NotificationReaderSyncManager @Inject constructor(
             val newNotifications = mutableListOf<NotificationReaderEntity>()
             val removedNotifications = mutableListOf<NotificationReaderEntity>()
             this.forEach { n ->
-                if (n.isPackageInList()) {
+                if (n.isAppInList()) {
                     // есть в белом/чёрном списке - снова становится "New" и отправляется сразу
                     newNotifications.add(n.copy(status = NotificationReaderEntity.New))
                 } else {
@@ -540,15 +541,16 @@ class NotificationReaderSyncManager @Inject constructor(
         )
     }
 
-    private suspend fun NotificationReaderEntity.isPackageInList(): Boolean {
-        return cacheRepo.isPackageInList(
+    private suspend fun NotificationReaderEntity.isAppInList(): Boolean {
+        return cacheRepo.isAppInList(
             context,
             packageName,
-            settingsRepo.getSettings().isWhitePackageList
+            appName,
+            settingsRepo.getSettings().isWhiteAppsList
         )
     }
 
-    private fun enqueueDownloadPackageList(url: String): DownloadService.Params {
+    private fun enqueueDownloadAppsList(url: String): DownloadService.Params {
         val params = DownloadParamsModel(url).toParams(
             mimeTypeRule = Include(FileFormat.TEXT.mimeType)
         )
@@ -566,7 +568,7 @@ class NotificationReaderSyncManager @Inject constructor(
             params.replaceFile,
             params.deleteUnfinished,
             params.retryWithNotifier,
-            DOWNLOAD_TAG_PACKAGE_LIST
+            DOWNLOAD_TAG_APPS_LIST
         ).let {
             downloadManager.enqueueDownload(it)
             return it
@@ -615,6 +617,6 @@ class NotificationReaderSyncManager @Inject constructor(
 
     companion object {
 
-        const val DOWNLOAD_TAG_PACKAGE_LIST = "package_list"
+        const val DOWNLOAD_TAG_APPS_LIST = "apps_list"
     }
 }

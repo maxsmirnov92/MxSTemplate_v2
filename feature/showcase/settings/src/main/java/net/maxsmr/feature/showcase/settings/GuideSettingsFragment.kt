@@ -82,12 +82,12 @@ class GuideSettingsFragment : SettingsFragment(), GuideComponentDelegate.GuideCh
                         "notificationsUrl",
                         R.string.showcase_settings_description_notifications_url
                     ),
-                    tilPackageListUrl.settingsGuideItem(
-                        "packageListUrl",
+                    tilAppsListUrl.settingsGuideItem(
+                        "appsListUrl",
                         R.string.showcase_settings_description_package_list_url
                     ),
-                    switchWhitePackageList.settingsGuideItem(
-                        "isWhitePackageList",
+                    switchWhiteAppsList.settingsGuideItem(
+                        "isWhiteAppsList",
                         R.string.showcase_settings_description_is_white_package_list
                     ),
                     tilNotificationsApiKey.settingsGuideItem(

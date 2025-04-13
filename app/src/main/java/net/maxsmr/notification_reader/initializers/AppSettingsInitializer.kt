@@ -23,7 +23,7 @@ class AppSettingsInitializer : Initializer<Unit> {
                 settingsRepo.updateSettings(
                     AppSettings(
                         notificationsUrl = BuildConfig.URL_NOTIFICATIONS,
-                        packageListUrl = BuildConfig.URL_PACKAGE_LIST,
+                        appsListUrl = BuildConfig.URL_APPS_LIST,
                         notificationsApiKey = BuildConfig.API_KEY_NOTIFICATIONS
                     )
                 )

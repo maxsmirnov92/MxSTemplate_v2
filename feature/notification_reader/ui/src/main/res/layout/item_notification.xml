@@ -25,7 +25,7 @@
             app:layout_constrainedHeight="true"
             app:layout_constrainedWidth="true"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/tvNotificationPackageName"
+            app:layout_constraintEnd_toStartOf="@id/tvNotificationAppInfo"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintWidth_max="70dp"
@@ -35,7 +35,7 @@
         <!--        app:layout_constraintWidth_percent="0.3"-->
 
         <TextView
-            android:id="@+id/tvNotificationPackageName"
+            android:id="@+id/tvNotificationAppInfo"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="@dimen/defaultPadding"
@@ -59,7 +59,7 @@
             app:layout_constrainedWidth="true"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/tvNotificationPackageName"
+            app:layout_constraintStart_toEndOf="@id/tvNotificationAppInfo"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintWidth_max="100dp">
 

@@ -17,6 +17,7 @@ import javax.inject.Inject
 
 class NotificationsSendUseCase @Inject constructor(
     private val readerRepo: NotificationReaderRepository,
+    // TODO не использовать напрямую dataSource
     private val dataSource: BaseNotificationReaderDataSource,
 ) : UseCase<NotificationsSendUseCase.Parameters, Unit>(Dispatchers.IO) {
 
@@ -41,6 +42,7 @@ class NotificationsSendUseCase @Inject constructor(
                     it.id,
                     it.contentText,
                     it.packageName,
+                    it.appName,
                     it.timestamp
                 )
             })

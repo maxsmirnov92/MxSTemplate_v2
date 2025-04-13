@@ -8,12 +8,16 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
+import net.maxsmr.core.di.BaseJson
 import net.maxsmr.core.di.DataStoreType
 import net.maxsmr.core.di.DataStores
+import net.maxsmr.core.network.api.notification_reader.AppInfo
+import net.maxsmr.core.utils.kotlinx.serialization.decodeFromStringOrNull
+import net.maxsmr.core.utils.kotlinx.serialization.encodeToStringOrNull
 import javax.inject.Inject
 
 /**
@@ -21,6 +25,7 @@ import javax.inject.Inject
  */
 class CacheDataStoreRepository @Inject constructor(
     @DataStores(DataStoreType.CACHE) private val dataStore: DataStore<Preferences>,
+    @BaseJson private val json: Json,
 ) {
 
     private val data: Flow<Preferences> = dataStore.data
@@ -33,8 +38,12 @@ class CacheDataStoreRepository @Inject constructor(
     val canDrawOverlaysAsked: Flow<Boolean>? = data.map { it[FIELD_CAN_DRAW_OVERLAYS_ASKED] ?: false }
         .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.O }
 
-    val packageList: Flow<Set<String>> =
-        data.map { it[FIELD_KEY_PACKAGE_LIST].orEmpty() }
+    val appInfoList: Flow<Set<AppInfo>>
+        get() {
+            return data.map {
+                json.decodeFromStringOrNull<Set<AppInfo>>(it[FIELD_KEY_APP_INFO_LIST]).orEmpty()
+            }
+        }
 
     val shouldNotificationReaderManagerRun: Flow<Boolean> =
         data.map { it[FIELD_KEY_SHOULD_NOTIFICATION_READER_RUN] ?: false }
@@ -104,31 +113,56 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
-    suspend fun isPackageInList(
+    suspend fun isAppInList(
         context: Context,
         packageName: String,
+        appName: String,
         isWhiteList: Boolean,
-    ): Boolean = getPackageList().let {
-        context.packageName != packageName && (it.isEmpty()
-                || if (isWhiteList) it.contains(packageName) else !it.contains(packageName))
+    ): Boolean = with(getAppInfoList()) {
+        if (context.packageName == packageName) {
+            return false
+        }
+        return (isEmpty()
+                || if (isWhiteList) {
+            any { it.match(packageName, appName) }
+        } else {
+            !any { it.match(packageName, appName) }
+        })
     }
 
-    suspend fun getPackageList(): Set<String> {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_PACKAGE_LIST]
-        }.firstOrNull().orEmpty()
+    suspend fun getAppInfoList(): Set<AppInfo> {
+        return appInfoList.firstOrNull().orEmpty()
     }
 
-    suspend fun setPackageList(packages: Set<String>) {
+    suspend fun setAppInfoList(
+        infos: String,
+        isPackageNameValidFunc: (String) -> Boolean = { true },
+    ): Set<AppInfo> {
+        val result = json.decodeFromStringOrNull<Set<AppInfo>>(infos).orEmpty()
+        setAppInfoList(
+            result,
+            isPackageNameValidFunc
+        )
+        return result
+    }
+
+    suspend fun setAppInfoList(
+        infos: Set<AppInfo>,
+        isPackageNameValidFunc: (String) -> Boolean = { true },
+    ) {
         dataStore.edit { prefs ->
-            prefs[FIELD_KEY_PACKAGE_LIST] = packages
+            prefs[FIELD_KEY_APP_INFO_LIST] = json.encodeToStringOrNull(
+                infos.filter { info ->
+                    info.packageName.takeIf { it.isNotEmpty() }?.let {
+                        isPackageNameValidFunc(it)
+                    } ?: false || info.appNamePrefix.isNotEmpty()
+                }
+            ).orEmpty()
         }
     }
 
     suspend fun shouldNotificationReaderRun(): Boolean {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_SHOULD_NOTIFICATION_READER_RUN]
-        }.firstOrNull() ?: false
+        return shouldNotificationReaderManagerRun.firstOrNull() ?: false
     }
 
     suspend fun setShouldNotificationReaderRun(toggle: Boolean) {
@@ -154,9 +188,7 @@ class CacheDataStoreRepository @Inject constructor(
     }
 
     suspend fun isTutorialCompeted(): Boolean {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_TUTORIAL_COMPLETED]
-        }.firstOrNull() ?: false
+        return isTutorialCompleted.firstOrNull() ?: false
     }
 
     suspend fun setTutorialCompleted(toggle: Boolean) {
@@ -177,13 +209,30 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
+    private fun AppInfo.match(
+        packageName: String,
+        appName: String,
+    ): Boolean {
+        if (this.packageName.isNotEmpty()) {
+            if (!packageName.equals(this.packageName, ignoreCase = true)) {
+                return false
+            }
+        }
+        if (this.appNamePrefix.isNotEmpty()) {
+            if (!appName.startsWith(this.appNamePrefix, ignoreCase = true)) {
+                return false
+            }
+        }
+        return true
+    }
+
     companion object {
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
         private val FIELD_BATTERY_OPTIMIZATION_ASKED = booleanPreferencesKey("batteryOptimizationAsked")
         private val FIELD_CAN_DRAW_OVERLAYS_ASKED = booleanPreferencesKey("canDrawOverlaysAsked")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
-        private val FIELD_KEY_PACKAGE_LIST = stringSetPreferencesKey("keyPackageList")
+        private val FIELD_KEY_APP_INFO_LIST = stringPreferencesKey("appInfoList")
         private val FIELD_KEY_SHOULD_NOTIFICATION_READER_RUN =
             booleanPreferencesKey("shouldNotificationReaderRun")
         private val FIELD_KEY_DEMO_PERIOD_EXPIRED = booleanPreferencesKey("demoPeriodExpired")

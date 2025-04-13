@@ -10,8 +10,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.gui.message.TextMessage
@@ -32,13 +30,14 @@ import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.notification_reader.data.NotificationReaderListenerService
 import net.maxsmr.feature.notification_reader.data.NotificationReaderRepository
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager
-import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.Companion.DOWNLOAD_TAG_PACKAGE_LIST
+import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.Companion.DOWNLOAD_TAG_APPS_LIST
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStopResult
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.StartMode
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData.Companion.NOTIFICATION_DATETIME_FORMAT
-import net.maxsmr.feature.notification_reader.ui.adapter.PackageNameAdapterData
+import net.maxsmr.feature.notification_reader.ui.adapter.AppInfoAdapterData
+import net.maxsmr.feature.notification_reader.ui.adapter.AppInfoAdapterData.Companion.asAdapterData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.preferences.ui.doOnBatteryOptimizationWithPostNotificationsAsk
@@ -58,13 +57,13 @@ class NotificationReaderViewModel @AssistedInject constructor(
 
     val serviceTargetState = _serviceTargetState as LiveData<ServiceTargetState?>
 
-    private val _packageListLoadState = MutableLiveData<LoadState<PackageListState>>(LoadState.initial(null))
+    private val _appsListLoadState = MutableLiveData<LoadState<AppsListData>>(LoadState.initial(null))
 
-    val packageListLoadState = _packageListLoadState as LiveData<LoadState<PackageListState>>
+    val appsListLoadState = _appsListLoadState as LiveData<LoadState<AppsListData>>
 
-    private val _packageListExpandedState by persistableLiveDataInitial(false)
+    private val _appsListExpandedState by persistableLiveDataInitial(false)
 
-    val packageListExpandedState = _packageListExpandedState as LiveData<Boolean>
+    val appsListExpandedState = _appsListExpandedState as LiveData<Boolean>
 
     val settings = settingsRepo.settingsFlow.asLiveData()
 
@@ -78,6 +77,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
                 it.id,
                 it.contentText,
                 it.packageName,
+                it.appName,
                 formatDate(Date(it.timestamp), NOTIFICATION_DATETIME_FORMAT),
                 it.status,
                 isRunning ?: false
@@ -101,39 +101,37 @@ class NotificationReaderViewModel @AssistedInject constructor(
         // при этом может появляться и пропадать в resultItems манагера
         // + настройка "белый список"
         zip(
-            downloadsViewModel.observeDownload(DOWNLOAD_TAG_PACKAGE_LIST) {
+            downloadsViewModel.observeDownload(DOWNLOAD_TAG_APPS_LIST) {
                 tag == it
             },
-            cacheRepo.packageList.asLiveData(),
+            cacheRepo.appInfoList.asLiveData(),
             settings
-        ) { loadState, packageList, settings ->
-            Triple(loadState, packageList, settings)
+        ) { loadState, appInfoList, settings ->
+            Triple(loadState, appInfoList, settings)
         }.observe {
-            val (loadState, packageList, settings) = it
-            viewModelScope.launch {
-                _packageListLoadState.postValue(
-                    if (loadState != null && !loadState.isSuccessWithData()) {
-                        if (!settings?.packageListUrl.isNullOrEmpty()) {
-                            loadState.copyOf(null)
-                        } else {
-                            LoadState.success(null)
-                        }
+            val (loadState, appsList, settings) = it
+            _appsListLoadState.postValue(
+                if (loadState != null && !loadState.isSuccessWithData()) {
+                    if (!settings?.appsListUrl.isNullOrEmpty()) {
+                        loadState.copyOf(null)
                     } else {
-                        LoadState.success(
-                            PackageListState(
-                                packageList.orEmpty().map { name -> PackageNameAdapterData(name) },
-                                settings?.isWhitePackageList == true
-                            )
-                        )
+                        LoadState.success(null)
                     }
-                )
-            }
+                } else {
+                    LoadState.success(
+                        AppsListData(
+                            appsList.orEmpty().map { info -> AppInfoAdapterData(info.asAdapterData()) },
+                            settings?.isWhiteAppsList == true
+                        )
+                    )
+                }
+            )
         }
         viewModelScope.launch {
-            _packageListLoadState.value = LoadState.success(
-                PackageListState(
-                    cacheRepo.getPackageList().map { name -> PackageNameAdapterData(name) },
-                    settingsRepo.getSettings().isWhitePackageList
+            _appsListLoadState.value = LoadState.success(
+                AppsListData(
+                    cacheRepo.getAppInfoList().map { info -> AppInfoAdapterData(info.asAdapterData()) },
+                    settingsRepo.getSettings().isWhiteAppsList
                 )
             )
         }
@@ -202,7 +200,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
         _serviceTargetState.value = ServiceTargetState(!isServiceRunning(), true)
     }
 
-    fun onDownloadPackageListAction() {
+    fun onDownloadAppsListAction() {
         if (!manager.isRunning.value) return
         if (!manager.doLaunchDownloadJobIfNeeded(
                     if (_serviceTargetState.value?.state == true) {
@@ -212,7 +210,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
                     }
                 )
         ) {
-            showSnackbar(TextMessage(R.string.notification_reader_snack_download_package_list_not_started))
+            showSnackbar(TextMessage(R.string.notification_reader_snack_download_apps_list_not_started))
         }
     }
 
@@ -240,8 +238,8 @@ class NotificationReaderViewModel @AssistedInject constructor(
         manager.retryFailedNotification(id)
     }
 
-    fun onTogglePackageListExpandedState() {
-        _packageListExpandedState.value = _packageListExpandedState.value == false
+    fun onToggleAppsListExpandedState() {
+        _appsListExpandedState.value = _appsListExpandedState.value == false
     }
 
     fun resetServiceTargetStateViewFlag() {
@@ -282,7 +280,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
     }
 
     private fun doStartWithHandleResult(context: Context): ManagerStartResult {
-        return manager.doStart(context).also {
+        return manager.doStart().also {
             logger.d("doStart result: $it")
             when (it) {
                 ManagerStartResult.SERVICE_START_FAILED -> {
@@ -305,7 +303,7 @@ class NotificationReaderViewModel @AssistedInject constructor(
     private fun doStopWithHandleResult(context: Context, navigateToSettings: Boolean): ManagerStopResult {
         // при возврате с экрана настроек, когда разрешение было отозвано,
         // можно попытаться остановить ещё раз
-        return manager.doStop(context, navigateToSettings).also {
+        return manager.doStop(navigateToSettings).also {
             logger.d("doStop result: $it")
             if (it == ManagerStopResult.SETTINGS_NEEDED && navigateToSettings) {
                 showToast(TextMessage(R.string.notification_reader_toast_stop_remove_in_settings))
@@ -318,8 +316,8 @@ class NotificationReaderViewModel @AssistedInject constructor(
         val changedFromView: Boolean,
     ) : Serializable
 
-    data class PackageListState(
-        val names: List<PackageNameAdapterData>,
+    data class AppsListData(
+        val infos: List<AppInfoAdapterData>,
         val isWhiteList: Boolean,
     )
 

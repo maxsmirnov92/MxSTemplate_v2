@@ -40,10 +40,7 @@ class BootCompeteReceiver : BaseBootCompleteReceiver() {
         if (canStartForegroundService(context)) {
             scope.launch {
                 if (cacheRepo.shouldNotificationReaderRun()) {
-                    manager.doStart(
-                        context,
-                        true
-                    )
+                    manager.doStart(true)
                 }
             }
         }

@@ -20,7 +20,6 @@ import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
-import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
@@ -48,7 +47,7 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
         mutableMapOf<Field<*>, View>().apply {
             with(viewModel) {
                 put(notificationsUrlField, binding.tilNotificationsUrl)
-                put(packageListUrlField, binding.tilPackageListUrl)
+                put(appsListUrlField, binding.tilAppsListUrl)
                 put(notificationsApiKeyField, binding.tilNotificationsApiKey)
                 put(failedNotificationsWatcherIntervalField, binding.tilFailedNotificationsWatcherInterval)
                 put(successNotificationsLifeTimeField, binding.tilSuccessNotificationsLifeTime)
@@ -110,8 +109,8 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
         super.onViewCreated(view, savedInstanceState, viewModel)
 
         viewModel.notificationsUrlField.observeTextWithBind(binding.tilNotificationsUrl)
-        viewModel.packageListUrlField.observeTextWithBind(binding.tilPackageListUrl)
-        viewModel.isWhitePackageListField.bindValue(viewLifecycleOwner, binding.switchWhitePackageList)
+        viewModel.appsListUrlField.observeTextWithBind(binding.tilAppsListUrl)
+        viewModel.isWhiteAppsListField.bindValue(viewLifecycleOwner, binding.switchWhiteAppsList)
 
         viewModel.notificationsApiKeyField.observeTextWithBind(binding.tilNotificationsApiKey)
 

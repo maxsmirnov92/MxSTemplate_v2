@@ -11,6 +11,7 @@ data class NotificationReaderEntity(
     val id: Long = 0,
     val contentText: String,
     val packageName: String,
+    val appName: String,
     val timestamp: Long,
     val status: Status
 ): Serializable {

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "004b250567cce775689068b79e29eada",
+    "identityHash": "3abb9f31d39a4a5c7b3ca1ef34a3c44a",
     "entities": [
       {
         "tableName": "DownloadInfo",
@@ -50,7 +50,7 @@
       },
       {
         "tableName": "NotificationData",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `contentText` TEXT NOT NULL, `packageName` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `status` BLOB NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `contentText` TEXT NOT NULL, `packageName` TEXT NOT NULL, `appName` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `status` BLOB NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -67,6 +67,12 @@
           {
             "fieldPath": "packageName",
             "columnName": "packageName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "appName",
+            "columnName": "appName",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -96,7 +102,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '004b250567cce775689068b79e29eada')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3abb9f31d39a4a5c7b3ca1ef34a3c44a')"
     ]
   }
 }

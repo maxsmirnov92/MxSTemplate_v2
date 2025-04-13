@@ -23,9 +23,9 @@
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/actionDownloadPackageList"
+        android:id="@+id/actionDownloadAppsList"
         app:showAsAction="never"
-        android:title="@string/notification_reader_menu_action_download_package_list" />
+        android:title="@string/notification_reader_menu_action_download_apps_list" />
 
 
 </menu>

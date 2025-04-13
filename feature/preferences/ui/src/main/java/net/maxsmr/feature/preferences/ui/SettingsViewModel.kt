@@ -38,16 +38,16 @@ class SettingsViewModel @Inject constructor(
         key = KEY_FIELD_URL_NOTIFICATIONS,
     )
 
-    val packageListUrlField = state.urlField(
-        R.string.settings_field_package_list_url_hint,
+    val appsListUrlField = state.urlField(
+        R.string.settings_field_apps_list_url_hint,
         isRequired = false,
         isValidByBlank = false,
-        key = KEY_FIELD_URL_PACKAGE_LIST
+        key = KEY_FIELD_URL_APPS_LIST
     )
 
-    val isWhitePackageListField: Field<Boolean> = Field.Builder(false)
+    val isWhiteAppsListField: Field<Boolean> = Field.Builder(false)
         .emptyIf { false }
-        .persist(state, KEY_FIELD_IS_WHITE_PACKAGE_LIST)
+        .persist(state, KEY_FIELD_IS_WHITE_APPS_LIST)
         .build()
 
     val notificationsApiKeyField: Field<String> = Field.Builder(EMPTY_STRING)
@@ -123,8 +123,8 @@ class SettingsViewModel @Inject constructor(
 
     private val allFields = mutableListOf<Field<*>>(
         notificationsUrlField,
-        packageListUrlField,
-        isWhitePackageListField,
+        appsListUrlField,
+        isWhiteAppsListField,
         notificationsApiKeyField,
         failedNotificationsWatcherIntervalField,
         successNotificationsLifeTimeField,
@@ -161,12 +161,12 @@ class SettingsViewModel @Inject constructor(
             appSettings.value = currentAppSettings.copy(notificationsUrl = it)
         }
 
-        packageListUrlField.clearErrorOnChange(this) {
-            appSettings.value = currentAppSettings.copy(packageListUrl = it)
+        appsListUrlField.clearErrorOnChange(this) {
+            appSettings.value = currentAppSettings.copy(appsListUrl = it)
         }
 
-        isWhitePackageListField.valueLive.observe {
-            appSettings.value = currentAppSettings.copy(isWhitePackageList = it)
+        isWhiteAppsListField.valueLive.observe {
+            appSettings.value = currentAppSettings.copy(isWhiteAppsList = it)
         }
 
         notificationsApiKeyField.clearErrorOnChange(this) {
@@ -284,9 +284,9 @@ class SettingsViewModel @Inject constructor(
     private fun restoreFields(settings: AppSettings) {
         // используется для того, чтобы выставить initial'ы в филды
         notificationsUrlField.value = settings.notificationsUrl
-        packageListUrlField.value = settings.packageListUrl
+        appsListUrlField.value = settings.appsListUrl
         notificationsApiKeyField.value = settings.notificationsApiKey
-        isWhitePackageListField.value = settings.isWhitePackageList
+        isWhiteAppsListField.value = settings.isWhiteAppsList
         failedNotificationsWatcherIntervalField.value = settings.failedNotificationsWatcherInterval
         successNotificationsLifeTimeField.value = settings.successNotificationsLifeTime
         connectTimeoutField.value = settings.connectTimeout
@@ -310,8 +310,8 @@ class SettingsViewModel @Inject constructor(
         const val DIALOG_TAG_IMPORT_FAILED = "import_failed"
 
         private const val KEY_FIELD_URL_NOTIFICATIONS = "url_notifications"
-        private const val KEY_FIELD_URL_PACKAGE_LIST = "url_package_list"
-        private const val KEY_FIELD_IS_WHITE_PACKAGE_LIST = "is_white_package_list"
+        private const val KEY_FIELD_URL_APPS_LIST = "url_apps_list"
+        private const val KEY_FIELD_IS_WHITE_APPS_LIST = "is_white_apps_list"
         private const val KEY_FIELD_API_KEY_NOTIFICATIONS = "api_key_notifications"
         private const val KEY_FIELD_FAILED_NOTIFICATIONS_WATCHER_INTERVAL = "failed_notifications_watcher_interval"
         private const val KEY_FIELD_SUCCESS_NOTIFICATIONS_LIFE_TIME = "success_notifications_life_time"

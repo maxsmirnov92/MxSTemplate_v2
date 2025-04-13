@@ -14,6 +14,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import net.maxsmr.android.recyclerview.adapters.base.delegation.BaseDraggableDelegationAdapter
 import net.maxsmr.android.recyclerview.adapters.base.drag.DragAndDropTouchHelperCallback
@@ -35,17 +36,17 @@ import net.maxsmr.core.database.model.notification_reader.NotificationReaderEnti
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.view.alert.delegate.CombinedViewFragmentAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
 import net.maxsmr.core.ui.view.databinding.LayoutErrorContainerBinding
-import net.maxsmr.core.ui.view.alert.delegate.CombinedViewFragmentAlertDelegate
 import net.maxsmr.feature.demo.DemoChecker
 import net.maxsmr.feature.demo.strategies.AlertDemoExpiredStrategy
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStartResult
 import net.maxsmr.feature.notification_reader.data.NotificationReaderSyncManager.ManagerStopResult
+import net.maxsmr.feature.notification_reader.ui.adapter.AppInfoAdapter
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapter
 import net.maxsmr.feature.notification_reader.ui.adapter.NotificationsAdapterData
-import net.maxsmr.feature.notification_reader.ui.adapter.PackageNamesAdapter
 import net.maxsmr.feature.notification_reader.ui.databinding.DialogInputApiKeyBinding
 import net.maxsmr.feature.notification_reader.ui.databinding.FragmentNotificationReaderBinding
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
@@ -72,7 +73,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
 
     private val downloadsViewModel: DownloadsViewModel by activityViewModels()
 
-    private val packageNamesAdapter = PackageNamesAdapter()
+    private val packageNamesAdapter = AppInfoAdapter()
     private val notificationsAdapter = NotificationsAdapter {
         viewModel.onRetryFailedNotification(it.id)
     }
@@ -106,7 +107,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
     lateinit var demoChecker: DemoChecker
 
     private var toggleServiceStateMenuItem: MenuItem? = null
-    private var downloadPackageListMenuItem: MenuItem? = null
+    private var downloadAppsListMenuItem: MenuItem? = null
     private var retryFailedMenuItem: MenuItem? = null
     private var clearSuccessMenuItem: MenuItem? = null
 
@@ -131,7 +132,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
         }
 
         with(binding) {
-            val errorBinding = LayoutErrorContainerBinding.bind(containerPackageListError.root)
+            val errorBinding = LayoutErrorContainerBinding.bind(containerAppsListError.root)
 
             viewModel.notificationsItems.observe {
                 notificationsAdapter.items = it
@@ -146,58 +147,63 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                 refreshClearSuccessMenuItem()
             }
 
-            zip(viewModel.isRunning, viewModel.packageListLoadState) { isRunning, loadState ->
+            zip(viewModel.isRunning, viewModel.appsListLoadState) { isRunning, loadState ->
                 isRunning to loadState
             }.observe {
                 val (isRunning, loadState) = it
                 if (isRunning == true) {
                     if (loadState?.isLoading == true) {
-                        containerPackageListLoading.isVisible = true
-                        containerPackageNames.isVisible = false
-                        containerPackageListError.root.isVisible = false
-                        containerPackageListState.isVisible = true
+                        containerAppsListLoading.isVisible = true
+                        containerAppsList.isVisible = false
+                        containerAppsListError.root.isVisible = false
+                        containerAppsListState.isVisible = true
                     } else {
-                        containerPackageListLoading.isVisible = false
-                        if (loadState?.isSuccessWithData { state -> !state?.names.isNullOrEmpty() } == true) {
+                        containerAppsListLoading.isVisible = false
+                        if (loadState?.isSuccessWithData { state -> !state?.infos.isNullOrEmpty() } == true) {
                             val data = loadState.data ?: return@observe
-                            tvPackageNamesSubtitle.text = getString(
+                            tvAppsListSubtitle.text = getString(
                                 if (data.isWhiteList) {
-                                    R.string.notification_reader_package_list_white_subtitle
+                                    R.string.notification_reader_apps_list_white_subtitle
                                 } else {
-                                    R.string.notification_reader_package_list_black_subtitle
+                                    R.string.notification_reader_apps_list_black_subtitle
                                 }
                             )
-                            packageNamesAdapter.items = data.names
-                            containerPackageNames.isVisible = true
-                            containerPackageListError.root.isVisible = false
-                            containerPackageListState.isVisible = true
+                            packageNamesAdapter.items = data.infos
+                            containerAppsList.isVisible = true
+                            containerAppsListError.root.isVisible = false
+                            containerAppsListState.isVisible = true
                         } else {
-                            containerPackageNames.isVisible = false
+                            containerAppsList.isVisible = false
                             if (loadState != null && loadState.isError()) {
+                                val error = loadState.error
                                 errorBinding.tvEmptyError.text =
-                                    loadState.error?.errorMessage()?.get(requireContext())?.takeIf { message ->
-                                        message.isNotEmpty()
-                                    }?.let { message ->
-                                        getString(R.string.notification_reader_package_list_error_format, message)
-                                    } ?: getString(R.string.notification_reader_package_list_error)
-                                containerPackageListError.root.isVisible = true
+                                    if (error?.error !is CancellationException) {
+                                        error?.errorMessage()?.get(requireContext())?.takeIf { message ->
+                                            message.isNotEmpty()
+                                        }?.let { message ->
+                                            getString(R.string.notification_reader_apps_list_error_format, message)
+                                        } ?: getString(R.string.notification_reader_apps_list_error)
+                                    } else {
+                                        getString(R.string.notification_reader_apps_list_cancelled)
+                                    }
+                                containerAppsListError.root.isVisible = true
                             } else {
-                                containerPackageListError.root.isVisible = false
+                                containerAppsListError.root.isVisible = false
                             }
-                            containerPackageListState.isVisible = loadState != null
+                            containerAppsListState.isVisible = loadState != null
                         }
                     }
                 } else {
-                    containerPackageListState.isVisible = false
+                    containerAppsListState.isVisible = false
                 }
             }
             zip(viewModel.isRunning, viewModel.settings) { isRunning, settings ->
                 isRunning to settings
             }.observe {
-                refreshDownloadPackageListMenuItem()
+                refreshDownloadAppsListMenuItem()
             }
 
-            viewModel.packageListExpandedState.observe {
+            viewModel.appsListExpandedState.observe {
                 ContextCompat.getDrawable(
                     requireContext(),
                     if (it) {
@@ -206,17 +212,17 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                         R.drawable.ic_arrow_down
                     }
                 )?.let { d ->
-                    tvPackageNamesSubtitle.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                    tvAppsListSubtitle.setCompoundDrawablesRelativeWithIntrinsicBounds(
                         null,
                         null,
                         d.createBitmapDrawable(requireContext(), 30, 30),
                         null
                     )
                 }
-                rvPackageNames.isVisible = it
+                rvAppList.isVisible = it
             }
 
-            rvPackageNames.adapter = packageNamesAdapter
+            rvAppList.adapter = packageNamesAdapter
             rvNotifications.adapter = notificationsAdapter
             touchHelper.attachToRecyclerView(rvNotifications)
             notificationsAdapter.registerItemsEventsListener(this@NotificationReaderFragment)
@@ -226,8 +232,8 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                     .build()
             )
 
-            tvPackageNamesSubtitle.setOnClickListener {
-                viewModel.onTogglePackageListExpandedState()
+            tvAppsListSubtitle.setOnClickListener {
+                viewModel.onToggleAppsListExpandedState()
             }
 
             errorBinding.tvEmptyError.setTextColor(
@@ -237,7 +243,7 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                 )
             )
             errorBinding.btRetry.setOnClickListener {
-                viewModel.onDownloadPackageListAction()
+                viewModel.onDownloadAppsListAction()
             }
 
             val clickListener = NumberedClickListener(15, TimeUnit.SECONDS.toMillis(4))
@@ -334,11 +340,11 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)
         toggleServiceStateMenuItem = menu.findItem(R.id.actionServiceStartStop)
-        downloadPackageListMenuItem = menu.findItem(R.id.actionDownloadPackageList)
+        downloadAppsListMenuItem = menu.findItem(R.id.actionDownloadAppsList)
         retryFailedMenuItem = menu.findItem(R.id.actionRetryFailed)
         clearSuccessMenuItem = menu.findItem(R.id.actionClearSuccess)
         refreshStateItemByServiceRunning()
-        refreshDownloadPackageListMenuItem()
+        refreshDownloadAppsListMenuItem()
         refreshRetryFailedMenuItem()
         refreshClearSuccessMenuItem()
     }
@@ -350,8 +356,8 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
                 true
             }
 
-            R.id.actionDownloadPackageList -> {
-                viewModel.onDownloadPackageListAction()
+            R.id.actionDownloadAppsList -> {
+                viewModel.onDownloadAppsListAction()
                 true
             }
 
@@ -407,9 +413,9 @@ open class NotificationReaderFragment : BaseNavigationFragment<NotificationReade
         }
     }
 
-    private fun refreshDownloadPackageListMenuItem() {
-        downloadPackageListMenuItem?.isVisible = viewModel.isRunning.value == true
-                && !viewModel.settings.value?.packageListUrl.isNullOrEmpty()
+    private fun refreshDownloadAppsListMenuItem() {
+        downloadAppsListMenuItem?.isVisible = viewModel.isRunning.value == true
+                && !viewModel.settings.value?.appsListUrl.isNullOrEmpty()
     }
 
     private fun refreshRetryFailedMenuItem() {

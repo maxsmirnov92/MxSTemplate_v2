@@ -13,6 +13,7 @@ data class NotificationReaderDataRequest(
         val id: Long,
         val contentText: String,
         val packageName: String,
+        val appName: String,
         val timestamp: Instant,
     ) {
 
@@ -20,7 +21,8 @@ data class NotificationReaderDataRequest(
             id: Long,
             content: String,
             packageName: String,
+            appName: String,
             timestamp: Long,
-        ) : this(id, content, packageName, Instant.fromEpochMilliseconds(timestamp))
+        ) : this(id, content, packageName, appName, Instant.fromEpochMilliseconds(timestamp))
     }
 }

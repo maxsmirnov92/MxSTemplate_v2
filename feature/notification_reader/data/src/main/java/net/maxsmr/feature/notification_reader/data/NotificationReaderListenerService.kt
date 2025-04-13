@@ -8,6 +8,8 @@ import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInfo
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Bundle
 import android.service.notification.NotificationListenerService
@@ -18,9 +20,12 @@ import androidx.core.os.bundleOf
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.NotificationWrapper
 import net.maxsmr.commonutils.isAtLeastOreo
+import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.commonutils.isAtLeastUpsideDownCake
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
@@ -34,6 +39,7 @@ import net.maxsmr.commonutils.service.startNoCheck
 import net.maxsmr.commonutils.service.stop
 import net.maxsmr.commonutils.service.stopForegroundCompat
 import net.maxsmr.commonutils.service.withMutabilityFlag
+import net.maxsmr.commonutils.text.isEmpty
 import net.maxsmr.core.android.baseApplicationContext
 import net.maxsmr.core.di.DI_NAME_FOREGROUND_SERVICE_ID_NOTIFICATION_READER
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
@@ -82,7 +88,7 @@ class NotificationReaderListenerService : NotificationListenerService() {
     }
 
     private val coroutineScope: CoroutineScope by lazy {
-        CoroutineScope(Dispatchers.IO)
+        CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
 
     @Inject
@@ -151,7 +157,20 @@ class NotificationReaderListenerService : NotificationListenerService() {
                         )
                     )
             ) {
-                manager.onNewNotification(text.toString(), sbn.packageName, timestamp)
+                val packageName = sbn.packageName
+                if (packageName.isEmpty()) {
+                    logger.w("Notification $sbn has empty package name, ignoring")
+                    return@launch
+                }
+                val packageInfo = packageManager.getPackageInfoOrNull(packageName)?.applicationInfo
+                val appLabel = packageInfo?.loadLabel(packageManager)?.toString().orEmpty()
+                logger.d("packageInfo: '$packageInfo', appLabel: '$appLabel'")
+                manager.onNewNotification(
+                    text.toString(),
+                    sbn.packageName,
+                    appLabel,
+                    timestamp
+                )
             } else {
                 stopForegroundCompat(true)
                 stopSelf()
@@ -167,6 +186,7 @@ class NotificationReaderListenerService : NotificationListenerService() {
     override fun onDestroy() {
         super.onDestroy()
         logger.d("onDestroy")
+        coroutineScope.cancel()
     }
 
     private fun foregroundNotification(): Notification {
@@ -320,5 +340,22 @@ class NotificationReaderListenerService : NotificationListenerService() {
             true,
             args = bundle
         )
+
+        // TODO replace
+        private fun PackageManager.getPackageInfoOrNull(packageName: String, flags: Int = 0): PackageInfo? {
+            if (!isEmpty(packageName)) {
+                try {
+                    return if (isAtLeastTiramisu()) {
+                        getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(flags.toLong()))
+                    } else {
+                        getPackageInfo(packageName, flags)
+                    }
+                } catch (e: PackageManager.NameNotFoundException) {
+                    // ignored
+                }
+
+            }
+            return null
+        }
     }
 }
