@@ -2,7 +2,6 @@ package net.maxsmr.core.network.api.notification_reader
 
 import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
-import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
 import retrofit2.http.Body
 import retrofit2.http.POST
 
@@ -12,10 +11,7 @@ interface NotificationReaderDataService {
     // должен меняться динамически в Interceptor
     @Authorization
     @POST("/")
-    @ResponseObjectType(NotificationReaderDataResponse::class)
-    suspend fun notifyData(
-        @Body request: NotificationReaderDataRequest,
-    ): NotificationReaderDataResponse
+    suspend fun notifyData(@Body request: NotificationReaderDataRequest)
 
     companion object {
 
