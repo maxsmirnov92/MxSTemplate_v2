@@ -127,7 +127,10 @@ class NotificationReaderSyncManager @Inject constructor(
                 }
             } else {
                 // начиная с Android 14 стартануть активити находясь в бэкграунде нельзя
-                context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                context.startActivity(
+                    Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
                 return ManagerStartResult.SETTINGS_NEEDED
             }
         }
@@ -162,7 +165,10 @@ class NotificationReaderSyncManager @Inject constructor(
             if (isNotificationAccessGranted(context)) {
                 if (navigateToSettings) {
                     // при наличии доступа сначала отправляем в настройки
-                    context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                    context.startActivity(
+                        Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    )
                 }
                 ManagerStopResult.SETTINGS_NEEDED
             } else {
