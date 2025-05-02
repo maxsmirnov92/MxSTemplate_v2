@@ -95,10 +95,10 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
                 doReloadWebView()
             }
         }
-        viewModel.currentUrl.observe {
+        viewModel.currentUrl.observeSafe {
             refreshMenuItemsByCurrentUri(it)
         }
-        viewModel.hasInitialUrl.observe {
+        viewModel.hasInitialUrl.observeSafe {
             refreshOpenHomeItem(it)
         }
     }
@@ -156,7 +156,7 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         super.onCreateMenu(menu, inflater)
 
         openHomeMenuItem = menu.findItem(R.id.action_open_home)
-        refreshOpenHomeItem(viewModel.hasInitialUrl.value ?: false)
+        refreshOpenHomeItem(viewModel.hasInitialUrl.value)
 
         copyMenuItem = menu.findItem(R.id.action_copy_link)
         shareMenuItem = menu.findItem(R.id.action_share_link)

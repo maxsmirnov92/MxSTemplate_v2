@@ -5,10 +5,14 @@ import android.net.Uri
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.annotation.CallSuper
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.LoadState.Companion.copyOf
 import net.maxsmr.core.android.base.BaseViewModel
@@ -18,27 +22,35 @@ import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData.Companion.
 
 open class BaseWebViewModel(state: SavedStateHandle, context: Context) : BaseViewModel(state, context) {
 
+    val firstWebViewData: StateFlow<LoadState<MainWebViewData?>> by lazy { _firstWebViewData.asStateFlow() }
+
+    val currentWebViewData: StateFlow<LoadState<MainWebViewData?>> by lazy { _currentWebViewData.asStateFlow() }
+
+    val currentWebViewProgress: StateFlow<Int?> by lazy { _currentWebViewProgress.asStateFlow() }
+
+    val currentUrl: StateFlow<Uri?> by lazy {
+        currentWebViewData
+            .map { it.data?.url }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }
+
+    val currentData: StateFlow<String?> by lazy {
+        currentWebViewData
+            .map { it.data?.data }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    }
+
     /**
      * Первые данные в WebView с состоянием загрузки/ошибки - после очередного вызова loadUrl/loadData
      */
-    private val _firstWebViewData = MutableLiveData<LoadState<MainWebViewData?>>(LoadState.initial())
-
-    val firstWebViewData = _firstWebViewData as LiveData<LoadState<MainWebViewData?>>
+    private val _firstWebViewData = MutableStateFlow<LoadState<MainWebViewData?>>(LoadState.initial())
 
     /**
      * Текущие данные в [WebView] с состоянием загрузки/ошибки
      */
-    private val _currentWebViewData = MutableLiveData<LoadState<MainWebViewData?>>(LoadState.initial())
+    private val _currentWebViewData = MutableStateFlow<LoadState<MainWebViewData?>>(LoadState.initial())
 
-    val currentWebViewData = _currentWebViewData as LiveData<LoadState<MainWebViewData?>>
-
-    private val _currentWebViewProgress = MutableLiveData<Int?>(null)
-
-    val currentWebViewProgress = _currentWebViewProgress as LiveData<Int?>
-
-    val currentUrl = currentWebViewData.map { it.data?.url }
-
-    val currentData = currentWebViewData.map { it.data?.data }
+    private val _currentWebViewProgress = MutableStateFlow<Int?>(null)
 
     /**
      * Был ли выставлен завершённый [firstWebViewData]
@@ -131,7 +143,7 @@ open class BaseWebViewModel(state: SavedStateHandle, context: Context) : BaseVie
             @JvmStatic
             fun fromWebViewData(
                 data: WebViewData?,
-                title: String? = null
+                title: String? = null,
             ): MainWebViewData? =
                 data?.let {
                     MainWebViewData(it.url, it.data, title, it.response, it.responseData)

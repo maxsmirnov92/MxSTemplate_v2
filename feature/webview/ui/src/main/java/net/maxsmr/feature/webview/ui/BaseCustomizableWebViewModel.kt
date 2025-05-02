@@ -2,10 +2,13 @@ package net.maxsmr.feature.webview.ui
 
 import android.content.Context
 import android.content.Intent
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.map
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.getSendTextIntent
@@ -31,12 +34,14 @@ abstract class BaseCustomizableWebViewModel(
         schemeIfEmpty = URL_SCHEME_HTTPS
     )
 
-    private val initialCustomizer = MutableLiveData<WebViewCustomizer?>(null)
-
-    val hasInitialUrl: LiveData<Boolean> = initialCustomizer.map {
-        // наличие домашней страницы == валидная исходная http/https-урла или about:blank
-        it?.url.isUrlValid(orBlank = true)
+    val hasInitialUrl: StateFlow<Boolean> by lazy {
+        initialCustomizer.map {
+            // наличие домашней страницы == валидная исходная http/https-урла или about:blank
+            it?.url.isUrlValid(orBlank = true)
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
     }
+
+    private val initialCustomizer = MutableStateFlow<WebViewCustomizer?>(null)
 
     abstract var customizer: WebViewCustomizer
 
@@ -53,9 +58,7 @@ abstract class BaseCustomizableWebViewModel(
             return false
         }
         val newValue = urlField.value.toValidUri(orBlank = true, schemeIfEmpty = URL_SCHEME_HTTPS) ?: return false
-        if (currentWebViewData.value?.isSuccess == true
-                && currentUrl.value.equalsIgnoreSubDomain(newValue)
-        ) {
+        if (currentWebViewData.value.isSuccess && currentUrl.value.equalsIgnoreSubDomain(newValue)) {
             return false
         }
         customizer = customizer.buildUpon().setUri(newValue).build()
@@ -71,7 +74,7 @@ abstract class BaseCustomizableWebViewModel(
     }
 
     fun onOpenHomePageAction() {
-        if (hasInitialUrl.value != true) return
+        if (!hasInitialUrl.value) return
         customizer = customizer.buildUpon().setUrl(initialCustomizer.value?.url).build()
     }
 

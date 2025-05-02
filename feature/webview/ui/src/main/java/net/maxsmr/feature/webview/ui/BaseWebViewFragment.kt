@@ -20,7 +20,6 @@ import net.maxsmr.commonutils.gui.loadDataCompat
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.LoadState.Companion.copyOf
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.URL_PAGE_BLANK
 import net.maxsmr.core.network.exceptions.HttpProtocolException
@@ -28,9 +27,10 @@ import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.isResponseOk
 import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.core.network.toPairs
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
-import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
 import net.maxsmr.feature.webview.data.client.ProgressWebChromeClient
@@ -53,7 +53,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
         .onStateChanged {
             if (it && shouldReloadAfterConnectionError) {
                 val data = viewModel.currentWebViewData.value
-                data?.error?.error?.let { error ->
+                data.error?.error?.let { error ->
                     if (error is WebResourceException && error.isConnectionError) {
                         // с задержкой, т.к. после появления сети коннект может не пройти сразу
                         webView.postDelayed({
@@ -82,13 +82,13 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         super.onViewCreated(view, savedInstanceState, viewModel)
         setupWebView(savedInstanceState)
-        viewModel.firstWebViewData.observe {
+        viewModel.firstWebViewData.observeSafe {
             onFirstResourceChanged(it)
         }
-        viewModel.currentWebViewData.observe {
+        viewModel.currentWebViewData.observeSafe {
             onResourceChanged(it)
         }
-        viewModel.currentWebViewProgress.observe {
+        viewModel.currentWebViewProgress.observeSafe {
             if (it != null) {
                 onShowProgress(it)
             } else {
