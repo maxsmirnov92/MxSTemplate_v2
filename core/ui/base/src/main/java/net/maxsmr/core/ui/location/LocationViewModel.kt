@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.DialogInterface
 import android.location.Location
 import android.os.HandlerThread
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -15,18 +13,18 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
-import net.maxsmr.commonutils.live.postValueIfNew
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.coroutines.asDispatcher
 import net.maxsmr.core.android.location.LocationCallback
 import net.maxsmr.core.android.location.receiver.ILocationReceiver
 import net.maxsmr.core.android.location.receiver.LocationParams
-import net.maxsmr.core.ui.R
 import net.maxsmr.core.android.permissions.ICanAskPermissions
+import net.maxsmr.core.ui.R
 
 class LocationViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
@@ -35,39 +33,40 @@ class LocationViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context
 ) : BaseViewModel(state, context), LocationCallback {
 
-    private val _currentLocation: MutableLiveData<Location?> = MutableLiveData()
-    val currentLocation: LiveData<Location?> = _currentLocation
+    val currentLocation: StateFlow<Location?> by lazy {  _currentLocation.asStateFlow() }
 
-    private val _navigateToLocationSettings = MutableStateFlow<VmEvent<Unit>?>(null)
-
-    val navigateToLocationSettings = _navigateToLocationSettings.asStateFlow()
-
-    private val locationThread: HandlerThread = HandlerThread("LocationHandlerThread")
+    val navigateToLocationSettings by lazy { _navigateToLocationSettings.asStateFlow() }
 
     private val locationDispatcher: CoroutineDispatcher by lazy {
         locationThread.asDispatcher()
     }
 
+    private val _currentLocation = MutableStateFlow<Location?>(null)
+
+    private val _navigateToLocationSettings = MutableStateFlow<VmEvent<Unit>?>(null)
+
+    private val locationThread: HandlerThread = HandlerThread("LocationHandlerThread")
+
     var lastGpsDeniedState: GpsDeniedState? = null
         private set
 
     override fun onLocationChanged(location: Location) {
-        _currentLocation.postValue(location)
+        _currentLocation.value = location
     }
 
     override fun onLocationAvailabilityChanged(isAvailable: Boolean) {
         if (!isAvailable) {
-            _currentLocation.postValueIfNew(null)
+            _currentLocation.value = null
         }
     }
 
     override fun onGpsNotAvailable() {
-        _currentLocation.postValueIfNew(null)
+        _currentLocation.value = null
         showOkDialog(DIALOG_TAG_GPS_NOT_AVAILABLE, R.string.dialog_gps_not_available_message)
     }
 
     override fun onGpsProviderNotEnabled() {
-        _currentLocation.postValueIfNew(null)
+        _currentLocation.value = null
         showYesNoDialog(
             DIALOG_TAG_GPS_NOT_ENABLED,
             TextMessage(R.string.dialog_gps_enable_message),
