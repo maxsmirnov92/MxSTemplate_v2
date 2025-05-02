@@ -99,7 +99,7 @@ googlePlayAppUpdates = "2.1.0"
 ruStoreSdkBom = "6.0.0"
 showcaseView = "1.4.1"
 
-cameraX = "1.4.0"
+cameraX = "1.4.2"
 googleMlKit = "19.0.1"
 huaweiMl = "3.11.0.301"
 
@@ -245,6 +245,7 @@ room-gradlePlugin = { group = "androidx.room", name = "room-gradle-plugin", vers
 ksp-gradlePlugin = { group = "com.google.devtools.ksp", name = "com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
 
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraX" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraX" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraX" }
 androidx-camera-extensions = { group = "androidx.camera", name = "camera-extensions", version.ref = "cameraX" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraX" }

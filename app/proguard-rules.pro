@@ -128,6 +128,9 @@
 #picasso
 -dontwarn com.squareup.okhttp.**
 
+#camera
+-keep class androidx.camera.** { *; }
+
 #joda
 -dontwarn org.joda**
 -keep class org.joda.** { *; }

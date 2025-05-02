@@ -1,8 +1,6 @@
 plugins {
     alias(libs.plugins.mxs.template.feature.view)
-    alias(libs.plugins.mxs.template.room)
     alias(libs.plugins.mxs.template.hilt)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -11,10 +9,11 @@ android {
 
 dependencies {
     implementation(project(":core:di"))
-    implementation(project(":feature:preferences:data"))
+    implementation(project(":core:android"))
     implementation(project(":feature:mobile_services"))
 
     implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.extensions)
     implementation(libs.androidx.camera.lifecycle)
