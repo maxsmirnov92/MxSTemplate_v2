@@ -23,7 +23,7 @@ class InternalFileStorage(
 
     override val path: String = rootDir.absolutePath
 
-    override fun get(name: String, path: String?): Result<File> = kotlin.Result.success(
+    override fun get(name: String, path: String?): Result<File> = Result.success(
         File(targetDir(rootDir, path), name)
     )
 }

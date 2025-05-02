@@ -7,6 +7,7 @@ import net.maxsmr.core.android.content.storage.app_private.ExternalFileStorage
 import net.maxsmr.core.android.content.storage.app_private.InternalFileStorage
 import net.maxsmr.core.android.content.storage.shared.SharedStorage
 import net.maxsmr.core.utils.flatMap
+import net.maxsmr.core.utils.flatMapError
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -66,14 +67,15 @@ interface ContentStorage<T> {
      * 1. Result.Failure - если возникло исключение
      */
     fun getOrCreate(name: String, path: String? = null): Result<T> {
-        return exists(name, path).flatMap { exists ->
-            if (exists) {
+        return exists(name, path)
+            .flatMap { if (it) {
                 get(name, path)
             } else {
+                throw IllegalStateException("Resource with name \"$name\" and \"$path\" not exists")
+            }}
+            .flatMapError {
                 create(name, path)
             }
-        }
-
     }
 
     /**

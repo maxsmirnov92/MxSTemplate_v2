@@ -17,11 +17,11 @@ abstract class FileContentStorage(
     val context: Context,
 ) : ContentStorage<File> {
 
-    override fun exists(name: String, path: String?): kotlin.Result<Boolean> = runCatching {
+    override fun exists(name: String, path: String?): Result<Boolean> = runCatching {
         get(name, path).getOrThrow().exists()
     }
 
-    override fun create(name: String, path: String?): kotlin.Result<File> = runCatching {
+    override fun create(name: String, path: String?): Result<File> = runCatching {
         val file = get(name, path).getOrThrow()
         if (file.exists()) {
             file.delete()
@@ -30,15 +30,15 @@ abstract class FileContentStorage(
         file
     }
 
-    abstract override fun get(name: String, path: String?): kotlin.Result<File>
+    abstract override fun get(name: String, path: String?): Result<File>
 
-    override fun write(resource: File, content: String): kotlin.Result<Unit> =
+    override fun write(resource: File, content: String): Result<Unit> =
         write(resource, content, false)
 
-    override fun write(resource: File, content: InputStream): kotlin.Result<Unit> =
+    override fun write(resource: File, content: InputStream): Result<Unit> =
         write(resource, content, false)
 
-    override fun read(resource: File): kotlin.Result<String> = runCatching {
+    override fun read(resource: File): Result<String> = runCatching {
         if (!resource.exists() || !resource.isFile) {
             throw IOException("Can't read from file $resource")
         }
@@ -47,7 +47,7 @@ abstract class FileContentStorage(
         String(bytes)
     }
 
-    override fun read(resource: File, outputStream: OutputStream): kotlin.Result<Unit> = runCatching {
+    override fun read(resource: File, outputStream: OutputStream): Result<Unit> = runCatching {
         if (!resource.exists() || !resource.isFile) {
             throw IOException("Can't read from file $resource")
         }
@@ -56,32 +56,32 @@ abstract class FileContentStorage(
         }
     }
 
-    override fun delete(resource: File): kotlin.Result<Boolean> = runCatching {
+    override fun delete(resource: File): Result<Boolean> = runCatching {
         if (resource.exists()) resource.delete() else true
     }
 
-    override fun openInputStream(resource: File): kotlin.Result<InputStream> = runCatching {
+    override fun openInputStream(resource: File): Result<InputStream> = runCatching {
         FileInputStream(resource)
     }
 
-    override fun openOutputStream(resource: File): kotlin.Result<Pair<File, OutputStream>> = runCatching {
+    override fun openOutputStream(resource: File): Result<Pair<File, OutputStream>> = runCatching {
         Pair(resource, FileOutputStream(resource))
     }
 
-    override fun shareUri(name: String, path: String?): kotlin.Result<Uri?> = runCatching {
+    override fun shareUri(name: String, path: String?): Result<Uri?> = runCatching {
         get(name, path).getOrThrow().toContentUri(context)
     }
 
     override fun requiredPermissions(read: Boolean, write: Boolean): Array<String> = emptyArray()
 
-    fun write(resource: File, content: String, append: Boolean): kotlin.Result<Unit> = runCatching {
+    fun write(resource: File, content: String, append: Boolean): Result<Unit> = runCatching {
         FileOutputStream(resource, append).use {
             it.write(content.toByteArray())
             it.flush()
         }
     }
 
-    fun write(resource: File, content: InputStream, append: Boolean): kotlin.Result<Unit> = runCatching {
+    fun write(resource: File, content: InputStream, append: Boolean): Result<Unit> = runCatching {
         FileOutputStream(resource, append).use {
             content.copyTo(it)
         }
