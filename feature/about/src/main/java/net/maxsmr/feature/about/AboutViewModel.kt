@@ -7,19 +7,25 @@ import android.text.style.CharacterStyle
 import android.util.Size
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.SavedStateHandle
-import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import net.maxsmr.commonutils.RangeSpanInfo
 import net.maxsmr.commonutils.createSpanText
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
-import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
+import net.maxsmr.core.android.base.delegates.persistableStateFlow
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import java.io.Serializable
 
 open class AboutViewModel(state: SavedStateHandle, context: Context) : BaseViewModel(state, context) {
 
-    val animatedLogoState by persistableLiveDataInitial(false)
+    val animatedLogoState: StateFlow<Boolean> by lazy {
+        _animatedLogoState.asStateFlow()
+    }
+
+    private val _animatedLogoState by persistableStateFlow(false)
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -33,7 +39,7 @@ open class AboutViewModel(state: SavedStateHandle, context: Context) : BaseViewM
 
     fun onLogoClick(easterEggInfo: AboutAppDescription.EasterEggInfo) {
         with(easterEggInfo) {
-            val isAnimated = animatedLogoState.value ?: false
+            val isAnimated = animatedLogoState.value
             if (!isAnimated) {
                 if (!logoAnimatedOnce) {
                     if (targetClickCount <= 0) return
@@ -41,7 +47,7 @@ open class AboutViewModel(state: SavedStateHandle, context: Context) : BaseViewM
                     logoPressedCount++
                     if (logoPressedCount >= targetClickCount) {
                         removeToastsFromQueue()
-                        animatedLogoState.value = true
+                        _animatedLogoState.value = true
                         logoAnimatedOnce = true
                     } else if (clicksLeftToShowToast > 0) {
                         val clicksLeft = targetClickCount - logoPressedCount
@@ -59,10 +65,10 @@ open class AboutViewModel(state: SavedStateHandle, context: Context) : BaseViewM
                     handler.postDelayed(logoPressedClearRunnable,
                         resetClickDelay.takeIf { it > 0 } ?: DELAY_RESET_CLICK_LOGO_DEFAULT)
                 } else {
-                    animatedLogoState.value = true
+                    _animatedLogoState.value = true
                 }
             } else {
-                animatedLogoState.value = false
+                _animatedLogoState.value = false
             }
         }
     }

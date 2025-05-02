@@ -14,9 +14,9 @@ import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.core.android.base.delegates.viewBinding
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
-import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
 import net.maxsmr.feature.about.adapter.DonateAddressAdapter
 import net.maxsmr.feature.about.adapter.DonateAddressAdapterData
@@ -72,7 +72,7 @@ abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<V
                 ivLogo.setOnClickListener {
                     viewModel.onLogoClick(eggInfo)
                 }
-                viewModel.animatedLogoState.observe {
+                viewModel.animatedLogoState.observeSafe {
                     // может быть animated-vector или animation-list
                     val animatedLogo = ContextCompat.getDrawable(requireContext(), eggInfo.animatedLogoResId) as Animatable
                     if (it) {
