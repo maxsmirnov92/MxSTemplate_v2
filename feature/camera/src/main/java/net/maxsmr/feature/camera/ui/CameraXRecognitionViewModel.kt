@@ -3,9 +3,10 @@ package net.maxsmr.feature.camera.ui
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
+import android.net.Uri
 import androidx.camera.core.CameraState
+import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageProxy
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -13,17 +14,23 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.flow.field.Field
+import net.maxsmr.commonutils.graphic.createBitmapFromUri
 import net.maxsmr.commonutils.graphic.isBitmapValid
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.message.errorMessage
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logException
 import net.maxsmr.commonutils.states.ILoadState
+import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.delegates.persistableLiveData
-import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
+import net.maxsmr.core.android.base.delegates.persistableStateFlow
+import net.maxsmr.core.android.content.storage.ContentStorage.StorageType
 import net.maxsmr.core.android.coroutines.execute.ExecuteResult
 import net.maxsmr.core.android.coroutines.execute.data
 import net.maxsmr.core.android.coroutines.execute.succeeded
@@ -32,6 +39,8 @@ import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine
 import net.maxsmr.core.domain.entities.feature.recognition.RecognizedLine.Companion.joinLines
 import net.maxsmr.core.ui.field.createField
 import net.maxsmr.feature.camera.CameraFacing
+import net.maxsmr.feature.camera.CameraXController
+import net.maxsmr.feature.camera.CameraXController.ErrorCallbacks
 import net.maxsmr.feature.camera.FrameCalculator
 import net.maxsmr.feature.camera.R
 import net.maxsmr.feature.camera.recognition.ITextRecognition
@@ -53,8 +62,8 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     @Assisted val imageAnalyzerExecutor: Executor,
     @Assisted val textMatcherUseCases: List<BaseTextMatcherUseCase<*>>,
     private val textRecognition: ITextRecognition,
-    @ApplicationContext context: Context,
-) : BaseViewModel(state, context) {
+    @ApplicationContext private val context: Context,
+) : BaseViewModel(state, context), ErrorCallbacks {
 
     /**
      * Целевой тип камеры (совпадёт с фактическим при успешном подключении)
@@ -69,20 +78,38 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     /**
      * Текущее состояние подсветки
      */
-    val flashLightStateLiveData by persistableLiveDataInitial<Boolean?>(null)
+    val flashLightStateFlow: StateFlow<Boolean?> by lazy {
+        _flashLightStateFlow.asStateFlow()
+    }
 
-    private val _recognitionStateLiveData by persistableLiveDataInitial(false)
+    val frameStatsStateFlow: StateFlow<FrameCalculator.FrameStats?> by lazy {
+        _frameStatsStateFlow.asStateFlow()
+    }
+
+    val realtimeResultsStateFlow: StateFlow<TextRecognitionResult?> by lazy {
+        _realtimeResultsStateFlow.asStateFlow()
+    }
+
+    val captureResultsStateFlow: StateFlow<TextRecognitionResult?> by lazy {
+        _captureResultsStateFlow.asStateFlow()
+    }
 
     /**
      * Текущее состояние распознавания
      */
-    val recognitionStateLiveData = _recognitionStateLiveData as LiveData<Boolean>
+    val recognitionStateFlow: StateFlow<Boolean> by lazy {
+        _recognitionStateFlow.asStateFlow()
+    }
 
-    val frameStatsLiveData by persistableLiveData<FrameCalculator.FrameStats?>()
+    private val _flashLightStateFlow by persistableStateFlow<Boolean?>(null)
 
-    val realtimeResultsLiveData by persistableLiveData<TextRecognitionResult?>()
+    private val _frameStatsStateFlow by persistableStateFlow<FrameCalculator.FrameStats?>(null)
 
-    val captureResultsLiveData by persistableLiveData<TextRecognitionResult?>()
+    private val _realtimeResultsStateFlow by persistableStateFlow<TextRecognitionResult?>(null)
+
+    private val _captureResultsStateFlow by persistableStateFlow<TextRecognitionResult?>(null)
+
+    private val _recognitionStateFlow by persistableStateFlow(false)
 
     private val dispatcher: CoroutineDispatcher by lazy {
         imageAnalyzerExecutor.asCoroutineDispatcher()
@@ -90,18 +117,27 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
 
     private val frameCalculator: FrameCalculator by lazy {
         FrameCalculator { stats, _ ->
-            frameStatsLiveData.value = stats
+            _frameStatsStateFlow.value = stats
         }
     }
 
+    private var jobs: CameraObservableJobs? = null
+
+    private var cameraStateCollectJob: Job? = null
+
     override fun onInitialized() {
         super.onInitialized()
-        captureResultsLiveData.observe {
+        _captureResultsStateFlow.observe {
             if (it is TextRecognitionResult.Success) {
                 showOkDialog(
                     DIALOG_TAG_CAPTURE_RECOGNITION_RESULT,
                     it.message,
-                    TextMessage(R.string.camera_dialog_capture_recognition_result_title)
+                    TextMessage(R.string.camera_dialog_capture_recognition_result_title),
+                    configBlock = {
+                        setOnClose {
+                            _captureResultsStateFlow.value = null
+                        }
+                    }
                 )
             } else if (it is TextRecognitionResult.Failed) {
                 showOkDialog(
@@ -110,10 +146,23 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
                     TextMessage(
                         R.string.camera_recognize_text_failed_format,
                         it.exception.message
-                    )
+                    ),
+                    configBlock = {
+                        setOnClose {
+                            _captureResultsStateFlow.value = null
+                        }
+                    }
                 )
             }
         }
+    }
+
+    override fun onCameraStartError(e: Exception) {
+        showCameraOpenError(e)
+    }
+
+    override fun onCameraStateError(e: CameraState.StateError) {
+        showCameraStateError(e)
     }
 
     override fun onCleared() {
@@ -126,7 +175,7 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     fun onFrameReceived(imageProxy: ImageProxy) {
         frameCalculator.onFrame() // imageProxy.imageInfo.timestamp
 
-        if (_recognitionStateLiveData.value != true) {
+        if (!_recognitionStateFlow.value) {
             imageProxy.close()
             return
         }
@@ -145,7 +194,7 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
                 textRecognition.processFrame(frame, rotationDegrees)
             } catch (e: Exception) {
                 logException(logger, e, "processFrame")
-                realtimeResultsLiveData.postValue(TextRecognitionResult.Failed(e))
+                _realtimeResultsStateFlow.value = TextRecognitionResult.Failed(e)
                 null
             } finally {
                 imageProxy.close()
@@ -160,12 +209,88 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
                 } ?: results.find {
                     it is TextRecognitionResult.Failed
                 }
-                realtimeResultsLiveData.postValue(result)
+                _realtimeResultsStateFlow.value = result
             }
         }
     }
 
-    fun onImageCaptured(imageBitmap: Bitmap, rotationDegrees: Int = 90) {
+    fun observeController(controller: CameraXController) {
+        cameraStateCollectJob?.cancel()
+        cameraStateCollectJob = controller.cameraStateType.observe {
+
+            fun cancel() {
+                jobs?.let {
+                    it.torchCollectJob.cancel()
+//                it.zoomState.cancel()
+                    jobs = null
+                }
+            }
+
+            val isOpened = controller.isCameraOpened
+            if (!isOpened) {
+                _flashLightStateFlow.value = null
+                clearStatsData()
+            }
+//            if (isOpened && controller.cameraInfo?.hasFlashUnit() != true) {
+//                flashLightState.value = null
+//            }
+
+            controller.observables?.let {
+                if (isOpened) {
+                    cancel()
+                    jobs = CameraObservableJobs(it.torchState.observe { state ->
+                        _flashLightStateFlow.value = when (state) {
+                            CameraXController.TorchState.ON -> true
+                            CameraXController.TorchState.OFF -> false
+                            else -> null
+                        }
+                    }
+//                        it.zoomState.observe() {}
+                    )
+                }
+
+                if (controller.isCameraClosed) {
+                    cancel()
+                }
+            }
+        }
+    }
+
+    fun toggleRecognitionState() {
+        val state = recognitionStateFlow.value
+        setRecognitionState(!state)
+    }
+
+    fun takePicture(
+        controller: CameraXController,
+        storageType: StorageType,
+        resourceNameFunc: (Long) -> String = { it.toString() },
+        imageConfig: (ImageCapture.() -> Unit)? = null,
+    ): Flow<LoadState<Uri?>> {
+        return controller.takePicture(
+            storageType,
+            resourceNameFunc,
+            imageConfig
+        ).also { flow ->
+            flow.observe {
+                if (!it.isLoading) {
+                    val data = it.getData()
+                    if (data != null) {
+                        createBitmapFromUri(data, context.contentResolver)?.let { bitmap ->
+                            onImageCaptured(bitmap)
+                        }
+                    } else {
+                        it.error?.let { e ->
+                            showTakePictureError(e)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun onImageCaptured(imageBitmap: Bitmap, rotationDegrees: Int = 90) {
+        // TODO в UseCase
         if (!isBitmapValid(imageBitmap)) {
             return
         }
@@ -175,47 +300,47 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
                 if (result.isEmpty()) {
                     throw EmptyResultException()
                 }
-                captureResultsLiveData.postValue(TextRecognitionResult.Success(TextMessage(result.joinLines())))
+                _captureResultsStateFlow.value = TextRecognitionResult.Success(TextMessage(result.joinLines()))
             } catch (e: Exception) {
                 logException(logger, e, "processFrame")
-                captureResultsLiveData.postValue(TextRecognitionResult.Failed(e))
+                _captureResultsStateFlow.value = TextRecognitionResult.Failed(e)
             } finally {
                 imageBitmap.recycle()
             }
         }
     }
 
-    fun setRecognitionState(toggle: Boolean) {
+    private fun setRecognitionState(toggle: Boolean) {
         if (!toggle || textMatcherUseCases.isNotEmpty()) {
-            _recognitionStateLiveData.value = toggle
+            _recognitionStateFlow.value = toggle
         }
     }
 
-    fun clearStatsData() {
-        frameCalculator.onStop()
-        frameStatsLiveData.value = null
-        realtimeResultsLiveData.value = null
-        captureResultsLiveData.value = null
-    }
-
-    fun showCameraOpenError(e: Throwable) {
+    private fun showCameraOpenError(e: Throwable) {
         showSnackbar(
             TextMessage(
                 R.string.camera_error_open_format,
                 e.message.takeIf { !it.isNullOrEmpty() } ?: e.toString()))
     }
 
-    fun showCameraStateError(e: CameraState.StateError) {
+    private fun showCameraStateError(e: CameraState.StateError) {
         showSnackbar(TextMessage(R.string.camera_error_state_format, "${e.code} ${e.type}"))
     }
 
-    fun showTakePictureError(e: ILoadState.ErrorData) {
+    private fun showTakePictureError(e: ILoadState.ErrorData) {
         showSnackbar(
             TextMessage(
                 R.string.camera_error_take_picture_format,
                 e.errorMessage() ?: e.toString()
             )
         )
+    }
+
+    private fun clearStatsData() {
+        frameCalculator.onStop()
+        _frameStatsStateFlow.value = null
+        _realtimeResultsStateFlow.value = null
+        _captureResultsStateFlow.value = null
     }
 
     private suspend fun BaseTextMatcherUseCase<*>.invokeWithLines(lines: List<RecognizedLine>): TextRecognitionResult {
@@ -289,6 +414,13 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
         }
     }
 
+    sealed interface TextRecognitionResult : Serializable {
+
+        data class Success(val message: TextMessage) : TextRecognitionResult
+
+        data class Failed(val exception: Throwable, val sourceText: String? = null) : TextRecognitionResult
+    }
+
     @AssistedFactory
     interface Factory {
 
@@ -299,12 +431,10 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
         ): CameraXRecognitionViewModel
     }
 
-    sealed interface TextRecognitionResult : Serializable {
-
-        data class Success(val message: TextMessage) : TextRecognitionResult
-
-        data class Failed(val exception: Throwable, val sourceText: String? = null) : TextRecognitionResult
-    }
+    private class CameraObservableJobs(
+        val torchCollectJob: Job,
+//        val zoomCollectJob: Job,
+    )
 
     companion object {
 

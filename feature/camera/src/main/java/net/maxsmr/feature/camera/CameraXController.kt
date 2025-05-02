@@ -27,19 +27,23 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.map
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
 import net.maxsmr.commonutils.asActivityOrThrow
+import net.maxsmr.commonutils.flow.errorLoad
+import net.maxsmr.commonutils.flow.loading
+import net.maxsmr.commonutils.flow.successLoad
+import net.maxsmr.commonutils.flow.transformLoadStateIfLoading
 import net.maxsmr.commonutils.gui.DiffOrientationEventListener
 import net.maxsmr.commonutils.gui.StandardAspectRatio
 import net.maxsmr.commonutils.gui.getDisplayStandardAspectRatio
 import net.maxsmr.commonutils.gui.getSurfaceRotation
 import net.maxsmr.commonutils.lifecycleOwnerOrThrow
-import net.maxsmr.commonutils.live.errorLoad
-import net.maxsmr.commonutils.live.just
-import net.maxsmr.commonutils.live.loading
-import net.maxsmr.commonutils.live.successLoad
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.logException
@@ -69,28 +73,12 @@ class CameraXController(
 
     private val logger = BaseLoggerHolder.instance.getLogger<BaseLogger>("CameraXController")
 
-    private val context: Context by lazy {
-        previewView.context
-    }
-
-    private val activity: Activity by lazy {
-        previewView.asActivityOrThrow()
-    }
-
-    private val lifecycleOwner: LifecycleOwner by lazy {
-        context.lifecycleOwnerOrThrow()
-    }
-
-    private val imageCaptureExecutor = Executors.newSingleThreadExecutor()
-
-    private val _cameraStateType = MutableLiveData(CameraState.Type.CLOSED)
-
     /**
      * Текущий тип состояния камеры, сообщаемый из cameraInfo
      */
-    val cameraStateType = _cameraStateType as LiveData<CameraState.Type>
-
-    private val _cameraLoadState = MutableLiveData(LoadState.success(Unit))
+    val cameraStateType: StateFlow<CameraState.Type> by lazy {
+        _cameraStateType.asStateFlow()
+    }
 
     /**
      * Текущее загрузочное состояние камеры:
@@ -98,19 +86,9 @@ class CameraXController(
      * 2. Success - успешное подключение/отключение
      * 3. Error - ошибка, при которой подключение не удалось или камера перестала быть [CameraState.Type.OPEN]
      */
-    val cameraLoadState = _cameraLoadState as LiveData<LoadState<Unit>>
-
-    private val orientationIntervalListener =
-        object : DiffOrientationEventListener(context, notifyDiffThreshold = 25) {
-            override fun onCorrectedRotationChanged(correctedRotation: Int) {
-                val rotation = getSurfaceRotation(getCorrectedRotationDegreesForCameraX(correctedRotation))
-//                В Preview не влияет на отображение фреймов,
-//                т.к. CameraX автоматически корректирует визуальное представление
-//                preview?.targetRotation = rotation
-                imageCapture?.targetRotation = rotation
-                imageAnalysis?.targetRotation = rotation
-            }
-        }
+    val cameraLoadState: StateFlow<LoadState<Unit>> by lazy {
+        _cameraLoadState.asStateFlow()
+    }
 
     val isCameraOpened: Boolean
         get() {
@@ -137,8 +115,39 @@ class CameraXController(
     val cameraControl: CameraControl?
         get() = camera?.cameraControl
 
+    private val context: Context by lazy {
+        previewView.context
+    }
+
+    private val activity: Activity by lazy {
+        previewView.asActivityOrThrow()
+    }
+
+    private val lifecycleOwner: LifecycleOwner by lazy {
+        context.lifecycleOwnerOrThrow()
+    }
+
+    private val imageCaptureExecutor = Executors.newSingleThreadExecutor()
+
+    private val _cameraStateType = MutableStateFlow(CameraState.Type.CLOSED)
+
+    private val _cameraLoadState = MutableStateFlow(LoadState.initial<Unit>())
+
+    private val orientationIntervalListener by lazy {
+        object : DiffOrientationEventListener(context, notifyDiffThreshold = 25) {
+            override fun onCorrectedRotationChanged(correctedRotation: Int) {
+                val rotation = getSurfaceRotation(getCorrectedRotationDegreesForCameraX(correctedRotation))
+//                В Preview не влияет на отображение фреймов,
+//                т.к. CameraX автоматически корректирует визуальное представление
+//                preview?.targetRotation = rotation
+                imageCapture?.targetRotation = rotation
+                imageAnalysis?.targetRotation = rotation
+            }
+        }
+    }
+
     /**
-     * LiveData, на которые можно подписаться;
+     * StateFlow, на которые можно подписаться;
      * Появляются в OPEN состоянии
      */
     var observables: CameraObservables? = null
@@ -213,11 +222,11 @@ class CameraXController(
                     if (value.cameraInfo.hasFlashUnit()) {
                         value.cameraInfo.torchState.map { state ->
                             TorchState.resolve(state)
-                        }
+                        }.asFlow()
                     } else {
-                        TorchState.NONE.just()
+                        flow { emit(TorchState.NONE) }
                     },
-                    value.cameraInfo.zoomState
+                    value.cameraInfo.zoomState.asFlow()
                 )
             } else {
                 field?.cameraInfo?.cameraState?.removeObservers(lifecycleOwner)
@@ -296,7 +305,7 @@ class CameraXController(
                 with(UseCaseGroup.Builder()) {
 
                     createImagePreview().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
+                        it.surfaceProvider = previewView.surfaceProvider
                         preview = it
                         addUseCase(it)
                     }
@@ -338,15 +347,30 @@ class CameraXController(
         storageType: StorageType,
         resourceNameFunc: (Long) -> String = { it.toString() },
         imageConfig: (ImageCapture.() -> Unit)? = null,
-    ): LiveData<LoadState<Uri>> {
+    ): Flow<LoadState<Uri?>> {
         logger.d("takePicture, storageType: $storageType")
 
-        if (!isCameraOpened) {
-            logger.e("Cannot take picture: camera is not opened")
-            return LoadState.error<Uri>(IllegalStateException()).just()
+        val stateFlow = MutableStateFlow<LoadState<Uri?>>(LoadState.initial())
+
+        fun error(message: String, cause: Throwable? = null) {
+            stateFlow.value = LoadState.error(IllegalStateException(message, cause))
         }
 
-        val capture = imageCapture ?: return LoadState.error<Uri>(IllegalStateException()).just()
+        fun resultStateFlow(): Flow<LoadState<Uri?>> {
+            // возвращаем не StateFlow, по которому застрянет collect,
+            // а конечный с Loading и последующим Success/Error
+            return stateFlow.transformLoadStateIfLoading()
+        }
+
+        if (!isCameraOpened) {
+            error("Cannot take picture: camera is not opened")
+            return resultStateFlow()
+        }
+
+        val capture = imageCapture ?: run {
+            error("Cannot take picture: imageCapture not set")
+            return resultStateFlow()
+        }
 
         val storage = ContentStorage.createUriStorage(storageType, ContentType.IMAGE, context)
 
@@ -360,8 +384,8 @@ class CameraXController(
                 resourceNameFunc(System.currentTimeMillis()).appendExtension("jpg")
             ).getOrThrow()
         } catch (e: Exception) {
-            logger.e("Cannot take picture: openOutputStream failed", e)
-            return LoadState.error<Uri>(e).just()
+            error("Cannot take picture: openOutputStream failed", e)
+            return stateFlow
         }
 
         val outputFileOptions = ImageCapture.OutputFileOptions.Builder(resource.second)
@@ -369,7 +393,7 @@ class CameraXController(
             .build()
         imageConfig?.invoke(capture)
 
-        val result = MutableLiveData<LoadState<Uri>>(LoadState.loading())
+        stateFlow.loading()
 
         capture.takePicture(
             outputFileOptions,
@@ -380,18 +404,18 @@ class CameraXController(
                     logger.d("onImageSaved, outputFileResults: $outputFileResults")
                     // результат приходит на треде от executor;
                     // savedUri нульное, т.к. подставляется стрим
-                    result.successLoad(resource.first, false)
+                    stateFlow.successLoad(resource.first)
                 }
 
                 override fun onError(exception: ImageCaptureException) {
                     logger.e("onError, exception: $exception")
                     resource.first.delete(context.contentResolver)
-                    result.errorLoad(exception, false)
+                    stateFlow.errorLoad(exception)
                 }
             }
         )
 
-        return result
+        return stateFlow
     }
 
     private fun createImagePreview() = Preview.Builder()
@@ -447,8 +471,8 @@ class CameraXController(
     }
 
     class CameraObservables(
-        val torchState: LiveData<TorchState>,
-        val zoomState: LiveData<ZoomState>,
+        val torchState: Flow<TorchState>,
+        val zoomState: Flow<ZoomState>,
     )
 
     interface ErrorCallbacks {

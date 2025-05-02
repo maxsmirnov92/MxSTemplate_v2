@@ -1,6 +1,5 @@
 package net.maxsmr.feature.camera.ui
 
-import android.content.res.Configuration
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.ui.components.activities.BaseNavigationActivity
 import net.maxsmr.feature.camera.R

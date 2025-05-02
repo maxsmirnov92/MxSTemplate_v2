@@ -16,18 +16,16 @@ import androidx.camera.core.ImageCapture.FLASH_MODE_AUTO
 import androidx.core.view.isVisible
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
-import net.maxsmr.commonutils.graphic.createBitmapFromUri
+import kotlinx.coroutines.flow.combine
 import net.maxsmr.commonutils.gui.message.errorMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
-import net.maxsmr.commonutils.live.observeLoadStateOnce
-import net.maxsmr.commonutils.live.zip
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.view.setShowProgress
 import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.CameraXController
@@ -49,7 +47,7 @@ import javax.inject.Inject
 import kotlin.math.roundToInt
 
 @AndroidEntryPoint
-class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionViewModel, StandardAlertRepresentation>(), ErrorCallbacks {
+class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionViewModel, StandardAlertRepresentation>() {
 
     override val layoutId: Int = R.layout.fragment_camera_x
 
@@ -95,7 +93,7 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                     viewModel.onFrameReceived(it)
                 }
             },
-            errorCallbacks = this
+            errorCallbacks = viewModel
         )
     }
 
@@ -129,11 +127,9 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                 override fun onNothingSelected(parent: AdapterView<*>?) {}
             }
 
-            controller.cameraStateType.observe {
+            controller.cameraStateType.observeSafe {
                 val isOpened = controller.isCameraOpened
-
                 toggleRequestedOrientationByState(isOpened)
-
                 btToggleCameraState.setText(
                     if (controller.isCameraClosed) {
                         R.string.camera_open
@@ -142,34 +138,9 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                     }
                 )
                 btCameraTakePicture.isEnabled = isOpened
-
-//                if (isOpened && controller.cameraInfo?.hasFlashUnit() != true) {
-//                    viewModel.flashLightState.value = null
-//                }
-
-                if (!isOpened) {
-                    viewModel.flashLightStateLiveData.value = null
-                    viewModel.clearStatsData()
-                }
-
-                controller.observables?.let {
-                    if (isOpened) {
-                        it.torchState.observe { state ->
-                            viewModel.flashLightStateLiveData.value = when (state) {
-                                CameraXController.TorchState.ON -> true
-                                CameraXController.TorchState.OFF -> false
-                                else -> null
-                            }
-                        }
-//                        it.zoomState.observe(viewLifecycleOwner) {}
-                    }
-
-                    if (controller.isCameraClosed) {
-                        it.torchState.removeObservers(viewLifecycleOwner)
-//                        it.zoomState.removeObservers(viewLifecycleOwner)
-                    }
-                }
             }
+
+            viewModel.observeController(controller)
 
             viewModel.cameraFacingField.valueFlow.observeSafe {
                 if (it != null) {
@@ -190,6 +161,12 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                 }
                 btToggleCameraState.isEnabled = it != null
             }
+            combine(viewModel.recognitionStateFlow, controller.cameraStateType) { recognitionState, cameraState ->
+                Pair(recognitionState, cameraState)
+            }.observeSafe {
+                tvCameraState.text = it.second.name
+                refreshToggleRecognitionMenuItemItem(it.first, it.second == CameraState.Type.OPEN)
+            }
 
             btToggleCameraState.setOnClickListener {
                 doOnPermissionsResult(
@@ -200,26 +177,15 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                 }
             }
             btCameraTakePicture.setOnClickListener {
-                controller.takePicture(ContentStorage.StorageType.SHARED).observeLoadStateOnce(viewLifecycleOwner) {
+                viewModel.takePicture(controller, ContentStorage.StorageType.SHARED).observeSafe {
+                    logger.d("Take picture state: $it")
                     btCameraTakePicture.setShowProgress(it.isLoading, defaultDrawableResId = R.drawable.ic_capture)
                     btCameraTakePicture.isEnabled = !it.isLoading && controller.isCameraOpened
-                    if (!it.isLoading) {
-                        val data = it.getData()
-                        if (data != null) {
-                            createBitmapFromUri(data, requireContext().contentResolver)?.let { bitmap ->
-                                viewModel.onImageCaptured(bitmap)
-                            }
-                        } else {
-                            it.error?.let { e ->
-                                viewModel.showTakePictureError(e)
-                            }
-                        }
-                    }
                 }
             }
         }
         with(binding.containerPreview) {
-            controller.cameraLoadState.observe {
+            controller.cameraLoadState.observeSafe {
                 if (it.isLoading) {
                     pbPreview.isVisible = true
                     containerPreview.previewView.isVisible = false
@@ -238,16 +204,16 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                     }
                 }
             }
-            viewModel.frameStatsLiveData.observe {
+            viewModel.frameStatsStateFlow.observeSafe {
                 containerPreview.tvFpsInfo.setTextOrGone(it?.lastFps?.roundToInt()?.let { fps ->
                     getString(R.string.camera_fps_text_format, fps)
                 })
             }
-            zip(viewModel.recognitionStateLiveData, viewModel.realtimeResultsLiveData) { state, results ->
+            combine(viewModel.recognitionStateFlow, viewModel.realtimeResultsStateFlow) { state, results ->
                 Pair(state, results)
-            }.observe {
+            }.observeSafe {
                 val results = it.second
-                if (results != null && it.first == true) {
+                if (results != null && it.first) {
                     if (results is CameraXRecognitionViewModel.TextRecognitionResult.Success) {
                         containerPreview.tvRecognitionSuccessResult.text = results.message.get(requireContext())
                         containerPreview.tvRecognitionSuccessResult.isVisible = true
@@ -262,11 +228,13 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                                 add(message)
                             }
                         }.mapNotNull { it.takeIf { it.isNotEmpty() } }
-                        containerPreview.tvRecognitionFailureResult.setTextOrGone(if (textResult.isNotEmpty()) {
-                            getString(R.string.camera_recognize_text_failed_format, join("\n\n", textResult))
-                        } else {
-                            EMPTY_STRING // getString(R.string.camera_recognize_text_failed)
-                        })
+                        containerPreview.tvRecognitionFailureResult.setTextOrGone(
+                            if (textResult.isNotEmpty()) {
+                                getString(R.string.camera_recognize_text_failed_format, join("\n\n", textResult))
+                            } else {
+                                EMPTY_STRING // getString(R.string.camera_recognize_text_failed)
+                            }
+                        )
                         containerPreview.tvRecognitionFailureResult.isVisible = true
                     }
                 } else {
@@ -286,15 +254,10 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
             }
         }
 
-        viewModel.flashLightStateLiveData.observe {
+        viewModel.flashLightStateFlow.observeSafe {
             refreshToggleFlashLightItem(it)
         }
-        zip(viewModel.recognitionStateLiveData, controller.cameraStateType) { recognitionState, cameraState ->
-            Pair(recognitionState, cameraState)
-        }.observe {
-            refreshToggleRecognitionMenuItemItem(it.first ?: false, it.second == CameraState.Type.OPEN)
-        }
-        viewModel.recognitionStateLiveData.observe {
+        viewModel.recognitionStateFlow.observeSafe {
             with(requireActivity().window) {
                 if (it) {
                     addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -309,9 +272,9 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
         super.onCreateMenu(menu, inflater)
         toggleFlashLightMenuItem = menu.findItem(R.id.actionToggleFlash)
         toggleRecognitionMenuItem = menu.findItem(R.id.actionToggleRecognition)
-        refreshToggleFlashLightItem(viewModel.flashLightStateLiveData.value)
+        refreshToggleFlashLightItem(viewModel.flashLightStateFlow.value)
         refreshToggleRecognitionMenuItemItem(
-            viewModel.recognitionStateLiveData.value ?: false,
+            viewModel.recognitionStateFlow.value,
             controller.isCameraOpened
         )
     }
@@ -319,15 +282,14 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         return when (menuItem.itemId) {
             R.id.actionToggleFlash -> {
-                viewModel.flashLightStateLiveData.value?.let {
+                viewModel.flashLightStateFlow.value?.let {
                     controller.cameraControl?.enableTorch(!it)
                 }
                 true
             }
 
             R.id.actionToggleRecognition -> {
-                val state = viewModel.recognitionStateLiveData.value ?: false
-                viewModel.setRecognitionState(!state)
+                viewModel.toggleRecognitionState()
                 true
             }
 
@@ -335,14 +297,6 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
                 false
             }
         }
-    }
-
-    override fun onCameraStartError(e: Exception) {
-        viewModel.showCameraOpenError(e)
-    }
-
-    override fun onCameraStateError(e: CameraState.StateError) {
-        viewModel.showCameraStateError(e)
     }
 
     private fun refreshToggleFlashLightItem(state: Boolean?) {

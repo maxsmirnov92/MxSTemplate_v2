@@ -30,6 +30,7 @@ import androidx.annotation.MainThread
 import androidx.annotation.RequiresPermission
 import androidx.core.os.ExecutorCompat
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import net.maxsmr.commonutils.gui.DiffOrientationEventListener
 import net.maxsmr.commonutils.isAtLeastPie
@@ -59,7 +60,19 @@ class Camera2Controller(private val textureView: TextureView) {
         context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     }
 
+    val state: StateFlow<CameraState> by lazy { _state.asStateFlow() }
+
+    val cameraId: StateFlow<String?> by lazy { _cameraId.asStateFlow() }
+
+    val cameraFacing: StateFlow<CameraFacing?> by lazy { _cameraFacing.asStateFlow() }
+
     val isCameraOpened get() = cameraDevice != null && _state.value != CameraState.NOT_INITIALIZED
+
+    private val _state = MutableStateFlow(CameraState.NOT_INITIALIZED)
+
+    private val _cameraId = MutableStateFlow<String?>(null)
+
+    private val _cameraFacing = MutableStateFlow<CameraFacing?>(null)
 
     var params: Params = Params()
         @RequiresPermission(Manifest.permission.CAMERA)
@@ -72,18 +85,6 @@ class Camera2Controller(private val textureView: TextureView) {
                 }
             }
         }
-
-    private var _state = MutableStateFlow(CameraState.NOT_INITIALIZED)
-
-    var state = _state.asStateFlow()
-
-    private var _cameraId = MutableStateFlow<String?>(null)
-
-    var cameraId = _cameraId.asStateFlow()
-
-    private var _cameraFacing = MutableStateFlow<CameraFacing?>(null)
-
-    var cameraFacing = _cameraFacing.asStateFlow()
 
     private var cameraDevice: CameraDevice? = null
 

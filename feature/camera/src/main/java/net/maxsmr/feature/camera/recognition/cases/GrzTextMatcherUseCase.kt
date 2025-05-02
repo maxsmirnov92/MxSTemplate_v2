@@ -86,7 +86,7 @@ class GrzTextMatcherUseCase : BaseTextMatcherUseCase<GrzTextMatcherUseCase.GrzRe
             "A" to "А",
             "H" to "Н",
             "K" to "К",
-            "X" to "Ч",
+            "X" to "Х",
             "C" to "С",
             "B" to "В",
             "M" to "М",

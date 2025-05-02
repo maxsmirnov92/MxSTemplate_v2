@@ -7,10 +7,8 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
@@ -86,39 +84,32 @@ class Camera2Fragment : BaseNavigationFragment<Camera2ViewModel, StandardAlertRe
                 }
                 btToggleCameraState.isEnabled = it != null
             }
-            lifecycleScope.launch {
-                combine(controller.cameraId, controller.state) { id, state ->
-                    Pair(id, state)
-                }.collect { (id, state) ->
-                    tvCameraState.text = if (id.isNullOrEmpty()) {
-                        state.name
-                    } else {
-                        "${state.name} (${getString(R.string.camera_id_format, id)})"
-                    }
+            combine(controller.cameraId, controller.state) { id, state ->
+                Pair(id, state)
+            }.observeSafe { (id, state) ->
+                tvCameraState.text = if (id.isNullOrEmpty()) {
+                    state.name
+                } else {
+                    "${state.name} (${getString(R.string.camera_id_format, id)})"
                 }
-            }
-//            lifecycleScope.launch {
-//                controller.cameraFacing.collect {
-//                    viewModel.cameraFacingField.value = it
-//                }
-//            }
-            lifecycleScope.launch {
-                controller.state.collect {
-                    toggleRequestedOrientationByState(controller.isCameraOpened)
 
-                    btToggleCameraState.setText(
-                        if (it == CameraState.NOT_INITIALIZED) {
-                            R.string.camera_open
-                        } else {
-                            R.string.camera_close
-                        }
-                    )
-                    btCameraTakePicture.isEnabled = it == CameraState.PREVIEWING
-//                    if (it == CameraState.NOT_INITIALIZED) {
-//                        binding.textureView.alpha = 0f
-//                    }
-                }
+                toggleRequestedOrientationByState(controller.isCameraOpened)
+
+                btToggleCameraState.setText(
+                    if (state == CameraState.NOT_INITIALIZED) {
+                        R.string.camera_open
+                    } else {
+                        R.string.camera_close
+                    }
+                )
+                btCameraTakePicture.isEnabled = state == CameraState.PREVIEWING
+//                if (state == CameraState.NOT_INITIALIZED) {
+//                    binding.textureView.alpha = 0f
+//                }
             }
+//            controller.cameraFacing.observeSafe {
+//                viewModel.cameraFacingField.value = it
+//            }
             btToggleCameraState.setOnClickListener {
                 if (controller.isCameraOpened) {
                     controller.closeCamera()
