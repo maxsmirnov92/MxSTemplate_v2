@@ -32,11 +32,11 @@ fun headersAdapterDelegate(listener: HeaderListener) =
 
             bind {
 
-                addNameTextList(etName) { e ->
+                addNameTextListener(etName) { e ->
                     lastInputEdit = etName
                     listener.onHeaderNameChanged(item.id, e.toString())
                 }
-                addValueTextList(etValue) { e ->
+                addValueTextListener(etValue) { e ->
                     lastInputEdit = etValue
                     listener.onHeaderValueChanged(item.id, e.toString())
                 }
@@ -104,7 +104,7 @@ class HeadersViewHolder(view: View) : AdapterDelegateViewHolder<HeaderInfoAdapte
         }
     }
 
-    fun addNameTextList(nameEdit: EditText, listener: AfterTextChangeListener) {
+    fun addNameTextListener(nameEdit: EditText, listener: AfterTextChangeListener) {
         logger.d("addNameTextList: nameEdit=$nameEdit")
         removeNameTextListener()
         nameTextListener = listener
@@ -112,7 +112,7 @@ class HeadersViewHolder(view: View) : AdapterDelegateViewHolder<HeaderInfoAdapte
         this.nameEdit = nameEdit
     }
 
-    fun addValueTextList(valueEdit: EditText, listener: AfterTextChangeListener) {
+    fun addValueTextListener(valueEdit: EditText, listener: AfterTextChangeListener) {
         logger.d("addValueTextList: valueEdit=$valueEdit")
         removeValueTextListener()
         valueTextListener = listener

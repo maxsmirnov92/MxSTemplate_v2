@@ -6,25 +6,24 @@ import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.net.toUri
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.distinctUntilChanged
-import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.ALGORITHM_SHA1
+import net.maxsmr.commonutils.flow.takeWhileInclusive
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
-import net.maxsmr.commonutils.live.unsubscribeIf
 import net.maxsmr.commonutils.media.readString
 import net.maxsmr.commonutils.media.takePersistableReadPermission
 import net.maxsmr.commonutils.states.LoadState
@@ -61,21 +60,21 @@ class DownloadsViewModel @Inject constructor(
     state: SavedStateHandle,
 ) : BaseViewModel(state, context) {
 
-    // TODO убрать LiveData
-    val downloadsInfos: LiveData<List<DownloadInfo>> = downloadRepo.get().asLiveData()
+    val downloadsInfos: Flow<List<DownloadInfo>> = downloadRepo.get()
 
-    val downloadItems: LiveData<List<DownloadInfoResultData>> = downloadManager.resultItems.asLiveData()
+    val downloadItems: Flow<List<DownloadInfoResultData>> = downloadManager.resultItems
 
     /**
      * Эмитит [IntentSenderParams], содержащие [android.content.IntentSender]
      * в случае возникновения ошибки доступа при записи/чтении "чужих" файлов в MediaStore. В этом
      * случае у пользователя надо запросить доступ к таким файлам через intent.
      */
-    val recoverableExceptions: LiveData<VmEvent<IntentSenderParams>?> = downloadsInfos.switchMap { list ->
-        downloadRepo.getIntentSenderParamsFiltered(list.map { it.name }).map { VmEvent(it) }.asLiveData()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val recoverableExceptions: Flow<VmEvent<IntentSenderParams>?> = downloadsInfos.flatMapLatest { list ->
+        downloadRepo.getIntentSenderParamsFiltered(list.map { it.name }).map { VmEvent(it) }
     }
 
-    val failedStartParams = downloadManager.failedStartParamsFlow.asLiveData()
+    val failedStartParams = downloadManager.failedStartParamsFlow
 
     override fun onInitialized() {
         super.onInitialized()
@@ -177,69 +176,63 @@ class DownloadsViewModel @Inject constructor(
         downloadManager.enqueueDownload(params)
     }
 
-    fun observeOnceDownloadByParams(
+    fun takeOnceDownloadByParams(
         params: DownloadService.Params,
         removeWhenFinished: Boolean = true,
         isSameFunc: (DownloadService.Params.(DownloadService.Params) -> Boolean)? = null,
-    ) = observeDownloadByParamsInternal(params, removeWhenFinished, isSameFunc).unsubscribeIf { !it.isLoading }
+    ) = takeDownloadByParamsInternal(params, removeWhenFinished, isSameFunc).takeWhileInclusive { it.isLoading }
 
-    fun observeDownloadByParams(
+    fun takeDownloadByParams(
         params: DownloadService.Params,
         isSameFunc: (DownloadService.Params.(DownloadService.Params) -> Boolean)? = null,
-    ): LiveData<LoadState<DownloadInfoWithParams>> {
-        return observeDownloadByParamsInternal(params, false, isSameFunc)
+    ): Flow<LoadState<DownloadInfoWithParams>> {
+        return takeDownloadByParamsInternal(params, false, isSameFunc)
     }
 
-    private fun observeDownloadByParamsInternal(
-        params: DownloadService.Params,
-        removeWhenFinished: Boolean,
-        isSameFunc: (DownloadService.Params.(DownloadService.Params) -> Boolean)? = null,
-    ): LiveData<LoadState<DownloadInfoWithParams>> {
-        return (if (isSameFunc == null) {
-            downloadManager.observeDownloadByParams(params, removeWhenFinished)
-        } else {
-            downloadManager.observeDownloadByParams(params, removeWhenFinished, isSameFunc)
-        }).asLiveData().distinctUntilChanged()
-    }
-
-    fun <P> observeOnceDownload(
+    fun <P> takeOnceDownload(
         params: P,
         removeWhenFinished: Boolean = true,
         isSameFunc: (DownloadService.Params.(P) -> Boolean),
-    ) = observeDownloadInternal(params, removeWhenFinished, isSameFunc).unsubscribeIf { !it.isLoading }
+    ) = takeDownloadInternal(params, removeWhenFinished, isSameFunc).takeWhileInclusive { it.isLoading }
 
-    fun <P> observeDownload(
+    fun <P> takeDownload(
         params: P,
         isSameFunc: (DownloadService.Params.(P) -> Boolean),
-    ): LiveData<LoadState<DownloadInfoWithParams>> {
-        return observeDownloadInternal(params, false, isSameFunc)
+    ): Flow<LoadState<DownloadInfoWithParams>> {
+        return takeDownloadInternal(params, false, isSameFunc)
     }
 
-    private fun <P> observeDownloadInternal(
-        params: P,
-        removeWhenFinished: Boolean,
-        isSameFunc: (DownloadService.Params.(P) -> Boolean),
-    ): LiveData<LoadState<DownloadInfoWithParams>> {
-        return downloadManager.observeDownload(params, removeWhenFinished, isSameFunc).asLiveData()
-            .distinctUntilChanged()
-    }
-
-    fun observeOnceDownloadByInfo(
-        owner: LifecycleOwner,
-        infoFunc: (DownloadInfo) -> Boolean,
+    fun takeOnceDownloadByInfo(
+        infoPredicate: (DownloadInfo) -> Boolean,
         statusChangeCallback: (DownloadInfo) -> Unit,
-    ) {
-        val observer = object : Observer<List<DownloadInfo>?> {
-            override fun onChanged(value: List<DownloadInfo>?) {
-                value?.find(infoFunc)?.let { info ->
-                    if (!info.isLoading) {
-                        downloadsInfos.removeObserver(this)
-                    }
-                    statusChangeCallback(info)
-                }
-            }
-        }
-        downloadsInfos.observe(owner, observer)
+    ): Job {
+        return downloadsInfos.takeWhileInclusive { list ->
+            return@takeWhileInclusive list.find(infoPredicate)?.let { info ->
+                statusChangeCallback(info)
+                // перестать собирать, если стал !isLoading
+                info.isLoading
+            } ?: false
+        }.launchIn(viewModelScope)
+    }
+
+    private fun takeDownloadByParamsInternal(
+        params: DownloadService.Params,
+        removeWhenFinished: Boolean,
+        isSameFunc: (DownloadService.Params.(DownloadService.Params) -> Boolean)? = null,
+    ): Flow<LoadState<DownloadInfoWithParams>> {
+        return (if (isSameFunc == null) {
+            downloadManager.takeDownloadByParams(params, removeWhenFinished)
+        } else {
+            downloadManager.takeDownloadByParams(params, removeWhenFinished, isSameFunc)
+        })
+    }
+
+    private fun <P> takeDownloadInternal(
+        params: P,
+        removeWhenFinished: Boolean,
+        isSameFunc: (DownloadService.Params.(P) -> Boolean),
+    ): Flow<LoadState<DownloadInfoWithParams>> {
+        return downloadManager.takeDownload(params, removeWhenFinished, isSameFunc)
     }
 
     /**

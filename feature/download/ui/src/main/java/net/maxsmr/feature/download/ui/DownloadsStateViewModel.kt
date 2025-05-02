@@ -3,7 +3,6 @@ package net.maxsmr.feature.download.ui
 import android.content.Context
 import android.content.DialogInterface
 import android.net.Uri
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -11,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -38,24 +38,41 @@ class DownloadsStateViewModel @Inject constructor(
     state: SavedStateHandle,
 ) : BaseViewModel(state, context) {
 
+    val queueNames: StateFlow<List<String>> by lazy {
+        _queueNames.asStateFlow()
+    }
+
+    val allItems: StateFlow<List<DownloadInfoAdapterData>> by lazy {
+        _allItems.asStateFlow()
+    }
+
+    val currentItems: StateFlow<List<DownloadInfoAdapterData>> by lazy {
+        _currentItems.asStateFlow()
+    }
+
+    val anyCanBeCancelled: StateFlow<Boolean> by lazy {
+        _currentItems
+            .map { it.any { item -> item.downloadInfo.isLoading } }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    }
+
+    val queryNameFilter: StateFlow<String> by lazy {
+        _queryNameFilter.asStateFlow()
+    }
+
+    val navigateUriEvent: StateFlow<VmEvent<IntentWithUriProvideStrategy<*>>?> by lazy {
+        _navigateUriEvent.asStateFlow()
+    }
+
     private val _queueNames = MutableStateFlow<List<String>>(emptyList())
-    val queueNames = _queueNames.asStateFlow()
 
     private val _allItems = MutableStateFlow<List<DownloadInfoAdapterData>>(emptyList())
-    val allItems = _allItems.asStateFlow()
 
     private val _currentItems = MutableStateFlow<List<DownloadInfoAdapterData>>(emptyList())
-    val currentItems = _currentItems.asStateFlow()
-
-    val anyCanBeCancelled = _currentItems
-        .map { it.any { item -> item.downloadInfo.isLoading } }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     private val _queryNameFilter = MutableStateFlow(EMPTY_STRING)
-    val queryNameFilter = _queryNameFilter.asStateFlow()
 
     private val _navigateUriEvent = MutableStateFlow<VmEvent<IntentWithUriProvideStrategy<*>>?>(null)
-    val navigateUriEvent = _navigateUriEvent.asStateFlow()
 
     override fun onInitialized() {
         super.onInitialized()

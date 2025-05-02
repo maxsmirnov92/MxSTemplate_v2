@@ -11,6 +11,8 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.REG_EX_ALGORITHM_SHA1
@@ -24,7 +26,7 @@ import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.actions.SnackbarExtraData.SnackbarLength
-import net.maxsmr.core.android.base.delegates.persistableLiveDataInitial
+import net.maxsmr.core.android.base.delegates.persistableStateFlow
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.android.baseAppName
 import net.maxsmr.core.android.content.ContentType
@@ -113,7 +115,11 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     /**
      * Готовые итемы для отображения в адаптере
      */
-    val headerItems by persistableLiveDataInitial<List<HeaderInfoAdapterData>>(arrayListOf())
+    val headerItems: StateFlow<List<HeaderInfoAdapterData>> by lazy {
+        _headerItems.asStateFlow()
+    }
+
+    private val _headerItems by persistableStateFlow<List<HeaderInfoAdapterData>>(emptyList())
 
     private val headerFields = mutableListOf<HeaderInfoFields>()
 
@@ -244,25 +250,25 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             )
         )
 
-        val headerItems = this.headerItems.value?.toMutableList() ?: mutableListOf()
+        val headerItems = this.headerItems.value.toMutableList()
         headerItems.add(
             HeaderInfoAdapterData(
                 id,
                 Pair(
                     HeaderInfoAdapterData.Info(
-                        keyInfo.field.value.orEmpty(),
+                        keyInfo.field.value,
                         keyInfo.field.hint,
                         keyInfo.field.error
                     ),
                     HeaderInfoAdapterData.Info(
-                        valueInfo.field.value.orEmpty(),
+                        valueInfo.field.value,
                         valueInfo.field.hint,
                         valueInfo.field.error
                     )
                 )
             )
         )
-        this.headerItems.value = ArrayList(headerItems)
+        _headerItems.value = headerItems
     }
 
     fun onRemoveHeader(id: Int) {
@@ -288,9 +294,9 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             it.header.second.removeObservers()
         }
 
-        val headerItems = this.headerItems.value?.toMutableList()
-        if (headerItems?.removeIf { it.id == id } == true) {
-            this.headerItems.value = headerItems
+        val headerItems = this.headerItems.value.toMutableList()
+        if (headerItems.removeIf { it.id == id }) {
+            _headerItems.value = headerItems
         }
     }
 
@@ -444,7 +450,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             }
         }
         if (hasChanged) {
-            headerItems.value = newItems
+            _headerItems.value = newItems
         }
     }
 

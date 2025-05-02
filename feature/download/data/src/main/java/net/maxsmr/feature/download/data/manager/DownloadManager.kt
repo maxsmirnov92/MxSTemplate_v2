@@ -408,7 +408,7 @@ class DownloadManager @Inject constructor(
         }
 
         scope.launch {
-            settingsRepo.observeNetworkStateWithSettings(networkStateManager).collect { stateWithSettings ->
+            settingsRepo.combineNetworkStateWithSettings(networkStateManager).collect { stateWithSettings ->
                 if (!stateWithSettings.shouldRetry) return@collect
 
                 val retryDownloads = downloadsRepo.getRaw().filter {
@@ -454,20 +454,20 @@ class DownloadManager @Inject constructor(
         }
     }
 
-    fun observeDownloadByParams(
+    fun takeDownloadByParams(
         params: DownloadService.Params,
         removeWhenFinished: Boolean,
         isSameFunc: DownloadService.Params.(DownloadService.Params) -> Boolean = { isSame(it) },
     ): Flow<LoadState<DownloadInfoWithParams>> {
-        return observeDownload(params, removeWhenFinished, isSameFunc)
+        return takeDownload(params, removeWhenFinished, isSameFunc)
     }
 
-    fun <P> observeDownload(
+    fun <P> takeDownload(
         params: P,
         removeWhenFinished: Boolean,
         isSameFunc: DownloadService.Params.(P) -> Boolean,
     ): Flow<LoadState<DownloadInfoWithParams>> {
-        return combine(resultItems, _failedStartParamsFlow) { items, failedParams ->
+        return combine(resultItems, failedStartParamsFlow) { items, failedParams ->
             Pair(items, failedParams)
         }.mapNotNull { pair ->
             pair.second.find { it.isSameFunc(params) }?.let {
@@ -493,7 +493,7 @@ class DownloadManager @Inject constructor(
                 // DownloadInfo не было, т.к. был зафиксирован еррор добавления в очередь / старта сервиса;
                 // но не возвращать еррор, если загрузка, проходящая по isSameFunc, уже где-то есть
                 resultItems.value.find { r -> r.params.isSameFunc(params) }?.let { r ->
-                    logger.w("observeDownload info is null, but params '$params' found in resultItems")
+                    logger.w("takeDownload: info is null, but params '$params' found in resultItems")
                     LoadState.loading(DownloadInfoWithParams(r.params, r.downloadInfo))
                 } ?: run {
                     // или можно поймать момент, когда оно сейчас в downloadsPendingQueue/downloadsLaunchedQueue
@@ -502,10 +502,10 @@ class DownloadManager @Inject constructor(
                             params
                         )
                     }?.let { q ->
-                        logger.w("observeDownload info is null, but params '$params' found in downloadsPendingQueue/downloadsLaunchedQueue")
+                        logger.w("takeDownload: info is null, but params '$params' found in downloadsPendingQueue/downloadsLaunchedQueue")
                         LoadState.loading(DownloadInfoWithParams(q.params, null))
                     } ?: run {
-                        logger.w("observeDownload info is null and params '$params' not found")
+                        logger.w("takeDownload: info is null and params '$params' not found")
                         LoadState.error(RuntimeException())
                     }
                 }

@@ -12,7 +12,7 @@ import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepositor
 import java.net.SocketException
 import java.net.SocketTimeoutException
 
-fun SettingsDataStoreRepository.observeNetworkStateWithSettings(networkStateManager: NetworkStateManager): Flow<NetworkStateWithSettings> {
+fun SettingsDataStoreRepository.combineNetworkStateWithSettings(networkStateManager: NetworkStateManager): Flow<NetworkStateWithSettings> {
     return combine(
         networkStateManager.asFlow(),
         settingsFlow

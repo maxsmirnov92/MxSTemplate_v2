@@ -184,12 +184,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel, Stand
         viewModel.deleteUnfinishedField.bindValue(viewLifecycleOwner, binding.cbDeleteUnfinished)
 
         binding.rvHeaders.adapter = headerInfoAdapter
-        binding.rvHeaders.addItemDecoration(
-            DividerItemDecoration.Builder(requireContext())
-                .setDivider(Divider.Space(10), DividerItemDecoration.Mode.ALL_EXCEPT_LAST)
-                .build()
-        )
-        viewModel.headerItems.observe {
+        viewModel.headerItems.observeSafe {
 //            requireActivity().clearFocus()
             headerInfoAdapter.items = it
         }

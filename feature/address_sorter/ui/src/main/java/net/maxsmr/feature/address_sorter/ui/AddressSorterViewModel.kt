@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.flow.field.Field
@@ -204,31 +203,29 @@ class AddressSorterViewModel @AssistedInject constructor(
                     }
 
                     if (shouldDownloadRoutingKey(e) && !wasKeyDownloaded) {
-                        downloadsViewModel.observeOnceDownloadByParams(enqueueDownloadRoutingKey()).observe {
-                            viewModelScope.launch {
 
-                                fun handleDownloadError(e: ILoadState.ErrorData?) {
-                                    showDownloadRoutingKeyError(e)
-                                    handleBaseError(false)
-                                }
+                        fun handleDownloadError(e: ILoadState.ErrorData?) {
+                            showDownloadRoutingKeyError(e)
+                            handleBaseError(false)
+                        }
 
-                                val data = it.getData()
-                                if (data != null) {
-                                    val key = withContext(Dispatchers.IO) {
-                                        data.downloadInfo?.localUri?.readString(context.contentResolver)
-                                            .orEmpty()
-                                    }
-                                    if (key.isNotEmpty()) {
-                                        wasKeyDownloaded = true
-                                        cacheRepo.setDoubleGisRoutingApiKey(key)
-                                        // повтор юзкейса с актуализированным ключом
-                                        doAddressSort()
-                                    } else {
-                                        handleDownloadError(ILoadState.ErrorData(EmptyResultException()))
-                                    }
-                                } else if (!it.isLoading) {
-                                    handleDownloadError(it.error)
+                        downloadsViewModel.takeOnceDownloadByParams(enqueueDownloadRoutingKey()).observe {
+                            val data = it.getData()
+                            if (data != null) {
+                                val key = withContext(Dispatchers.IO) {
+                                    data.downloadInfo?.localUri?.readString(context.contentResolver)
+                                        .orEmpty()
                                 }
+                                if (key.isNotEmpty()) {
+                                    wasKeyDownloaded = true
+                                    cacheRepo.setDoubleGisRoutingApiKey(key)
+                                    // повтор юзкейса с актуализированным ключом
+                                    doAddressSort()
+                                } else {
+                                    handleDownloadError(ILoadState.ErrorData(EmptyResultException()))
+                                }
+                            } else if (!it.isLoading) {
+                                handleDownloadError(it.error)
                             }
                         }
                     } else {
@@ -503,7 +500,7 @@ class AddressSorterViewModel @AssistedInject constructor(
                     is ExecuteResult.Error -> {
                         val e = result.exception
                         if (shouldDownloadRoutingKey(e) && !wasKeyDownloaded) {
-                            downloadsViewModel.observeOnceDownloadByParams(enqueueDownloadRoutingKey()).observe {
+                            downloadsViewModel.takeOnceDownloadByParams(enqueueDownloadRoutingKey()).observe {
                                 viewModelScope.launch {
                                     var isHandled = false
                                     val data = it.getData()
