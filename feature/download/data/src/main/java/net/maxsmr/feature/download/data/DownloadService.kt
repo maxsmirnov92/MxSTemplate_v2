@@ -288,7 +288,6 @@ class DownloadService : Service() {
 
         // защита от множественных параллельных скачиваний одного и того же файла
         if (currentDownloads[params.requestParams.url] != null) {
-            notifier.onDownloadNotStarted(params)
             logger.d("Skip download of $params: another same download is already in progress")
             notifier.onDownloadNotStarted(params)
             return START_NOT_STICKY
@@ -353,11 +352,9 @@ class DownloadService : Service() {
                 currentJobs[downloadInfo.id] = it
             }
 
-            fun onException(e: Exception, localUri: Uri? = null) {
+            suspend fun onException(e: Exception, localUri: Uri? = null) {
                 logger.e("onException: $e, localUri: $localUri")
-                coroutineScope.launch {
-                    // для перестраховки при любых исключениях suspend'ы
-                    // запускаем в другом неотменённом скопе
+                withContext(NonCancellable) {
                     val info = downloadInfo.copy(
                         status = DownloadInfo.Status.Error(localUri?.toString(), e)
                     )
@@ -369,7 +366,7 @@ class DownloadService : Service() {
                 }
             }
 
-            fun onCancellationException(e: CancellationException) {
+            suspend fun onCancellationException(e: CancellationException) {
                 onException(e, unfinishedLocalUri)
             }
 
@@ -925,6 +922,7 @@ class DownloadService : Service() {
         )
 
         fun createRequest(listener: ProgressListener): Request = requestParams.createRequest(listener)
+
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is Params) return false
@@ -957,6 +955,18 @@ class DownloadService : Service() {
             result = 31 * result + retryWithNotifier.hashCode()
             result = 31 * result + (tag?.hashCode() ?: 0)
             return result
+        }
+
+        override fun toString(): String {
+            return "Params(requestParams=$requestParams, " +
+                    "notificationParams=$notificationParams, " +
+                    "storageType=$storageType, " +
+                    "subDirPath=$subDirPath, " +
+                    "targetHashInfo=$targetHashInfo, " +
+                    "skipIfDownloaded=$skipIfDownloaded, " +
+                    "replaceFile=$replaceFile, " +
+                    "deleteUnfinished=$deleteUnfinished, " +
+                    "retryWithNotifier=$retryWithNotifier, tag=$tag)"
         }
 
 

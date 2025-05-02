@@ -14,31 +14,21 @@ import javax.inject.Singleton
 @Singleton
 class DownloadStateNotifier @Inject constructor() {
 
-    private val _downloadStartEvents =
-        MutableSharedFlow<DownloadStartInfo>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _events =
+        MutableSharedFlow<DownloadNotifierEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    val downloadStartEvents = _downloadStartEvents.asSharedFlow()
-
-    private val _downloadRetryEvents =
-        MutableSharedFlow<DownloadService.Params>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-    val downloadRetryEvents = _downloadRetryEvents.asSharedFlow()
-
-    private val _downloadStateEvents =
-        MutableSharedFlow<DownloadState>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-    val downloadStateEvents = _downloadStateEvents.asSharedFlow()
+    val events = _events.asSharedFlow()
 
     fun onDownloadNotStarted(params: DownloadService.Params) {
-        _downloadStartEvents.tryEmit(DownloadStartInfo(params, false))
+        _events.tryEmit(DownloadNotifierEvent.NotStarted(params))
     }
 
     fun onDownloadStarting(downloadInfo: DownloadInfo, params: DownloadService.Params) {
-        _downloadStartEvents.tryEmit(DownloadStartInfo(params, true, downloadInfo))
+        _events.tryEmit(DownloadNotifierEvent.Starting(params, downloadInfo))
     }
 
     fun onDownloadRetry(params: DownloadService.Params) {
-        _downloadRetryEvents.tryEmit(params)
+        _events.tryEmit(DownloadNotifierEvent.Retry(params))
     }
 
     fun onDownloadProcessing(
@@ -47,7 +37,7 @@ class DownloadStateNotifier @Inject constructor() {
         downloadInfo: DownloadInfo,
         params: DownloadService.Params,
     ) {
-        _downloadStateEvents.tryEmit(DownloadState.Loading(type, stateInfo, downloadInfo, params))
+        _events.tryEmit(DownloadNotifierEvent.State(DownloadState.Loading(type, stateInfo, downloadInfo, params)))
     }
 
     fun onDownloadSuccess(
@@ -55,7 +45,7 @@ class DownloadStateNotifier @Inject constructor() {
         params: DownloadService.Params,
         oldParams: DownloadService.Params,
     ) {
-        _downloadStateEvents.tryEmit(DownloadState.Success(downloadInfo, params, oldParams))
+        _events.tryEmit(DownloadNotifierEvent.State(DownloadState.Success(downloadInfo, params, oldParams)))
     }
 
     fun onDownloadFailed(
@@ -64,7 +54,7 @@ class DownloadStateNotifier @Inject constructor() {
         oldParams: DownloadService.Params,
         e: Exception,
     ) {
-        _downloadStateEvents.tryEmit(DownloadState.Failed(e, downloadInfo, params, oldParams))
+        _events.tryEmit(DownloadNotifierEvent.State(DownloadState.Failed(e, downloadInfo, params, oldParams)))
     }
 
     fun onDownloadCancelled(
@@ -72,17 +62,50 @@ class DownloadStateNotifier @Inject constructor() {
         params: DownloadService.Params,
         oldParams: DownloadService.Params,
     ) {
-        _downloadStateEvents.tryEmit(DownloadState.Cancelled(downloadInfo, params, oldParams))
+        _events.tryEmit(DownloadNotifierEvent.State(DownloadState.Cancelled(downloadInfo, params, oldParams)))
     }
 
-    class DownloadStartInfo(
-        val params: DownloadService.Params,
-        val isStarted: Boolean,
-        val downloadInfo: DownloadInfo? = null,
-    ) : Serializable {
+    sealed interface DownloadNotifierEvent {
 
-        override fun toString(): String {
-            return "DownloadStartInfo(params=$params, isStarted=$isStarted, downloadInfo=$downloadInfo)"
+        sealed interface Start : DownloadNotifierEvent {
+            val params: DownloadService.Params
+        }
+
+        class NotStarted(
+            override val params: DownloadService.Params,
+        ) : Start {
+
+            override fun toString(): String {
+                return "NotStarted(params=$params)"
+            }
+        }
+
+        class Starting(
+            override val params: DownloadService.Params,
+            val downloadInfo: DownloadInfo,
+        ) : Start {
+
+            override fun toString(): String {
+                return "Starting(params=$params, downloadInfo=$downloadInfo)"
+            }
+        }
+
+        class Retry(
+            val params: DownloadService.Params,
+        ) : DownloadNotifierEvent {
+
+            override fun toString(): String {
+                return "Retry(params=$params)"
+            }
+        }
+
+        class State(
+            val state: DownloadState,
+        ) : DownloadNotifierEvent {
+
+            override fun toString(): String {
+                return "State(state=$state)"
+            }
         }
     }
 

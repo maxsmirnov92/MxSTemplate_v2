@@ -47,6 +47,7 @@ import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
+import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadNotifierEvent
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading.Type
 import net.maxsmr.feature.download.data.DownloadsRepo
 import net.maxsmr.feature.download.data.DownloadsViewModel.DownloadInfoWithParams
@@ -114,15 +115,20 @@ class DownloadManager @Inject constructor(
 
     val resultItems = _resultItems.asStateFlow()
 
-    private val _failedStartParamsEvents = MutableSharedFlow<DownloadService.Params>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _failedStartParamsEvents =
+        MutableSharedFlow<DownloadService.Params>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     val failedStartParamsEvents: SharedFlow<DownloadService.Params> = _failedStartParamsEvents.asSharedFlow()
 
-    private val _successAddedToQueueEvents = MutableSharedFlow<DownloadService.Params>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _successAddedToQueueEvents =
+        MutableSharedFlow<DownloadService.Params>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     val successAddedToQueueEvents: SharedFlow<DownloadService.Params> = _successAddedToQueueEvents.asSharedFlow()
 
-    private val _failedAddedToQueueEvents = MutableSharedFlow<Pair<DownloadService.Params, FailAddReason>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _failedAddedToQueueEvents = MutableSharedFlow<Pair<DownloadService.Params, FailAddReason>>(
+        replay = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     val failedAddedToQueueEvents: SharedFlow<Pair<DownloadService.Params, FailAddReason>> =
         _failedAddedToQueueEvents.asSharedFlow()
@@ -243,149 +249,161 @@ class DownloadManager @Inject constructor(
             }
         }
 
-        scope.launch {
-            notifier.downloadStartEvents.collect { info ->
-                logger.d("downloadStartEvent: $info")
-                val newSet = downloadsLaunchedQueue.value.toMutableSet()
+        suspend fun handleStartEvents(event: DownloadNotifierEvent.Start) {
+            val newSet = downloadsLaunchedQueue.value.toMutableSet()
 
-                var startedItem: QueueItem? = null
-                val iterator = newSet.iterator()
-                while (iterator.hasNext()) {
-                    val item = iterator.next()
-                    if (item.params.targetResourceName == info.params.targetResourceName
-                            || item.downloadId == info.downloadInfo?.id
+            var startedItem: QueueItem? = null
+            val iterator = newSet.iterator()
+            while (iterator.hasNext()) {
+                val item = iterator.next()
+                if (item.params.targetResourceName == event.params.targetResourceName
+                        || (event is DownloadNotifierEvent.Starting && item.downloadId == event.downloadInfo.id)
+                ) {
+                    if (event is DownloadNotifierEvent.Starting) {
+                        // на этом этапе id загрузки может быть 0, если не была найдена сущность по имени
+                        startedItem = item.copy(downloadId = event.downloadInfo.id)
+                    }
+                    iterator.remove()
+                    break
+                }
+            }
+            downloadsLaunchedQueue.emit(newSet)
+
+            startedItem?.let {
+                logger.d("$it started, adding to downloadsQueue, removed from downloadsLaunchedQueue")
+                downloadsQueue.appendToSet(it)
+                downloadsStorage.addItem(it)
+            }
+
+            // дополнительно была отложенная отмена по launched
+            val pendingCancelQueue = downloadsPendingCancelQueue.value.toMutableSet()
+            if (pendingCancelQueue.removeIf { it.params.isSame(event.params) }) {
+                downloadsPendingCancelQueue.value = pendingCancelQueue
+                if (event is DownloadNotifierEvent.Starting) {
+                    cancelDownload(event.downloadInfo.id)
+                }
+            }
+
+            // рефреш результирующих итемов
+            if (event is DownloadNotifierEvent.Starting) {
+                DownloadInfoResultData(event.params, event.downloadInfo, null).refreshWith()
+            }
+        }
+
+        suspend fun handleRetryEvents(event: DownloadNotifierEvent.Retry) {
+            retryDownloadSuspended(event.params)
+        }
+
+        suspend fun handleStateEvents(event: DownloadNotifierEvent.State) {
+            val state = event.state
+            if (state !is DownloadStateNotifier.DownloadState.Loading) {
+                logger.d("Finished downloadStateEvent: $state")
+                val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
+
+                // после перехода в завершённое состояние убираем из очереди текущих загрузок
+                val newDownloadsSet = downloadsQueue.value.toMutableSet()
+                val downloadsIterator = newDownloadsSet.iterator()
+
+                var finishedItem: QueueItem? = null
+
+                while (downloadsIterator.hasNext()) {
+                    val item = downloadsIterator.next()
+                    // на этом этапе можно сравнивать только по id в DownloadInfo, если он был правильный;
+                    // по targetResourceName в предыдущих неизменённых парамсах остаётся, на случай если id = 0
+                    if (item.params.targetResourceName == state.oldParams.targetResourceName
+                            || item.downloadId == state.downloadInfo.id
                     ) {
-                        if (info.isStarted) {
-                            // на этом этапе id загрузки может быть 0, если не была найдена сущность по имени
-                            startedItem = item.copy(downloadId = info.downloadInfo?.id)
-                        }
-                        iterator.remove()
+                        logger.d("$item finished, removing from downloadsQueue")
+                        downloadsIterator.remove()
+                        downloadsStorage.removeItem(item)
+                        finishedItem = item
                         break
                     }
                 }
-                downloadsLaunchedQueue.emit(newSet)
 
-                startedItem?.let {
-                    logger.d("$it started, adding to downloadsQueue, removed from downloadsLaunchedQueue")
-                    downloadsQueue.appendToSet(it)
-                    downloadsStorage.addItem(it)
-                }
+                if (finishedItem == null) {
+                    // если вдруг не нашли item в downloadsQueue -
+                    // downloadStartEvent был скипнут, попали сразу в этот коллектор
 
-                // дополнительно была отложенная отмена по launched
-                val pendingCancelQueue = downloadsPendingCancelQueue.value.toMutableSet()
-                if (pendingCancelQueue.removeIf { it.params.isSame(info.params) }) {
-                    downloadsPendingCancelQueue.value = pendingCancelQueue
-                    if (info.isStarted && info.downloadInfo != null) {
-                        cancelDownload(info.downloadInfo.id)
-                    }
-                }
+                    val newLaunchedDownloadsSet = downloadsLaunchedQueue.value.toMutableSet()
+                    val launchedDownloadsIterator = newLaunchedDownloadsSet.iterator()
 
-                // рефреш результирующих итемов
-                if (info.isStarted) {
-                    info.downloadInfo?.let { downloadInfo ->
-                        DownloadInfoResultData(info.params, downloadInfo, null).refreshWith()
-                    }
-                }
-            }
-        }
-        scope.launch {
-            notifier.downloadStateEvents.collect { state ->
-                logger.d("downloadStateEvents: $state")
-                if (state !is DownloadStateNotifier.DownloadState.Loading) {
-                    logger.d("Finished downloadStateEvent: $state")
-                    val newFinishedSet = downloadsFinishedQueue.value.toMutableSet()
-
-                    // после перехода в завершённое состояние убираем из очереди текущих загрузок
-                    val newDownloadsSet = downloadsQueue.value.toMutableSet()
-                    val downloadsIterator = newDownloadsSet.iterator()
-
-                    var finishedItem: QueueItem? = null
-
-                    while (downloadsIterator.hasNext()) {
-                        val item = downloadsIterator.next()
-                        // на этом этапе можно сравнивать только по id в DownloadInfo, если он был правильный;
-                        // по targetResourceName в предыдущих неизменённых парамсах остаётся, на случай если id = 0
+                    while (launchedDownloadsIterator.hasNext()) {
+                        val item = launchedDownloadsIterator.next()
                         if (item.params.targetResourceName == state.oldParams.targetResourceName
                                 || item.downloadId == state.downloadInfo.id
                         ) {
-                            logger.d("$item finished, removing from downloadsQueue")
-                            downloadsIterator.remove()
-                            downloadsStorage.removeItem(item)
+                            logger.d("$item finished, removing from downloadsLaunchedQueue")
+                            launchedDownloadsIterator.remove()
                             finishedItem = item
                             break
                         }
                     }
 
-                    if (finishedItem == null) {
-                        // если вдруг не нашли item в downloadsQueue -
-                        // downloadStartEvent был скипнут, попали сразу в этот коллектор
-
-                        val newLaunchedDownloadsSet = downloadsLaunchedQueue.value.toMutableSet()
-                        val launchedDownloadsIterator = newLaunchedDownloadsSet.iterator()
-
-                        while (launchedDownloadsIterator.hasNext()) {
-                            val item = launchedDownloadsIterator.next()
-                            if (item.params.targetResourceName == state.oldParams.targetResourceName
-                                    || item.downloadId == state.downloadInfo.id
-                            ) {
-                                logger.d("$item finished, removing from downloadsLaunchedQueue")
-                                launchedDownloadsIterator.remove()
-                                finishedItem = item
-                                break
-                            }
-                        }
-
-                        if (finishedItem != null) {
-                            downloadsLaunchedQueue.emit(newLaunchedDownloadsSet)
-                        }
-                    } else {
-                        // итем был найден downloadsQueue как и предполагалось
-                        downloadsQueue.emit(newDownloadsSet)
+                    if (finishedItem != null) {
+                        downloadsLaunchedQueue.emit(newLaunchedDownloadsSet)
                     }
-
-                    finishedItem?.let {
-                        // актуализируем парамсы для завершённого итема
-                        val newFinishedItem =
-                            finishedItem.copy(params = state.params, downloadId = state.downloadInfo.id)
-
-                        var previousFinishedItem: QueueItem? = null
-                        newFinishedSet.refreshWith(newFinishedItem) {
-                            if (it.id == newFinishedItem.id
-                                    || it.downloadId == newFinishedItem.downloadId
-                            ) {
-                                // если был стартован через retry, такого уже не будет
-                                previousFinishedItem = it
-                                true
-                            } else {
-                                false
-                            }
-                        }.apply {
-                            newFinishedSet.clear()
-                            newFinishedSet.addAll(this)
-                        }
-
-                        previousFinishedItem?.let {
-                            downloadsFinishedStorage.removeItem(it)
-                        }
-                        downloadsFinishedStorage.addItem(newFinishedItem)
-                    }
-
-                    downloadsFinishedQueue.emit(newFinishedSet)
-                } else if (state.stateInfo.done) {
-                    when (state.type) {
-                        Type.UPLOADING -> logger.d("Done uploading")
-                        Type.DOWNLOADING -> logger.d("Done downloading")
-                        Type.STORING -> logger.d("Done storing")
-                    }
+                } else {
+                    // итем был найден downloadsQueue как и предполагалось
+                    downloadsQueue.emit(newDownloadsSet)
                 }
 
-                DownloadInfoResultData(state.params, state.downloadInfo, state).refreshWith()
+                finishedItem?.let {
+                    // актуализируем парамсы для завершённого итема
+                    val newFinishedItem =
+                        finishedItem.copy(params = state.params, downloadId = state.downloadInfo.id)
+
+                    var previousFinishedItem: QueueItem? = null
+                    newFinishedSet.refreshWith(newFinishedItem) {
+                        if (it.id == newFinishedItem.id
+                                || it.downloadId == newFinishedItem.downloadId
+                        ) {
+                            // если был стартован через retry, такого уже не будет
+                            previousFinishedItem = it
+                            true
+                        } else {
+                            false
+                        }
+                    }.apply {
+                        newFinishedSet.clear()
+                        newFinishedSet.addAll(this)
+                    }
+
+                    previousFinishedItem?.let {
+                        downloadsFinishedStorage.removeItem(it)
+                    }
+                    downloadsFinishedStorage.addItem(newFinishedItem)
+                }
+
+                downloadsFinishedQueue.emit(newFinishedSet)
+            } else if (state.stateInfo.done) {
+                when (state.type) {
+                    Type.UPLOADING -> logger.d("Done uploading")
+                    Type.DOWNLOADING -> logger.d("Done downloading")
+                    Type.STORING -> logger.d("Done storing")
+                }
             }
+
+            DownloadInfoResultData(state.params, state.downloadInfo, state).refreshWith()
         }
+
         scope.launch {
-            notifier.downloadRetryEvents.collect {
-                logger.d("downloadRetryEvent: $it")
-                retryDownloadSuspended(it)
+            notifier.events.collect { event ->
+                logger.d("Download notifier event: $event")
+
+                when (event) {
+                    is DownloadNotifierEvent.Start -> {
+                        handleStartEvents(event)
+                    }
+
+                    is DownloadNotifierEvent.Retry -> {
+                        handleRetryEvents(event)
+                    }
+
+                    is DownloadNotifierEvent.State -> {
+                       handleStateEvents(event)
+                    }
+                }
             }
         }
 
