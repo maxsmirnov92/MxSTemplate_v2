@@ -4,9 +4,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Parcelable
 import androidx.navigation.NavType
-import kotlinx.serialization.json.Json
 import net.maxsmr.commonutils.getParcelableCompat
 import net.maxsmr.commonutils.getSerializableCompat
+import net.maxsmr.core.android.baseJson
 import net.maxsmr.core.utils.kotlinx.serialization.encodeToStringOrNull
 import java.io.Serializable
 
@@ -16,7 +16,6 @@ import java.io.Serializable
  */
 object NavTypeHolder {
 
-    lateinit var json: Json
 
     @PublishedApi
     internal val navTypeMap = mutableMapOf<Class<*>, NavType<*>>()
@@ -30,7 +29,7 @@ object NavTypeHolder {
             }
 
             override fun parseValue(value: String): T {
-                return json.decodeFromString(value)
+                return baseJson.decodeFromString(value)
             }
 
             override fun put(bundle: Bundle, key: String, value: T) {
@@ -50,7 +49,7 @@ object NavTypeHolder {
             }
 
             override fun parseValue(value: String): T {
-                return json.decodeFromString(value)
+                return baseJson.decodeFromString(value)
             }
 
             override fun put(bundle: Bundle, key: String, value: T) {
@@ -72,6 +71,6 @@ object NavTypeHolder {
     }
 
     inline fun <reified T> encodeArg(arg: T): String {
-        return Uri.encode(json.encodeToStringOrNull(arg)).orEmpty()
+        return Uri.encode(baseJson.encodeToStringOrNull(arg)).orEmpty()
     }
 }

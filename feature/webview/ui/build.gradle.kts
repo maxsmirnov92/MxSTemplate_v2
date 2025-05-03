@@ -11,4 +11,5 @@ android {
 dependencies {
     api(project(":feature:webview:data"))
     implementation(project(":feature:rate"))
+    implementation(libs.kotlinx.serialization.json)
 }

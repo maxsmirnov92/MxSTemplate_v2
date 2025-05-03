@@ -61,8 +61,8 @@
             app:popExitAnim="@anim/slide_out" />
 
         <argument
-            android:name="customizer"
-            app:argType="net.maxsmr.feature.webview.ui.WebViewCustomizer" />
+            android:name="params"
+            app:argType="net.maxsmr.mxstemplate.ui.fragment.params.WebViewScreenParams" />
 
     </fragment>
 
@@ -113,8 +113,8 @@
             app:popExitAnim="@anim/slide_out" />
 
         <argument
-            android:name="isForRate"
-            app:argType="boolean" />
+            android:name="params"
+            app:argType="net.maxsmr.mxstemplate.ui.fragment.params.AboutScreenParams" />
 
     </fragment>
 
@@ -132,13 +132,10 @@
             app:popEnterAnim="@anim/slide_in"
             app:popExitAnim="@anim/slide_out" />
 
-        <argument
-            android:name="emailAddress"
-            app:argType="string" />
 
         <argument
-            android:name="shouldNavigateToMarket"
-            app:argType="boolean" />
+            android:name="params"
+            app:argType="net.maxsmr.mxstemplate.ui.fragment.params.FeedbackScreenParams" />
 
     </fragment>
 

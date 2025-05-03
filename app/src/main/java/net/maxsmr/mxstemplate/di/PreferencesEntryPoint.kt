@@ -8,7 +8,7 @@ import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepositor
 
 @[EntryPoint
 InstallIn(SingletonComponent::class)]
-interface PreferencesFeatureEntryPoint {
+interface PreferencesEntryPoint {
 
     val cacheDataStoreRepository: CacheDataStoreRepository
 

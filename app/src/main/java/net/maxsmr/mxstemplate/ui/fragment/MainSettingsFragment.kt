@@ -10,6 +10,7 @@ import net.maxsmr.feature.preferences.ui.SettingsFragmentAlertDelegate
 import net.maxsmr.feature.preferences.ui.SettingsViewModel
 import net.maxsmr.feature.rate.RateAppReminderComponentDelegate
 import net.maxsmr.mxstemplate.RATE_APP_ASK_INTERVAL
+import net.maxsmr.mxstemplate.ui.fragment.params.AboutScreenParams
 
 @AndroidEntryPoint
 class MainSettingsFragment: SettingsFragment() {
@@ -23,7 +24,7 @@ class MainSettingsFragment: SettingsFragment() {
         ) {
             viewModel.navigate(
                 NavigationAction.NavigationCommand.ToDirectionWithNavDirections(
-                    MainDownloadsPagerFragmentDirections.actionToAboutFragment(true)
+                    MainDownloadsPagerFragmentDirections.actionToAboutFragment(AboutScreenParams(true))
                 )
             )
         }

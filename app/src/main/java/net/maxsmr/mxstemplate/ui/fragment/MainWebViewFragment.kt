@@ -10,6 +10,7 @@ import net.maxsmr.feature.rate.RateAppReminderComponentDelegate
 import net.maxsmr.feature.rate.alert.view.RateAppReminderFragmentAlertDelegate
 import net.maxsmr.mxstemplate.RATE_APP_ASK_INTERVAL
 import net.maxsmr.mxstemplate.ui.MainWebViewModel
+import net.maxsmr.mxstemplate.ui.fragment.params.AboutScreenParams
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
@@ -35,7 +36,7 @@ class MainWebViewFragment: BaseDownloadableWebViewFragment<MainWebViewModel>() {
         ) {
             viewModel.navigate(
                 NavigationAction.NavigationCommand.ToDirectionWithNavDirections(
-                    MainDownloadsPagerFragmentDirections.actionToAboutFragment(true)
+                    MainDownloadsPagerFragmentDirections.actionToAboutFragment(AboutScreenParams(true))
                 )
             )
         }

@@ -1,21 +1,20 @@
 package net.maxsmr.feature.webview.ui
 
 import android.net.Uri
-import androidx.annotation.Keep
+import kotlinx.serialization.Serializable
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.URL_PAGE_BLANK
 import net.maxsmr.core.network.equalsIgnoreSubDomain
 import net.maxsmr.core.network.isUrlValid
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient.ViewUrlMode
-import java.io.Serializable
 import java.nio.charset.Charset
 
 /**
  * Инкапсулирет задание свойств для [android.webkit.WebView]
  * @param url любая URL, включая [URL_PAGE_BLANK] или ресурсные схемы
  */
-@Keep
+@Serializable
 class WebViewCustomizer private constructor(
     val title: String,
     val url: String,
@@ -23,7 +22,7 @@ class WebViewCustomizer private constructor(
     val reloadAfterConnectionError: Boolean,
     val changeTitleByState: Boolean,
     val viewUrlStrategy: ViewUrlStrategy,
-) : Serializable {
+) : java.io.Serializable {
 
     fun buildUpon() = Builder()
         .setTitle(title)
@@ -127,17 +126,19 @@ class WebViewCustomizer private constructor(
         )
     }
 
+    @Serializable
     data class WebViewDataArgs @JvmOverloads constructor(
         val data: String,
         val mimeType: String = FileFormat.HTML.mimeType,
         val charset: String = Charset.defaultCharset().name(),
         val forceBase64: Boolean = true,
-    ) : Serializable
+    ) : java.io.Serializable
 
+    @Serializable
     class ViewUrlStrategy(
         val targetUrlMode: ViewUrlMode,
         private val matcher: UrlMatcher = UrlMatcher.AnyUrlMatcher,
-    ) : Serializable {
+    ) : java.io.Serializable {
 
         fun getMode(uri: Uri): ViewUrlMode {
             return if (targetUrlMode == ViewUrlMode.INTERNAL
@@ -149,10 +150,13 @@ class WebViewCustomizer private constructor(
             }
         }
 
-        sealed interface UrlMatcher : Serializable {
 
-            abstract fun match(url: Uri): Boolean
+        @Serializable
+        sealed interface UrlMatcher : java.io.Serializable {
 
+            fun match(url: Uri): Boolean
+
+            @Serializable
             data object AnyUrlMatcher : UrlMatcher {
 
                 override fun match(url: Uri): Boolean = true
@@ -160,17 +164,18 @@ class WebViewCustomizer private constructor(
                 private fun readResolve(): Any = AnyUrlMatcher
             }
 
-            class CustomUrlMatcher(private val matchFunc: (Uri) -> Boolean) : UrlMatcher {
-
-                override fun match(url: Uri): Boolean {
-                    return matchFunc(url)
-                }
-            }
+//            class CustomUrlMatcher(private val matchFunc: (Uri) -> Boolean) : UrlMatcher {
+//
+//                override fun match(url: Uri): Boolean {
+//                    return matchFunc(url)
+//                }
+//            }
 
             /**
              * Соответствие текущей урлы по возможным
              * схемам / хостам / параметрам
              */
+            @Serializable
             class PartsUrlMatcher private constructor(
                 private val scheme: MatchRule.SchemeMatchRule,
                 private val host: MatchRule.HostMatchRule,
@@ -191,12 +196,12 @@ class WebViewCustomizer private constructor(
                     return scheme.match(url) && host.match(url) && queryParameters.match(url)
                 }
 
-                private sealed class MatchRule(
-                    private val variants: List<String>,
-                    private val shouldInclude: Boolean,
-                ) {
+                private sealed interface MatchRule {
 
-                    abstract fun match(url: Uri, variant: String): Boolean
+                    val variants: List<String>
+                    val shouldInclude: Boolean
+
+                    fun match(url: Uri, variant: String): Boolean
 
                     fun match(url: Uri): Boolean {
                         return if (variants.any { it.isNotEmpty() }) {
@@ -213,30 +218,33 @@ class WebViewCustomizer private constructor(
                     }
 
 
+                    @Serializable
                     class SchemeMatchRule(
-                        variants: List<String>,
-                        shouldInclude: Boolean,
-                    ) : MatchRule(variants, shouldInclude) {
+                        override val variants: List<String>,
+                        override val shouldInclude: Boolean,
+                    ) : MatchRule {
 
                         override fun match(url: Uri, variant: String): Boolean {
                             return url.scheme?.equals(variant) == true
                         }
                     }
 
+                    @Serializable
                     class HostMatchRule(
-                        variants: List<String>,
-                        shouldInclude: Boolean,
-                    ) : MatchRule(variants, shouldInclude) {
+                        override val variants: List<String>,
+                        override val shouldInclude: Boolean,
+                    ) : MatchRule {
 
                         override fun match(url: Uri, variant: String): Boolean {
                             return url.host.equalsIgnoreSubDomain(variant)
                         }
                     }
 
+                    @Serializable
                     class QueryParametersMatchRule(
-                        variants: List<String>,
-                        shouldInclude: Boolean,
-                    ) : MatchRule(variants, shouldInclude) {
+                        override val variants: List<String>,
+                        override val shouldInclude: Boolean,
+                    ) : MatchRule {
 
                         override fun match(url: Uri, variant: String): Boolean {
                             return url.queryParameterNames.any { name ->

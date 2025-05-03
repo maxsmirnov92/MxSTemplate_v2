@@ -14,4 +14,5 @@ dependencies {
     implementation(project(":feature:rate"))
     implementation(project(":feature:mobile_services"))
     implementation(project(":feature:preferences:data"))
+    implementation(libs.kotlinx.serialization.json)
 }

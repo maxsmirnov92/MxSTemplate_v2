@@ -21,6 +21,7 @@ import net.maxsmr.mxstemplate.RATE_APP_ASK_INTERVAL
 import net.maxsmr.mxstemplate.RELEASE_NOTES_ASSETS_FOLDER_NAME_EN
 import net.maxsmr.mxstemplate.RELEASE_NOTES_ASSETS_FOLDER_NAME_RU
 import net.maxsmr.mxstemplate.mobileBuildType
+import net.maxsmr.mxstemplate.ui.fragment.params.AboutScreenParams
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 import javax.inject.Named
@@ -49,7 +50,7 @@ class MainDownloadsPagerFragment : BaseDownloadsPagerFragment() {
         ) {
             viewModel.navigate(
                 NavigationAction.NavigationCommand.ToDirectionWithNavDirections(
-                    MainDownloadsPagerFragmentDirections.actionToAboutFragment(true)
+                    MainDownloadsPagerFragmentDirections.actionToAboutFragment(AboutScreenParams(true))
                 )
             )
         }

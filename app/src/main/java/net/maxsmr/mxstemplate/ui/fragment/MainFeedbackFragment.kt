@@ -17,8 +17,6 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainFeedbackFragment: BaseFeedbackFragment<MainFeedbackViewModel>() {
 
-    private val args by navArgs<MainFeedbackFragmentArgs>()
-
     override val viewModel: MainFeedbackViewModel by viewModels()
 
     private val rateDelegate by lazy {
@@ -39,7 +37,7 @@ class MainFeedbackFragment: BaseFeedbackFragment<MainFeedbackViewModel>() {
 
     override fun onSendClick() {
         super.onSendClick()
-        if (args.shouldNavigateToMarket) {
+        if (viewModel.params.shouldNavigateToMarket) {
             rateDelegate.navigateToMarket()
         }
     }

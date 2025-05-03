@@ -14,6 +14,7 @@ import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepositor
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
 import net.maxsmr.mxstemplate.R
 import net.maxsmr.mxstemplate.ui.fragment.MainDownloadsPagerFragmentDirections
+import net.maxsmr.mxstemplate.ui.fragment.params.WebViewScreenParams
 import net.maxsmr.mxstemplate.ui.getViewUrlStrategy
 
 internal fun NavController.navigateWithGraphFragmentsFromCaller(
@@ -59,7 +60,8 @@ internal fun NavController.navigateWithGraphFragments(
         it.id == destinationId
     } ?: false
     return if (!selected
-            && currentNavFragment?.canNavigate(targetAction) != false) {
+            && currentNavFragment?.canNavigate(targetAction) != false
+    ) {
         targetAction.invoke()
         true
     } else {
@@ -93,10 +95,12 @@ private fun NavController.navigateWithGraphFragments(
             val settings = settingsRepo.getSettings()
             navigate(
                 MainDownloadsPagerFragmentDirections.actionToWebViewFragment(
-                    WebViewCustomizer.Builder()
-                        .setUrl(settings.startPageUrl)
-                        .setViewUrlStrategy(settings.getViewUrlStrategy())
-                        .build()
+                    WebViewScreenParams(
+                        WebViewCustomizer.Builder()
+                            .setUrl(settings.startPageUrl)
+                            .setViewUrlStrategy(settings.getViewUrlStrategy())
+                            .build()
+                    )
                 ),
                 navOptions = navOptions()
             )

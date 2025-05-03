@@ -11,8 +11,9 @@ import net.maxsmr.feature.rate.BaseRateAppComponentDelegate
 import net.maxsmr.mobile_services.IMobileServicesAvailability
 import net.maxsmr.mobile_services.MobileBuildType
 import net.maxsmr.mxstemplate.BuildConfig
-import net.maxsmr.mxstemplate.di.MobileServicesFeatureEntryPoint
+import net.maxsmr.mxstemplate.di.MobileServicesEntryPoint
 import net.maxsmr.mxstemplate.ui.fragment.MainAboutFragmentDirections
+import net.maxsmr.mxstemplate.ui.fragment.params.FeedbackScreenParams
 
 class MainRateAppComponentDelegate(
     host: Activity,
@@ -25,7 +26,7 @@ class MainRateAppComponentDelegate(
     override fun navigateToMarket() {
         if (!EntryPointAccessors.fromApplication(
                     host,
-                    MobileServicesFeatureEntryPoint::class.java
+                    MobileServicesEntryPoint::class.java
                 ).marketIntentLauncher.startActivityMarketIntent(host)
         ) {
             viewModel.showToast(TextMessage(R.string.error_intent_open_market))
@@ -35,7 +36,9 @@ class MainRateAppComponentDelegate(
     override fun navigateToFeedback(shouldNavigateToMarket: Boolean) {
         viewModel.navigate(
             NavigationAction.NavigationCommand.ToDirectionWithNavDirections(
-                MainAboutFragmentDirections.actionToFeedbackFragment(BuildConfig.DEV_EMAIL_ADDRESS, shouldNavigateToMarket)
+                MainAboutFragmentDirections.actionToFeedbackFragment(
+                    FeedbackScreenParams(BuildConfig.DEV_EMAIL_ADDRESS, shouldNavigateToMarket)
+                )
             )
         )
     }

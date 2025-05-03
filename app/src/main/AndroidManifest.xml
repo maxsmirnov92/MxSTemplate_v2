@@ -137,9 +137,6 @@
             <meta-data
                 android:name="net.maxsmr.mxstemplate.initializers.AppSettingsInitializer"
                 android:value="androidx.startup" />
-            <meta-data
-                android:name="net.maxsmr.mxstemplate.initializers.NavTypeHolderInitializer"
-                android:value="androidx.startup" />
         </provider>
         <provider
             android:name="androidx.core.content.FileProvider"

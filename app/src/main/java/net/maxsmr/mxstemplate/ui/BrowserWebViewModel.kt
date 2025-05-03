@@ -4,25 +4,19 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import net.maxsmr.core.android.screen.extractScreenParams
 import net.maxsmr.feature.download.ui.webview.BaseDownloadableWebViewModel
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
 import net.maxsmr.mxstemplate.ui.fragment.BrowserWebViewFragmentArgs
+import net.maxsmr.mxstemplate.ui.fragment.params.WebViewScreenParams
 import javax.inject.Inject
 
 @HiltViewModel
 class BrowserWebViewModel @Inject constructor(
     state: SavedStateHandle,
-    @ApplicationContext context: Context
+    @ApplicationContext context: Context,
 ) : BaseDownloadableWebViewModel(state, context) {
 
-    override var customizer: WebViewCustomizer = if (state.contains(ARG_WEB_CUSTOMIZER)) {
-        BrowserWebViewFragmentArgs.fromSavedStateHandle(state).customizer
-    } else {
-        WebViewCustomizer.Builder().build()
-    }
-
-    companion object {
-
-        const val ARG_WEB_CUSTOMIZER = "customizer"
-    }
+    override var customizer: WebViewCustomizer =
+        state.extractScreenParams<WebViewScreenParams>().customizer
 }

@@ -28,6 +28,7 @@ dependencies {
 //    implementation(libs.androidx.lifecycle.extensions)
     implementation(libs.androidx.lifecycle.common.java8)
     implementation(libs.androidx.navigation.common.ktx)
+    implementation(libs.androidx.fragment)
 
     implementation(libs.androidx.localbroadcastmanager)
     implementation(libs.androidx.core.ktx)

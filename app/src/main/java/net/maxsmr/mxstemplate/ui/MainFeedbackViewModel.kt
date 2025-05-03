@@ -5,8 +5,10 @@ import androidx.lifecycle.SavedStateHandle
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.android.screen.extractScreenParams
 import net.maxsmr.feature.rate.fragment.BaseFeedbackViewModel
 import net.maxsmr.mxstemplate.ui.fragment.MainFeedbackFragmentArgs
+import net.maxsmr.mxstemplate.ui.fragment.params.FeedbackScreenParams
 import javax.inject.Inject
 
 @HiltViewModel
@@ -15,9 +17,9 @@ class MainFeedbackViewModel @Inject constructor(
     @ApplicationContext context: Context
 ): BaseFeedbackViewModel(state, context) {
 
-    override val emailAddress: String = if (state.contains("emailAddress")) {
-        MainFeedbackFragmentArgs.fromSavedStateHandle(state).emailAddress
-    } else {
-        EMPTY_STRING
+    override val emailAddress: String by lazy {
+        params.emailAddress
     }
+
+    val params = state.extractScreenParams<FeedbackScreenParams>()
 }
