@@ -49,6 +49,7 @@ import net.maxsmr.feature.camera.recognition.cases.BaseTextMatcherUseCase
 import net.maxsmr.feature.camera.recognition.cases.DocTypeTextMatcherUseCase
 import net.maxsmr.feature.camera.recognition.cases.EmailTextMatcherUseCase
 import net.maxsmr.feature.camera.recognition.cases.GrzTextMatcherUseCase
+import net.maxsmr.feature.camera.recognition.cases.ImageCaptureRecognitionUseCase
 import net.maxsmr.feature.camera.recognition.cases.RusPhoneTextMatcherUseCase
 import java.io.Serializable
 import java.util.concurrent.Executor
@@ -61,6 +62,7 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
     @Assisted val imageAnalyzerExecutor: Executor,
     @Assisted val textMatcherUseCases: List<BaseTextMatcherUseCase<*>>,
+    private val imageCaptureRecognitionUseCase: ImageCaptureRecognitionUseCase,
     private val textRecognition: ITextRecognition,
     @ApplicationContext private val context: Context,
 ) : BaseViewModel(state, context), ErrorCallbacks {
@@ -90,10 +92,6 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
         _realtimeResultsStateFlow.asStateFlow()
     }
 
-    val captureResultsStateFlow: StateFlow<TextRecognitionResult?> by lazy {
-        _captureResultsStateFlow.asStateFlow()
-    }
-
     /**
      * Текущее состояние распознавания
      */
@@ -106,8 +104,6 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     private val _frameStatsStateFlow by persistableStateFlow<FrameCalculator.FrameStats?>(null)
 
     private val _realtimeResultsStateFlow by persistableStateFlow<TextRecognitionResult?>(null)
-
-    private val _captureResultsStateFlow by persistableStateFlow<TextRecognitionResult?>(null)
 
     private val _recognitionStateFlow by persistableStateFlow(false)
 
@@ -124,38 +120,6 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     private var jobs: CameraObservableJobs? = null
 
     private var cameraStateCollectJob: Job? = null
-
-    override fun onInitialized() {
-        super.onInitialized()
-        _captureResultsStateFlow.observe {
-            if (it is TextRecognitionResult.Success) {
-                showOkDialog(
-                    DIALOG_TAG_CAPTURE_RECOGNITION_RESULT,
-                    it.message,
-                    TextMessage(R.string.camera_dialog_capture_recognition_result_title),
-                    configBlock = {
-                        setOnClose {
-                            _captureResultsStateFlow.value = null
-                        }
-                    }
-                )
-            } else if (it is TextRecognitionResult.Failed) {
-                showOkDialog(
-                    DIALOG_TAG_CAPTURE_RECOGNITION_RESULT,
-                    TextMessage(R.string.camera_dialog_capture_recognition_result_title),
-                    TextMessage(
-                        R.string.camera_recognize_text_failed_format,
-                        it.exception.message
-                    ),
-                    configBlock = {
-                        setOnClose {
-                            _captureResultsStateFlow.value = null
-                        }
-                    }
-                )
-            }
-        }
-    }
 
     override fun onCameraStartError(e: Exception) {
         showCameraOpenError(e)
@@ -290,22 +254,31 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     }
 
     private fun onImageCaptured(imageBitmap: Bitmap, rotationDegrees: Int = 90) {
-        // TODO в UseCase
-        if (!isBitmapValid(imageBitmap)) {
-            return
-        }
-        viewModelScope.launch(dispatcher) {
-            try {
-                val result = textRecognition.processCapture(imageBitmap, rotationDegrees)
-                if (result.isEmpty()) {
-                    throw EmptyResultException()
+        viewModelScope.launch {
+            val result = imageCaptureRecognitionUseCase(
+                ImageCaptureRecognitionUseCase.Params(imageBitmap, rotationDegrees)
+            )
+            when (result) {
+                is ExecuteResult.Success -> {
+                    showOkDialog(
+                        DIALOG_TAG_CAPTURE_RECOGNITION_RESULT,
+                        result.data,
+                        TextMessage(R.string.camera_dialog_capture_recognition_result_title),
+                    )
                 }
-                _captureResultsStateFlow.value = TextRecognitionResult.Success(TextMessage(result.joinLines()))
-            } catch (e: Exception) {
-                logException(logger, e, "processFrame")
-                _captureResultsStateFlow.value = TextRecognitionResult.Failed(e)
-            } finally {
-                imageBitmap.recycle()
+
+                is ExecuteResult.Error -> {
+                    showOkDialog(
+                        DIALOG_TAG_CAPTURE_RECOGNITION_RESULT,
+                        result.errorMessage()?.let {
+                            TextMessage(R.string.camera_recognize_text_failed_format, it)
+                        } ?: TextMessage(R.string.camera_recognize_text_failed)
+                    )
+                }
+
+                else -> {
+
+                }
             }
         }
     }
@@ -340,7 +313,6 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
         frameCalculator.onStop()
         _frameStatsStateFlow.value = null
         _realtimeResultsStateFlow.value = null
-        _captureResultsStateFlow.value = null
     }
 
     private suspend fun BaseTextMatcherUseCase<*>.invokeWithLines(lines: List<RecognizedLine>): TextRecognitionResult {
