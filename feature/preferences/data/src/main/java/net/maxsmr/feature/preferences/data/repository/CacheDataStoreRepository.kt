@@ -35,6 +35,9 @@ class CacheDataStoreRepository @Inject constructor(
 
     val batteryOptimizationAsked: Flow<Boolean> = data.map { it[FIELD_BATTERY_OPTIMIZATION_ASKED] ?: false }
 
+    val canDrawOverlaysAsked: Flow<Boolean>? = data.map { it[FIELD_CAN_DRAW_OVERLAYS_ASKED] ?: false }
+        .takeIf { Build.VERSION.SDK_INT >= Build.VERSION_CODES.O }
+
     val isDemoPeriodExpired: Flow<Boolean> = data.map { it[FIELD_KEY_DEMO_PERIOD_EXPIRED] ?: false }
 
     val isTutorialCompleted: Flow<Boolean> = data.map { it[FIELD_KEY_TUTORIAL_COMPLETED] ?: false }
@@ -61,6 +64,16 @@ class CacheDataStoreRepository @Inject constructor(
 
     suspend fun clearBatteryOptimizationAsked() {
         setBatteryOptimizationAsked(false)
+    }
+
+    suspend fun wasCanDrawOverlaysAsked() = canDrawOverlaysAsked?.firstOrNull() ?: false
+
+    suspend fun setCanDrawOverlaysAsked() {
+        setCanDrawOverlaysAsked(true)
+    }
+
+    suspend fun clearCanDrawOverlaysAsked() {
+        setCanDrawOverlaysAsked(false)
     }
 
     suspend fun getLastQueueId(): Int {
@@ -181,6 +194,14 @@ class CacheDataStoreRepository @Inject constructor(
         }
     }
 
+    private suspend fun setCanDrawOverlaysAsked(toggle: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            dataStore.edit { prefs ->
+                prefs[FIELD_CAN_DRAW_OVERLAYS_ASKED] = toggle
+            }
+        }
+    }
+
     private suspend fun setRateAppInfo(rateInfo: RateAppInfo) {
         val result: String =
             json.encodeToStringOrNull(rateInfo).orEmpty()
@@ -205,6 +226,7 @@ class CacheDataStoreRepository @Inject constructor(
 
         private val FIELD_POST_NOTIFICATION_ASKED = booleanPreferencesKey("postNotificationAsked")
         private val FIELD_BATTERY_OPTIMIZATION_ASKED = booleanPreferencesKey("batteryOptimizationAsked")
+        private val FIELD_CAN_DRAW_OVERLAYS_ASKED = booleanPreferencesKey("canDrawOverlaysAsked")
         private val FIELD_LAST_QUEUE_ID = intPreferencesKey("lastQueueId")
         private val FIELD_HAS_DOWNLOAD_PARAMS_MODEL_SAMPLE = booleanPreferencesKey("hasDownloadParamsModelSample")
         private val FIELD_RATE_APP_INFO = stringPreferencesKey("rateAppInfo")

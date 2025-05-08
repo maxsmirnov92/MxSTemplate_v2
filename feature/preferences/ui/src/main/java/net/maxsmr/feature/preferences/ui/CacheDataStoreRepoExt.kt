@@ -51,6 +51,31 @@ fun CacheDataStoreRepository.doOnBatteryOptimizationAsk(
     }
 }
 
+/**
+ * @param targetAction true - если спрашивалось ранее
+ */
+fun CacheDataStoreRepository.doOnCanDrawOverlaysAsked(
+    viewModel: BaseViewModel,
+    context: Context,
+    targetAction: (Boolean) -> Unit,
+) {
+    canDrawOverlaysAsked?.let { flow ->
+        viewModel.doOnAnyAskOption(
+            flow = flow,
+            setAskedFunc = {
+                viewModel.viewModelScope.launch {
+                    this@doOnCanDrawOverlaysAsked.setCanDrawOverlaysAsked()
+                }
+            }
+        ) {
+            if (!it) {
+                context.startActivity(getManageOverlayPermissionIntent(context))
+            }
+            targetAction.invoke(it)
+        }
+    } ?: targetAction.invoke(false)
+}
+
 fun <T> CacheDataStoreRepository.doOnPostNotificationPermissionResult(
     host: T,
     onlyWhenGranted: Boolean,
