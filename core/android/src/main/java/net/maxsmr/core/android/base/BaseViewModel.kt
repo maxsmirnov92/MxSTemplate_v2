@@ -9,13 +9,12 @@ import androidx.lifecycle.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.take
 import net.maxsmr.commonutils.flow.observeLatest
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.isAtLeastR
 import net.maxsmr.commonutils.live.doOnNext
 import net.maxsmr.commonutils.live.event.VmEvent
-import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.states.ILoadState
@@ -36,26 +35,10 @@ import net.maxsmr.core.android.content.pick.PickResult
 import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.NetworkException
 
-/**
- * Базовая ViewModel для использования в приложении.
- *
- * @param state обертка над savedInstanceState: Bundle для возможности восстанавливать состояния полей VM
- * после смерти и возобновления процесса приложения. SavedInstanceState может быть использован как фрагмента
- * (если VM не расшаренная), так и activity (если расшаренная), см [net.maxsmr.app.common.gui.BaseVmFragment.isSharedViewModel].
- * НЕ НУЖНО сохранять все подряд, т.к. во-первых объем данных ограничен,
- * во-вторых можно прийти к неправильному поведению. Например, НЕ НУЖНО сохранять ответы запросов,
- * т.к. возобновление процесса может случиться через значительный промежуток времени,
- * и данные того запроса могут быть неактуальны, поэтому запросы лучше повторять. Хорошие кандидаты для
- * сохранения - данные полей, которые юзер мог долго вводить и потратить на это много времени.
- * Также для удобства хранения в state добавлены делегаты [PersistableLiveData], [PersistableLiveDataInitial],
- * [PersistableValue], [PersistableValueInitial]
- */
 abstract class BaseViewModel(
     val state: SavedStateHandle,
     context: Context,
-) : ViewModel(), LifecycleOwner {
-
-    protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
+) : ViewModel() {
 
     /**
      * Для навигации по фрагментам графа (в этом же модуле, иначе не будет сгенерированных Action),
@@ -63,7 +46,6 @@ abstract class BaseViewModel(
      * в котором имеется данный [BaseNavigationFragment], кто будет обозревать ивенты
      */
     val navigationCommand by lazy { _navigationCommand.asStateFlow() }
-
 
     val toastCommand by lazy { _toastCommand.asStateFlow() }
 
@@ -90,14 +72,13 @@ abstract class BaseViewModel(
      */
     val connectionManager: ConnectionManager by lazy { ConnectionManager(context, viewModelScope, snackbarQueue) }
 
+    protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
+
     private val _navigationCommand = MutableStateFlow<VmEvent<NavigationAction>?>(null)
 
     private val _toastCommand = MutableStateFlow<VmEvent<ToastAction>?>(null)
 
-    private val lifecycleRegistry: LifecycleRegistry by lazy { LifecycleRegistry(this) }
-
     init {
-        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_CREATE)
         Handler(Looper.getMainLooper()).post { onInitialized() }
     }
 
@@ -110,18 +91,7 @@ abstract class BaseViewModel(
      * обращением к своим полям. Если метод d() вызывается в init блоке A, то на этот момент
      * поля класса B еще не проинициализированы и при обращении к ним можно получить краш или баг.
      */
-    @CallSuper
-    protected open fun onInitialized() {
-        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
-    }
-
-    final override val lifecycle: LifecycleRegistry
-        get() = lifecycleRegistry
-
-    override fun onCleared() {
-        super.onCleared()
-        lifecycle.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    }
+    protected open fun onInitialized() {}
 
     /**
      * Не использовать для показа ошибок запросов. Для этого используйте [showErrorDialog]
@@ -305,18 +275,16 @@ abstract class BaseViewModel(
     }
 
     fun doOnAnyAskOption(
-        flow: Flow<Boolean>?,
+        flow: Flow<Boolean>,
         setAskedFunc: suspend () -> Unit,
-        targetAction: (Boolean) -> Unit,
+        targetAction: suspend (Boolean) -> Unit,
     ) {
-        flow?.asLiveData()?.observeOnce(this) {
+        flow.take(1).observe {
             if (!it) {
-                this.viewModelScope.launch {
-                    setAskedFunc()
-                }
+                setAskedFunc()
             }
             targetAction(it)
-        } ?: targetAction.invoke(true)
+        }
     }
 
     protected fun AlertQueue.toggle(
@@ -362,16 +330,6 @@ abstract class BaseViewModel(
                 hideDialog(tag)
             }
         }
-
-    @Deprecated("", replaceWith = ReplaceWith(expression = "StateFlow"))
-    protected inline fun <T> LiveData<T>.observe(
-        owner: LifecycleOwner = this@BaseViewModel,
-        crossinline onNext: (T) -> Unit,
-    ): Observer<T> {
-        val observer = Observer<T> { onNext(it) }
-        this.observe(owner, observer)
-        return observer
-    }
 
     protected inline fun <T> Flow<T>.observe(
         crossinline onNext: suspend (T) -> Unit,

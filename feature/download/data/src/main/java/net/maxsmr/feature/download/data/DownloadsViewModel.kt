@@ -77,8 +77,6 @@ class DownloadsViewModel @Inject constructor(
     val failedStartParams = downloadManager.failedStartParamsFlow
 
     override fun onInitialized() {
-        super.onInitialized()
-
         downloadManager.successAddedToQueueEvents.observe {
             it.targetResourceName.takeIf { res -> res.isNotEmpty() }?.let { name ->
                 showSnackbar(

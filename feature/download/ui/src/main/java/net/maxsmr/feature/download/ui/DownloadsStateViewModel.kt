@@ -75,8 +75,6 @@ class DownloadsStateViewModel @Inject constructor(
     private val _navigateUriEvent = MutableStateFlow<VmEvent<IntentWithUriProvideStrategy<*>>?>(null)
 
     override fun onInitialized() {
-        super.onInitialized()
-
         manager.downloadsPendingParams.observe {
             _queueNames.value = it.map { params -> params.targetResourceName }
         }

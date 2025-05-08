@@ -12,20 +12,15 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.ResettableLazy
-import net.maxsmr.commonutils.flow.observe
 import net.maxsmr.commonutils.flow.observeEvents
 import net.maxsmr.commonutils.flow.observeLatest
 import net.maxsmr.commonutils.flow.repeatOnLifecycle
 import net.maxsmr.commonutils.live.event.VmEvent
-import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.resettableLazy
@@ -35,8 +30,8 @@ import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
 import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.core.ui.R
-import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.alert.representation.AlertRepresentation
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
@@ -53,8 +48,6 @@ import net.maxsmr.permissionchecker.PermissionsHelper
  */
 abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fragment(),
         ICanAskPermissions, ICanRegisterForActivityResult {
-
-    protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
     override val attachedContext: Context by lazy { requireContext() }
 
@@ -74,6 +67,8 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
      * @see BaseViewModel.connectionManager
      */
     protected open val connectionHandler: ConnectionHandler<AR>? = null
+
+    protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
     protected val navigationActor by lazy { NavigationActorImpl(this) }
 
@@ -164,21 +159,6 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
             permissions.toSet(),
             handler,
         )
-    }
-
-    fun doOnAnyAskOption(
-        flow: Flow<Boolean>?,
-        setAskedFunc: suspend () -> Unit,
-        targetAction: (Boolean) -> Unit,
-    ) {
-        flow?.asLiveData()?.observeOnce(this) {
-            if (!it) {
-                this.lifecycleScope.launch {
-                    setAskedFunc()
-                }
-            }
-            targetAction(it)
-        } ?: targetAction.invoke(true)
     }
 
     /**

@@ -147,8 +147,6 @@ class SettingsViewModel @Inject constructor(
     private var initialSettings by persistableValueInitial<AppSettings?>(null)
 
     override fun onInitialized() {
-        super.onInitialized()
-
         if (initialSettings == null) {
             viewModelScope.launch {
                 updateSettings()

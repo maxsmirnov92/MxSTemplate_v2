@@ -4,7 +4,7 @@ import android.content.SharedPreferences
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 
-
+@Deprecated("", replaceWith = ReplaceWith(expression = "DataStore"))
 abstract class SharedPreferenceLiveData<T>(
     private val sharedPrefs: SharedPreferences,
     private val key: String,

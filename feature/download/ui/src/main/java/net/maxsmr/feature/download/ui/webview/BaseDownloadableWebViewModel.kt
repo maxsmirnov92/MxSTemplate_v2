@@ -27,7 +27,6 @@ abstract class BaseDownloadableWebViewModel(state: SavedStateHandle, context: Co
     }
 
     override fun onInitialized() {
-        super.onInitialized()
         fileNameField.valueFlow.observe {
             fileNameField.validateAndSetByRequired()
         }

@@ -3,12 +3,13 @@ package net.maxsmr.feature.preferences.ui
 import android.Manifest
 import android.content.Context
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import net.maxsmr.commonutils.flow.observeLatest
+import net.maxsmr.commonutils.getManageOverlayPermissionIntent
 import net.maxsmr.commonutils.isAtLeastTiramisu
-import net.maxsmr.commonutils.live.observeOnce
 import net.maxsmr.commonutils.openBatteryOptimizationSettings
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
@@ -17,15 +18,20 @@ import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.permissionchecker.PermissionsHelper
 
+/**
+ * @param targetAction true - если спрашивалось ранее
+ */
 fun CacheDataStoreRepository.doOnBatteryOptimizationAsk(
     viewModel: BaseViewModel,
     context: Context,
     dialogTag: String,
-    targetAction: () -> Unit,
+    targetAction: suspend (Boolean) -> Unit,
 ) {
     viewModel.doOnAnyAskOption(
-        batteryOptimizationAsked,
-        {}
+        flow = batteryOptimizationAsked,
+        setAskedFunc = {
+            // пустой, т.к. выставляем в диалоге
+        }
     ) {
         if (!it) {
             viewModel.showOkDialog(
@@ -40,18 +46,19 @@ fun CacheDataStoreRepository.doOnBatteryOptimizationAsk(
                     context.openBatteryOptimizationSettings()
                 }
             }
-        } else {
-            targetAction()
         }
+        targetAction(it)
     }
 }
 
-fun <T>  CacheDataStoreRepository.doOnPostNotificationPermissionResult(
+fun <T> CacheDataStoreRepository.doOnPostNotificationPermissionResult(
     host: T,
     onlyWhenGranted: Boolean,
     targetAction: () -> Unit,
-) where T: ICanAskPermissions, T: LifecycleOwner {
-    observeOncePostNotificationPermissionAsked(host,
+) where T : ICanAskPermissions, T : LifecycleOwner {
+    observePostNotificationPermissionAsked(
+        host,
+        true,
         targetAction,
         onPostNotificationDenied = {
             if (!onlyWhenGranted) {
@@ -62,25 +69,34 @@ fun <T>  CacheDataStoreRepository.doOnPostNotificationPermissionResult(
             if (!onlyWhenGranted || it) {
                 targetAction()
             }
-        })
+        }
+    )
 }
 
 @JvmOverloads
-fun <T> CacheDataStoreRepository.observeOncePostNotificationPermissionAsked(
+fun <T> CacheDataStoreRepository.observePostNotificationPermissionAsked(
     host: T,
+    shouldObserveOnce: Boolean,
     onPostNotificationGranted: (() -> Unit)? = null,
     onPostNotificationDenied: (() -> Unit)? = null,
     onPostNotificationAlreadyAsked: ((Boolean) -> Unit)? = null,
-) where T: ICanAskPermissions, T: LifecycleOwner {
+) where T : ICanAskPermissions, T : LifecycleOwner {
     /**
      * после получения разрешения или отказа пользователя получать уведомления - не показывать этот запрос снова
      */
     fun setPostNotificationAsked() {
         host.lifecycleScope.launch {
-            this@observeOncePostNotificationPermissionAsked.setPostNotificationAsked()
+            this@observePostNotificationPermissionAsked.setPostNotificationAsked()
         }
     }
-    postNotificationAsked?.asLiveData()?.observeOnce(host) { asked ->
+
+    postNotificationAsked?.let {
+        if (shouldObserveOnce) {
+            it.take(1)
+        } else {
+            it
+        }
+    }?.observeLatest(host.lifecycleScope) { asked ->
         if (!asked) {
             host.doOnPermissionsResult(
                 BaseActivity.REQUEST_CODE_PERMISSION_NOTIFICATIONS,
@@ -95,6 +111,7 @@ fun <T> CacheDataStoreRepository.observeOncePostNotificationPermissionAsked(
             }
         } else {
             if (isAtLeastTiramisu()) {
+                // проверка по факту уже была ранее
                 onPostNotificationAlreadyAsked?.invoke(
                     host.permissionsHelper.hasPermissions(
                         host.attachedContext,
@@ -102,40 +119,6 @@ fun <T> CacheDataStoreRepository.observeOncePostNotificationPermissionAsked(
                     )
                 )
             }
-        }
-    } ?: onPostNotificationGranted?.invoke()
-}
-
-@JvmOverloads
-fun <T> CacheDataStoreRepository.observePostNotificationPermissionAsked(
-    host: T,
-    onPostNotificationGranted: (() -> Unit)? = null,
-    onPostNotificationDenied: (() -> Unit)? = null,
-    onPostNotificationAlreadyAsked: (() -> Unit)? = null,
-) where T: ICanAskPermissions, T: LifecycleOwner {
-    /**
-     * после получения разрешения или отказа пользователя получать уведомления - не показывать этот запрос снова
-     */
-    fun setPostNotificationAsked() {
-        host.lifecycleScope.launch {
-            this@observePostNotificationPermissionAsked.setPostNotificationAsked()
-        }
-    }
-    postNotificationAsked?.asLiveData()?.observe(host) { asked ->
-        if (!asked) {
-            host.doOnPermissionsResult(
-                BaseActivity.REQUEST_CODE_PERMISSION_NOTIFICATIONS,
-                PermissionsHelper.withPostNotificationsByApiVersion(emptySet()),
-                onDenied = {
-                    setPostNotificationAsked()
-                    onPostNotificationGranted?.invoke()
-                }
-            ) {
-                setPostNotificationAsked()
-                onPostNotificationDenied?.invoke()
-            }
-        } else {
-            onPostNotificationAlreadyAsked?.invoke()
         }
     } ?: onPostNotificationGranted?.invoke()
 }

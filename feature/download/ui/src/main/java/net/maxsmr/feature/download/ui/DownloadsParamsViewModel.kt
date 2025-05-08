@@ -45,7 +45,7 @@ import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
-import net.maxsmr.feature.preferences.ui.doOnBatteryOptimizationWithPostNotificationsAsk
+import net.maxsmr.feature.preferences.ui.doOnBatteryOptimizationWithPostNotificationsAskIfNeeded
 import java.io.Serializable
 
 class DownloadsParamsViewModel @AssistedInject constructor(
@@ -156,8 +156,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
 
     override fun onInitialized() {
-        super.onInitialized()
-
         fun Field<BooleanFieldWithState>.toggleState(value: Boolean) {
             this.value = if (value) {
                 BooleanFieldWithState(value = true, isEnabled = false)
@@ -418,7 +416,11 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             )
         }
 
-        doOnBatteryOptimizationWithPostNotificationsAsk(fragment, cacheRepo, settingsRepo) {
+        doOnBatteryOptimizationWithPostNotificationsAskIfNeeded(
+            fragment,
+            cacheRepo,
+            settingsRepo
+        ) {
             startDownload()
         }
     }

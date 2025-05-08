@@ -46,7 +46,6 @@ abstract class BaseCustomizableWebViewModel(
     abstract var customizer: WebViewCustomizer
 
     override fun onInitialized() {
-        super.onInitialized()
         urlField.valueFlow.observe {
             urlField.validateAndSetByRequired()
         }

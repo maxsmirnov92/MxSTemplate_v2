@@ -139,8 +139,6 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     override fun onInitialized() {
-        super.onInitialized()
-
         viewModelScope.launch {
             items.collectLatest {
                 _resultItemsState.value = LoadState.success(it.mergeWithSuggests())

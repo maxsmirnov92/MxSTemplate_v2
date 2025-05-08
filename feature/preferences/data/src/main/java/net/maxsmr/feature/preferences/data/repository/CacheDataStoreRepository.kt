@@ -49,14 +49,6 @@ class CacheDataStoreRepository @Inject constructor(
         setPostNotificationAsked(false)
     }
 
-    private suspend fun setPostNotificationAsked(toggle: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            dataStore.edit { prefs ->
-                prefs[FIELD_POST_NOTIFICATION_ASKED] = toggle
-            }
-        }
-    }
-
     suspend fun wasBatteryOptimizationAsked(): Boolean {
         return dataStore.data.map { prefs ->
             prefs[FIELD_BATTERY_OPTIMIZATION_ASKED]
@@ -64,9 +56,11 @@ class CacheDataStoreRepository @Inject constructor(
     }
 
     suspend fun setBatteryOptimizationAsked() {
-        dataStore.edit { prefs ->
-            prefs[FIELD_BATTERY_OPTIMIZATION_ASKED] = true
-        }
+        setBatteryOptimizationAsked(true)
+    }
+
+    suspend fun clearBatteryOptimizationAsked() {
+        setBatteryOptimizationAsked(false)
     }
 
     suspend fun getLastQueueId(): Int {
@@ -112,14 +106,6 @@ class CacheDataStoreRepository @Inject constructor(
         setRateAppInfo(RateAppInfo(false, notAskAgain))
     }
 
-    private suspend fun setRateAppInfo(rateInfo: RateAppInfo) {
-        val result: String =
-            json.encodeToStringOrNull(rateInfo).orEmpty()
-        dataStore.edit { prefs ->
-            prefs[FIELD_RATE_APP_INFO] = result
-        }
-    }
-
     suspend fun getSeenReleaseNotesVersionCodes(): List<Int> {
         val jsonArray = dataStore.data.map { prefs ->
             prefs[FIELD_SEEN_RELEASE_NOTES_VERSION_CODES]
@@ -149,12 +135,6 @@ class CacheDataStoreRepository @Inject constructor(
         setLastCheckInAppUpdate(0)
     }
 
-    private suspend fun setLastCheckInAppUpdate(timestamp: Long) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_LAST_CHECK_IN_APP_UPDATE] = timestamp
-        }
-    }
-
     suspend fun getDoubleGisRoutingApiKey(): String {
         return dataStore.data.map { prefs ->
             prefs[FIELD_KEY_DOUBLE_GIS_ROUTING_API_KEY]
@@ -177,21 +157,47 @@ class CacheDataStoreRepository @Inject constructor(
         setDemoPeriodExpired(false)
     }
 
-    private suspend fun setDemoPeriodExpired(toggle: Boolean) {
-        dataStore.edit { prefs ->
-            prefs[FIELD_KEY_DEMO_PERIOD_EXPIRED] = toggle
-        }
-    }
-
     suspend fun isTutorialCompeted(): Boolean {
-        return dataStore.data.map { prefs ->
-            prefs[FIELD_KEY_TUTORIAL_COMPLETED]
-        }.firstOrNull() ?: false
+        return isTutorialCompleted.firstOrNull() ?: false
     }
 
     suspend fun setTutorialCompleted(toggle: Boolean) {
         dataStore.edit { prefs ->
             prefs[FIELD_KEY_TUTORIAL_COMPLETED] = toggle
+        }
+    }
+
+    private suspend fun setPostNotificationAsked(toggle: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            dataStore.edit { prefs ->
+                prefs[FIELD_POST_NOTIFICATION_ASKED] = toggle
+            }
+        }
+    }
+
+    private suspend fun setBatteryOptimizationAsked(toggle: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[FIELD_BATTERY_OPTIMIZATION_ASKED] = toggle
+        }
+    }
+
+    private suspend fun setRateAppInfo(rateInfo: RateAppInfo) {
+        val result: String =
+            json.encodeToStringOrNull(rateInfo).orEmpty()
+        dataStore.edit { prefs ->
+            prefs[FIELD_RATE_APP_INFO] = result
+        }
+    }
+
+    private suspend fun setLastCheckInAppUpdate(timestamp: Long) {
+        dataStore.edit { prefs ->
+            prefs[FIELD_LAST_CHECK_IN_APP_UPDATE] = timestamp
+        }
+    }
+
+    private suspend fun setDemoPeriodExpired(toggle: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[FIELD_KEY_DEMO_PERIOD_EXPIRED] = toggle
         }
     }
 
