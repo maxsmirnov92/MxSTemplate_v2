@@ -41,6 +41,20 @@ class MainDownloadsPagerFragment : BaseDownloadsPagerFragment() {
         )
     }
 
+    private val releaseNotesDelegate by lazy {
+        ReleaseNotesComponentDelegate(
+            requireContext(),
+            viewModel,
+            versionCode,
+            versionName,
+            mapOf(
+                "en" to RELEASE_NOTES_ASSETS_FOLDER_NAME_EN,
+                "ru" to RELEASE_NOTES_ASSETS_FOLDER_NAME_RU
+            ),
+            cacheRepo,
+        )
+    }
+
     private val rateReminderDelegate by lazy {
         RateAppReminderComponentDelegate(
             requireContext(),
@@ -54,20 +68,6 @@ class MainDownloadsPagerFragment : BaseDownloadsPagerFragment() {
                 )
             )
         }
-    }
-
-    private val releaseNotesDelegate by lazy {
-        ReleaseNotesComponentDelegate(
-            requireContext(),
-            viewModel,
-            versionCode,
-            versionName,
-            mapOf(
-                "en" to RELEASE_NOTES_ASSETS_FOLDER_NAME_EN,
-                "ru" to RELEASE_NOTES_ASSETS_FOLDER_NAME_RU
-            ),
-            cacheRepo,
-        )
     }
 
     @Inject
@@ -98,6 +98,6 @@ class MainDownloadsPagerFragment : BaseDownloadsPagerFragment() {
     }
 
     override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
-        return listOf(rateReminderDelegate, appUpdateDelegate, releaseNotesDelegate)
+        return listOf(appUpdateDelegate, releaseNotesDelegate, rateReminderDelegate)
     }
 }

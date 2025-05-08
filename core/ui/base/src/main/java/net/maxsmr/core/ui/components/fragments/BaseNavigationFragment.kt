@@ -77,7 +77,7 @@ abstract class BaseNavigationFragment<VM : BaseViewModel, AR: AlertRepresentatio
      * Возможна ли навигация с этого фрагмента в текущем состоянии
      * @param navigationAction целевое действие навигации; можно вызвать отложенно по готовности
      */
-    open fun canNavigate(navigationAction: () -> Unit) = true
+    open fun canNavigate(isFromBackPressed: Boolean, navigationAction: () -> Unit) = true
 
     /**
      * @return true, если нажатие на этом фрагменте было обработано

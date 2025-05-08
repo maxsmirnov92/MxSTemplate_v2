@@ -107,10 +107,12 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
         }
     }
 
+    @Suppress("DEPRECATION")
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
 
         fun doActionWithCheck(targetAction: () -> Unit) {
-            if (currentNavFragment?.canNavigate(targetAction) != false) {
+            if (currentNavFragment?.canNavigate(true, targetAction) != false) {
                 targetAction.invoke()
             }
         }

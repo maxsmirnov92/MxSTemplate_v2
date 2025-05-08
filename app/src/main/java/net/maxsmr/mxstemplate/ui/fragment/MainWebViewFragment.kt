@@ -36,7 +36,7 @@ class MainWebViewFragment: BaseDownloadableWebViewFragment<MainWebViewModel>() {
         ) {
             viewModel.navigate(
                 NavigationAction.NavigationCommand.ToDirectionWithNavDirections(
-                    MainDownloadsPagerFragmentDirections.actionToAboutFragment(AboutScreenParams(true))
+                    MainWebViewFragmentDirections.actionToAboutFragment(AboutScreenParams(true))
                 )
             )
         }

@@ -138,9 +138,11 @@ class SettingsViewModel @Inject constructor(
         routingAppFromCurrentField
     )
 
-    private val _appSettings = MutableSharedFlow<AppSettings?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _appSettings =
+        MutableSharedFlow<AppSettings?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    private val appSettings: StateFlow<AppSettings?> = _appSettings.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    private val appSettings: StateFlow<AppSettings?> =
+        _appSettings.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private val currentAppSettings: AppSettings get() = appSettings.value ?: AppSettings()
 
@@ -230,6 +232,9 @@ class SettingsViewModel @Inject constructor(
     fun navigateBackWithAlert(errorFieldResult: (Field<*>) -> Unit?): Boolean =
         navigateWithAlert(errorFieldResult) { navigateBack() }
 
+    /**
+     * @return true если навигация возможна, изменений нет; false - в ином случае
+     */
     fun navigateWithAlert(
         errorFieldResult: (Field<*>) -> Unit?,
         navigationAction: (() -> Unit)?,
@@ -248,9 +253,9 @@ class SettingsViewModel @Inject constructor(
                     Alert.Answer(R.string.settings_dialog_confirm_negative_button),
                 )
                 .build()
-            true
-        } else {
             false
+        } else {
+            true
         }
     }
 

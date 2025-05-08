@@ -60,7 +60,7 @@ internal fun NavController.navigateWithGraphFragments(
         it.id == destinationId
     } ?: false
     return if (!selected
-            && currentNavFragment?.canNavigate(targetAction) != false
+            && currentNavFragment?.canNavigate(false, targetAction) != false
     ) {
         targetAction.invoke()
         true
@@ -74,20 +74,27 @@ private fun NavController.navigateWithGraphFragments(
     lifecycleScope: LifecycleCoroutineScope,
     settingsRepo: SettingsDataStoreRepository,
 ) {
+
     fun navOptions() = navOptions {
         // убирает все до startDestinationId, на них сработает onDestroy
         popUpTo(graph.findStartDestination().id) { // startDestinationId
-            saveState = true
+            if (currentDestination?.id != R.id.navigationWebView) {
+                // WebView сбрасывается в любом случае;
+                // не сохраняем, чтобы иметь возможность подставить урлу из настроек
+                // с применением на новом инстансе VM
+                saveState = true
+            }
         }
         // проверка currentNavDestinationId уже была
         launchSingleTop = true
         restoreState = true
+
         // при navigate с saveState + restoreState будет переиспользоваться тот же инстанс фрагмента и VM,
         // но на нём также при уходе будет вызываться onDestroyView, а при переходе onCreateView
         // (т.е. viewLifecycleOwner в любом случае другой);
         // если один из флагов false - каждый раз будет новый инстанс (в т.ч. VM, которая by viewModels):
         // при этом на новом будет вызван onCreate,
-        // а на предыдущем не вызван onDestroy (если только не попадает в popupTo)
+        // а на предыдущем не вызван onDestroy (если только не попадает в popUpTo)
     }
 
     if (destinationId == R.id.navigationWebView) {

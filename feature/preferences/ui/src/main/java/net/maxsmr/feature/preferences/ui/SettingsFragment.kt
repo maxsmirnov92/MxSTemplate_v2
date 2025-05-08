@@ -141,14 +141,15 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
         }
     }
 
-    override fun canNavigate(navigationAction: () -> Unit): Boolean {
-        return true
-        // navigateWithAlert убирается при навигации по итемам в графе, т.к. предусматривается saveState = true / restoreState = true
-        // return !viewModel.navigateWithAlert(errorFieldFunc, navigationAction)
+    override fun canNavigate(isFromBackPressed: Boolean, navigationAction: () -> Unit): Boolean {
+        // в navigateWithAlert нет необходимости при навигации по итемам в графе
+        // (но не при удалении из стека, если этот фрагмент верхний),
+        // т.к. предусматривается saveState = true / restoreState = true
+        return !isFromBackPressed || viewModel.navigateWithAlert(errorFieldFunc, navigationAction)
     }
 
     override fun onUpPressed(): Boolean {
-        return if (!viewModel.navigateBackWithAlert(errorFieldFunc)) {
+        return if (viewModel.navigateBackWithAlert(errorFieldFunc)) {
             super.onUpPressed()
         } else {
             true
