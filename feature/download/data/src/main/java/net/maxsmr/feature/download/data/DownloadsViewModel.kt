@@ -38,7 +38,6 @@ import net.maxsmr.core.utils.kotlinx.serialization.decodeFromStringOrNull
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultGETServiceParamsFor
 import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultPOSTServiceParamsFor
 import net.maxsmr.feature.download.data.DownloadService.RequestParams.MimeTypeMatchRule
-import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.data.manager.DownloadManager.FailAddReason
 import net.maxsmr.feature.download.data.model.IntentSenderParams
@@ -62,8 +61,6 @@ class DownloadsViewModel @Inject constructor(
 
     val downloadsInfos: Flow<List<DownloadInfo>> = downloadRepo.get()
 
-    val downloadItems: Flow<List<DownloadInfoResultData>> = downloadManager.resultItems
-
     /**
      * Эмитит [IntentSenderParams], содержащие [android.content.IntentSender]
      * в случае возникновения ошибки доступа при записи/чтении "чужих" файлов в MediaStore. В этом
@@ -74,10 +71,8 @@ class DownloadsViewModel @Inject constructor(
         downloadRepo.getIntentSenderParamsFiltered(list.map { it.name }).map { VmEvent(it) }
     }
 
-    val failedStartParams = downloadManager.failedStartParamsFlow
-
     override fun onInitialized() {
-        downloadManager.successAddedToQueueEvents.observe {
+        downloadManager.successAddedToQueueEvent.observe {
             it.targetResourceName.takeIf { res -> res.isNotEmpty() }?.let { name ->
                 showSnackbar(
                     TextMessage(
@@ -88,7 +83,7 @@ class DownloadsViewModel @Inject constructor(
             }
         }
 
-        downloadManager.failedAddedToQueueEvents.observe {
+        downloadManager.failedAddedToQueueEvent.observe {
             val name = it.first.targetResourceName
             val reason = TextMessage.ResArg(
                 when (it.second) {
@@ -121,7 +116,7 @@ class DownloadsViewModel @Inject constructor(
         }
 
 
-        downloadManager.failedStartParamsEvents.observe {
+        downloadManager.failedStartParamsEvent.observe {
             showOkDialog(
                 DIALOG_TAG_FAILED_START,
                 TextMessage(

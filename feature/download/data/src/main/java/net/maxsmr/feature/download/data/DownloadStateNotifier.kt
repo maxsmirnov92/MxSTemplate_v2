@@ -3,6 +3,7 @@ package net.maxsmr.feature.download.data
 import android.content.Context
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import net.maxsmr.commonutils.media.length
 import net.maxsmr.core.ProgressListener
@@ -14,21 +15,25 @@ import javax.inject.Singleton
 @Singleton
 class DownloadStateNotifier @Inject constructor() {
 
-    private val _events =
-        MutableSharedFlow<DownloadNotifierEvent>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val event: SharedFlow<DownloadNotifierEvent> by lazy {
+        _event.asSharedFlow()
+    }
 
-    val events = _events.asSharedFlow()
+    private val _event = MutableSharedFlow<DownloadNotifierEvent>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     fun onDownloadNotStarted(params: DownloadService.Params) {
-        _events.tryEmit(DownloadNotifierEvent.NotStarted(params))
+        _event.tryEmit(DownloadNotifierEvent.NotStarted(params))
     }
 
     fun onDownloadStarting(downloadInfo: DownloadInfo, params: DownloadService.Params) {
-        _events.tryEmit(DownloadNotifierEvent.Starting(params, downloadInfo))
+        _event.tryEmit(DownloadNotifierEvent.Starting(params, downloadInfo))
     }
 
     fun onDownloadRetry(params: DownloadService.Params) {
-        _events.tryEmit(DownloadNotifierEvent.Retry(params))
+        _event.tryEmit(DownloadNotifierEvent.Retry(params))
     }
 
     fun onDownloadProcessing(
@@ -37,7 +42,7 @@ class DownloadStateNotifier @Inject constructor() {
         downloadInfo: DownloadInfo,
         params: DownloadService.Params,
     ) {
-        _events.tryEmit(DownloadNotifierEvent.State(DownloadState.Loading(type, stateInfo, downloadInfo, params)))
+        _event.tryEmit(DownloadNotifierEvent.State(DownloadState.Loading(type, stateInfo, downloadInfo, params)))
     }
 
     fun onDownloadSuccess(
@@ -45,7 +50,7 @@ class DownloadStateNotifier @Inject constructor() {
         params: DownloadService.Params,
         oldParams: DownloadService.Params,
     ) {
-        _events.tryEmit(DownloadNotifierEvent.State(DownloadState.Success(downloadInfo, params, oldParams)))
+        _event.tryEmit(DownloadNotifierEvent.State(DownloadState.Success(downloadInfo, params, oldParams)))
     }
 
     fun onDownloadFailed(
@@ -54,7 +59,7 @@ class DownloadStateNotifier @Inject constructor() {
         oldParams: DownloadService.Params,
         e: Exception,
     ) {
-        _events.tryEmit(DownloadNotifierEvent.State(DownloadState.Failed(e, downloadInfo, params, oldParams)))
+        _event.tryEmit(DownloadNotifierEvent.State(DownloadState.Failed(e, downloadInfo, params, oldParams)))
     }
 
     fun onDownloadCancelled(
@@ -62,7 +67,7 @@ class DownloadStateNotifier @Inject constructor() {
         params: DownloadService.Params,
         oldParams: DownloadService.Params,
     ) {
-        _events.tryEmit(DownloadNotifierEvent.State(DownloadState.Cancelled(downloadInfo, params, oldParams)))
+        _event.tryEmit(DownloadNotifierEvent.State(DownloadState.Cancelled(downloadInfo, params, oldParams)))
     }
 
     sealed interface DownloadNotifierEvent {

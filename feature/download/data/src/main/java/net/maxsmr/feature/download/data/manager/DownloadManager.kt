@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -71,10 +72,32 @@ class DownloadManager @Inject constructor(
     private val networkStateManager: NetworkStateManager,
 ) {
 
+    val resultItems: StateFlow<List<DownloadInfoResultData>> by lazy {
+        _resultItems.asStateFlow()
+    }
+
+    val downloadsPendingParams: Flow<List<DownloadService.Params>> by lazy {
+        downloadsPendingQueue.map {
+            it.map { item -> item.params }
+        }
+    }
+
+    val failedStartParamsEvent: SharedFlow<DownloadService.Params> by lazy {
+        _failedStartParamsEvent.asSharedFlow()
+    }
+
+    val successAddedToQueueEvent: SharedFlow<DownloadService.Params> by lazy {
+        _successAddedToQueueEvent.asSharedFlow()
+    }
+
+    val failedAddedToQueueEvent: SharedFlow<Pair<DownloadService.Params, FailAddReason>> by lazy {
+        _failedAddedToQueueEvent.asSharedFlow()
+    }
+
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("DownloadManager")
 
-    // Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val scope =
+        CoroutineScope(Dispatchers.Default + SupervisorJob())     // Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
     private val downloadsPendingStorage = QueueFileStorage(context, "download_pending_queue")
 
@@ -113,35 +136,26 @@ class DownloadManager @Inject constructor(
      */
     private val _resultItems = MutableStateFlow<List<DownloadInfoResultData>>(listOf())
 
-    val resultItems = _resultItems.asStateFlow()
+    private val _failedStartParams = MutableStateFlow<List<DownloadService.Params>>(listOf())
 
-    private val _failedStartParamsEvents =
-        MutableSharedFlow<DownloadService.Params>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-    val failedStartParamsEvents: SharedFlow<DownloadService.Params> = _failedStartParamsEvents.asSharedFlow()
-
-    private val _successAddedToQueueEvents =
-        MutableSharedFlow<DownloadService.Params>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-    val successAddedToQueueEvents: SharedFlow<DownloadService.Params> = _successAddedToQueueEvents.asSharedFlow()
-
-    private val _failedAddedToQueueEvents = MutableSharedFlow<Pair<DownloadService.Params, FailAddReason>>(
-        replay = 1,
+    // Channel + Flow (для последнего очищаемого значения)
+    // не используем, т.к. предполагается возможность подписки в более чем одном месте;
+    // но replay = 1 для запоминания последнего неочищаемого значения также не подходит
+    // из-за повторных появлений в UI
+    private val _failedStartParamsEvent = MutableSharedFlow<DownloadService.Params>(
+        extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    val failedAddedToQueueEvents: SharedFlow<Pair<DownloadService.Params, FailAddReason>> =
-        _failedAddedToQueueEvents.asSharedFlow()
+    private val _successAddedToQueueEvent = MutableSharedFlow<DownloadService.Params>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
-    private val _failedStartParamsFlow = MutableStateFlow<List<DownloadService.Params>>(listOf())
-
-    val failedStartParamsFlow = _failedStartParamsFlow.asStateFlow()
-
-    val downloadsPendingParams by lazy {
-        downloadsPendingQueue.map {
-            it.map { item -> item.params }
-        }
-    }
+    private val _failedAddedToQueueEvent = MutableSharedFlow<Pair<DownloadService.Params, FailAddReason>>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     init {
 
@@ -388,7 +402,7 @@ class DownloadManager @Inject constructor(
         }
 
         scope.launch {
-            notifier.events.collect { event ->
+            notifier.event.collect { event ->
                 logger.d("Download notifier event: $event")
 
                 when (event) {
@@ -401,7 +415,7 @@ class DownloadManager @Inject constructor(
                     }
 
                     is DownloadNotifierEvent.State -> {
-                       handleStateEvents(event)
+                        handleStateEvents(event)
                     }
                 }
             }
@@ -427,29 +441,29 @@ class DownloadManager @Inject constructor(
         }
 
         fun refreshFailed(params: DownloadService.Params) {
-            val currentFailed = _failedStartParamsFlow.value.toMutableList()
+            val currentFailed = _failedStartParams.value.toMutableList()
             currentFailed.removeIf { p -> p.isSame(params) }
             currentFailed.add(params)
-            _failedStartParamsFlow.value = currentFailed
+            _failedStartParams.value = currentFailed
         }
 
         scope.launch {
-            failedAddedToQueueEvents.collect {
+            failedAddedToQueueEvent.collect {
                 refreshFailed(it.first)
             }
         }
 
         scope.launch {
-            failedStartParamsEvents.collect {
+            failedStartParamsEvent.collect {
                 refreshFailed(it)
             }
         }
 
         scope.launch {
             resultItems.collect { items ->
-                val currentFailed = _failedStartParamsFlow.value.toMutableList()
+                val currentFailed = _failedStartParams.value.toMutableList()
                 currentFailed.removeIf { failed -> items.any { it.params.isSame(failed) } }
-                _failedStartParamsFlow.value = currentFailed
+                _failedStartParams.value = currentFailed
             }
         }
     }
@@ -467,7 +481,7 @@ class DownloadManager @Inject constructor(
         removeWhenFinished: Boolean,
         isSameFunc: DownloadService.Params.(P) -> Boolean,
     ): Flow<LoadState<DownloadInfoWithParams>> {
-        return combine(resultItems, failedStartParamsFlow) { items, failedParams ->
+        return combine(_resultItems, _failedStartParams) { items, failedParams ->
             Pair(items, failedParams)
         }.mapNotNull { pair ->
             pair.second.find { it.isSameFunc(params) }?.let {
@@ -516,9 +530,9 @@ class DownloadManager @Inject constructor(
                     state.data?.downloadInfo?.id?.let { id ->
                         removeFinishedSuspended(id)
                     }
-                    val currentFailed = _failedStartParamsFlow.value.toMutableList()
+                    val currentFailed = _failedStartParams.value.toMutableList()
                     currentFailed.removeIf { failed -> failed.isSameFunc(params) }
-                    _failedStartParamsFlow.value = currentFailed
+                    _failedStartParams.value = currentFailed
                 }
             }
         }// .takeWhile { it.isLoading }
@@ -787,10 +801,10 @@ class DownloadManager @Inject constructor(
             downloadsPendingQueue.appendToSet(item)
             downloadsPendingStorage.addItem(item)
 
-            _successAddedToQueueEvents.emit(params)
+            _successAddedToQueueEvent.emit(params)
         } finally {
             failReason?.let {
-                _failedAddedToQueueEvents.emit(Pair(params, it))
+                _failedAddedToQueueEvent.emit(Pair(params, it))
             }
         }
     }
@@ -912,7 +926,7 @@ class DownloadManager @Inject constructor(
                 if (!DownloadService.start(item.params.getActualParams(), context)) {
                     // при размере буфера 0 и BufferOverflow.SUSPEND tryEmit не сработает
                     logger.e("DownloadService start failed with item $item")
-                    _failedStartParamsEvents.emit(item.params)
+                    _failedStartParamsEvent.emit(item.params)
                 } else {
                     // т.к. статус в таблице после start не успеет смениться на loading сразу
                     // (onDownloadStarting в корутине),

@@ -23,7 +23,10 @@ class DownloadsRepo @Inject constructor(
     private val hashManager: DownloadsHashManager,
 ) {
 
-    private val _intentSenderEvents = MutableSharedFlow<IntentSenderParams>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _intentSenderEvent = MutableSharedFlow<IntentSenderParams>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
 
     private val notificationRequestCode = AtomicInteger(Random.nextInt(Int.MAX_VALUE / 2))
 
@@ -60,7 +63,6 @@ class DownloadsRepo @Inject constructor(
 
     suspend fun removeUnfinished() {
         removeIf(false)
-//        dao.removeFinished()
     }
 
     suspend fun removeFinished() {
@@ -68,19 +70,14 @@ class DownloadsRepo @Inject constructor(
 //        dao.removeFinished()
     }
 
-    private suspend fun removeIf(isFinished: Boolean) {
-        val ids = dao.getAllRaw().filter { it.isLoading != isFinished }.map { it.id }
-        remove(ids)
-    }
-
     /**
      * Возвращает общий статус загрузок ресурсов в перечне [resourceNames] согласно следующим правилам
      * 1. Если хоть 1 файл еще загружается, либо загрузка не началась -> [Status.LOADING]
-     * 1. Иначе если хоть 1 загрузка с ошибкой -> [Status.ERROR]
-     * 1. Иначе -> [Status.SUCCESS]
+     * 2. Иначе если хоть 1 загрузка с ошибкой -> [Status.ERROR]
+     * 3. Иначе -> [Status.SUCCESS]
      */
     fun status(resourceNames: List<String>): Flow<Status> =
-        downloadsInfos(resourceNames).map {
+        getDownloadsInfos(resourceNames).map {
             when {
                 it.isEmpty() || it.any { it.isLoading } -> Status.LOADING
                 it.any { info -> info.isError } -> Status.ERROR
@@ -89,7 +86,7 @@ class DownloadsRepo @Inject constructor(
             }
         }
 
-    fun downloadsInfos(resourceNames: List<String>): Flow<List<DownloadInfo>> = dao.getAllByNames(resourceNames)
+    fun getDownloadsInfos(resourceNames: List<String>): Flow<List<DownloadInfo>> = dao.getAllByNames(resourceNames)
 
     /**
      * @return true, если бланк билета уже загружен, иначе false
@@ -107,14 +104,20 @@ class DownloadsRepo @Inject constructor(
     }
 
     fun notifyIntentSender(params: IntentSenderParams) {
-        _intentSenderEvents.tryEmit(params)
+        _intentSenderEvent.tryEmit(params)
     }
 
     fun getIntentSenderParamsFiltered(resourceNames: Collection<String>): Flow<IntentSenderParams> {
-        return _intentSenderEvents.filter { it.resourceName in resourceNames }
+        return _intentSenderEvent.filter { it.resourceName in resourceNames }
     }
 
     fun nextNotificationRequestCode(): Int = notificationRequestCode.incrementAndGet()
+
+    suspend fun nextItemId(): Int {
+        return itemIdCounter.incrementAndGet().apply {
+            cacheRepo.setLastQueueId(this)
+        }
+    }
 
     suspend fun setItemIdCounterByItemsCount(count: Int) {
         val counter = if (count == 0) {
@@ -132,9 +135,8 @@ class DownloadsRepo @Inject constructor(
         itemIdCounter.set(counter)
     }
 
-    suspend fun nextItemId(): Int {
-        return itemIdCounter.incrementAndGet().apply {
-            cacheRepo.setLastQueueId(this)
-        }
+    private suspend fun removeIf(isFinished: Boolean) {
+        val ids = dao.getAllRaw().filter { it.isLoading != isFinished }.map { it.id }
+        remove(ids)
     }
 }
