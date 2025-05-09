@@ -25,8 +25,7 @@ abstract class BaseRateBottomSheetDialog<D : BaseRateBottomSheetDialog.RateData>
     layoutResId: Int,
     alert: Alert,
     cancelable: Boolean = true,
-    shouldMatchHeight: Boolean = false,
-    initialState: BottomSheetState = BottomSheetState.STATE_COLLAPSED,
+    shouldExpand: Boolean = true,
     private val lifecycleOwner: LifecycleOwner,
     private val orderRating: MutableLiveData<Int>,
     private val orderRatingIgnore: MutableLiveData<Boolean>?,
@@ -36,8 +35,7 @@ abstract class BaseRateBottomSheetDialog<D : BaseRateBottomSheetDialog.RateData>
     layoutResId = layoutResId,
     alert = alert,
     cancelable = cancelable,
-    shouldMatchHeight = shouldMatchHeight,
-    initialState = initialState
+    shouldExpand = shouldExpand,
 ) {
 
     protected abstract val titleTextView: TextView

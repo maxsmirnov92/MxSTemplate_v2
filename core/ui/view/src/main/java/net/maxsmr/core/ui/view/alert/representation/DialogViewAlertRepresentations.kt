@@ -125,6 +125,7 @@ fun Alert.asProgressDialog(
 fun Alert.asCommonWrapBottomSheetDialog(
     context: Context,
     cancelable: Boolean = true,
+    shouldExpand: Boolean = true
 ): DialogViewAlertRepresentation {
-    return CommonWrapBottomSheetDialog(context, this, cancelable).toRepresentation()
+    return CommonWrapBottomSheetDialog(context, this, cancelable, shouldExpand).toRepresentation()
 }
