@@ -52,6 +52,7 @@ import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadNotifierEv
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading.Type
 import net.maxsmr.feature.download.data.DownloadsRepo
 import net.maxsmr.feature.download.data.DownloadsViewModel.DownloadInfoWithParams
+import net.maxsmr.feature.preferences.data.combineNetworkStateWithSettings
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import java.io.File
 import java.io.Serializable

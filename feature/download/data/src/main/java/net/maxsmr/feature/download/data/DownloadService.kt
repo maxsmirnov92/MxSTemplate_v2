@@ -52,7 +52,6 @@ import net.maxsmr.core.android.content.ViewStrategy
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
-import net.maxsmr.core.di.DI_NAME_APP_NAME
 import net.maxsmr.core.di.DI_NAME_FOREGROUND_SERVICE_ID_DOWNLOAD
 import net.maxsmr.core.di.DI_NAME_MAIN_ACTIVITY_CLASS
 import net.maxsmr.core.di.DownloaderOkHttpClient
@@ -69,6 +68,7 @@ import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.R
 import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.withTimeouts
 import net.maxsmr.core.network.exceptions.IncorrectAttachmentException
 import net.maxsmr.core.network.exceptions.IncorrectContentTypeException
+import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType
 import net.maxsmr.core.network.getContentTypeHeader
 import net.maxsmr.core.network.getFileNameFromAttachmentHeader
@@ -84,7 +84,6 @@ import net.maxsmr.feature.download.data.DownloadService.Params
 import net.maxsmr.feature.download.data.DownloadService.RequestParams.MimeTypeMatchRule
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading
 import net.maxsmr.feature.download.data.manager.DownloadsHashManager
-import net.maxsmr.feature.download.data.manager.checkPreferableConnection
 import net.maxsmr.feature.download.data.model.BaseDownloadParams
 import net.maxsmr.feature.download.data.model.IntentSenderParams
 import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
@@ -391,10 +390,10 @@ class DownloadService : Service() {
             }
 
             try {
-                context.checkPreferableConnection(
-                    networkStateManager,
-                    params.requestParams.preferredConnectionTypes
-                )
+                val types = params.requestParams.preferredConnectionTypes
+                if (!networkStateManager.hasPreferableConnection(types)) {
+                    throw NoPreferableConnectivityException(types, this@DownloadService)
+                }
 
                 val client = okHttpClient.newBuilder().apply {
                     withTimeouts(params.requestParams.connectTimeout.takeIf { it >= 0 } ?: CONNECT_TIMEOUT_DEFAULT)

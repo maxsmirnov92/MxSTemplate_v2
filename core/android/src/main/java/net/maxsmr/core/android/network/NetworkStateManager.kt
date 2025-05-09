@@ -15,13 +15,14 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType
 import java.io.Serializable
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * Менеджер доступности сетевого подключения.
- * Получение текущего значения - [hasConnection], подписка - [asStatusLiveData]
+ * Получение текущего значения - [hasConnection], подписка - [asFlow]/[asStatusLiveData]
  */
 @Singleton
 class NetworkStateManager @Inject constructor(@ApplicationContext context: Context) {
@@ -67,11 +68,32 @@ class NetworkStateManager @Inject constructor(@ApplicationContext context: Conte
     @Deprecated("", replaceWith = ReplaceWith(expression = "asStatusFlow"))
     fun asStatusLiveData() = connectionLiveData.map { it.has }
 
-    /**
-     * Принудительно обновить LD. **Не использовать** - см. описание класса.
-     */
-    fun updateConnectionLiveDataState() {
-        connectionLiveData.postValue(getConnectionInfo())
+    fun hasPreferableConnection(types: Set<PreferableType>): Boolean {
+        var hasPreferableConnection = true
+        val connectionInfo = getConnectionInfo()
+        if (connectionInfo.has &&
+                (connectionInfo.hasWiFi != null || connectionInfo.hasCellular != null)
+                && types.isNotEmpty()
+        ) {
+            // предпочтительные типы указаны и в API информация возвращается
+            hasPreferableConnection = false
+            run breaking@{
+                types.forEach {
+                    when (it) {
+                        PreferableType.CELLULAR -> if (connectionInfo.hasCellular == true) {
+                            hasPreferableConnection = true
+                            return@breaking
+                        }
+
+                        PreferableType.WIFI -> if (connectionInfo.hasWiFi == true) {
+                            hasPreferableConnection = true
+                            return@breaking
+                        }
+                    }
+                }
+            }
+        }
+        return hasPreferableConnection
     }
 
     fun hasConnection() = getConnectionInfo().has
