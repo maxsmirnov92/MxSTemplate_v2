@@ -6,10 +6,9 @@ import dagger.hilt.android.plugin.util.capitalize
 import net.maxsmr.mxstemplate.getPropertyNotNull
 import net.maxsmr.mxstemplate.getStringPropertyNotNull
 import net.maxsmr.mxstemplate.loadProperties
+import net.maxsmr.mxstemplate.toFieldMapInfo
 //import com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension
-import java.io.FileInputStream
 import java.util.Locale
-import java.util.Properties
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -50,7 +49,7 @@ data class AppVersion(
     constructor(
         code: Int,
         type: String,
-        isDemo: Boolean
+        isDemo: Boolean,
     ) : this(code, getVersionName(code, isDemo), type, isDemo)
 }
 
@@ -65,33 +64,8 @@ android {
         versionName = appVersion.name
         project.ext.set("archivesBaseName", "${project.name}_${appVersion.name}_${appVersion.type}")
 
-        buildConfigField("int", "PROTOCOL_VERSION", "1")
-
-        buildConfigField("String", "MOBILE_BUILD_TYPE", "\"${appVersion.type}\"")
-
-        buildConfigField(
-            "boolean",
-            "IS_DEMO_BUILD",
-            "${appVersion.isDemo}"
-        )
-        val donateProperties = File(rootDir, "app/donate.properties").loadProperties()
-
-        val addressesMap = mutableMapOf<String, String>()
-        donateProperties.entries.forEach {
-            val key = it.key as String? ?: return@forEach
-            val value = it.value as String? ?: return@forEach
-            addressesMap[key] = value
-        }
-
-        var addressesHashMap = "new java.util.HashMap<String, String>()" + "{" + "{ "
-        addressesMap.forEach { (k, v) -> addressesHashMap += "put(\"${k}\"," + "\"${v}\"" + ");" }
-        val addressesString = "$addressesHashMap}}"
-
-        buildConfigField(
-            "java.util.Map<String, String>",
-            "DEV_PAYMENT_ADDRESSES",
-            addressesString
-        )
+        applyAppVersionFields()
+        applyDonatePropertiesFields()
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -296,8 +270,7 @@ fun ApplicationVariantDimension.applySigningConfig(
             return false
         }
 
-        val properties = Properties()
-        properties.load(FileInputStream(propsFile))
+        val properties = propsFile.loadProperties()
         android {
             signingConfigs {
                 create(signingConfigName) {
@@ -327,13 +300,15 @@ fun ApplicationVariantDimension.applySigningConfig(
 }
 
 fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
-    val appProperties = File(rootDir, "app/${
+    val appProperties = File(
+        rootDir, "app/${
             if (isDebug) {
                 "app_debug.properties"
             } else {
                 "app_release.properties"
             }
-        }").loadProperties()
+        }"
+    ).loadProperties()
     buildConfigField(
         "String",
         "AUTHORIZATION_RADAR_IO",
@@ -363,6 +338,26 @@ fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
         "String",
         "DEV_EMAIL_ADDRESS",
         appProperties.getStringPropertyNotNull("devEmailAddress")
+    )
+}
+
+fun VariantDimension.applyAppVersionFields() {
+    buildConfigField("int", "PROTOCOL_VERSION", "1")
+    buildConfigField("String", "MOBILE_BUILD_TYPE", "\"${appVersion.type}\"")
+    buildConfigField(
+        "boolean",
+        "IS_DEMO_BUILD",
+        "${appVersion.isDemo}"
+    )
+}
+
+fun VariantDimension.applyDonatePropertiesFields() {
+    val donateProperties = File(rootDir, "app/donate.properties").loadProperties()
+    val addressesInfo = donateProperties.toFieldMapInfo(String::class.java)
+    buildConfigField(
+        addressesInfo.type,
+        "DEV_PAYMENT_ADDRESSES",
+        addressesInfo.value
     )
 }
 
