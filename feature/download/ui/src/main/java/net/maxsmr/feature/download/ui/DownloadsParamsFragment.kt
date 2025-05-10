@@ -11,8 +11,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
-import net.maxsmr.android.recyclerview.views.decoration.Divider
-import net.maxsmr.android.recyclerview.views.decoration.DividerItemDecoration
 import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.flow.field.observeFromText
 import net.maxsmr.commonutils.gui.addSoftInputStateListener
@@ -173,6 +171,8 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel, Stand
         binding.etSubDirName.bindToTextNotNull(viewModel.subDirNameField)
         viewModel.subDirNameField.observeFromText(binding.etSubDirName, viewLifecycleOwner)
         viewModel.subDirNameField.bindHintError(viewLifecycleOwner, binding.tilSubDirName)
+
+        viewModel.saveToInternalDirField.bindValue(viewLifecycleOwner, binding.cbSaveToInternalDir)
 
         binding.etTargetHash.bindToTextNotNull(viewModel.targetHashField)
         viewModel.targetHashField.observeFromText(binding.etTargetHash, viewLifecycleOwner)

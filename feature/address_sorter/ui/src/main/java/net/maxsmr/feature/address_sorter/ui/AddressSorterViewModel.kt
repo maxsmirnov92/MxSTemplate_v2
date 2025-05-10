@@ -713,21 +713,11 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     private fun enqueueDownloadRoutingKey(): DownloadService.Params {
-        val params = DownloadParamsModel(routingKeyUrl).toParams(context)
-        DownloadService.Params(
-            params.requestParams,
-            null,
-            params.resourceName,
-            DownloadServiceStorage.Type.INTERNAL,
-            params.subDirPath,
-            params.targetHashInfo,
-            params.skipIfDownloaded,
-            params.replaceFile,
-            params.deleteUnfinished,
-            params.retryWithNotifier
-        ).let {
+        return DownloadParamsModel(
+            routingKeyUrl,
+            saveToInternalDir = true
+        ).toParams(context).also {
             downloadsViewModel.enqueueDownload(it)
-            return it
         }
     }
 

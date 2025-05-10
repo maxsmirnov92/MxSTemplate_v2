@@ -16,6 +16,7 @@ import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.view.bindHintError
+import net.maxsmr.core.ui.view.bindValue
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.DownloadsFragmentAlertDelegate
 import net.maxsmr.feature.download.ui.databinding.DialogSaveAsBinding
@@ -58,10 +59,13 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
             viewModel.subDirNameField.observeFromText(dialogBinding.etSubDirName, viewLifecycleOwner)
             viewModel.subDirNameField.bindHintError(viewLifecycleOwner, dialogBinding.tilSubDirName)
 
+            viewModel.saveToInternalDirField.bindValue(viewLifecycleOwner, dialogBinding.cbSaveToInternalDir)
+
             val onAction: () -> Unit = {
                 downloadsViewModel.enqueueDownload(model.copy(
                     fileName = viewModel.fileNameField.value,
-                    subDirName = viewModel.subDirNameField.value
+                    subDirName = viewModel.subDirNameField.value,
+                    saveToInternalDir = viewModel.saveToInternalDirField.value
                 ), modelWithType.second)
                 requireActivity().hideKeyboard()
             }

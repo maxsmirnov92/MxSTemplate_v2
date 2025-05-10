@@ -11,6 +11,7 @@ import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.ui.field.fileNameField
 import net.maxsmr.core.ui.field.subDirNameField
+import net.maxsmr.core.ui.field.saveToInternalDirField
 import net.maxsmr.feature.download.ui.R
 import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewModel
 
@@ -21,6 +22,8 @@ abstract class BaseDownloadableWebViewModel(state: SavedStateHandle, context: Co
     val fileNameField: Field<String> = fileNameField(isRequired = true)
 
     val subDirNameField: Field<String> = subDirNameField()
+
+    val saveToInternalDirField: Field<Boolean> = saveToInternalDirField()
 
     val canStartDownload = combine(fileNameField.errorFlow, subDirNameField.errorFlow) { e1, e2 ->
         e1 == null && e2 == null

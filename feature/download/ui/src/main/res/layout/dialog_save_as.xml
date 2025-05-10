@@ -10,12 +10,12 @@
         android:id="@+id/tilFileName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:hint="@string/field_file_name_hint">
+        android:layout_marginTop="12dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etFileName"
             style="@style/SingleLineInputText"
+            android:hint="@string/field_file_name_hint"
             android:imeOptions="actionNext" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -24,14 +24,22 @@
         android:id="@+id/tilSubDirName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:hint="@string/field_sub_dir_name_hint">
+        android:layout_marginTop="12dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etSubDirName"
             style="@style/SingleLineInputText"
+            android:hint="@string/field_sub_dir_name_hint"
             android:imeOptions="actionDone" />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+    <CheckBox
+        android:id="@+id/cbSaveToInternalDir"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/download_field_save_to_internal_dir"
+        android:textAppearance="@style/TextAppearance.AppCompat.Small" />
 
 </LinearLayout>

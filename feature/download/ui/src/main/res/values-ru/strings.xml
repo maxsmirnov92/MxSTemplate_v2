@@ -10,6 +10,7 @@
     <string name="download_field_request_body_non_required_text">Файл тела запроса не требуется</string>
     <string name="download_field_request_body_empty_error">Тело запроса обязательно</string>
     <string name="download_field_file_name_fix_checkbox_text">Поменять из заголовка ответа при наличии</string>
+    <string name="download_field_save_to_internal_dir">Сохранять во внутреннюю папку приложения</string>
     <string name="download_field_target_hash_hint">Целевой хэш SHA-1</string>
     <string name="download_field_target_hash_error">Несоответствие формату алгоритма SHA-1</string>
     <string name="download_field_ignore_server_errors">Игнорировать ошибки сервера</string>

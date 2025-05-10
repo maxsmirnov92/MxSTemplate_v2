@@ -14,6 +14,7 @@
     <string name="download_field_request_body_non_required_text">Request body file not required</string>
     <string name="download_field_request_body_empty_error">Request body file is required</string>
     <string name="download_field_file_name_fix_checkbox_text">Change by header name if available</string>
+    <string name="download_field_save_to_internal_dir">Save to app internal directory</string>
     <string name="download_field_target_hash_hint">Target SHA-1 hash</string>
     <string name="download_field_target_hash_error">Not valid SHA-1 format</string>
     <string name="download_field_ignore_server_errors">Ignore server errors</string>

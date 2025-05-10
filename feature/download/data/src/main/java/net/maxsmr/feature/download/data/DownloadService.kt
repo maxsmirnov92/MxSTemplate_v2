@@ -33,6 +33,7 @@ import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatExc
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.media.getContentName
 import net.maxsmr.commonutils.media.getMimeTypeFromName
+import net.maxsmr.commonutils.media.isContentUriFromSelfPackage
 import net.maxsmr.commonutils.media.isEmpty
 import net.maxsmr.commonutils.media.lengthOrThrow
 import net.maxsmr.commonutils.media.mimeTypeOrThrow
@@ -85,6 +86,7 @@ import net.maxsmr.feature.download.data.manager.DownloadsHashManager
 import net.maxsmr.feature.download.data.model.BaseDownloadParams
 import net.maxsmr.feature.download.data.model.IntentSenderParams
 import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
+import net.maxsmr.feature.download.data.storage.DownloadServiceStorage.Type
 import net.maxsmr.feature.download.data.storage.StoreException
 import net.maxsmr.permissionchecker.PermissionsHelper
 import okhttp3.Headers.Companion.toHeaders
@@ -543,25 +545,32 @@ class DownloadService : Service() {
         prevDownload: DownloadInfo?,
     ): DownloadInfo? {
         val success = prevDownload?.statusAsSuccess
+
         // Есть валидный целевой или ранее запомненный в success
         val expectedHash =
             (params.targetHashInfo?.takeIf { !it.isEmpty } ?: success?.initialHashInfo)?.takeIf { !it.isEmpty }
 
         success?.let {
             logger.d("Got previous success download: $prevDownload")
-            // Прошлая загрузка успешно завершена, проверяем совпадения хэша по ее uri с целевым хэшем
-            // либо с хэшем на момент загрузки (чтобы убедиться, что файл не менялся с тех пор)
-            // В прошлой загрузке могли не запомнить хэш
-            if (expectedHash != null) {
-                logger.d("Checking it hash with $expectedHash...")
-                if (hashManager.checkHash(it.localUri, expectedHash)) {
-                    logger.d("Previous success download match: $prevDownload")
-                    return prevDownload
+
+            val shouldSaveToInternal = params.storageType == Type.INTERNAL
+            val hasInternalUri = success.localUri.isContentUriFromSelfPackage(this@DownloadService)
+
+            if (shouldSaveToInternal && hasInternalUri || !shouldSaveToInternal && !hasInternalUri) {
+                // Прошлая загрузка успешно завершена, проверяем совпадения хэша по ее uri с целевым хэшем
+                // либо с хэшем на момент загрузки (чтобы убедиться, что файл не менялся с тех пор)
+                // В прошлой загрузке могли не запомнить хэш
+                if (expectedHash != null) {
+                    logger.d("Checking it hash with $expectedHash...")
+                    if (hashManager.checkHash(it.localUri, expectedHash)) {
+                        logger.d("Previous success download match: $prevDownload")
+                        return prevDownload
+                    }
                 }
             }
         }
 
-        // Пробуем проверить хэши всех существующих uri с совпадающими именами в целевой папки
+        // Пробуем проверить хэши всех существующих uri с совпадающими именами в целевой папке
         expectedHash ?: return null
         val alreadyLoadedUris = this.alreadyLoadedUris(params)
         if (alreadyLoadedUris.isEmpty()) return null
@@ -894,7 +903,7 @@ class DownloadService : Service() {
         val requestParams: RequestParams,
         val notificationParams: NotificationParams?,
         resourceName: String,
-        val storageType: DownloadServiceStorage.Type = DownloadServiceStorage.Type.SHARED,
+        val storageType: Type = Type.SHARED,
         val subDirPath: String? = null,
         val targetHashInfo: HashInfo? = null,
         val skipIfDownloaded: Boolean = true,
@@ -966,14 +975,28 @@ class DownloadService : Service() {
                     "retryWithNotifier=$retryWithNotifier, tag=$tag)"
         }
 
+        sealed interface RequestMethod {
+
+            val method: Method
+
+            object Get: RequestMethod {
+
+                override val method = Method.GET
+            }
+
+            class Post(val body: RequestParams.Body) : RequestMethod {
+
+                override val method = Method.POST
+            }
+        }
 
         companion object {
 
             @JvmOverloads
-            fun defaultPOSTServiceParamsFor(
+            fun defaultServiceParamsFor(
                 uri: String,
+                method: RequestMethod,
                 preferredFileName: String?,
-                body: RequestParams.Body,
                 ignoreAttachment: Boolean = false,
                 ignoreFileName: Boolean = true,
                 storeErrorBody: Boolean = false,
@@ -982,6 +1005,7 @@ class DownloadService : Service() {
                 contentTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
                 headers: HashMap<String, String> = HashMap(),
                 format: FileFormat? = null,
+                storageType: Type = Type.SHARED,
                 subDir: String? = null,
                 targetHashInfo: HashInfo? = null,
                 replaceFile: Boolean = false,
@@ -1000,20 +1024,33 @@ class DownloadService : Service() {
                     targetIgnoreFileName = ignoreFileName
                 }
                 return Params(
-                    RequestParams.newPost(
-                        uri,
-                        body,
-                        headers = headers,
-                        ignoreAttachment = ignoreAttachment,
-                        ignoreFileName = targetIgnoreFileName,
-                        storeErrorBody = storeErrorBody,
-                        connectTimeout = connectTimeout,
-                        retryOnConnectionFailure = retryOnConnectionFailure,
-                        contentTypeRule = contentTypeRule
-                    ),
+                    when (method) {
+                        is RequestMethod.Post -> RequestParams.newPost(
+                            uri,
+                            method.body,
+                            headers = headers,
+                            ignoreAttachment = ignoreAttachment,
+                            ignoreFileName = targetIgnoreFileName,
+                            storeErrorBody = storeErrorBody,
+                            connectTimeout = connectTimeout,
+                            retryOnConnectionFailure = retryOnConnectionFailure,
+                            contentTypeRule = contentTypeRule
+                        )
+
+                        is RequestMethod.Get -> RequestParams.newGet(
+                            uri,
+                            headers = headers,
+                            ignoreAttachment = ignoreAttachment,
+                            ignoreFileName = targetIgnoreFileName,
+                            storeErrorBody = storeErrorBody,
+                            connectTimeout = connectTimeout,
+                            retryOnConnectionFailure = retryOnConnectionFailure,
+                            contentTypeRule = contentTypeRule
+                        )
+                    },
                     notificationParams,
                     fileName,
-                    DownloadServiceStorage.Type.SHARED,
+                    storageType,
                     subDir,
                     targetHashInfo,
                     targetHashInfo != null,
@@ -1027,64 +1064,6 @@ class DownloadService : Service() {
                     }
                 }
             }
-
-            @JvmOverloads
-            fun defaultGETServiceParamsFor(
-                uri: String,
-                preferredFileName: String?,
-                ignoreAttachment: Boolean = false,
-                ignoreFileName: Boolean = true,
-                storeErrorBody: Boolean = false,
-                connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
-                retryOnConnectionFailure: Boolean = RETRY_ON_CONNECTION_FAILURE_DEFAULT,
-                contentTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
-                headers: HashMap<String, String> = HashMap(),
-                format: FileFormat? = null,
-                subDir: String? = null,
-                targetHashInfo: HashInfo? = null,
-                replaceFile: Boolean = false,
-                deleteUnfinished: Boolean = true,
-                notificationParams: NotificationParams,
-            ): Params {
-                val fileName: String
-                val targetIgnoreFileName: Boolean
-                if (preferredFileName.isNullOrEmpty()) {
-                    // желаемое не указано - подбираем из урлы,
-                    // но не игнорируем после получения ответа в заголовке
-                    fileName = getContentName(preferredFileName.orEmpty(), uri)
-                    targetIgnoreFileName = false
-                } else {
-                    fileName = preferredFileName
-                    targetIgnoreFileName = ignoreFileName
-                }
-                return Params(
-                    RequestParams.newGet(
-                        uri,
-                        headers = headers,
-                        ignoreAttachment = ignoreAttachment,
-                        ignoreFileName = targetIgnoreFileName,
-                        storeErrorBody = storeErrorBody,
-                        connectTimeout = connectTimeout,
-                        retryOnConnectionFailure = retryOnConnectionFailure,
-                        contentTypeRule = contentTypeRule
-                    ),
-                    notificationParams,
-                    fileName,
-                    DownloadServiceStorage.Type.SHARED,
-                    subDir,
-                    targetHashInfo,
-                    targetHashInfo != null,
-                    replaceFile = replaceFile,
-                    deleteUnfinished = deleteUnfinished
-                ).apply {
-                    resourceMimeType = format?.let {
-                        format.mimeType
-                    } ?: run {
-                        getMimeTypeFromName(fileName)
-                    }
-                }
-            }
-
         }
     }
 
@@ -1190,7 +1169,7 @@ class DownloadService : Service() {
 
             fun match(type: String?): Boolean
 
-            data object None : MimeTypeMatchRule {
+            object None : MimeTypeMatchRule {
 
                 override val mimeTypes: Set<String> = emptySet()
 

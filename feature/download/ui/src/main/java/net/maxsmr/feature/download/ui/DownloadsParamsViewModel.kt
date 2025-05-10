@@ -40,6 +40,7 @@ import net.maxsmr.core.ui.field.createNonEmptyField
 import net.maxsmr.core.ui.field.createTextField
 import net.maxsmr.core.ui.field.fileNameField
 import net.maxsmr.core.ui.field.subDirNameField
+import net.maxsmr.core.ui.field.saveToInternalDirField
 import net.maxsmr.core.ui.field.urlField
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
@@ -81,6 +82,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     )
 
     val subDirNameField: Field<String> = subDirNameField()
+
+    val saveToInternalDirField: Field<Boolean> = saveToInternalDirField()
 
     val targetHashField: Field<String> = createTextField(
         initialValue = EMPTY_STRING,
@@ -142,8 +145,9 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                 fileNameField,
                 fileNameChangeStateField,
                 subDirNameField,
-                targetHashField,
                 ignoreServerErrorsField,
+                targetHashField,
+                saveToInternalDirField,
                 ignoreAttachmentStateField,
                 replaceFileField,
                 deleteUnfinishedField
@@ -384,6 +388,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             val subDirName = subDirNameField.value
             val ignoreFileName = !fileNameChangeStateField.value.value
 
+            val saveToInternalDir = saveToInternalDirField.value
+
             val headers = hashMapOf<String, String>()
             headerFields.forEach {
                 val key = it.header.first.field.value
@@ -406,6 +412,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
                     fileName,
                     ignoreFileName,
                     subDirName,
+                    saveToInternalDir,
                     targetHash,
                     ignoreServerErrors,
                     ignoreAttachment,

@@ -11,6 +11,7 @@ data class DownloadParamsModel(
     val fileName: String? = null,
     val ignoreFileName: Boolean = false,
     val subDirName: String? = null,
+    val saveToInternalDir: Boolean = false,
     val targetSha1Hash: String? = null,
     val ignoreServerErrors: Boolean = false,
     val ignoreAttachment: Boolean = false,

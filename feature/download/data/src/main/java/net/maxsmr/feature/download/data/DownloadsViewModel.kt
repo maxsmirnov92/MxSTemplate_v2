@@ -34,12 +34,13 @@ import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.utils.kotlinx.serialization.decodeFromStringOrNull
-import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultGETServiceParamsFor
-import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultPOSTServiceParamsFor
+import net.maxsmr.feature.download.data.DownloadService.Params.Companion.defaultServiceParamsFor
+import net.maxsmr.feature.download.data.DownloadService.Params.RequestMethod
 import net.maxsmr.feature.download.data.DownloadService.RequestParams.MimeTypeMatchRule
 import net.maxsmr.feature.download.data.manager.DownloadManager
 import net.maxsmr.feature.download.data.manager.DownloadManager.FailAddReason
 import net.maxsmr.feature.download.data.model.IntentSenderParams
+import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
 import javax.inject.Inject
 
 /**
@@ -269,6 +270,7 @@ class DownloadsViewModel @Inject constructor(
             mimeType: String? = null,
             mimeTypeRule: MimeTypeMatchRule? = MimeTypeMatchRule.None,
         ): DownloadService.Params = with(this) {
+
             val url = url.trim()
             val bodyUri = bodyUri?.trim()
             val targetHashInfo = targetSha1Hash?.takeIf { it.isNotEmpty() }?.let {
@@ -282,44 +284,40 @@ class DownloadsViewModel @Inject constructor(
             // не спрашивать из ответа тип, если он известен заранее
             val hasMimeType = !mimeType.isNullOrEmpty()
 
-            if (method == Method.POST && !bodyUri.isNullOrEmpty()) {
-                defaultPOSTServiceParamsFor(
-                    url,
-                    fileName,
+            val requestMethod = if (method == Method.POST && !bodyUri.isNullOrEmpty()) {
+                RequestMethod.Post(
                     DownloadService.RequestParams.Body(
                         context,
                         DownloadService.RequestParams.Body.Uri(bodyUri),
-                    ),
-                    ignoreAttachment = ignoreAttachment,
-                    ignoreFileName = ignoreFileName,
-                    storeErrorBody = ignoreServerErrors,
-                    contentTypeRule = if (hasMimeType) null else mimeTypeRule,
-                    headers = headers,
-                    subDir = subDirName,
-                    targetHashInfo = targetHashInfo,
-                    replaceFile = replaceFile,
-                    deleteUnfinished = deleteUnfinished,
-                    notificationParams = notificationParams,
+                    )
                 )
             } else {
-                defaultGETServiceParamsFor(
-                    url,
-                    fileName,
-                    ignoreAttachment = ignoreAttachment,
-                    ignoreFileName = ignoreFileName,
-                    storeErrorBody = ignoreServerErrors,
-                    contentTypeRule = if (hasMimeType) null else mimeTypeRule,
-                    headers = headers,
-                    subDir = subDirName,
-                    targetHashInfo = targetHashInfo,
-                    replaceFile = replaceFile,
-                    deleteUnfinished = deleteUnfinished,
-                    notificationParams = notificationParams,
-                )
+                RequestMethod.Get
             }
-        }.apply {
-            if (!mimeType.isNullOrEmpty()) {
-                resourceMimeType = mimeType
+
+            defaultServiceParamsFor(
+                url,
+                requestMethod,
+                fileName,
+                ignoreAttachment = ignoreAttachment,
+                ignoreFileName = ignoreFileName,
+                storeErrorBody = ignoreServerErrors,
+                contentTypeRule = if (hasMimeType) null else mimeTypeRule,
+                headers = headers,
+                storageType = if (!saveToInternalDir) {
+                    DownloadServiceStorage.Type.SHARED
+                } else {
+                    DownloadServiceStorage.Type.INTERNAL
+                },
+                subDir = subDirName,
+                targetHashInfo = targetHashInfo,
+                replaceFile = replaceFile,
+                deleteUnfinished = deleteUnfinished,
+                notificationParams = notificationParams,
+            ).apply {
+                if (!mimeType.isNullOrEmpty()) {
+                    resourceMimeType = mimeType
+                }
             }
         }
     }

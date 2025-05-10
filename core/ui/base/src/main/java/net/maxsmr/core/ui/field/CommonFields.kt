@@ -63,6 +63,12 @@ fun BaseViewModel.subDirNameField(
     }
 }
 
+fun BaseViewModel.saveToInternalDirField() = createNonEmptyField(
+    initialValue = false,
+    key = KEY_FIELD_SAVE_TO_INTERNAL_DIR
+)
+
 private const val KEY_FIELD_URL = "url"
 private const val KEY_FIELD_FILE_NAME = "file_name"
 private const val KEY_FIELD_SUB_DIR_NAME = "sub_dir_name"
+private const val KEY_FIELD_SAVE_TO_INTERNAL_DIR = "save_to_internal_dir"
