@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.core.net.toUri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -245,8 +244,6 @@ class DownloadsViewModel @Inject constructor(
         @JvmOverloads
         fun defaultSuccessNotificationActions(
             context: Context,
-            @StringRes shareChooseClientTitle: Int = net.maxsmr.core.ui.R.string.chooser_title_send,
-            @StringRes viewChooseClientTitle: Int = net.maxsmr.core.ui.R.string.chooser_title_view,
             @DrawableRes shareIconResId: Int = android.R.drawable.ic_menu_share,
             @DrawableRes viewIconResId: Int = android.R.drawable.ic_menu_view,
             subject: String = EMPTY_STRING,
@@ -254,7 +251,6 @@ class DownloadsViewModel @Inject constructor(
             emails: ArrayList<String> = arrayListOf(),
         ): MutableSet<DownloadService.NotificationParams.SuccessAction> = mutableSetOf(
             DownloadService.NotificationParams.SuccessAction.Share(
-                context.getString(shareChooseClientTitle),
                 context.getString(R.string.download_notification_success_share_button),
                 shareIconResId,
                 subject,
@@ -262,7 +258,6 @@ class DownloadsViewModel @Inject constructor(
                 emails
             ),
             DownloadService.NotificationParams.SuccessAction.View(
-                context.getString(viewChooseClientTitle),
                 context.getString(R.string.download_notification_success_view_button),
                 viewIconResId
             ),

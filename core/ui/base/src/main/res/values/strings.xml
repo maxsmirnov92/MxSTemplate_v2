@@ -7,8 +7,6 @@
     <string name="pick_more_permissions">You may grant permissions %s to %s to see more variants.</string>
 
     <string name="chooser_title_send_email">Choose app for sending email</string>
-    <string name="chooser_title_send">Share via app</string>
-    <string name="chooser_title_view">Open via app</string>
     <string name="error_intent_email">Install any email application to send a letter</string>
     <string name="error_intent_send">No apps for sending found</string>
     <string name="error_intent_open_url">No apps for viewing links found</string>

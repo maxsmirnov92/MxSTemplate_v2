@@ -43,12 +43,10 @@ import net.maxsmr.commonutils.service.startNoCheck
 import net.maxsmr.commonutils.service.stopForegroundCompat
 import net.maxsmr.commonutils.service.withMutabilityFlag
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.commonutils.wrapChooserWithInitial
 import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.android.content.FileFormat
-import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
-import net.maxsmr.core.android.content.ShareStrategy
-import net.maxsmr.core.android.content.ViewStrategy
+import net.maxsmr.core.android.content.ShareIntentStrategy
+import net.maxsmr.core.android.content.ViewIntentStrategy
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.database.model.download.DownloadInfo.Status.Error.Companion.isCancelled
@@ -680,7 +678,7 @@ class DownloadService : Service() {
                         it.iconResId,
                         it.notificationActionName.takeIf { it.isNotEmpty() }
                             ?: getString(R.string.download_notification_success_view_button),
-                        it.intent(this@DownloadService, uri, mimeType).toPendingIntent())
+                        it.intent(uri, mimeType).toPendingIntent())
 
                 }
                 notificationParams.actionIntent<NotificationParams.SuccessAction.Share>()?.let {
@@ -688,7 +686,7 @@ class DownloadService : Service() {
                         it.iconResId,
                         it.notificationActionName.takeIf { it.isNotEmpty() }
                             ?: getString(R.string.download_notification_success_share_button),
-                        it.intent(this@DownloadService, uri, mimeType).toPendingIntent())
+                        it.intent(uri, mimeType).toPendingIntent())
 
                 }
                 setContentIntent()
@@ -1323,7 +1321,7 @@ class DownloadService : Service() {
             return "NotificationParams(actions=$successActions)"
         }
 
-        fun SuccessAction.add() {
+        fun SuccessAction.addOrReplace() {
             if (!successActions.add(this)) {
                 successActions.remove(this)
                 successActions.add(this)
@@ -1337,21 +1335,16 @@ class DownloadService : Service() {
         sealed class SuccessAction : Serializable {
 
             abstract val id: Int
-            abstract val chooserTitle: String
 
             @get:DrawableRes
             abstract val iconResId: Int
 
             abstract val notificationActionName: String
 
-            fun intent(
-                context: Context,
-                uri: Uri,
-                mimeType: String,
-            ): Intent {
+            fun intent(uri: Uri, mimeType: String): Intent {
                 logger.d("Success mimeType: $mimeType, action: $this")
                 // chooser title может не сработать для SEND/SEND_MULTIPLE
-                return createIntent(uri, mimeType).wrapChooserWithInitial(context, chooserTitle)
+                return createIntent(uri, mimeType)
             }
 
             protected abstract fun createIntent(uri: Uri, mimeType: String): Intent
@@ -1368,7 +1361,6 @@ class DownloadService : Service() {
             }
 
             data class View @JvmOverloads constructor(
-                override val chooserTitle: String,
                 override val notificationActionName: String = EMPTY_STRING,
                 override val iconResId: Int = android.R.drawable.ic_menu_view,
             ) : SuccessAction() {
@@ -1376,11 +1368,10 @@ class DownloadService : Service() {
                 override val id: Int = 1
 
                 override fun createIntent(uri: Uri, mimeType: String): Intent =
-                    ViewStrategy(IntentWithUriProvideStrategy.Data(uri, mimeType)).intent()
+                    ViewIntentStrategy(ViewIntentStrategy.ViewData(uri, mimeType)).intent()
             }
 
             data class Share @JvmOverloads constructor(
-                override val chooserTitle: String,
                 override val notificationActionName: String = EMPTY_STRING,
                 override val iconResId: Int = android.R.drawable.ic_menu_share,
                 val intentSubject: String = EMPTY_STRING,
@@ -1391,11 +1382,10 @@ class DownloadService : Service() {
                 override val id: Int = 2
 
                 override fun createIntent(uri: Uri, mimeType: String): Intent =
-                    ShareStrategy(
-                        ShareStrategy.Data(
+                    ShareIntentStrategy(
+                        ShareIntentStrategy.ShareData(
                             uri,
                             mimeType,
-                            true,
                             intentText,
                             intentSubject,
                             intentEmails
@@ -1481,11 +1471,9 @@ class DownloadService : Service() {
         @JvmOverloads
         fun getViewAction(
             context: Context,
-            @StringRes chooserTitleRes: Int = net.maxsmr.core.ui.R.string.chooser_title_view,
             @StringRes notificationActionRes: Int = R.string.download_notification_success_view_button,
             @DrawableRes iconResId: Int = android.R.drawable.ic_menu_view,
         ) = NotificationParams.SuccessAction.View(
-            context.getString(chooserTitleRes),
             context.getString(notificationActionRes),
             iconResId
         )
@@ -1494,14 +1482,12 @@ class DownloadService : Service() {
         @JvmOverloads
         fun getShareAction(
             context: Context,
-            @StringRes chooserTitleRes: Int = net.maxsmr.core.ui.R.string.chooser_title_send,
             @StringRes notificationActionRes: Int = R.string.download_notification_success_share_button,
             @DrawableRes iconResId: Int = android.R.drawable.ic_menu_share,
             intentSubject: String = EMPTY_STRING,
             intentText: String = EMPTY_STRING,
             intentEmails: ArrayList<String> = arrayListOf(),
         ) = NotificationParams.SuccessAction.Share(
-            context.getString(chooserTitleRes),
             context.getString(notificationActionRes),
             iconResId,
             intentSubject,

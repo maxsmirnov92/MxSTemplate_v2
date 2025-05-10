@@ -31,10 +31,7 @@ import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
 import net.maxsmr.commonutils.media.path
 import net.maxsmr.commonutils.startActivitySafe
-import net.maxsmr.commonutils.wrapChooserWithInitial
 import net.maxsmr.core.android.base.delegates.viewBinding
-import net.maxsmr.core.android.content.ShareStrategy
-import net.maxsmr.core.android.content.ViewStrategy
 import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
@@ -214,28 +211,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel, Standar
     override fun handleVmEvents() {
         super.handleVmEvents()
         viewModel.navigateUriEvent.observeEventsSafe { s ->
-            val context = requireContext()
-            var intent = s.intent()
-
-            val titleResId = when (s) {
-                is ViewStrategy -> {
-                    net.maxsmr.core.ui.R.string.chooser_title_view
-                }
-
-                is ShareStrategy -> {
-                    net.maxsmr.core.ui.R.string.chooser_title_send
-                }
-
-                else -> {
-                    null
-                }
-            }
-            titleResId?.let {
-                intent = intent.wrapChooserWithInitial(context, context.getString(it))
-            }
-            // по дефолту "открыть с помощью" или "поделиться"
-
-            context.startActivitySafe(intent) {
+            requireContext().startActivitySafe(s.intent()) {
                 viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.error_intent_any))
             }
         }

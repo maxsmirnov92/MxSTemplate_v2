@@ -22,8 +22,8 @@ import net.maxsmr.commonutils.media.isEmpty
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
-import net.maxsmr.core.android.content.ShareStrategy
-import net.maxsmr.core.android.content.ViewStrategy
+import net.maxsmr.core.android.content.ShareIntentStrategy
+import net.maxsmr.core.android.content.ViewIntentStrategy
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
@@ -186,14 +186,14 @@ class DownloadsStateViewModel @Inject constructor(
     fun onViewResource(downloadUri: Uri, mimeType: String) {
         navigateUriAfterCheck(
             downloadUri,
-            ViewStrategy(IntentWithUriProvideStrategy.Data(downloadUri, mimeType))
+            ViewIntentStrategy(ViewIntentStrategy.ViewData(downloadUri, mimeType))
         )
     }
 
     fun onShareResource(downloadUri: Uri, mimeType: String) {
         navigateUriAfterCheck(
             downloadUri,
-            ShareStrategy(ShareStrategy.Data(downloadUri, mimeType))
+            ShareIntentStrategy(ShareIntentStrategy.ShareData(downloadUri, mimeType))
         )
     }
 
