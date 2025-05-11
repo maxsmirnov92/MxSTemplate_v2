@@ -2,6 +2,7 @@ package net.maxsmr.feature.webview.ui
 
 import android.content.Context
 import android.content.Intent
+import androidx.annotation.CallSuper
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,6 +46,7 @@ abstract class BaseCustomizableWebViewModel(
 
     abstract var customizer: WebViewCustomizer
 
+    @CallSuper
     override fun onInitialized() {
         urlField.valueFlow.observe {
             urlField.validateAndSetByRequired()

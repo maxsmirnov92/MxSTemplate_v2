@@ -78,12 +78,12 @@ private fun NavController.navigateWithGraphFragments(
     fun navOptions() = navOptions {
         // убирает все до startDestinationId, на них сработает onDestroy
         popUpTo(graph.findStartDestination().id) { // startDestinationId
-            if (currentDestination?.id != R.id.navigationWebView) {
-                // WebView сбрасывается в любом случае;
-                // не сохраняем, чтобы иметь возможность подставить урлу из настроек
-                // с применением на новом инстансе VM
-                saveState = true
-            }
+            // 1. при saveState == true:
+            // onSaveInstanceState будет вызван в т.ч. на дестроящемся фрагменте;
+            // на VM фрагмента, с которого уходим, не будет вызван onCleared;
+            // 2. при saveState == false:
+            // onSaveInstanceState - не будет вызван (только если свернуть), onCleared - будет
+            saveState = true
         }
         // проверка currentNavDestinationId уже была
         launchSingleTop = true

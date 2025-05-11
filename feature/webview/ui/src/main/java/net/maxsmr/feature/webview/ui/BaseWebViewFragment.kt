@@ -108,16 +108,15 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             "(function() { return !!window.WebGLRenderingContext && !!document.createElement('canvas').getContext('webgl'); })();"
         ) { value ->
             if ("true" == value) {
-                Log.d("WebView", "WebGL поддерживается")
+                Log.d("WebView", "WebGL supported")
             } else {
-                Log.d("WebView", "WebGL не поддерживается")
+                Log.d("WebView", "WebGL not supported")
             }
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        if (isRemoving || !isAdded) return
         val bundle = Bundle()
         webView.saveState(bundle)
         outState.putBundle(ARG_WEB_VIEW_STATE, bundle)
