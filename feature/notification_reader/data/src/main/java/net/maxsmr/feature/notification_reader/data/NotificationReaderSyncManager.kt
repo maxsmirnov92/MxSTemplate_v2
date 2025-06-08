@@ -561,7 +561,9 @@ class NotificationReaderSyncManager @Inject constructor(
             mimeTypeRule = Include(FileFormat.TEXT.mimeType)
         )
         DownloadService.Params(
-            params.requestParams,
+            params.requestParams.copy(
+                ignoreAttachment = true
+            ),
             DownloadService.NotificationParams(
                 retryActionIfFailed = false,
                 successActions = DownloadsViewModel.defaultSuccessNotificationActions(context),
