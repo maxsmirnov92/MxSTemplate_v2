@@ -26,8 +26,8 @@ class DoubleGisOkHttpClientManager(
 
     override fun configureBuild(builder: OkHttpClient.Builder) {
         with(builder) {
-            super.configureBuild(this)
             addInterceptor(DoubleGisInterceptor())
+            super.configureBuild(this)
         }
     }
 

@@ -27,8 +27,8 @@ class RadarIoOkHttpClientManager(
 
     override fun configureBuild(builder: OkHttpClient.Builder) {
         with(builder) {
-            super.configureBuild(this)
             addInterceptor(RadarIoInterceptor())
+            super.configureBuild(this)
         }
     }
 
