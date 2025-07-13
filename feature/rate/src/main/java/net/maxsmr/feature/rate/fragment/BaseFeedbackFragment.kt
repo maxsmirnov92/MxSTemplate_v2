@@ -8,18 +8,18 @@ import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.bindHintError
 import net.maxsmr.feature.rate.R
 import net.maxsmr.feature.rate.databinding.FragmentFeedbackBinding
 
-abstract class BaseFeedbackFragment<VM : BaseFeedbackViewModel> : BaseVmFragment<VM, StandardAlertRepresentation>() {
+abstract class BaseFeedbackFragment<VM : BaseFeedbackViewModel> : BaseVmFragment<VM>() {
 
     override val layoutId: Int = R.layout.fragment_feedback
 
     private val binding by viewBinding(FragmentFeedbackBinding::bind)
 
-    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(this, viewModel)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         binding.etSubject.bindToTextNotNull(viewModel.subjectField)

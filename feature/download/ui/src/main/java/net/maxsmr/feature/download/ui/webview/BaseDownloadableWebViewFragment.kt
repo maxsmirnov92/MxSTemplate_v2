@@ -10,11 +10,10 @@ import androidx.fragment.app.activityViewModels
 import net.maxsmr.commonutils.flow.field.observeFromText
 import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.hideKeyboard
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.alert.delegate.BaseViewAlertDelegate
 import net.maxsmr.core.ui.components.handleAlerts
 import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.view.bindHintError
 import net.maxsmr.core.ui.view.bindValue
 import net.maxsmr.feature.download.data.DownloadsViewModel
@@ -39,8 +38,8 @@ abstract class BaseDownloadableWebViewFragment<VM: BaseDownloadableWebViewModel>
         }
     }
 
-    override fun handleAlerts(delegate: BaseAlertDelegate<VM, StandardAlertRepresentation>) {
-        super.handleAlerts(delegate)
+    override fun handleViewAlerts(delegate: BaseViewAlertDelegate<VM>) {
+        super.handleViewAlerts(delegate)
         delegate.bindAlertDialog(BaseDownloadableWebViewModel.DIALOG_TAG_SAVE_AS) {
             @Suppress("UNCHECKED_CAST")
             val modelWithType = it.extraData as? ParamsModelWithType ?: throw IllegalStateException("Extra data for this dialog not specified")

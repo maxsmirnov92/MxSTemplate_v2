@@ -1,7 +1,7 @@
 package net.maxsmr.feature.address_sorter.ui
 
-import androidx.fragment.app.Fragment
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.view.alert.delegate.BaseFragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asMultiChoiceDialog
 import net.maxsmr.core.ui.view.alert.representation.asOkDialog
 import net.maxsmr.core.ui.view.alert.representation.asYesNoDialog
@@ -17,12 +17,11 @@ import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.Companion.DIA
 import net.maxsmr.feature.address_sorter.ui.AddressSorterViewModel.Companion.DIALOG_TAG_ROUTING_FAILED
 
 class AddressSorterFragmentAlertDelegate(
-    fragment: Fragment,
-    viewModel: AddressSorterViewModel
-): ViewFragmentAlertDelegate<AddressSorterViewModel>(fragment, viewModel) {
+    override val fragment: BaseVmFragment<AddressSorterViewModel>,
+    override val viewModel: AddressSorterViewModel,
+) : BaseFragmentViewAlertDelegate<AddressSorterViewModel>() {
 
-    override fun handleCommonAlertDialogs() {
-        super.handleCommonAlertDialogs()
+    override fun handleAlertDialogs() {
         bindAlertDialog(DIALOG_TAG_IMPORT_FAILED) {
             it.asOkDialog(context)
         }

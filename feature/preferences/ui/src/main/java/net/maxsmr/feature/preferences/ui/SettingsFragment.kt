@@ -20,10 +20,11 @@ import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.scrollToView
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.alert.delegate.BaseViewAlertDelegate
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.field.setFieldValueIfEnabled
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.bindHintError
 import net.maxsmr.core.ui.view.bindValue
 import net.maxsmr.core.ui.view.bindValueWithState
@@ -31,7 +32,7 @@ import net.maxsmr.feature.preferences.ui.databinding.FragmentSettingsBinding
 import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
-open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, StandardAlertRepresentation>() {
+open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_settings
 
@@ -63,8 +64,11 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel, Standard
 
     private var saveMenuItem: MenuItem? = null
 
-    override fun createAlertDelegate(): BaseAlertDelegate<SettingsViewModel, StandardAlertRepresentation> =
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
         SettingsFragmentAlertDelegate(this, viewModel)
+    )
 
     override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateMenu(menu, inflater)

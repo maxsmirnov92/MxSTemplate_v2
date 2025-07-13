@@ -6,10 +6,9 @@ import net.maxsmr.core.di.DI_NAME_VERSION_CODE
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_IN_APP_UPDATES
-import net.maxsmr.core.ui.view.alert.delegate.CombinedViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.about.ReleaseNotesComponentDelegate
 import net.maxsmr.feature.about.alert.view.ReleaseNotesFragmentAlertDelegate
-import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.BaseDownloadsPagerFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.rate.RateAppReminderComponentDelegate
@@ -88,14 +87,12 @@ class MainDownloadsPagerFragment : BaseDownloadsPagerFragment() {
     @Named(DI_NAME_VERSION_NAME)
     lateinit var versionName: String
 
-    override fun createAlertDelegate(): CombinedViewFragmentAlertDelegate<DownloadsViewModel> {
-        return CombinedViewFragmentAlertDelegate(
-            listOf(
-                ReleaseNotesFragmentAlertDelegate(this, viewModel),
-                RateAppReminderFragmentAlertDelegate(rateReminderDelegate, this, viewModel)
-            ), this, viewModel
-        )
-    }
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
+        ReleaseNotesFragmentAlertDelegate(this, viewModel),
+        RateAppReminderFragmentAlertDelegate(this, viewModel, rateReminderDelegate)
+    )
 
     override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
         return listOf(appUpdateDelegate, releaseNotesDelegate, rateReminderDelegate)

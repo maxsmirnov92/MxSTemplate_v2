@@ -14,9 +14,8 @@ import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.core.android.base.delegates.viewBinding
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
 import net.maxsmr.feature.about.adapter.DonateAddressAdapter
 import net.maxsmr.feature.about.adapter.DonateAddressAdapterData
@@ -24,7 +23,7 @@ import net.maxsmr.feature.about.adapter.DonateAddressClickListener
 import net.maxsmr.feature.about.databinding.FragmentAboutBinding
 import net.maxsmr.feature.rate.BaseRateAppComponentDelegate
 
-abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<VM, StandardAlertRepresentation>(), DonateAddressClickListener {
+abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<VM>(), DonateAddressClickListener {
 
     abstract val rateDelegate: BaseRateAppComponentDelegate
 
@@ -38,7 +37,7 @@ abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<V
 
     private val adapter by lazy { DonateAddressAdapter(this) }
 
-    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(this, viewModel)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {
         super.onViewCreated(view, savedInstanceState, viewModel)

@@ -1,17 +1,16 @@
 package net.maxsmr.feature.camera.ui
 
-import androidx.fragment.app.Fragment
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.view.alert.delegate.BaseFragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asOkDialog
 import net.maxsmr.feature.camera.ui.CameraXRecognitionViewModel.Companion.DIALOG_TAG_CAPTURE_RECOGNITION_RESULT
 
 class CameraXRecognitionFragmentAlertDelegate(
-    fragment: Fragment,
-    viewModel: CameraXRecognitionViewModel,
-): ViewFragmentAlertDelegate<CameraXRecognitionViewModel>(fragment, viewModel) {
+    override val fragment: BaseVmFragment<CameraXRecognitionViewModel>,
+    override val viewModel: CameraXRecognitionViewModel,
+): BaseFragmentViewAlertDelegate<CameraXRecognitionViewModel>() {
 
-    override fun handleCommonAlertDialogs() {
-        super.handleCommonAlertDialogs()
+    override fun handleAlertDialogs() {
         bindAlertDialog(DIALOG_TAG_CAPTURE_RECOGNITION_RESULT) {
             it.asOkDialog(context)
         }

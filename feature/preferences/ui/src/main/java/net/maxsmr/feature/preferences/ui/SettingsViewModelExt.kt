@@ -11,7 +11,7 @@ import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 
 fun BaseViewModel.doOnBatteryOptimizationWithPostNotificationsAskIfNeeded(
-    fragment: BaseVmFragment<*, *>,
+    fragment: BaseVmFragment<*>,
     cacheRepo: CacheDataStoreRepository,
     settingsRepo: SettingsDataStoreRepository,
     targetAction: () -> Unit,
@@ -30,7 +30,7 @@ fun BaseViewModel.doOnBatteryOptimizationWithPostNotificationsAskIfNeeded(
 }
 
 fun BaseViewModel.doOnPostNotificationsAskIfNeeded(
-    fragment: BaseVmFragment<*, *>,
+    fragment: BaseVmFragment<*>,
     cacheRepo: CacheDataStoreRepository,
     settingsRepo: SettingsDataStoreRepository,
     onlyWhenGranted: Boolean,

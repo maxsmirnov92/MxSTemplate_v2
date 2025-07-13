@@ -11,10 +11,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.combine
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.camera.Camera2Controller
 import net.maxsmr.feature.camera.Camera2Controller.CameraState
 import net.maxsmr.feature.camera.CameraFacing
@@ -26,7 +25,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class Camera2Fragment : BaseNavigationFragment<Camera2ViewModel, StandardAlertRepresentation>() {
+class Camera2Fragment : BaseNavigationFragment<Camera2ViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_camera_2
 
@@ -41,7 +40,7 @@ class Camera2Fragment : BaseNavigationFragment<Camera2ViewModel, StandardAlertRe
         Camera2Controller(binding.textureView)
     }
 
-    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(this, viewModel)
 
     @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: Camera2ViewModel) {

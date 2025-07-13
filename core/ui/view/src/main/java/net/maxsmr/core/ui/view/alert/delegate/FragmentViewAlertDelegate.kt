@@ -1,8 +1,5 @@
 package net.maxsmr.core.ui.view.alert.delegate
 
-
-import android.content.Context
-import androidx.fragment.app.Fragment
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_BATTERY_OPTIMIZATION
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_NO_INTERNET
@@ -13,36 +10,27 @@ import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_SERVER_ER
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_UNKNOWN_ERROR
 import net.maxsmr.core.android.base.BaseViewModel.Companion.SNACKBAR_TAG_QUEUE
 import net.maxsmr.core.android.base.BaseViewModel.Companion.TOAST_TAG_QUEUE
-import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.base.alert.queue.AlertQueue
-import net.maxsmr.core.ui.view.alert.ViewAlertHandler
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.alert.delegate.BaseViewAlertDelegate
 import net.maxsmr.core.ui.alert.representation.asToast
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.components.fragments.BaseVmFragment
 import net.maxsmr.core.ui.view.alert.representation.asOkDialog
 import net.maxsmr.core.ui.view.alert.representation.asProgressDialog
 import net.maxsmr.core.ui.view.alert.representation.asSnackbar
 import net.maxsmr.core.ui.view.alert.representation.asYesNoDialog
 
-/**
- * Делегат для fragment с функцией отображения алертов
- * с репрезентациями на основе android.app.Dialog и View;
- * 1. Использование "из коробки" при наличии прикреплённой [BaseViewModel]:
- * подразумевается первое использование не ранее onViewCreated!
- * 2. Использование по месту при подстановке [AlertQueue], диалоги с которой он должен обрабатывать;
- */
-open class ViewFragmentAlertDelegate<VM : BaseViewModel>(
-    val fragment: Fragment,
-    viewModel: VM,
-): BaseAlertDelegate<VM, StandardAlertRepresentation>(viewModel) {
+class FragmentViewAlertDelegate<VM : BaseViewModel>(
+    override val fragment: BaseVmFragment<VM>,
+    override val viewModel: VM,
+    private val delegates: List<BaseViewAlertDelegate<VM>> = listOf(),
+) : BaseFragmentViewAlertDelegate<VM>() {
 
-    protected val context: Context by lazy {
-        fragment.requireContext()
-    }
+    constructor(
+        fragment: BaseVmFragment<VM>,
+        viewModel: VM,
+        vararg delegates: BaseViewAlertDelegate<VM>,
+    ): this(fragment, viewModel, delegates.asList())
 
-    private val alertHandler: ViewAlertHandler by lazy { ViewAlertHandler(fragment) }
-
-    override fun handleCommonAlertDialogs() {
+    override fun handleAlertDialogs() {
         val context = context
         bindDefaultProgress()
         bindAlertDialog(DIALOG_TAG_NO_INTERNET) { it.asOkDialog(context) }
@@ -56,6 +44,9 @@ open class ViewFragmentAlertDelegate<VM : BaseViewModel>(
         }
         bindAlertDialog(DIALOG_TAG_BATTERY_OPTIMIZATION) {
             it.asOkDialog(context)
+        }
+        delegates.forEach {
+            it.handleAlertDialogs()
         }
     }
 
@@ -72,14 +63,6 @@ open class ViewFragmentAlertDelegate<VM : BaseViewModel>(
         }
     }
 
-    override fun bindAlert(
-        dialogQueue: AlertQueue,
-        tag: String,
-        representationFactory: (Alert) -> StandardAlertRepresentation?,
-    ) {
-        alertHandler.handle(dialogQueue, tag, representationFactory)
-    }
-
     /**
      * Стандартная реализация progress, нужно вызвать по месту на конкретном экране
      */
@@ -89,7 +72,7 @@ open class ViewFragmentAlertDelegate<VM : BaseViewModel>(
         cancelable: Boolean = false,
         onCancel: (() -> Unit)? = null,
     ) {
-        bindAlert(viewModel.dialogQueue, tag) {
+        bindStandardAlert(viewModel.dialogQueue, tag) {
             it.asProgressDialog(context, cancelable, onCancel = onCancel)
         }
     }

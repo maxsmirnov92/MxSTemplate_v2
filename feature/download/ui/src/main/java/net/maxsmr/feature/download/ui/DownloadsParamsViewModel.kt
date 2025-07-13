@@ -372,7 +372,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     /**
      * @param errorFieldResult с первым ошибочным [Field]
      */
-    fun onStartDownloadClick(fragment: BaseVmFragment<*, *>, errorFieldResult: (Field<*>?) -> Unit) {
+    fun onStartDownloadClick(fragment: BaseVmFragment<*>, errorFieldResult: (Field<*>?) -> Unit) {
 
         fun startDownload() {
             val result = allFields.validateAndSetByRequiredFields()

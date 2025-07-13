@@ -8,14 +8,13 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayoutMediator
 import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.core.android.base.delegates.viewBinding
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.DownloadsPagerAdapter
 import net.maxsmr.feature.download.ui.databinding.FragmentDownloadsPagerBinding
 
-abstract class BaseDownloadsPagerFragment : BaseNavigationFragment<DownloadsViewModel, StandardAlertRepresentation>() {
+abstract class BaseDownloadsPagerFragment : BaseNavigationFragment<DownloadsViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_downloads_pager
 
@@ -30,7 +29,7 @@ abstract class BaseDownloadsPagerFragment : BaseNavigationFragment<DownloadsView
         }
     }
 
-    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(this, viewModel)
 
     override fun onViewCreated(
         view: View,

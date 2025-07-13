@@ -36,6 +36,7 @@ import net.maxsmr.core.database.model.download.DownloadInfo
 import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asSnackbar
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
@@ -49,7 +50,7 @@ import java.util.Locale
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel, StandardAlertRepresentation>(),
+class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         DownloadListener, BaseDraggableDelegationAdapter.ItemsEventsListener<DownloadInfoAdapterData>,
         SearchView.OnQueryTextListener {
 
@@ -80,7 +81,11 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel, Standar
 
     private var searchView: SearchView? = null
 
-    override fun createAlertDelegate() = DownloadsStateFragmentAlertDelegate(this, viewModel)
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
+        DownloadsStateFragmentAlertDelegate(this, viewModel)
+    )
 
     override fun onViewCreated(
         view: View,
@@ -275,7 +280,11 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel, Standar
                                 append(path)
                             }
                             if (state is DownloadStateNotifier.DownloadState.Success) {
-                                formatSizeSingle(state.getResourceLength(requireContext()), SizeUnit.BYTES, precision = 2)?.let { size ->
+                                formatSizeSingle(
+                                    state.getResourceLength(requireContext()),
+                                    SizeUnit.BYTES,
+                                    precision = 2
+                                )?.let { size ->
                                     appendSeparator(2)
                                     append(size.get(context))
                                 }

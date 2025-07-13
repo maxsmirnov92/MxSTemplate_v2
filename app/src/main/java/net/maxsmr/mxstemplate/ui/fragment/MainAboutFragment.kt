@@ -6,6 +6,7 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IComponentDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription
 import net.maxsmr.feature.about.AboutViewModel.AboutAppDescription.DonateInfo.PaymentAddress
 import net.maxsmr.feature.about.BaseAboutFragment
@@ -69,8 +70,11 @@ class MainAboutFragment : BaseAboutFragment<MainAboutViewModel>() {
         }
     }
 
-    override fun createAlertDelegate(): RateAppFragmentAlertDelegate<MainAboutViewModel> =
-        RateAppFragmentAlertDelegate(rateDelegate, this, viewModel)
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
+        RateAppFragmentAlertDelegate(this, viewModel, rateDelegate)
+    )
 
     override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
         return listOf(rateDelegate)

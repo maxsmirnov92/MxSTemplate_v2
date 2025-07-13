@@ -29,7 +29,7 @@ import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.bindHintError
 import net.maxsmr.core.ui.view.bindValue
 import net.maxsmr.core.ui.view.bindValueWithState
@@ -42,7 +42,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel, StandardAlertRepresentation>(),
+class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(),
         HeaderListener {
 
     @Inject
@@ -109,7 +109,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel, Stand
 
     private var wasResumedOnce = false
 
-    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(this, viewModel)
 
     override fun onViewCreated(
         view: View,

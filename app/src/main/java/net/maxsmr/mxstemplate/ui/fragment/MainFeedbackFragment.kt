@@ -1,10 +1,9 @@
 package net.maxsmr.mxstemplate.ui.fragment
 
 import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.navArgs
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.ui.components.IComponentDelegate
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.rate.alert.view.RateAppFragmentAlertDelegate
 import net.maxsmr.feature.rate.fragment.BaseFeedbackFragment
@@ -42,8 +41,12 @@ class MainFeedbackFragment: BaseFeedbackFragment<MainFeedbackViewModel>() {
         }
     }
 
-    override fun createAlertDelegate(): ViewFragmentAlertDelegate<MainFeedbackViewModel> =
-        RateAppFragmentAlertDelegate(rateDelegate, this, viewModel)
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
+        RateAppFragmentAlertDelegate( this, viewModel, rateDelegate)
+    )
+
 
     override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
         return listOf(rateDelegate)

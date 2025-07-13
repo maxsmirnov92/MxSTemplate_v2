@@ -1,29 +1,24 @@
 package net.maxsmr.core.ui.alert.representation
 
-import android.content.Context
 import android.widget.Toast
-import net.maxsmr.core.android.base.actions.ToastExtraData
-import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.ui.message.toast.createToast
 
-fun Alert.asToast(
-    context: Context,
-): StandardAlertRepresentation {
-    val message = title ?: message
-    val extraData = extraData as ToastExtraData?
+internal fun Toast.toRepresentation() = ToastAlertRepresentation(this)
 
-    check(message != null) {
-        "Alert must contain title or message for being displayed as toast"
-    }
-    check(extraData != null) {
-        "Alert must contain extra data for being displayed as toast"
+internal class ToastAlertRepresentation(
+    private val toast: Toast,
+) : StandardAlertRepresentation {
+
+    private var wasShown = false
+
+    override fun show() {
+        if (wasShown) return
+        toast.show()
+        wasShown = true
     }
 
-    val toast = context.createToast(message, extraData, object : Toast.Callback() {
-        override fun onToastHidden() {
-            super.onToastHidden()
-            close()
-        }
-    })
-    return toast.toRepresentation()
+    override fun hide() {
+        if (!wasShown) return
+        toast.cancel()
+        wasShown = false
+    }
 }

@@ -27,12 +27,10 @@ import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
 import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.ConnectionHandler
-import net.maxsmr.core.ui.alert.representation.AlertRepresentation
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.handleEvents
-import net.maxsmr.core.ui.compose.alert.delegate.ComposableActivityAlertDelegate
+import net.maxsmr.core.ui.compose.alert.delegate.ComposableAlertDelegate
 import net.maxsmr.core.ui.compose.alert.representation.ComposableAlertRepresentation
 import net.maxsmr.core.ui.message.toast.ToastActorImpl
 import net.maxsmr.core.ui.navigation.NavigationActorImpl
@@ -197,8 +195,8 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     protected open fun getAlertDelegateForActivityViewModel(
         scope: CoroutineScope,
         hostState: SnackbarHostState,
-    ): ComposableActivityAlertDelegate<VM> {
-        return ComposableActivityAlertDelegate(
+    ): ComposableAlertDelegate<VM> {
+        return ComposableAlertDelegate(
             this@BaseComposeActivity, viewModel, scope, hostState
         )
     }
@@ -206,7 +204,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     protected open fun getConnectionHandlerForActivityViewModel(
         scope: CoroutineScope,
         hostState: SnackbarHostState,
-    ): ConnectionHandler<AlertRepresentation>? {
+    ): ConnectionHandler<ComposableAlertRepresentation>? {
         return null
     }
 
@@ -214,8 +212,8 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         viewModel: VM,
         scope: CoroutineScope,
         hostState: SnackbarHostState,
-    ): ComposableActivityAlertDelegate<VM> {
-        return ComposableActivityAlertDelegate(
+    ): ComposableAlertDelegate<VM> {
+        return ComposableAlertDelegate(
             this@BaseComposeActivity, viewModel, scope, hostState
         )
     }
@@ -224,7 +222,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         viewModel: VM,
         scope: CoroutineScope,
         hostState: SnackbarHostState,
-    ): ConnectionHandler<AlertRepresentation>? {
+    ): ConnectionHandler<ComposableAlertRepresentation>? {
         return getConnectionHandlerForActivityViewModel(scope, hostState)
     }
 
@@ -232,12 +230,12 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     @CallSuper
     protected open fun HandleComposableAlerts(
         viewModel: BaseViewModel,
-        delegate: ComposableActivityAlertDelegate<*>,
+        delegate: ComposableAlertDelegate<*>,
     ) {
-        delegate.HandleCommonAlertDialogs()
+        delegate.HandleAlertDialogs()
     }
 
-    protected open fun handleStandardAlerts(viewModel: BaseViewModel, delegate: ComposableActivityAlertDelegate<*>) {
+    protected open fun handleStandardAlerts(viewModel: BaseViewModel, delegate: ComposableAlertDelegate<*>,) {
         delegate.handleSnackbarAlerts()
         delegate.handleToastAlerts()
     }
@@ -309,20 +307,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
             viewModel.connectionManager.queue?.let {
                 // queue разные: snackbarQueue вместо dialogQueue
                 alertDelegate.BindComposableAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
-                    val result = mapper(alert)
-                    if (result is ComposableAlertRepresentation) {
-                        return@BindComposableAlert result
-                    } else {
-                        null
-                    }
-                }
-                alertDelegate.bindStandardAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
-                    val result = mapper(alert)
-                    if (result is StandardAlertRepresentation) {
-                        return@bindStandardAlert result
-                    } else {
-                        null
-                    }
+                   mapper(alert)
                 }
             }
         }
@@ -361,8 +346,8 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     protected class ScreenComponents(
         val viewModel: BaseViewModel,
         val key: String?,
-        val alertDelegate: ComposableActivityAlertDelegate<*>,
-        val connectionHandler: ConnectionHandler<AlertRepresentation>? = null,
+        val alertDelegate: ComposableAlertDelegate<*>,
+        val connectionHandler: ConnectionHandler<ComposableAlertRepresentation>? = null,
     ) {
 
         val disposables = mutableListOf<Job>()

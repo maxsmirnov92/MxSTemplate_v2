@@ -13,13 +13,13 @@ import net.maxsmr.core.ui.alert.representation.AlertRepresentation
  */
 class ConnectionHandler<AR : AlertRepresentation> private constructor(
     val onNetworkStateChanged: ((Boolean) -> Unit)? = null,
-    val alertsMapper: ((Alert) -> AR?)? = null,
+    val alertsMapper: ((Alert) -> AR)? = null,
 ) {
 
     class Builder<AR : AlertRepresentation> {
 
         private var onNetworkStateChanged: ((Boolean) -> Unit)? = null
-        private var alertsMapper: ((Alert) -> AR?)? = null
+        private var alertsMapper: ((Alert) -> AR)? = null
 
         /**
          * Задает способ обработки изменения состояния сети.
@@ -36,7 +36,7 @@ class ConnectionHandler<AR : AlertRepresentation> private constructor(
          *
          * @param handler лямбда, вызываемая при **пропаже** интернет соединения
          */
-        fun mapAlerts(handler: (Alert) -> AR?) = apply {
+        fun mapAlerts(handler: (Alert) -> AR) = apply {
             alertsMapper = handler
         }
 

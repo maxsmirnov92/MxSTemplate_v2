@@ -23,11 +23,13 @@ import net.maxsmr.core.android.base.BaseViewModel.*
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.android.base.actions.NavigationAction.NavigationCommand
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
+import net.maxsmr.core.android.base.actions.SnackbarExtraData.SnackbarLength
 import net.maxsmr.core.android.base.actions.ToastAction
 import net.maxsmr.core.android.base.actions.ToastExtraData
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
+import net.maxsmr.core.android.base.alert.queue.AlertQueueItem.UniqueStrategy
 import net.maxsmr.core.android.base.alert.showOkAlert
 import net.maxsmr.core.android.base.alert.showYesNoAlert
 import net.maxsmr.core.android.base.connection.ConnectionManager
@@ -211,24 +213,23 @@ abstract class BaseViewModel(
         _navigationCommand.tryEmit(VmEvent(NavigationAction(NavigationCommand.Back)))
     }
 
-    /**
-     * @param uniqueStrategy при [AlertQueueItem.UniqueStrategy.None] и [AlertQueueItem.UniqueStrategy.Replace]
-     * поведение НЕ INDEFINITE снека будет одинаковым
-     */
     fun showSnackbar(
         message: TextMessage,
         data: SnackbarExtraData = SnackbarExtraData(),
         answer: Alert.Answer? = null,
-        uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None,
+        uniqueStrategy: UniqueStrategy = UniqueStrategy.None,
         priority: AlertQueueItem.Priority = AlertQueueItem.Priority.NORMAL,
         putInQueueHead: Boolean = false,
     ) {
+        if (uniqueStrategy == UniqueStrategy.None && data.length == SnackbarLength.INDEFINITE) {
+            throw IllegalArgumentException("uniqueStrategy cannot be 'None' with 'INDEFINITE' length")
+        }
         AlertSnackbarBuilder(SNACKBAR_TAG_QUEUE)
             .setMessage(message)
             .setExtraData(data)
             .setUniqueStrategy(uniqueStrategy)
             .setPriority(priority, putInQueueHead)
-            .setOneShot(data.length != SnackbarExtraData.SnackbarLength.INDEFINITE)
+//            .setOneShot(data.length != SnackbarExtraData.SnackbarLength.INDEFINITE)
             .also { b ->
                 answer?.let {
                     b.setAnswers(answer)
@@ -244,14 +245,14 @@ abstract class BaseViewModel(
     fun showToast(
         message: TextMessage,
         data: ToastExtraData = ToastExtraData(),
-        uniqueStrategy: AlertQueueItem.UniqueStrategy = AlertQueueItem.UniqueStrategy.None,
+        uniqueStrategy: UniqueStrategy = UniqueStrategy.None,
     ) {
         if (isAtLeastR()) {
             AlertToastBuilder(TOAST_TAG_QUEUE)
                 .setMessage(message)
                 .setExtraData(data)
-                .setUniqueStrategy(uniqueStrategy)
-                .setOneShot(true)
+                .setUniqueStrategy(uniqueStrategy.takeIf { it != UniqueStrategy.Replace } ?: UniqueStrategy.None)
+                .setOneShot(uniqueStrategy == UniqueStrategy.Replace)
                 .build()
         } else {
             // для API ниже 30 addCallback отсутствует,

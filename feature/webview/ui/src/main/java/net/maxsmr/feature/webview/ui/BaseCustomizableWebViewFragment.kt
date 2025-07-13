@@ -31,8 +31,7 @@ import net.maxsmr.commonutils.text.isEmpty
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.isAnyResourceScheme
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.alert.delegate.BaseViewAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient
 import net.maxsmr.feature.webview.data.client.ExternalViewUrlWebViewClient.ViewUrlMode
@@ -103,8 +102,8 @@ abstract class BaseCustomizableWebViewFragment<VM : BaseCustomizableWebViewModel
         }
     }
 
-    override fun handleAlerts(delegate: BaseAlertDelegate<VM, StandardAlertRepresentation>) {
-        super.handleAlerts(delegate)
+    override fun handleViewAlerts(delegate: BaseViewAlertDelegate<VM>) {
+        super.handleViewAlerts(delegate)
         delegate.bindAlertDialog(BaseCustomizableWebViewModel.DIALOG_TAG_OPEN_URL) {
             val positiveAnswer =
                 it.answers.getOrNull(0) ?: throw IllegalStateException("Required positive answer is missing")

@@ -3,17 +3,16 @@ package net.maxsmr.mxstemplate.ui.fragment
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.ui.components.IComponentDelegate
-import net.maxsmr.core.ui.view.alert.delegate.CombinedViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.preferences.ui.SettingsFragment
 import net.maxsmr.feature.preferences.ui.SettingsFragmentAlertDelegate
-import net.maxsmr.feature.preferences.ui.SettingsViewModel
 import net.maxsmr.feature.rate.RateAppReminderComponentDelegate
 import net.maxsmr.feature.rate.alert.view.RateAppReminderFragmentAlertDelegate
 import net.maxsmr.mxstemplate.RATE_APP_ASK_INTERVAL
 import net.maxsmr.mxstemplate.ui.fragment.params.AboutScreenParams
 
 @AndroidEntryPoint
-class MainSettingsFragment: SettingsFragment() {
+class MainSettingsFragment : SettingsFragment() {
 
     private val rateReminderDelegate by lazy {
         RateAppReminderComponentDelegate(
@@ -30,14 +29,12 @@ class MainSettingsFragment: SettingsFragment() {
         }
     }
 
-    override fun createAlertDelegate(): CombinedViewFragmentAlertDelegate<SettingsViewModel> {
-        return CombinedViewFragmentAlertDelegate(
-            listOf(
-                SettingsFragmentAlertDelegate(this, viewModel),
-                RateAppReminderFragmentAlertDelegate(rateReminderDelegate, this, viewModel)
-            ), this, viewModel
-        )
-    }
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
+        SettingsFragmentAlertDelegate(this, viewModel),
+        RateAppReminderFragmentAlertDelegate(this, viewModel, rateReminderDelegate)
+    )
 
     override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
         return listOf(rateReminderDelegate)

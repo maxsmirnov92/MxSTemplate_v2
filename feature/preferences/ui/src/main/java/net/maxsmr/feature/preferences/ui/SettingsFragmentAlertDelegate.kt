@@ -1,20 +1,18 @@
 package net.maxsmr.feature.preferences.ui
 
-import androidx.fragment.app.Fragment
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.view.alert.delegate.BaseFragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asYesNoNeutralDialog
 import net.maxsmr.feature.preferences.ui.SettingsViewModel.Companion.DIALOG_TAG_CONFIRM_EXIT
 
 class SettingsFragmentAlertDelegate(
-    fragment: Fragment,
-    viewModel: SettingsViewModel,
-) : ViewFragmentAlertDelegate<SettingsViewModel>(fragment, viewModel) {
+    override val fragment: BaseVmFragment<SettingsViewModel>,
+    override val viewModel: SettingsViewModel,
+) : BaseFragmentViewAlertDelegate<SettingsViewModel>() {
 
-    override fun handleCommonAlertDialogs() {
-        super.handleCommonAlertDialogs()
+    override fun handleAlertDialogs() {
         bindAlertDialog(DIALOG_TAG_CONFIRM_EXIT) {
             it.asYesNoNeutralDialog(context)
         }
     }
-
 }

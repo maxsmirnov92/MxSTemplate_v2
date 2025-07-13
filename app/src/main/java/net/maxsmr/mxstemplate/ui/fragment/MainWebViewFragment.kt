@@ -4,6 +4,7 @@ import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.ui.components.IComponentDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.download.ui.webview.BaseDownloadableWebViewFragment
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.rate.RateAppReminderComponentDelegate
@@ -15,7 +16,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainWebViewFragment: BaseDownloadableWebViewFragment<MainWebViewModel>() {
+class MainWebViewFragment : BaseDownloadableWebViewFragment<MainWebViewModel>() {
 
 //    private val args by navArgs<MainWebViewFragmentArgs>()
 
@@ -42,9 +43,11 @@ class MainWebViewFragment: BaseDownloadableWebViewFragment<MainWebViewModel>() {
         }
     }
 
-    override fun createAlertDelegate(): RateAppReminderFragmentAlertDelegate<MainWebViewModel> {
-        return RateAppReminderFragmentAlertDelegate(rateReminderDelegate, this, viewModel)
-    }
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
+        RateAppReminderFragmentAlertDelegate(this@MainWebViewFragment, viewModel, rateReminderDelegate)
+    )
 
     override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
         return listOf(rateReminderDelegate)

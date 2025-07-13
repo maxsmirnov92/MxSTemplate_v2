@@ -6,6 +6,7 @@ import net.maxsmr.core.di.DI_NAME_VERSION_CODE
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_IN_APP_UPDATES
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.about.ReleaseNotesComponentDelegate
 import net.maxsmr.feature.about.alert.view.ReleaseNotesFragmentAlertDelegate
 import net.maxsmr.feature.download.ui.webview.BaseDownloadableWebViewFragment
@@ -70,9 +71,11 @@ class BrowserWebViewFragment : BaseDownloadableWebViewFragment<BrowserWebViewMod
     @Named(DI_NAME_VERSION_NAME)
     lateinit var versionName: String
 
-    override fun createAlertDelegate(): ReleaseNotesFragmentAlertDelegate<BrowserWebViewModel> {
-        return ReleaseNotesFragmentAlertDelegate(this, viewModel)
-    }
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
+        listOf(ReleaseNotesFragmentAlertDelegate(this, viewModel))
+    )
 
     override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
         return listOf(appUpdateDelegate, releaseNotesDelegate)

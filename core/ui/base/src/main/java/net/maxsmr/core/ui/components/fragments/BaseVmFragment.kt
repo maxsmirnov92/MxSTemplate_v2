@@ -30,9 +30,10 @@ import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
 import net.maxsmr.core.android.permissions.ICanAskPermissions
 import net.maxsmr.core.ui.R
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
 import net.maxsmr.core.ui.alert.ConnectionHandler
-import net.maxsmr.core.ui.alert.representation.AlertRepresentation
+import net.maxsmr.core.ui.alert.delegate.BaseAlertDelegate
+import net.maxsmr.core.ui.alert.delegate.BaseViewAlertDelegate
+import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.handleAlerts
@@ -46,7 +47,7 @@ import net.maxsmr.permissionchecker.PermissionsHelper
 /**
  * Фрагмент с конкретным типом VM и базовыми методами для подписки
  */
-abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fragment(),
+abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
         ICanAskPermissions, ICanRegisterForActivityResult {
 
     override val attachedContext: Context by lazy { requireContext() }
@@ -66,7 +67,7 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
      *
      * @see BaseViewModel.connectionManager
      */
-    protected open val connectionHandler: ConnectionHandler<AR>? = null
+    protected open val connectionHandler: ConnectionHandler<StandardAlertRepresentation>? = null
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
@@ -74,7 +75,7 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
 
     protected val toastActor by lazy { ToastActorImpl(requireContext()) }
 
-    private val alertDelegate: ResettableLazy<BaseAlertDelegate<VM, AR>> = resettableLazy {
+    private val alertDelegate: ResettableLazy<BaseAlertDelegate<VM>> = resettableLazy {
         createAlertDelegate()
     }
 
@@ -95,7 +96,7 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
         DialogDeniedPermissionsHandler(viewModel, requireActivity())
     }
 
-    protected abstract fun createAlertDelegate(): BaseAlertDelegate<VM, AR>
+    protected abstract fun createAlertDelegate(): BaseAlertDelegate<VM>
 
     final override fun onCreateView(
         inflater: LayoutInflater,
@@ -110,7 +111,10 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
         // см. коммент к navigateWithGraphFragments;
         // viewLifecycleOwner другой, показ алертов не срабатывает
         alertDelegate.reset()
-        handleAlerts(alertDelegate.value)
+        val delegate = alertDelegate.value
+        if (delegate is BaseViewAlertDelegate) {
+            handleViewAlerts(delegate)
+        }
         handleVmEvents()
 
         delegates.forEach {
@@ -171,7 +175,7 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
     )
 
     @CallSuper
-    protected open fun handleAlerts(delegate: BaseAlertDelegate<VM, AR>) {
+    protected open fun handleViewAlerts(delegate: BaseViewAlertDelegate<VM>) {
         delegate.handleAlerts()
     }
 
@@ -229,7 +233,7 @@ abstract class BaseVmFragment<VM : BaseViewModel, AR: AlertRepresentation> : Fra
         connectionHandler?.alertsMapper?.let { mapper ->
             viewModel.connectionManager.queue?.let {
                 // queue разные: snackbarQueue вместо dialogQueue
-                alertDelegate.value.bindAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
+                alertDelegate.value.bindStandardAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
                     mapper(alert)
                 }
             }

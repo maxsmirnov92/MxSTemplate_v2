@@ -1,20 +1,19 @@
 package net.maxsmr.feature.about.alert.view
 
-import androidx.fragment.app.Fragment
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.view.alert.delegate.BaseFragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asCommonWrapBottomSheetDialog
 import net.maxsmr.feature.about.ReleaseNotesComponentDelegate.Companion.DIALOG_TAG_RELEASE_NOTES
 
-class ReleaseNotesFragmentAlertDelegate<VM: BaseViewModel>(
-    fragment: Fragment,
-    viewModel: VM,
-): ViewFragmentAlertDelegate<VM>(fragment, viewModel) {
+class ReleaseNotesFragmentAlertDelegate<VM : BaseViewModel>(
+    override val fragment: BaseVmFragment<VM>,
+    override val viewModel: VM,
+) : BaseFragmentViewAlertDelegate<VM>() {
 
-    override fun handleCommonAlertDialogs() {
-        super.handleCommonAlertDialogs()
+    override fun handleAlertDialogs() {
         bindAlertDialog(DIALOG_TAG_RELEASE_NOTES) {
-            it.asCommonWrapBottomSheetDialog(fragment.requireContext(), false)
+            it.asCommonWrapBottomSheetDialog(context, false)
         }
     }
 }

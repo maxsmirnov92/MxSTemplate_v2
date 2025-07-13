@@ -30,7 +30,7 @@ import net.maxsmr.core.network.toPairs
 import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
 import net.maxsmr.feature.webview.data.client.ProgressWebChromeClient
@@ -39,7 +39,7 @@ import net.maxsmr.feature.webview.data.client.exception.WebResourceException
 import okhttp3.Headers.Companion.toHeaders
 import java.nio.charset.Charset
 
-abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragment<VM, StandardAlertRepresentation>() {
+abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragment<VM>() {
 
     abstract val webView: WebView
 
@@ -76,7 +76,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
     protected var isWebViewInitialized = false
         private set
 
-    override fun createAlertDelegate() = ViewFragmentAlertDelegate(this, viewModel)
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(this, viewModel)
 
     @CallSuper
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: VM) {

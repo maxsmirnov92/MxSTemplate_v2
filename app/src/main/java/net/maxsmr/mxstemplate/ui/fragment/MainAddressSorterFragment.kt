@@ -5,7 +5,7 @@ import net.maxsmr.core.di.DI_NAME_VERSION_CODE
 import net.maxsmr.core.di.DI_NAME_VERSION_NAME
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.location.LocationViewModel
-import net.maxsmr.core.ui.view.alert.delegate.CombinedViewFragmentAlertDelegate
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.about.ReleaseNotesComponentDelegate
 import net.maxsmr.feature.about.alert.view.ReleaseNotesFragmentAlertDelegate
 import net.maxsmr.feature.address_sorter.ui.AddressSorterFragmentAlertDelegate
@@ -61,15 +61,12 @@ class MainAddressSorterFragment : BaseAddressSorterFragment() {
     @Named(DI_NAME_VERSION_NAME)
     lateinit var versionName: String
 
-    override fun createAlertDelegate(): CombinedViewFragmentAlertDelegate<AddressSorterViewModel> {
-        return CombinedViewFragmentAlertDelegate(
-            listOf(
-                AddressSorterFragmentAlertDelegate(this, viewModel),
-                ReleaseNotesFragmentAlertDelegate(this, viewModel)
-            ),
-            this, viewModel
-        )
-    }
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
+        AddressSorterFragmentAlertDelegate(this, viewModel),
+        ReleaseNotesFragmentAlertDelegate(this, viewModel)
+    )
 
     override fun createFragmentDelegates(): List<IComponentDelegate<*>> {
         return listOf(releaseNotesDelegate)

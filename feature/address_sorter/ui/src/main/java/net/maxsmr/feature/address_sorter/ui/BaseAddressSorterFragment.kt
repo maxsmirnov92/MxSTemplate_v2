@@ -32,8 +32,8 @@ import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
+import net.maxsmr.core.ui.alert.delegate.BaseAlertDelegate
+import net.maxsmr.core.ui.alert.delegate.BaseViewAlertDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_PERMISSION_GPS
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
@@ -41,6 +41,7 @@ import net.maxsmr.core.ui.components.handleAlerts
 import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.location.LocationViewModel
 import net.maxsmr.core.ui.openAnyIntentWithToastError
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.DialogViewAlertRepresentation
 import net.maxsmr.core.ui.view.bindHintError
 import net.maxsmr.core.ui.view.content.pick.chooser.HandlerContentPickerBuilder
@@ -53,7 +54,7 @@ import net.maxsmr.feature.address_sorter.ui.databinding.DialogExportFileNameBind
 import net.maxsmr.feature.address_sorter.ui.databinding.FragmentAddressSorterBinding
 import net.maxsmr.feature.download.data.DownloadsViewModel
 
-abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel, StandardAlertRepresentation>(),
+abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterViewModel>(),
         AddressInputListener, BaseDraggableDelegationAdapter.ItemsEventsListener<AddressInputData> {
 
     override val layoutId: Int = R.layout.fragment_address_sorter
@@ -95,8 +96,8 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     // by lazy не подходит, т.к.
     // "Fragments must call registerForActivityResult() before they are created"
-    private val contentPicker: ContentPicker<BaseVmFragment<*, *>> =
-        HandlerContentPickerBuilder<BaseVmFragment<*, *>>(this)
+    private val contentPicker: ContentPicker<BaseVmFragment<*>> =
+        HandlerContentPickerBuilder<BaseVmFragment<*>>(this)
             .addRequest(
                 PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_JSON)
                     .addSafParams(SafPickerParams.json())
@@ -137,10 +138,11 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
 
     private var shouldScrollToEnd: Boolean = false
 
-    override fun createAlertDelegate(): BaseAlertDelegate<AddressSorterViewModel, StandardAlertRepresentation> =
-        AddressSorterFragmentAlertDelegate(
-            this, viewModel
-        )
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
+        AddressSorterFragmentAlertDelegate(this, viewModel)
+    )
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: AddressSorterViewModel) {
         super.onViewCreated(view, savedInstanceState, viewModel)
@@ -212,8 +214,8 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
         adapter.registerItemsEventsListener(this)
     }
 
-    override fun handleAlerts(delegate: BaseAlertDelegate<AddressSorterViewModel, StandardAlertRepresentation>) {
-        super.handleAlerts(delegate)
+    override fun handleViewAlerts(delegate: BaseViewAlertDelegate<AddressSorterViewModel>) {
+        super.handleViewAlerts(delegate)
         delegate.bindAlertDialog(AddressSorterViewModel.DIALOG_TAG_EXPORT_FILE_NAME) {
 
             val positiveAnswer =

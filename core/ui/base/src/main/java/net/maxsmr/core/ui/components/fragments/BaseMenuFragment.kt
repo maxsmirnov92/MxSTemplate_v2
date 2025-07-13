@@ -11,9 +11,8 @@ import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.lifecycle.Lifecycle
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.ui.alert.representation.AlertRepresentation
 
-abstract class BaseMenuFragment<VM : BaseViewModel, AR: AlertRepresentation> : BaseVmFragment<VM, AR>(), MenuProvider {
+abstract class BaseMenuFragment<VM : BaseViewModel> : BaseVmFragment<VM>(), MenuProvider {
 
     @get:MenuRes
     protected open val menuResId: Int = 0

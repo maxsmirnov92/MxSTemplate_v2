@@ -60,8 +60,8 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
     protected val currentNavDestinationId: Int
         get() = currentNavDestination?.id ?: NAV_ID_NONE
 
-    protected val currentNavFragment: BaseNavigationFragment<*, *>?
-        get() = navHostFragment.childFragmentManager.fragments.lastOrNull() as? BaseNavigationFragment<*, *>
+    protected val currentNavFragment: BaseNavigationFragment<*>?
+        get() = navHostFragment.childFragmentManager.fragments.lastOrNull() as? BaseNavigationFragment<*>
 
     protected val navBackStackEntryCount: Int
         get() = navHostFragment.childFragmentManager.backStackEntryCount
@@ -157,7 +157,7 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
-    override fun registerToolbarWithNavigation(toolbar: Toolbar, fragment: BaseNavigationFragment<*, *>) {
+    override fun registerToolbarWithNavigation(toolbar: Toolbar, fragment: BaseNavigationFragment<*>) {
         setSupportActionBar(toolbar)
         val configuration = appBarConfiguration
         toolbar.setupWithNavController(navController, configuration)

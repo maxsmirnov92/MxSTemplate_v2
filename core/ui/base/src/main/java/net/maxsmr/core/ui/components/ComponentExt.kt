@@ -6,10 +6,10 @@ import net.maxsmr.commonutils.flow.observeEvents
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.android.base.actions.ToastAction
-import net.maxsmr.core.ui.alert.BaseAlertDelegate
+import net.maxsmr.core.ui.alert.delegate.BaseViewAlertDelegate
 
-fun BaseAlertDelegate<*, *>.handleAlerts() {
-    handleCommonAlertDialogs()
+fun BaseViewAlertDelegate<*>.handleAlerts() {
+    handleAlertDialogs()
     handleSnackbarAlerts()
     handleToastAlerts()
 }

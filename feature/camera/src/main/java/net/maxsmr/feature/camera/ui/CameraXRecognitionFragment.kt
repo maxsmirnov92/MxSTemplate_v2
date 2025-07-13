@@ -23,13 +23,12 @@ import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
+import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.setShowProgress
 import net.maxsmr.feature.camera.CameraFacing
 import net.maxsmr.feature.camera.CameraXController
-import net.maxsmr.feature.camera.CameraXController.ErrorCallbacks
 import net.maxsmr.feature.camera.R
 import net.maxsmr.feature.camera.databinding.FragmentCameraXBinding
 import net.maxsmr.feature.camera.databinding.LayoutCameraControlsBinding
@@ -47,7 +46,7 @@ import javax.inject.Inject
 import kotlin.math.roundToInt
 
 @AndroidEntryPoint
-class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionViewModel, StandardAlertRepresentation>() {
+class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionViewModel>() {
 
     override val layoutId: Int = R.layout.fragment_camera_x
 
@@ -100,7 +99,11 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
     private var toggleFlashLightMenuItem: MenuItem? = null
     private var toggleRecognitionMenuItem: MenuItem? = null
 
-    override fun createAlertDelegate() = CameraXRecognitionFragmentAlertDelegate(this, viewModel)
+    override fun createAlertDelegate() = FragmentViewAlertDelegate(
+        this,
+        viewModel,
+        CameraXRecognitionFragmentAlertDelegate(this, viewModel)
+    )
 
     @SuppressLint("MissingPermission")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?, viewModel: CameraXRecognitionViewModel) {

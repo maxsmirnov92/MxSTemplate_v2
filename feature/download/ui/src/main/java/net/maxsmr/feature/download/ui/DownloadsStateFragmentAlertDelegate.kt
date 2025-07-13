@@ -1,7 +1,7 @@
 package net.maxsmr.feature.download.ui
 
-import androidx.fragment.app.Fragment
-import net.maxsmr.core.ui.view.alert.delegate.ViewFragmentAlertDelegate
+import net.maxsmr.core.ui.components.fragments.BaseVmFragment
+import net.maxsmr.core.ui.view.alert.delegate.BaseFragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.alert.representation.asYesNoDialog
 import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_CANCEL_ALL
 import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_CLEAR_QUEUE
@@ -9,12 +9,11 @@ import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_T
 import net.maxsmr.feature.download.ui.DownloadsStateViewModel.Companion.DIALOG_TAG_RETRY_IF_SUCCESS
 
 class DownloadsStateFragmentAlertDelegate(
-    fragment: Fragment,
-    viewModel: DownloadsStateViewModel
-): ViewFragmentAlertDelegate<DownloadsStateViewModel>(fragment, viewModel) {
+    override val fragment: BaseVmFragment<DownloadsStateViewModel>,
+    override val viewModel: DownloadsStateViewModel,
+) : BaseFragmentViewAlertDelegate<DownloadsStateViewModel>() {
 
-    override fun handleCommonAlertDialogs() {
-        super.handleCommonAlertDialogs()
+    override fun handleAlertDialogs() {
         bindAlertDialog(DIALOG_TAG_CLEAR_QUEUE) {
             it.asYesNoDialog(context)
         }
