@@ -1,94 +1,51 @@
 package net.maxsmr.core.android.base.connection
 
-import android.content.Context
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.asStateFlow
 import net.maxsmr.commonutils.flow.observe
+import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
 import net.maxsmr.core.android.base.alert.Alert
-import net.maxsmr.core.android.base.alert.queue.AlertQueue
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
 import net.maxsmr.core.android.network.NetworkStateManager
+import net.maxsmr.core.network.R
 
 /**
- * Класс определяет логику обработки состояния сети. Хранится во ViewModel
+ * Класс отслеживает текущее состояние сети
+ * и отображет snackbar при её отсутствии
  */
 class ConnectionManager(
-    private val context: Context,
-    private val scope: CoroutineScope,
+    private val networkStateManager: NetworkStateManager,
+    private val viewModel: BaseViewModel,
 ) {
 
-    /**
-     * Эмитит признак доступности соединения
-     */
-    val asStateFlow: StateFlow<Boolean> by lazy {
-        combine(
-            _manualCheck,
-            networkStateManager.asStatusFlow()
-        ) { manual, status ->
-            manual || status
-        }.stateIn(scope, SharingStarted.Eagerly, false)
-    }
+    val statusFlow: StateFlow<Boolean> by lazy {  _statusFlow.asStateFlow() }
 
-    /**
-     * Признак доступности соединения
-     */
-    val has: Boolean
-        get() = asStateFlow.value
+    val status: Boolean
+        get() = statusFlow.value
 
-    private val _manualCheck by lazy { MutableStateFlow(false) }
+    private val _statusFlow = MutableStateFlow(false)
 
-    private val networkStateManager by lazy { NetworkStateManager(context) }
-
-    var queue: AlertQueue? = null
-        private set
-
-    /**
-     * Конструктор для создания менеджера, дополнительно помещающего алерты об отсутствии сети в [queue]
-     *
-     * @param queue очередь сообщений, куда помещаются алерты об отсутствии сети. Null, если алерты не нужны
-     * @param builder опциональный билдер на случай нестандартного алерта
-     */
-    constructor(
-        context: Context,
-        scope: CoroutineScope,
-        queue: AlertQueue,
-        builder: AlertQueueItem.Builder? = null,
-    ) : this(context, scope) {
-        this.queue = queue
-        asStateFlow.observe(scope) {
+    init {
+        networkStateManager.asStatusFlow().observe(viewModel.viewModelScope) {
+            _statusFlow.value = it
             if (it) {
-                queue.removeAllWithTag(SNACKBAR_TAG_CONNECTIVITY)
+                viewModel.hideSnackbars()
             } else {
-                builder?.build()
-                    ?: AlertQueueItem.Builder(SNACKBAR_TAG_CONNECTIVITY, queue)
-                        .setTitle(net.maxsmr.core.network.R.string.error_no_connection)
-                        .setAnswers(
-                            Alert.Answer(net.maxsmr.core.android.R.string.check_again)
-                                .also { alert -> alert.onSelect { check() } })
-                        .setUniqueStrategy(AlertQueueItem.UniqueStrategy.Ignore)
-                        .setExtraData(SnackbarExtraData(SnackbarExtraData.SnackbarLength.INDEFINITE))
-                        .build()
+                viewModel.showSnackbar(
+                    R.string.error_no_connection,
+                    SnackbarExtraData(SnackbarExtraData.SnackbarLength.INDEFINITE),
+                    Alert.Answer(net.maxsmr.core.android.R.string.check_again)
+                        .also { alert -> alert.onSelect(/*false*/) { check() } },
+                    AlertQueueItem.UniqueStrategy.Replace,
+                )
             }
         }
     }
 
-    /**
-     * Запускает проверку доступности соединения
-     */
     fun check() {
-        scope.launch {
-            _manualCheck.tryEmit(networkStateManager.hasConnection())
-        }
-    }
-
-    companion object {
-
-        const val SNACKBAR_TAG_CONNECTIVITY = "connectivity"
+        _statusFlow.value = networkStateManager.hasConnection()
     }
 }

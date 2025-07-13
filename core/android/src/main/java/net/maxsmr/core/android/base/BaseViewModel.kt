@@ -3,7 +3,6 @@ package net.maxsmr.core.android.base
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
 import androidx.lifecycle.*
 import kotlinx.coroutines.flow.Flow
@@ -37,10 +36,7 @@ import net.maxsmr.core.android.content.pick.PickResult
 import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.NetworkException
 
-abstract class BaseViewModel(
-    val state: SavedStateHandle,
-    context: Context,
-) : ViewModel() {
+abstract class BaseViewModel(val state: SavedStateHandle) : ViewModel() {
 
     /**
      * Для навигации по фрагментам графа (в этом же модуле, иначе не будет сгенерированных Action),
@@ -70,9 +66,10 @@ abstract class BaseViewModel(
     val toastQueue: AlertQueue by lazy { AlertQueue() }
 
     /**
-     * Определяет логику обработки событий состояния сети. Переопределите, если требуется обработка.
+     * Определяет логику обработки событий состояния сети.
+     * null, если отслеживание состояния не требуется.
      */
-    val connectionManager: ConnectionManager by lazy { ConnectionManager(context, viewModelScope, snackbarQueue) }
+    open val connectionManager: ConnectionManager? = null
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
@@ -83,7 +80,6 @@ abstract class BaseViewModel(
     init {
         Handler(Looper.getMainLooper()).post { onInitialized() }
     }
-
 
     /**
      * Метод вызывается после выполнения init блока конкретного класса. Полезен для задания логики
@@ -214,6 +210,17 @@ abstract class BaseViewModel(
     }
 
     fun showSnackbar(
+        @StringRes messageResId: Int,
+        data: SnackbarExtraData = SnackbarExtraData(),
+        answer: Alert.Answer? = null,
+        uniqueStrategy: UniqueStrategy = UniqueStrategy.None,
+        priority: AlertQueueItem.Priority = AlertQueueItem.Priority.NORMAL,
+        putInQueueHead: Boolean = false,
+    ) {
+        showSnackbar(TextMessage(messageResId), data, answer, uniqueStrategy, priority, putInQueueHead)
+    }
+
+    fun showSnackbar(
         message: TextMessage,
         data: SnackbarExtraData = SnackbarExtraData(),
         answer: Alert.Answer? = null,
@@ -238,8 +245,16 @@ abstract class BaseViewModel(
 
     }
 
-    fun removeSnackbarsFromQueue() {
+    fun hideSnackbars() {
         snackbarQueue.removeAllWithTag(SNACKBAR_TAG_QUEUE)
+    }
+
+    fun showToast(
+        @StringRes messageResId: Int,
+        data: ToastExtraData = ToastExtraData(),
+        uniqueStrategy: UniqueStrategy = UniqueStrategy.None,
+    ) {
+        showToast(TextMessage(messageResId), data, uniqueStrategy)
     }
 
     fun showToast(
@@ -262,7 +277,7 @@ abstract class BaseViewModel(
         }
     }
 
-    fun removeToastsFromQueue() {
+    fun hideToasts() {
         if (isAtLeastR()) {
             toastQueue.removeAllWithTag(TOAST_TAG_QUEUE)
         }

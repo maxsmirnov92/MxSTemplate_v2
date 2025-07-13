@@ -21,9 +21,11 @@ import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.media.isEmpty
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
+import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.content.IntentWithUriProvideStrategy
 import net.maxsmr.core.android.content.ShareIntentStrategy
 import net.maxsmr.core.android.content.ViewIntentStrategy
+import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.data.manager.DownloadInfoResultData
@@ -35,8 +37,14 @@ import javax.inject.Inject
 class DownloadsStateViewModel @Inject constructor(
     private val manager: DownloadManager,
     @ApplicationContext private val context: Context,
+    networkStateManager: NetworkStateManager,
     state: SavedStateHandle,
-) : BaseViewModel(state, context) {
+) : BaseViewModel(state) {
+
+    override val connectionManager = ConnectionManager(
+        networkStateManager,
+        this
+    )
 
     val queueNames: StateFlow<List<String>> by lazy {
         _queueNames.asStateFlow()

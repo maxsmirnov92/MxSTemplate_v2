@@ -1,6 +1,5 @@
 package net.maxsmr.feature.download.ui.webview
 
-import android.content.Context
 import android.webkit.CookieManager
 import android.webkit.URLUtil
 import androidx.lifecycle.SavedStateHandle
@@ -8,16 +7,20 @@ import kotlinx.coroutines.flow.combine
 import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.alert.Alert
+import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.ui.field.fileNameField
-import net.maxsmr.core.ui.field.subDirNameField
 import net.maxsmr.core.ui.field.saveToInternalDirField
+import net.maxsmr.core.ui.field.subDirNameField
 import net.maxsmr.feature.download.ui.R
 import net.maxsmr.feature.webview.ui.BaseCustomizableWebViewModel
 
 typealias ParamsModelWithType = Pair<DownloadParamsModel, String?>
 
-abstract class BaseDownloadableWebViewModel(state: SavedStateHandle, context: Context) : BaseCustomizableWebViewModel(state, context) {
+abstract class BaseDownloadableWebViewModel(
+    networkStateManager: NetworkStateManager,
+    state: SavedStateHandle,
+) : BaseCustomizableWebViewModel(networkStateManager, state) {
 
     val fileNameField: Field<String> = fileNameField(isRequired = true)
 

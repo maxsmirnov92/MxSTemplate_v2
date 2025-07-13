@@ -70,6 +70,9 @@ class Alert private constructor(
 
         constructor(title: String) : this(TextMessage(title))
 
+        /**
+         * @param closeAfterSelect в случае снекбара не имеет эффекта
+         */
         fun onSelect(closeAfterSelect: Boolean = true, action: () -> Unit) = apply {
             this.select = action
             this.closeAfterSelect = closeAfterSelect

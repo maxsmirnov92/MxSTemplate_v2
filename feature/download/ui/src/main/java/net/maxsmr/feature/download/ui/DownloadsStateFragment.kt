@@ -25,7 +25,6 @@ import net.maxsmr.commonutils.conversion.SizeUnit
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.format.formatSizeSingle
 import net.maxsmr.commonutils.gui.PopupParams
-import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setSpanText
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.gui.showPopupWindowWithObserver
@@ -33,11 +32,8 @@ import net.maxsmr.commonutils.media.path
 import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.database.model.download.DownloadInfo
-import net.maxsmr.core.ui.alert.ConnectionHandler
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
-import net.maxsmr.core.ui.view.alert.representation.asSnackbar
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadStateNotifier
 import net.maxsmr.feature.download.ui.adapter.DownloadInfoAdapter
@@ -53,10 +49,6 @@ import javax.inject.Inject
 class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         DownloadListener, BaseDraggableDelegationAdapter.ItemsEventsListener<DownloadInfoAdapterData>,
         SearchView.OnQueryTextListener {
-
-    override val connectionHandler = ConnectionHandler.Builder<StandardAlertRepresentation>().mapAlerts {
-        it.asSnackbar(requireView())
-    }.build()
 
     @Inject
     override lateinit var permissionsHelper: PermissionsHelper
@@ -217,7 +209,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
         super.handleVmEvents()
         viewModel.navigateUriEvent.observeEventsSafe { s ->
             requireContext().startActivitySafe(s.intent()) {
-                viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.error_intent_any))
+                viewModel.showToast(net.maxsmr.core.ui.R.string.error_intent_any)
             }
         }
     }
@@ -298,7 +290,7 @@ class DownloadsStateFragment : BaseMenuFragment<DownloadsStateViewModel>(),
                                     true
                                 ) {
                                     requireContext().copyToClipboard("url", params.requestParams.url)
-                                    viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message))
+                                    viewModel.showToast(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message)
                                 }
                             )))
                     }

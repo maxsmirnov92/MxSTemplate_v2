@@ -14,7 +14,7 @@ import net.maxsmr.core.ui.field.createTextField
 import net.maxsmr.core.ui.openEmailIntentWithToastError
 import net.maxsmr.feature.rate.R
 
-abstract class BaseFeedbackViewModel(state: SavedStateHandle, context: Context,) : BaseViewModel(state, context) {
+abstract class BaseFeedbackViewModel(state: SavedStateHandle) : BaseViewModel(state) {
 
     protected abstract val emailAddress: String
 

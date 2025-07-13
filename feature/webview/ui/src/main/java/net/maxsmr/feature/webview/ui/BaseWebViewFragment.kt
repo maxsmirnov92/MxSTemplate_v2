@@ -49,23 +49,19 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
 
     abstract val errorContainer: View?
 
-    override val connectionHandler = ConnectionHandler.Builder<StandardAlertRepresentation>()
-        .onStateChanged {
-            if (it && shouldReloadAfterConnectionError) {
-                val data = viewModel.currentWebViewData.value
-                data.error?.error?.let { error ->
-                    if (error is WebResourceException && error.isConnectionError) {
-                        // с задержкой, т.к. после появления сети коннект может не пройти сразу
-                        webView.postDelayed({
-                            // если последняя ошибка была обусловлена сетью,
-                            // загрузить повторно при появлении сети сейчас
-                            doReloadWebView()
-                        }, 500)
-                    }
-                }
+    override val connectionHandler = ConnectionHandler {
+        val data = viewModel.currentWebViewData.value
+        data.error?.error?.let { error ->
+            if (error is WebResourceException && error.isConnectionError) {
+                // с задержкой, т.к. после появления сети коннект может не пройти сразу
+                webView.postDelayed({
+                    // если последняя ошибка была обусловлена сетью,
+                    // загрузить повторно при появлении сети сейчас
+                    doReloadWebView()
+                }, 500)
             }
         }
-        .build()
+    }
 
     protected open val shouldReloadAfterConnectionError: Boolean = true
 
@@ -235,7 +231,7 @@ abstract class BaseWebViewFragment<VM : BaseWebViewModel> : BaseNavigationFragme
             with(viewModel) {
                 // используем инфу о состоянии для последнего ресурса с той же урлой
                 val currentResource = currentWebViewData.value
-                (if (currentResource != null && currentResource.isError) {
+                (if (currentResource.isError) {
                     // если до этого в onPageLoadError выставлялся еррор - оставляем статус
                     currentResource.copyOf(data)
                 } else {

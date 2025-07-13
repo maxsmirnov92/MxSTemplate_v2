@@ -1,5 +1,6 @@
 package net.maxsmr.core.ui.view.alert.delegate
 
+import android.view.View
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_BATTERY_OPTIMIZATION
 import net.maxsmr.core.android.base.BaseViewModel.Companion.DIALOG_TAG_NO_INTERNET
@@ -51,9 +52,14 @@ class FragmentViewAlertDelegate<VM : BaseViewModel>(
     }
 
     override fun handleSnackbarAlerts() {
-        val view = fragment.requireView()
         bindAlertSnackbar(SNACKBAR_TAG_QUEUE) {
-            it.asSnackbar(view)
+            try {
+                it.asSnackbar(fragment.requireView())
+            } catch (e: Exception) {
+                // костыль при уже имеющемся алерте и возврате на тот же фрагмент с пересозданной view
+                // при определённой вложенности с использованием Jetpack Navigation
+                it.asSnackbar(fragment.requireActivity().window.decorView.findViewById(android.R.id.content))
+            }
         }
     }
 
@@ -63,9 +69,6 @@ class FragmentViewAlertDelegate<VM : BaseViewModel>(
         }
     }
 
-    /**
-     * Стандартная реализация progress, нужно вызвать по месту на конкретном экране
-     */
     @JvmOverloads
     fun bindDefaultProgress(
         tag: String = DIALOG_TAG_PROGRESS,

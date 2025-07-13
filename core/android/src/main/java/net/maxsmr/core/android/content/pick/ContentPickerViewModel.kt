@@ -1,10 +1,8 @@
 package net.maxsmr.core.android.content.pick
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,10 +16,7 @@ import net.maxsmr.core.android.content.pick.concrete.ConcretePickerType
 import javax.inject.Inject
 
 @HiltViewModel
-class ContentPickerViewModel @Inject constructor(
-    state: SavedStateHandle,
-    @ApplicationContext context: Context,
-) : BaseViewModel(state, context) {
+class ContentPickerViewModel @Inject constructor(state: SavedStateHandle) : BaseViewModel(state) {
 
     val pickResultEvent: StateFlow<VmEvent<PickResult>?> by lazy {
         _pickResultEvent.asStateFlow()

@@ -57,7 +57,7 @@ class DownloadsViewModel @Inject constructor(
     @BaseJson private val json: Json,
     @ApplicationContext private val context: Context,
     state: SavedStateHandle,
-) : BaseViewModel(state, context) {
+) : BaseViewModel(state) {
 
     val downloadsInfos: Flow<List<DownloadInfo>> = downloadRepo.get()
 
@@ -142,7 +142,7 @@ class DownloadsViewModel @Inject constructor(
                             delay(500)
                         }
                     } else {
-                        showSnackbar(TextMessage(R.string.download_snackbar_no_valid_params))
+                        showSnackbar(R.string.download_snackbar_no_valid_params)
                     }
                 }
         }

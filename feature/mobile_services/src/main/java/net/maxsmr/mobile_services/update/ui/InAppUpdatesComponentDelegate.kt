@@ -74,13 +74,13 @@ class InAppUpdatesComponentDelegate(
 
     override fun onUpdateDownloadNotStarted(isCancelled: Boolean) {
         if (!isCancelled) {
-            viewModel.showToast(TextMessage(R.string.mobile_services_toast_update_download_not_started_message))
+            viewModel.showToast(R.string.mobile_services_toast_update_download_not_started_message)
         }
     }
 
     override fun onUpdateDownloadStarted() {
         viewModel.showSnackbar(
-            TextMessage(R.string.mobile_services_snackbar_update_downloading_message),
+            R.string.mobile_services_snackbar_update_downloading_message,
             SnackbarExtraData(SnackbarExtraData.SnackbarLength.INDEFINITE),
             priority = AlertQueueItem.Priority.HIGHEST,
             putInQueueHead = true
@@ -94,7 +94,7 @@ class InAppUpdatesComponentDelegate(
             cacheRepo.clearLastCheckInAppUpdate()
         }
         viewModel.showSnackbar(
-            TextMessage(R.string.mobile_services_snackbar_update_downloaded_message),
+            R.string.mobile_services_snackbar_update_downloaded_message,
             SnackbarExtraData(SnackbarExtraData.SnackbarLength.INDEFINITE),
             Alert.Answer(R.string.mobile_services_snackbar_update_downloaded_action).onSelect {
                 completeAction()
@@ -105,11 +105,11 @@ class InAppUpdatesComponentDelegate(
     }
 
     override fun onUpdateFailed() {
-        viewModel.showToast(TextMessage(R.string.mobile_services_toast_update_failed_message))
+        viewModel.showToast(R.string.mobile_services_toast_update_failed_message)
     }
 
     override fun onUpdateCancelled() {
-        viewModel.showToast(TextMessage(R.string.mobile_services_toast_update_cancelled_message))
+        viewModel.showToast(R.string.mobile_services_toast_update_cancelled_message)
     }
 
     override fun onStartUpdateFlowFailed(throwable: Throwable) {

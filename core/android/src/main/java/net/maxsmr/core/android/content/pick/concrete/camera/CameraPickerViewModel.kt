@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import net.maxsmr.commonutils.format.formatDate
 import net.maxsmr.commonutils.media.toContentUri
 import net.maxsmr.core.android.base.BaseViewModel
@@ -15,10 +14,7 @@ import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
-internal class CameraPickerViewModel @Inject constructor(
-    state: SavedStateHandle,
-    @ApplicationContext context: Context,
-) : BaseViewModel(state, context) {
+internal class CameraPickerViewModel @Inject constructor(state: SavedStateHandle) : BaseViewModel(state) {
 
     private var photoResultUri: Uri? by persistableValue()
     private var videoResultUri: Uri? by persistableValue()

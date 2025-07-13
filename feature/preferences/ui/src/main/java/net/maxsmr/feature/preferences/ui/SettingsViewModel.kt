@@ -1,10 +1,8 @@
 package net.maxsmr.feature.preferences.ui
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,8 +35,7 @@ class SettingsViewModel @Inject constructor(
     private val repository: SettingsDataStoreRepository,
     val cacheRepository: CacheDataStoreRepository,
     state: SavedStateHandle,
-    @ApplicationContext context: Context,
-) : BaseViewModel(state, context) {
+) : BaseViewModel(state) {
 
     val maxDownloadsField: Field<Int> = createNonEmptyField(
         initialValue = 0,

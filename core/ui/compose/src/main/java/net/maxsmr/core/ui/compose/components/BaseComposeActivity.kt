@@ -21,7 +21,6 @@ import net.maxsmr.commonutils.flow.observe
 import net.maxsmr.commonutils.flow.observeEvents
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
 import net.maxsmr.core.android.permissions.ICanAskPermissions
@@ -31,7 +30,6 @@ import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.compose.alert.delegate.ComposableAlertDelegate
-import net.maxsmr.core.ui.compose.alert.representation.ComposableAlertRepresentation
 import net.maxsmr.core.ui.message.toast.ToastActorImpl
 import net.maxsmr.core.ui.navigation.NavigationActorImpl
 import net.maxsmr.designsystem.compose.component.AppBackground
@@ -204,7 +202,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     protected open fun getConnectionHandlerForActivityViewModel(
         scope: CoroutineScope,
         hostState: SnackbarHostState,
-    ): ConnectionHandler<ComposableAlertRepresentation>? {
+    ): ConnectionHandler? {
         return null
     }
 
@@ -222,7 +220,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         viewModel: VM,
         scope: CoroutineScope,
         hostState: SnackbarHostState,
-    ): ConnectionHandler<ComposableAlertRepresentation>? {
+    ): ConnectionHandler? {
         return getConnectionHandlerForActivityViewModel(scope, hostState)
     }
 
@@ -235,7 +233,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         delegate.HandleAlertDialogs()
     }
 
-    protected open fun handleStandardAlerts(viewModel: BaseViewModel, delegate: ComposableAlertDelegate<*>,) {
+    protected open fun handleStandardAlerts(viewModel: BaseViewModel, delegate: ComposableAlertDelegate<*>) {
         delegate.handleSnackbarAlerts()
         delegate.handleToastAlerts()
     }
@@ -294,20 +292,10 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     }
 
     private fun ScreenComponents.observeNetworkConnectionHandlerState() {
-        connectionHandler?.onNetworkStateChanged?.let { onStateChanged ->
-            viewModel.connectionManager.asStateFlow.observeSafe {
-                onStateChanged(it)
-            }
-        }
-    }
-
-    @Composable
-    private fun ScreenComponents.ObserveNetworkConnectionHandlerAlerts() {
-        connectionHandler?.alertsMapper?.let { mapper ->
-            viewModel.connectionManager.queue?.let {
-                // queue разные: snackbarQueue вместо dialogQueue
-                alertDelegate.BindComposableAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
-                   mapper(alert)
+        viewModel.connectionManager?.let { manager ->
+            connectionHandler?.onNetworkStateChanged?.let {
+                manager.statusFlow.observeSafe { state ->
+                    it.invoke(state)
                 }
             }
         }
@@ -328,7 +316,6 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
     @Composable
     private fun ScreenComponents.Register(navController: NavController) {
         // FIXME по остальным нет возможности отписаться
-        ObserveNetworkConnectionHandlerAlerts()
         observeNetworkConnectionHandlerState()
         HandleComposableAlerts(viewModel, alertDelegate)
         handleStandardAlerts(viewModel, alertDelegate)
@@ -347,7 +334,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
         val viewModel: BaseViewModel,
         val key: String?,
         val alertDelegate: ComposableAlertDelegate<*>,
-        val connectionHandler: ConnectionHandler<ComposableAlertRepresentation>? = null,
+        val connectionHandler: ConnectionHandler? = null,
     ) {
 
         val disposables = mutableListOf<Job>()

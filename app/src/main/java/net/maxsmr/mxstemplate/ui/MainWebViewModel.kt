@@ -1,9 +1,8 @@
 package net.maxsmr.mxstemplate.ui
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
+import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.android.screen.extractScreenParams
 import net.maxsmr.feature.download.ui.webview.BaseDownloadableWebViewModel
 import net.maxsmr.feature.webview.ui.WebViewCustomizer
@@ -12,9 +11,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainWebViewModel @Inject constructor(
+    networkStateManager: NetworkStateManager,
     state: SavedStateHandle,
-    @ApplicationContext context: Context,
-) : BaseDownloadableWebViewModel(state, context) {
+) : BaseDownloadableWebViewModel(networkStateManager, state) {
 
     override var customizer: WebViewCustomizer =
         state.extractScreenParams<WebViewScreenParams>().customizer

@@ -25,7 +25,6 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.resettableLazy
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.connection.ConnectionManager
 import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
 import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
 import net.maxsmr.core.android.permissions.ICanAskPermissions
@@ -33,7 +32,6 @@ import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.alert.delegate.BaseAlertDelegate
 import net.maxsmr.core.ui.alert.delegate.BaseViewAlertDelegate
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.handleAlerts
@@ -67,7 +65,7 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
      *
      * @see BaseViewModel.connectionManager
      */
-    protected open val connectionHandler: ConnectionHandler<StandardAlertRepresentation>? = null
+    protected open val connectionHandler: ConnectionHandler? = null
 
     protected val logger: BaseLogger = BaseLoggerHolder.instance.getLogger(javaClass)
 
@@ -225,16 +223,10 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
     ) = repeatOnLifecycle(owner, lifecycleState) { this.collectLatest { action(it) } }
 
     private fun observeNetworkConnectionHandler() {
-        connectionHandler?.onNetworkStateChanged?.let { onStateChanged ->
-            viewModel.connectionManager.asStateFlow.observeSafe {
-                onStateChanged(it)
-            }
-        }
-        connectionHandler?.alertsMapper?.let { mapper ->
-            viewModel.connectionManager.queue?.let {
-                // queue разные: snackbarQueue вместо dialogQueue
-                alertDelegate.value.bindStandardAlert(it, ConnectionManager.SNACKBAR_TAG_CONNECTIVITY) { alert ->
-                    mapper(alert)
+        viewModel.connectionManager?.let { manager ->
+            connectionHandler?.onNetworkStateChanged?.let {
+                manager.statusFlow.observeSafe { state ->
+                    it.invoke(state)
                 }
             }
         }

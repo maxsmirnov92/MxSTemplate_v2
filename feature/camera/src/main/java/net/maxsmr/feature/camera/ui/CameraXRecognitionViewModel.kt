@@ -65,7 +65,7 @@ class CameraXRecognitionViewModel @AssistedInject constructor(
     private val imageCaptureRecognitionUseCase: ImageCaptureRecognitionUseCase,
     private val textRecognition: ITextRecognition,
     @ApplicationContext private val context: Context,
-) : BaseViewModel(state, context), ErrorCallbacks {
+) : BaseViewModel(state), ErrorCallbacks {
 
     /**
      * Целевой тип камеры (совпадёт с фактическим при успешном подключении)

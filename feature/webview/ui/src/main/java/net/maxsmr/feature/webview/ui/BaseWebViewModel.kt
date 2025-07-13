@@ -1,6 +1,5 @@
 package net.maxsmr.feature.webview.ui
 
-import android.content.Context
 import android.net.Uri
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -16,11 +15,23 @@ import kotlinx.coroutines.flow.stateIn
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.states.LoadState.Companion.copyOf
 import net.maxsmr.core.android.base.BaseViewModel
+import net.maxsmr.core.android.base.connection.ConnectionManager
+import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient.WebViewData
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
 import net.maxsmr.feature.webview.ui.BaseWebViewModel.MainWebViewData.Companion.fromWebViewData
 
-open class BaseWebViewModel(state: SavedStateHandle, context: Context) : BaseViewModel(state, context) {
+open class BaseWebViewModel(
+    networkStateManager: NetworkStateManager,
+    state: SavedStateHandle,
+) : BaseViewModel(state) {
+
+    override val connectionManager by lazy {
+        ConnectionManager(
+            networkStateManager,
+            this
+        )
+    }
 
     val firstWebViewData: StateFlow<LoadState<MainWebViewData?>> by lazy { _firstWebViewData.asStateFlow() }
 

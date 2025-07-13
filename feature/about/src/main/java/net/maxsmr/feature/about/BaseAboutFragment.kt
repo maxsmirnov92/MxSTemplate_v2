@@ -11,7 +11,6 @@ import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import net.maxsmr.commonutils.convertAnyToPx
 import net.maxsmr.commonutils.copyToClipboard
-import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
@@ -108,7 +107,7 @@ abstract class BaseAboutFragment<VM : AboutViewModel> : BaseNavigationFragment<V
 
     override fun onAddressClick(address: PaymentAddress) {
         requireContext().copyToClipboard("payment address", address.address)
-        viewModel.showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_copied_to_clipboard_message))
+        viewModel.showToast(net.maxsmr.core.ui.R.string.toast_copied_to_clipboard_message)
     }
 
 }

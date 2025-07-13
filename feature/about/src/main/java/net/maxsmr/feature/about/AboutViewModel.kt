@@ -1,13 +1,11 @@
 package net.maxsmr.feature.about
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.text.style.CharacterStyle
 import android.util.Size
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.SavedStateHandle
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import net.maxsmr.commonutils.RangeSpanInfo
@@ -19,7 +17,7 @@ import net.maxsmr.core.android.base.delegates.persistableStateFlow
 import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import java.io.Serializable
 
-open class AboutViewModel(state: SavedStateHandle, context: Context) : BaseViewModel(state, context) {
+open class AboutViewModel(state: SavedStateHandle) : BaseViewModel(state) {
 
     val animatedLogoState: StateFlow<Boolean> by lazy {
         _animatedLogoState.asStateFlow()
@@ -46,7 +44,7 @@ open class AboutViewModel(state: SavedStateHandle, context: Context) : BaseViewM
                     handler.removeCallbacks(logoPressedClearRunnable)
                     logoPressedCount++
                     if (logoPressedCount >= targetClickCount) {
-                        removeToastsFromQueue()
+                        hideToasts()
                         _animatedLogoState.value = true
                         logoAnimatedOnce = true
                     } else if (clicksLeftToShowToast > 0) {

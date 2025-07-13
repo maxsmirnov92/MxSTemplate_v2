@@ -79,7 +79,6 @@ import net.maxsmr.feature.address_sorter.ui.adapter.AddressInputData
 import net.maxsmr.feature.download.data.DownloadService
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.data.DownloadsViewModel.Companion.toParams
-import net.maxsmr.feature.download.data.storage.DownloadServiceStorage
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import retrofit2.HttpException
@@ -102,7 +101,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     private val addressSortUseCase: AddressSortUseCase,
     private val addressRoutingUseCase: AddressRoutingUseCase,
     @ApplicationContext private val context: Context,
-) : BaseViewModel(state, context) {
+) : BaseViewModel(state) {
 
     val exportFileNameField: Field<String> =
         fileNameField(isRequired = true, initialValue = EXPORT_FILE_NAME_DEFAULT)
@@ -180,7 +179,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun doRefresh() {
-        removeSnackbarsFromQueue()
+        hideSnackbars()
         _resultItemsState.value = LoadState.loading(_resultItemsState.value.data.orEmpty())
 
         viewModelScope.launch {
@@ -351,7 +350,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onClearAction() {
-        removeSnackbarsFromQueue()
+        hideSnackbars()
         showYesNoDialog(DIALOG_TAG_CLEAR_ITEMS, TextMessage(R.string.address_sorter_dialog_clear_items_message)) {
             if (it == DialogInterface.BUTTON_POSITIVE) {
                 viewModelScope.launch {
@@ -365,7 +364,7 @@ class AddressSorterViewModel @AssistedInject constructor(
         val location = locationViewModel.currentLocation.value?.let {
             Address.Location(it.latitude.toFloat(), it.longitude.toFloat())
         } ?: return
-        removeSnackbarsFromQueue()
+        hideSnackbars()
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
             val result = reverseGeocodeUseCase.invoke(location)
@@ -425,7 +424,7 @@ class AddressSorterViewModel @AssistedInject constructor(
     }
 
     fun onInfoAction(item: AddressItem) {
-        removeSnackbarsFromQueue()
+        hideSnackbars()
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
 
         viewModelScope.launch {
@@ -573,7 +572,7 @@ class AddressSorterViewModel @AssistedInject constructor(
      * Для адреса с данным [id] был выбран [AddressSuggestItem] из выпадающего списка
      */
     fun onSuggestSelected(id: Long, suggestItem: AddressSuggestItem) {
-        removeSnackbarsFromQueue()
+        hideSnackbars()
         dialogQueue.toggle(true, DIALOG_TAG_PROGRESS)
         viewModelScope.launch {
             // убрать только из мапы

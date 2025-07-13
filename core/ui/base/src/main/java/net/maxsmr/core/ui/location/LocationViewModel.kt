@@ -31,7 +31,7 @@ class LocationViewModel @AssistedInject constructor(
     @Assisted private val mockLocationReceiver: ILocationReceiver?,
     private val locationReceiver: ILocationReceiver,
     @ApplicationContext private val context: Context
-) : BaseViewModel(state, context), LocationCallback {
+) : BaseViewModel(state), LocationCallback {
 
     val currentLocation: StateFlow<Location?> by lazy {  _currentLocation.asStateFlow() }
 

@@ -55,7 +55,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     private val cacheRepo: CacheDataStoreRepository,
     private val settingsRepo: SettingsDataStoreRepository,
     @ApplicationContext private val context: Context,
-) : BaseViewModel(state, context) {
+) : BaseViewModel(state) {
 
     val urlField: Field<String> = urlField(
         hintResId = R.string.download_field_url_hint,

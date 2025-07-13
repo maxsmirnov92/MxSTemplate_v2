@@ -2,7 +2,6 @@ package net.maxsmr.mxstemplate.ui.delegate
 
 import android.app.Activity
 import dagger.hilt.android.EntryPointAccessors
-import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.ui.R
@@ -29,7 +28,7 @@ class MainRateAppComponentDelegate(
                     MobileServicesEntryPoint::class.java
                 ).marketIntentLauncher.startActivityMarketIntent(host)
         ) {
-            viewModel.showToast(TextMessage(R.string.error_intent_open_market))
+            viewModel.showToast(R.string.error_intent_open_market)
         }
     }
 

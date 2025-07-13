@@ -16,6 +16,7 @@ import net.maxsmr.commonutils.getSendTextIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.network.URL_SCHEME_HTTPS
 import net.maxsmr.core.network.equalsIgnoreSubDomain
 import net.maxsmr.core.network.isUrlValid
@@ -23,9 +24,9 @@ import net.maxsmr.core.network.toValidUri
 import net.maxsmr.core.ui.field.urlField
 
 abstract class BaseCustomizableWebViewModel(
+    networkStateManager: NetworkStateManager,
     state: SavedStateHandle,
-    context: Context
-) : BaseWebViewModel(state, context) {
+) : BaseWebViewModel(networkStateManager, state) {
 
     val urlField: Field<String> = urlField(
         hintResId = R.string.webview_dialog_open_url_field_hint,
@@ -82,7 +83,7 @@ abstract class BaseCustomizableWebViewModel(
     fun onCopyLinkAction(context: Context) {
         currentUrl.value?.let {
             context.copyToClipboard(context.getString(R.string.webview_url_link_title), it.toString())
-            showToast(TextMessage(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message))
+            showToast(net.maxsmr.core.ui.R.string.toast_link_copied_to_clipboard_message)
         }
     }
 
@@ -91,7 +92,7 @@ abstract class BaseCustomizableWebViewModel(
             context.startActivitySafe(getSendTextIntent(it.toString()).apply {
                 putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.webview_url_link_title))
             }) {
-                showToast(TextMessage(net.maxsmr.core.ui.R.string.error_intent_send))
+                showToast(net.maxsmr.core.ui.R.string.error_intent_send)
             }
         }
     }
