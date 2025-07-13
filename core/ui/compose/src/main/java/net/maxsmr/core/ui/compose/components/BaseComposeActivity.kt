@@ -5,8 +5,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.CallSuper
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModelProvider
@@ -32,7 +36,7 @@ import net.maxsmr.core.ui.components.handleEvents
 import net.maxsmr.core.ui.compose.alert.delegate.ComposableAlertDelegate
 import net.maxsmr.core.ui.message.toast.ToastActorImpl
 import net.maxsmr.core.ui.navigation.NavigationActorImpl
-import net.maxsmr.designsystem.compose.component.AppBackground
+import net.maxsmr.designsystem.compose.theme.AppTheme
 import net.maxsmr.permissionchecker.BaseDeniedPermissionsHandler
 import net.maxsmr.permissionchecker.PermissionsCallbacks
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -82,9 +86,15 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
                 rememberNavController(),
                 SnackbarHostState()
             ).apply {
-                RegisterActivityComponents(this)
-                AppBackground {
-                    SetScreenContent(this)
+                AppTheme {
+                    // A surface container using the 'background' color from the theme
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.surface // background
+                    ) {
+                        SetScreenContent(this)
+                        RegisterActivityComponents(this)
+                    }
                 }
             }
         }
