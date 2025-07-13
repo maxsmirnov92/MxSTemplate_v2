@@ -88,7 +88,9 @@ class DialogComposableAlertRepresentationBuilder(
                     onCancel?.invoke()
                 },
                 title = {
-                    Text(title)
+                    if (title.isNotEmpty()) {
+                        Text(title)
+                    }
                 },
                 text = {
                     Column {
@@ -102,54 +104,68 @@ class DialogComposableAlertRepresentationBuilder(
                                 contentPadding = PaddingValues(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                items(answers, {
-                                    it.tag ?: it.title.get(context)
-                                }) {
+                                items(
+                                    answers,
+                                    { it.tag ?: it.title.get(context) }
+                                ) {
                                     val isChecked = it.isChecked ?: false
                                     val text = it.title.get(context).toString()
-                                    when(type) {
+                                    when (type) {
                                         MultiChoiceAnswersData.AnswerType.RADIO -> {
-                                            RadioButtonWithText(isChecked, text, {
-                                                answersState.value = answers.map { a ->
-                                                    if (a != it) {
-                                                        a.copy(isChecked = false)
-                                                    } else {
-                                                        a.copy(isChecked = true)
+                                            RadioButtonWithText(
+                                                isSelected = isChecked,
+                                                text = text,
+                                                onClick = {
+                                                    answersState.value = answers.map { a ->
+                                                        if (a != it) {
+                                                            a.copy(isChecked = false)
+                                                        } else {
+                                                            a.copy(isChecked = true)
+                                                        }
                                                     }
-                                                }
-                                                if (it.closeAfterSelect) {
+                                                    if (it.closeAfterSelect) {
+                                                        alert.doClose()
+                                                    }
+                                                })
+                                        }
+
+                                        MultiChoiceAnswersData.AnswerType.CHECKBOX -> {
+                                            CheckBoxWithText(
+                                                isChecked = isChecked,
+                                                text = text,
+                                                onCheckedChange = { checked ->
+                                                    answersState.value = answers.map { a ->
+                                                        if (a != it) {
+                                                            a
+                                                        } else {
+                                                            a.copy(isChecked = checked)
+                                                        }
+                                                    }
+                                                    if (it.closeAfterSelect) {
+                                                        alert.doClose()
+                                                    }
+                                                })
+                                        }
+
+                                        else -> {
+                                            Text(
+                                                text = text,
+                                                modifier = Modifier.clickable {
+                                                    answersState.value = answers.map { a ->
+                                                        if (a != it) {
+                                                            a
+                                                        } else {
+                                                            a.copy(isChecked = true)
+                                                        }
+                                                    }
                                                     alert.doClose()
                                                 }
-                                            })
-                                        }
-                                        MultiChoiceAnswersData.AnswerType.CHECKBOX -> {
-                                            CheckBoxWithText(isChecked, text, { checked ->
-                                                answersState.value = answers.map { a ->
-                                                    if (a != it) {
-                                                        a
-                                                    } else {
-                                                        a.copy(isChecked = checked)
-                                                    }
-                                                }
-                                            })
-                                        }
-                                        else -> {
-                                            Text(text, Modifier.clickable {
-                                                answersState.value = answers.map { a ->
-                                                    if (a != it) {
-                                                        a
-                                                    } else {
-                                                        a.copy(isChecked = true)
-                                                    }
-                                                }
-                                                alert.doClose()
-                                            })
+                                            )
                                         }
                                     }
                                 }
                             }
                         }
-
                     }
                 },
                 confirmButton = {
@@ -171,7 +187,6 @@ class DialogComposableAlertRepresentationBuilder(
                     dismissOnBackPress = cancelable,
                     dismissOnClickOutside = cancelable
                 ),
-
             )
         }
     }
