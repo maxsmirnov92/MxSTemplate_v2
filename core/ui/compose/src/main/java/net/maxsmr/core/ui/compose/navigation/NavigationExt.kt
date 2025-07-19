@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import dagger.hilt.android.lifecycle.HiltViewModel
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.ui.compose.components.ComposableDependencies
-import net.maxsmr.core.ui.compose.components.IComposableViewModelsContainer
+import net.maxsmr.core.ui.compose.components.ComposableViewModelsContainer
 import net.maxsmr.core.ui.compose.components.LocalViewModelStoreOwner
 import net.maxsmr.core.ui.compose.navigation.ViewModelResult.Companion.createWithRegister
 
@@ -34,7 +34,7 @@ fun getRouteWithArgs(
 @Composable
 inline fun <reified VM : BaseViewModel> hiltViewModel(
     route: String,
-    viewModelContainer: IComposableViewModelsContainer,
+    viewModelContainer: ComposableViewModelsContainer,
     dependencies: ComposableDependencies,
     sameComposableHierarchy: Boolean = true,
     viewModelStoreOwner: ViewModelStoreOwner = LocalContext.current as ViewModelStoreOwner,
@@ -66,7 +66,7 @@ inline fun <reified VM : BaseViewModel> hiltViewModel(
 @Composable
 inline fun <reified VM : BaseViewModel> viewModel(
     route: String,
-    viewModelContainer: IComposableViewModelsContainer,
+    viewModelContainer: ComposableViewModelsContainer,
     dependencies: ComposableDependencies,
     sameComposableHierarchy: Boolean = true,
     args: Any? = null,
@@ -94,7 +94,7 @@ inline fun <reified VM : BaseViewModel> viewModel(
 fun LocalViewModelStoreOwner.ClearOnDispose(
     route: String,
     viewModel: BaseViewModel,
-    viewModelContainer: IComposableViewModelsContainer,
+    viewModelContainer: ComposableViewModelsContainer,
 ) {
     DisposableEffect(Unit) {
         onDispose {
@@ -122,7 +122,7 @@ class ViewModelResult<VM : BaseViewModel>(
         @Composable
         fun <VM : BaseViewModel> VM.createWithRegister(
             route: String,
-            viewModelContainer: IComposableViewModelsContainer,
+            viewModelContainer: ComposableViewModelsContainer,
             dependencies: ComposableDependencies,
             needDeferred: Boolean,
             viewModelStoreOwner: ViewModelStoreOwner,

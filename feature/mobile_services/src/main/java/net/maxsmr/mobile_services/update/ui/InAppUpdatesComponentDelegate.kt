@@ -11,7 +11,7 @@ import net.maxsmr.core.android.base.actions.ToastDuration
 import net.maxsmr.core.android.base.actions.ToastExtraData
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
-import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
+import net.maxsmr.core.android.base.result.ActivityResultRegisterer
 import net.maxsmr.core.ui.components.IComponentDelegate
 import net.maxsmr.core.utils.hasTimePassed
 import net.maxsmr.feature.mobile_services.R
@@ -24,14 +24,14 @@ import net.maxsmr.mobile_services.update.RuStoreInAppUpdateChecker
 import net.maxsmr.mobile_services.update.StubInAppUpdateChecker
 
 class InAppUpdatesComponentDelegate(
-    override val host: ICanRegisterForActivityResult,
+    override val host: ActivityResultRegisterer,
     override val viewModel: BaseViewModel,
     private val cacheRepo: CacheDataStoreRepository,
     private val interval: Long,
     updateRequestCode: Int,
     availability: IMobileServicesAvailability,
     mobileBuildType: MobileBuildType,
-) : IComponentDelegate<ICanRegisterForActivityResult>, InAppUpdateChecker.Callbacks {
+) : IComponentDelegate<ActivityResultRegisterer>, InAppUpdateChecker.Callbacks {
 
     init {
         check(interval >= 0) {
@@ -39,7 +39,7 @@ class InAppUpdatesComponentDelegate(
         }
     }
 
-    override val context: Context by lazy { host.attachedActivity }
+    override val context: Context by lazy { host.requireActivity }
 
     // by lazy нельзя из-за registerForActivityResult в CommonInAppUpdateChecker
     private val checker: InAppUpdateChecker = when (mobileBuildType) {

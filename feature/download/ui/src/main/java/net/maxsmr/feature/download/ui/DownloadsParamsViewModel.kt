@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.REG_EX_ALGORITHM_SHA1
 import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.flow.field.observeWithClearError
-import net.maxsmr.commonutils.flow.field.validateAndSetByRequiredFields
+import net.maxsmr.commonutils.flow.field.validateAndSetByRequired
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStreamOrThrow
@@ -34,13 +34,13 @@ import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.domain.entities.feature.download.DownloadParamsModel
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.components.fragments.BaseVmFragment
-import net.maxsmr.core.ui.field.BooleanFieldWithState
 import net.maxsmr.core.ui.field.createField
 import net.maxsmr.core.ui.field.createNonEmptyField
 import net.maxsmr.core.ui.field.createTextField
 import net.maxsmr.core.ui.field.fileNameField
-import net.maxsmr.core.ui.field.subDirNameField
 import net.maxsmr.core.ui.field.saveToInternalDirField
+import net.maxsmr.core.ui.field.subDirNameField
+import net.maxsmr.core.ui.field.toggleRequiredWithEnabled
 import net.maxsmr.core.ui.field.urlField
 import net.maxsmr.feature.download.data.DownloadsViewModel
 import net.maxsmr.feature.download.ui.adapter.HeaderInfoAdapterData
@@ -76,8 +76,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     val fileNameField: Field<String> = fileNameField()
 
-    val fileNameChangeStateField: Field<BooleanFieldWithState> = createNonEmptyField(
-        initialValue = BooleanFieldWithState(false),
+    val fileNameChangeStateField: Field<Boolean> = createNonEmptyField(
+        initialValue = false,
         key = KEY_FIELD_FILE_NAME_CHANGE_STATE
     )
 
@@ -100,8 +100,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         key = KEY_FIELD_IGNORE_SERVER_ERRORS
     )
 
-    val ignoreAttachmentStateField: Field<BooleanFieldWithState> = createNonEmptyField(
-        initialValue = BooleanFieldWithState(false),
+    val ignoreAttachmentStateField: Field<Boolean> = createNonEmptyField(
+        initialValue = false,
         key = KEY_FIELD_IGNORE_ATTACHMENT_STATE
     )
 
@@ -160,29 +160,22 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
 
     override fun onInitialized() {
-        fun Field<BooleanFieldWithState>.toggleState(value: Boolean) {
-            this.value = if (value) {
-                BooleanFieldWithState(value = true, isEnabled = false)
+
+        fun Field<Boolean>.toggleState(value: Boolean) {
+            if (value) {
+                this.value = true
+                enabled = false
             } else {
-                this.value.copy(isEnabled = true)
+                enabled = true
             }
         }
 
         urlField.observeWithClearError(viewModelScope)
         methodField.valueFlow.observe {
-            var body = bodyField.value
-            body = if (it == Method.POST) {
-                bodyField.setRequired(
-                    required = true,
-                    emptyMessageResId = R.string.download_field_request_body_empty_error,
-                    withAsterisk = true
-                )
-                body.copy(isEnabled = true)
-            } else {
-                bodyField.setNonRequired()
-                body.copy(isEnabled = false)
-            }
-            bodyField.value = body
+            bodyField.toggleRequiredWithEnabled(
+                it == Method.POST,
+                R.string.download_field_request_body_empty_error
+            )
         }
         bodyField.observeWithClearError(viewModelScope)
         fileNameField.observeWithClearError(viewModelScope)
@@ -202,9 +195,8 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     }
 
     fun onBodyUriSelected(uri: Uri) {
-        val body = bodyField.value
-        if (!body.isEnabled) return
-        bodyField.value = body.copy(bodyUri = uri.toString())
+        if (!bodyField.enabled) return
+        bodyField.value = UriBodyContainer(bodyUri = uri.toString())
     }
 
     fun onClearRequestBodyUri() {
@@ -235,12 +227,12 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         }
 
         val keyField = createTextField(EMPTY_STRING) {
-            setRequired(true, R.string.download_field_header_key_empty_error)
+            required(R.string.download_field_header_key_empty_error)
             hint(R.string.download_field_header_key_hint)
         }
         val keyInfo = keyField.observe(true)
         val valueField = createTextField(EMPTY_STRING) {
-            setRequired(true, R.string.download_field_header_value_empty_error)
+            required(R.string.download_field_header_value_empty_error)
             hint(R.string.download_field_header_value_hint)
         }
         val valueInfo = valueField.observe(false)
@@ -375,7 +367,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     fun onStartDownloadClick(fragment: BaseVmFragment<*>, errorFieldResult: (Field<*>?) -> Unit) {
 
         fun startDownload() {
-            val result = allFields.validateAndSetByRequiredFields()
+            val result = allFields.validateAndSetByRequired()
             if (result.isNotEmpty()) {
                 errorFieldResult(result.first())
                 return
@@ -386,7 +378,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
             val fileName = fileNameField.value
             val subDirName = subDirNameField.value
-            val ignoreFileName = !fileNameChangeStateField.value.value
+            val ignoreFileName = !fileNameChangeStateField.value
 
             val saveToInternalDir = saveToInternalDirField.value
 
@@ -400,7 +392,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
             val targetHash = targetHashField.value
 
             val ignoreServerErrors = ignoreServerErrorsField.value
-            val ignoreAttachment = ignoreAttachmentStateField.value.value
+            val ignoreAttachment = ignoreAttachmentStateField.value
             val replaceFile = replaceFileField.value
             val deleteUnfinished = deleteUnfinishedField.value
 
@@ -437,7 +429,7 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         isKey: Boolean,
         updateInfoFunc: (HeaderInfoAdapterData.Info) -> HeaderInfoAdapterData.Info,
     ) {
-        val items = headerItems.value ?: return
+        val items = headerItems.value
         var hasChanged = false
         val newItems = mutableListOf<HeaderInfoAdapterData>().apply {
             items.forEach {
@@ -478,7 +470,6 @@ class DownloadsParamsViewModel @AssistedInject constructor(
 
     data class UriBodyContainer(
         val bodyUri: String? = null,
-        val isEnabled: Boolean = false,
     ) : Serializable {
 
         val isEmpty = bodyUri.isNullOrEmpty()

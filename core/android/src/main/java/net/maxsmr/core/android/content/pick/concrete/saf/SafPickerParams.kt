@@ -4,6 +4,7 @@ import android.content.Intent
 import kotlinx.parcelize.Parcelize
 import net.maxsmr.commonutils.media.MIME_TYPE_ANY
 import net.maxsmr.commonutils.media.getMimeTypeFromExtension
+import net.maxsmr.core.android.content.MIME_TYPE_TEXT
 import net.maxsmr.core.android.content.pick.concrete.ConcretePickerParams
 import net.maxsmr.core.android.content.pick.concrete.ConcretePickerType
 
@@ -25,7 +26,7 @@ class SafPickerParams @JvmOverloads constructor(
 
     companion object {
 
-        private val DOCUMENT_MIME_TYPES = arrayListOf(
+        val DOCUMENT_MIME_TYPES = arrayListOf(
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "application/msword",
             "application/vnd.ms-excel",
@@ -44,15 +45,11 @@ class SafPickerParams @JvmOverloads constructor(
             "text/plain",
         )
 
-        private val IMAGE_MIME_TYPES = arrayListOf(
+        val IMAGE_MIME_TYPES = arrayListOf(
             "image/jpeg",
             "image/pjpeg",
             "image/png",
         )
-
-        private const val MIME_TYPE_JSON = "application/json"
-
-        private const val MIME_TYPE_TEXT = "text/plain"
 
         @JvmStatic
         fun documents() = SafPickerParams(intentType = MIME_TYPE_ANY, mimeTypes = DOCUMENT_MIME_TYPES)

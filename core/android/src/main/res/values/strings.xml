@@ -4,7 +4,6 @@
     <string name="no">No</string>
     <string name="delete">Delete</string>
     <string name="close">Close</string>
-    <string name="understand">Understood</string>
 
     <string name="error_format">Error occurred: \"%s\"</string>
     <string name="error_unexpected">Unexpected error occurred</string>

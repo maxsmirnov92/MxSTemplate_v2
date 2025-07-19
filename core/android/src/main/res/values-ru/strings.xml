@@ -3,7 +3,6 @@
     <string name="no">Нет</string>
     <string name="delete">Удалить</string>
     <string name="close">Закрыть</string>
-    <string name="understand">Понятно</string>
 
     <string name="error_format">Произошла ошибка: \"%s\"</string>
     <string name="error_unexpected">Произошла неизвестная ошибка</string>

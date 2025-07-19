@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import net.maxsmr.commonutils.flow.field.Field
-import net.maxsmr.commonutils.flow.field.anyRequiredFieldEmptyFlow
+import net.maxsmr.commonutils.flow.field.anyRequiredFieldIsEmptyFlow
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.ui.field.createTextField
@@ -22,7 +22,7 @@ abstract class BaseFeedbackViewModel(state: SavedStateHandle) : BaseViewModel(st
         initialValue = EMPTY_STRING,
         key = KEY_FIELD_SUBJECT
     ) {
-        setRequired(true, R.string.rate_feedback_field_subject_empty_error)
+        required(R.string.rate_feedback_field_subject_empty_error)
         hint(R.string.rate_feedback_field_subject_hint, withAsterisk = false)
     }
 
@@ -30,22 +30,23 @@ abstract class BaseFeedbackViewModel(state: SavedStateHandle) : BaseViewModel(st
         initialValue = EMPTY_STRING,
         key = KEY_FIELD_TEXT
     ) {
-        setRequired(true, R.string.rate_feedback_field_text_empty_error)
+        required(R.string.rate_feedback_field_text_empty_error)
         hint(R.string.rate_feedback_field_message_hint, withAsterisk = false)
     }
 
     val isSendEnabled = listOf(subjectField, textField)
-        .anyRequiredFieldEmptyFlow()
+        .anyRequiredFieldIsEmptyFlow()
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun openEmailIntent(context: Context) {
         if (!isSendEnabled.value) return
         val subject = subjectField.value
         val text = textField.value
-        context.openEmailIntentWithToastError(emailAddress, sendIntentFunc = {
-            putExtra(Intent.EXTRA_SUBJECT, subject)
-            putExtra(Intent.EXTRA_TEXT, text)
-        })
+        context.openEmailIntentWithToastError(
+            email = emailAddress,
+            subject = subject,
+            text = text
+        )
     }
 
     companion object {

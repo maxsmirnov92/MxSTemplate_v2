@@ -2,7 +2,6 @@ package net.maxsmr.core.android.content
 
 import android.content.Intent
 import android.net.Uri
-import net.maxsmr.commonutils.SendAction
 import net.maxsmr.commonutils.getSendIntent
 import net.maxsmr.commonutils.getViewIntent
 import net.maxsmr.commonutils.text.EMPTY_STRING
@@ -49,7 +48,7 @@ class ViewIntentStrategy(override val data: ViewData) : IntentWithUriProvideStra
 class ShareIntentStrategy(override val data: ShareData) : IntentWithUriProvideStrategy<ShareIntentStrategy.ShareData> {
 
     override fun intent(): Intent =
-        getSendIntent(SendAction.SEND).apply { setupIntent(this) }
+        getSendIntent(false).apply { setupIntent(this) }
 
     override fun setupIntent(intent: Intent) {
         with(this@ShareIntentStrategy.data) {

@@ -7,7 +7,7 @@ import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.model.toJSONObject
-import net.maxsmr.commonutils.stream.IStreamNotifier
+import net.maxsmr.commonutils.stream.StreamNotifier
 import net.maxsmr.commonutils.stream.copyStreamOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.text.charsetForNameOrNull
@@ -204,7 +204,7 @@ fun Response.asStringOrThrow(previousDownloadedSize: Long? = null): String? {
 fun Response.write(
     outputStream: OutputStream,
     previousDownloadedSize: Long? = null,
-    notifier: IStreamNotifier? = null,
+    notifier: StreamNotifier? = null,
 ): ResponseBody? = try {
     writeOrThrow(outputStream, previousDownloadedSize, notifier)
 } catch (e: IOException) {
@@ -216,7 +216,7 @@ fun Response.write(
 fun Response.writeOrThrow(
     outputStream: OutputStream,
     previousDownloadedSize: Long? = null,
-    notifier: IStreamNotifier? = null,
+    notifier: StreamNotifier? = null,
 ): ResponseBody {
     val responseBody = this?.body ?: throw RuntimeException("Response body is missing")
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
@@ -315,7 +315,7 @@ fun ResponseBody.asStringClonedOrThrow(): Pair<String, Charset> {
  */
 fun Response.writeCloned(
     outputStream: OutputStream?,
-    notifier: IStreamNotifier? = null,
+    notifier: StreamNotifier? = null,
 ): ResponseBody? = try {
     writeClonedOrThrow(outputStream, notifier)
 } catch (e: IOException) {
@@ -326,7 +326,7 @@ fun Response.writeCloned(
 @Throws(IOException::class)
 fun Response.writeClonedOrThrow(
     outputStream: OutputStream?,
-    notifier: IStreamNotifier? = null,
+    notifier: StreamNotifier? = null,
 ): ResponseBody? {
     outputStream ?: return null
     val responseBody = this.body ?: return null
@@ -455,12 +455,12 @@ private fun Response?.skipBytesIfSupportedOrThrow(downloadedSize: Long?) {
 @Throws(IOException::class)
 private fun InputStream.copyToOutputStreamOrThrow(
     outputStream: OutputStream,
-    notifier: IStreamNotifier?,
+    notifier: StreamNotifier?,
     contentLength: Long,
 ) {
     copyStreamOrThrow(outputStream,
         if (notifier != null) {
-            object : IStreamNotifier {
+            object : StreamNotifier {
 
                 override val notifyInterval: Long = notifier.notifyInterval
 

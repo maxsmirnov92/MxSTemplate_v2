@@ -15,8 +15,7 @@ import net.maxsmr.commonutils.flow.observeEvents
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.core.android.R
 import net.maxsmr.core.android.base.delegates.FragmentViewBindingDelegate.Companion.onViewLifecycleCreated
-import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
-import net.maxsmr.core.android.content.pick.ContentPicker.Builder
+import net.maxsmr.core.android.base.result.ActivityResultRegisterer
 import net.maxsmr.core.android.content.pick.concrete.ConcretePickerParams
 import net.maxsmr.core.android.content.pick.concrete.camera.CameraPicker
 import net.maxsmr.core.android.content.pick.concrete.camera.CameraPickerParams
@@ -24,7 +23,7 @@ import net.maxsmr.core.android.content.pick.concrete.media.MediaPicker
 import net.maxsmr.core.android.content.pick.concrete.media.MediaPickerParams
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPicker
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
-import net.maxsmr.core.android.permissions.ICanAskPermissions
+import net.maxsmr.core.android.permissions.PermissionsRequester
 
 /**
  * Фасад для взятия контента из разных источников и обработки разрешений.
@@ -41,11 +40,11 @@ class ContentPicker<T> private constructor(
     private val requests: Set<PickRequest>,
     private val permissionHandler: PermissionHandler,
     private val showChooserAction: (Int, TextMessage, Map<ConcretePickerParams, IntentWithPermissions>) -> Unit,
-) where T : ICanAskPermissions, T : ICanRegisterForActivityResult, T : ViewModelStoreOwner, T : LifecycleOwner {
+) where T : PermissionsRequester, T : ActivityResultRegisterer, T : ViewModelStoreOwner, T : LifecycleOwner {
 
     private val viewModel: ContentPickerViewModel by lazy {
         // VM шарится между ContentPicker и AppIntentChooser
-        ViewModelProvider(host.attachedActivity)[ContentPickerViewModel::class.java]
+        ViewModelProvider(host.requireActivity)[ContentPickerViewModel::class.java]
     }
 
     private val cameraPicker by lazy { CameraPicker(host) }
@@ -54,7 +53,7 @@ class ContentPicker<T> private constructor(
 
     private val resultLaunchers = mutableMapOf<Int, ActivityResultLauncher<Intent>>()
 
-    private val context by lazy { host.attachedContext }
+    private val context by lazy { host.requireContext }
 
     init {
         // регистрируем launcher'ы для всех реквестов в этом пикере
@@ -241,7 +240,7 @@ class ContentPicker<T> private constructor(
         protected val host: T,
         private val permissionHandler: PermissionHandler,
         private val showChooserAction: (Int, TextMessage, Map<ConcretePickerParams, IntentWithPermissions>) -> Unit,
-    ) where T : ICanAskPermissions, T : ICanRegisterForActivityResult, T : ViewModelStoreOwner, T : LifecycleOwner {
+    ) where T : PermissionsRequester, T : ActivityResultRegisterer, T : ViewModelStoreOwner, T : LifecycleOwner {
 
         private val requests: MutableSet<PickRequest> = mutableSetOf()
 

@@ -2,9 +2,9 @@ package net.maxsmr.core.ui.view.content.pick.chooser
 
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelStoreOwner
-import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
+import net.maxsmr.core.android.base.result.ActivityResultRegisterer
 import net.maxsmr.core.android.content.pick.ContentPicker
-import net.maxsmr.core.android.permissions.ICanAskPermissions
+import net.maxsmr.core.android.permissions.PermissionsRequester
 
 class HandlerContentPickerBuilder<T>(
     host: T,
@@ -32,4 +32,4 @@ class HandlerContentPickerBuilder<T>(
             host,
             AppIntentChooserData(code, title, intents)
         )
-    }) where T : ICanAskPermissions, T : ICanRegisterForActivityResult, T : ViewModelStoreOwner, T : LifecycleOwner
+    }) where T : PermissionsRequester, T : ActivityResultRegisterer, T : ViewModelStoreOwner, T : LifecycleOwner

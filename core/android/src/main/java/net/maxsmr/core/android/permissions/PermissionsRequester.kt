@@ -4,11 +4,11 @@ import android.content.Context
 import androidx.activity.ComponentActivity
 import net.maxsmr.permissionchecker.PermissionsHelper
 
-interface ICanAskPermissions {
+interface PermissionsRequester {
     
-    val attachedContext: Context
+    val requireContext: Context
 
-    val attachedActivity: ComponentActivity
+    val requireActivity: ComponentActivity
     
     val permissionsHelper: PermissionsHelper
 

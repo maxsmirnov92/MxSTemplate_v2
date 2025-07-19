@@ -2,8 +2,8 @@ package net.maxsmr.core.android.location
 
 import android.content.Context
 import android.location.Location
-import net.maxsmr.commonutils.location.isGpsAvailable
-import net.maxsmr.commonutils.location.isGpsEnabled
+import net.maxsmr.commonutils.location.hasLocationFeature
+import net.maxsmr.commonutils.location.isLocationProviderEnabled
 
 interface LocationCallback {
 
@@ -15,14 +15,18 @@ interface LocationCallback {
 
     fun onGpsProviderNotEnabled()
 
-    fun checkLocationEnabled(context: Context, isGpsOnly: Boolean, checkOnly: Boolean = false): Boolean {
-        if (!isGpsAvailable(isGpsOnly, context)) {
-            if (!checkOnly) {
+    fun checkLocationEnabled(
+        context: Context,
+        withGpsOnly: Boolean,
+        withNotify: Boolean = false
+    ): Boolean {
+        if (!hasLocationFeature(withGpsOnly, context)) {
+            if (!withNotify) {
                 onGpsNotAvailable()
             }
             return false
-        } else if (!isGpsEnabled(isGpsOnly, context)) {
-            if (!checkOnly) {
+        } else if (!isLocationProviderEnabled(withGpsOnly, context)) {
+            if (!withNotify) {
                 onGpsProviderNotEnabled()
             }
             return false

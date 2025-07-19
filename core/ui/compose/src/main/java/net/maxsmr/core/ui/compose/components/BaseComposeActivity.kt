@@ -25,9 +25,9 @@ import net.maxsmr.commonutils.flow.observe
 import net.maxsmr.commonutils.flow.observeEvents
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
+import net.maxsmr.core.android.base.result.ActivityResultRegisterer
 import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
-import net.maxsmr.core.android.permissions.ICanAskPermissions
+import net.maxsmr.core.android.permissions.PermissionsRequester
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.components.IComponentDelegate
@@ -45,11 +45,11 @@ import net.maxsmr.permissionchecker.PermissionsHelper
  * [BaseActivity] для использования экранов в виде Composable-функций
  */
 abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
-        ICanAskPermissions, ICanRegisterForActivityResult, IComposableViewModelsContainer {
+        PermissionsRequester, ActivityResultRegisterer, ComposableViewModelsContainer {
 
-    override val attachedContext: Context by lazy { this }
+    override val requireContext: Context by lazy { this }
 
-    override val attachedActivity: ComponentActivity by lazy { this }
+    override val requireActivity: ComponentActivity by lazy { this }
 
     protected abstract val viewModel: VM
 
@@ -152,7 +152,7 @@ abstract class BaseComposeActivity<VM : BaseViewModel> : BaseActivity(),
 
     override fun <VM : BaseViewModel> getFactoryForViewModel(
         viewModelClass: Class<VM>,
-        args: IComposableViewModelsContainer.IFactoryArgs<VM>?,
+        args: ComposableViewModelsContainer.IFactoryArgs<VM>?,
     ): ViewModelProvider.Factory? {
         return null
     }

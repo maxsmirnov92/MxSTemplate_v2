@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.flow.field.observeWithClearError
-import net.maxsmr.commonutils.flow.field.validateAndSetByRequiredFields
+import net.maxsmr.commonutils.flow.field.validateAndSetByRequired
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.core.android.base.BaseViewModel
@@ -21,10 +21,8 @@ import net.maxsmr.core.android.base.delegates.persistableValueInitial
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
-import net.maxsmr.core.ui.field.BooleanFieldWithState
-import net.maxsmr.core.ui.field.LongFieldWithState
 import net.maxsmr.core.ui.field.createNonEmptyField
-import net.maxsmr.core.ui.field.toggleRequiredFieldState
+import net.maxsmr.core.ui.field.toggleRequiredWithEnabled
 import net.maxsmr.core.ui.field.urlField
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
@@ -79,8 +77,8 @@ class SettingsViewModel @Inject constructor(
         key = KEY_FIELD_DISABLE_NOTIFICATIONS
     )
 
-    val updateNotificationIntervalStateField: Field<LongFieldWithState> = createNonEmptyField(
-        initialValue = LongFieldWithState(0),
+    val updateNotificationIntervalField: Field<Long> = createNonEmptyField(
+        initialValue = 0,
         key = KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE
     ) {
         validators(Field.Validator({
@@ -89,13 +87,13 @@ class SettingsViewModel @Inject constructor(
                 UPDATE_NOTIFICATION_INTERVAL_MIN
             )
         }) {
-            it.value >= UPDATE_NOTIFICATION_INTERVAL_MIN
+            it >= UPDATE_NOTIFICATION_INTERVAL_MIN
         })
         hint(R.string.settings_field_update_notification_interval_hint)
     }
 
-    val openLinksInExternalAppsField: Field<BooleanFieldWithState> = createNonEmptyField(
-        initialValue = BooleanFieldWithState(false),
+    val openLinksInExternalAppsField: Field<Boolean> = createNonEmptyField(
+        initialValue = false,
         key = KEY_FIELD_OPEN_LINKS_IN_EXTERNAL_APPS
     )
 
@@ -128,7 +126,7 @@ class SettingsViewModel @Inject constructor(
         retryOnConnectionFailureField,
         retryDownloadsField,
         disableNotificationsField,
-        updateNotificationIntervalStateField,
+        updateNotificationIntervalField,
         openLinksInExternalAppsField,
         startPageUrlField,
         routingAppField,
@@ -173,18 +171,18 @@ class SettingsViewModel @Inject constructor(
 
         disableNotificationsField.valueFlow.observe {
             _appSettings.tryEmit(currentAppSettings.copy(disableNotifications = it))
-            updateNotificationIntervalStateField.toggleRequiredFieldState(
+            updateNotificationIntervalField.toggleRequiredWithEnabled(
                 !it,
                 net.maxsmr.core.ui.R.string.field_error_empty,
             )
         }
 
-        updateNotificationIntervalStateField.observeWithClearError(viewModelScope) {
-            _appSettings.tryEmit(currentAppSettings.copy(updateNotificationInterval = it.value))
+        updateNotificationIntervalField.observeWithClearError(viewModelScope) {
+            _appSettings.tryEmit(currentAppSettings.copy(updateNotificationInterval = it))
         }
 
         openLinksInExternalAppsField.valueFlow.observe {
-            _appSettings.tryEmit(currentAppSettings.copy(openLinksInExternalApps = it.value))
+            _appSettings.tryEmit(currentAppSettings.copy(openLinksInExternalApps = it))
         }
 
         startPageUrlField.observeWithClearError(viewModelScope) {
@@ -205,7 +203,7 @@ class SettingsViewModel @Inject constructor(
         navigationAction: (() -> Unit)? = null,
     ) {
         viewModelScope.launch {
-            val result = allFields.validateAndSetByRequiredFields()
+            val result = allFields.validateAndSetByRequired()
             if (result.isNotEmpty()) {
                 errorFieldResult(result.first())
                 return@launch
@@ -264,10 +262,10 @@ class SettingsViewModel @Inject constructor(
         retryOnConnectionFailureField.value = settings.retryOnConnectionFailure
         retryDownloadsField.value = settings.retryDownloads
         disableNotificationsField.value = settings.disableNotifications
-        updateNotificationIntervalStateField.value =
-            LongFieldWithState(settings.updateNotificationInterval, !settings.disableNotifications)
-        openLinksInExternalAppsField.value =
-            BooleanFieldWithState(settings.openLinksInExternalApps, isAtLeastTiramisu())
+        updateNotificationIntervalField.value = settings.updateNotificationInterval
+        updateNotificationIntervalField.enabled = !settings.disableNotifications
+        openLinksInExternalAppsField.value = settings.openLinksInExternalApps
+        openLinksInExternalAppsField.enabled = isAtLeastTiramisu()
         startPageUrlField.value = settings.startPageUrl
         routingAppField.value = settings.routingApp
         routingAppFromCurrentField.value = settings.routingAppFromCurrent

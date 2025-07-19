@@ -25,14 +25,13 @@ import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.gui.runAction
 import net.maxsmr.commonutils.gui.scrollTo
 import net.maxsmr.commonutils.states.LoadState
-import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
+import net.maxsmr.core.android.base.delegates.savedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
-import net.maxsmr.core.ui.alert.delegate.BaseAlertDelegate
 import net.maxsmr.core.ui.alert.delegate.BaseViewAlertDelegate
 import net.maxsmr.core.ui.components.activities.BaseActivity.Companion.REQUEST_CODE_PERMISSION_GPS
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
@@ -60,7 +59,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
     override val layoutId: Int = R.layout.fragment_address_sorter
 
     override val viewModel: AddressSorterViewModel by viewModels {
-        AbstractSavedStateViewModelFactory(this) {
+        savedStateViewModelFactory(this) {
             factory.create(it, locationViewModel, downloadsViewModel, routingKeyUrl)
         }
     }
@@ -68,7 +67,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
     override val menuResId: Int = R.menu.menu_address_sorter
 
     private val locationViewModel: LocationViewModel by viewModels {
-        AbstractSavedStateViewModelFactory(this) {
+        savedStateViewModelFactory(this) {
             locationFactory.create(it, null)
         }
     }

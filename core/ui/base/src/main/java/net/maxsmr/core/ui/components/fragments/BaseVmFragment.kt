@@ -25,9 +25,9 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.resettableLazy
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
+import net.maxsmr.core.android.base.result.ActivityResultRegisterer
 import net.maxsmr.core.android.permissions.DialogDeniedPermissionsHandler
-import net.maxsmr.core.android.permissions.ICanAskPermissions
+import net.maxsmr.core.android.permissions.PermissionsRequester
 import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.alert.ConnectionHandler
 import net.maxsmr.core.ui.alert.delegate.BaseAlertDelegate
@@ -46,11 +46,11 @@ import net.maxsmr.permissionchecker.PermissionsHelper
  * Фрагмент с конкретным типом VM и базовыми методами для подписки
  */
 abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
-        ICanAskPermissions, ICanRegisterForActivityResult {
+        PermissionsRequester, ActivityResultRegisterer {
 
-    override val attachedContext: Context by lazy { requireContext() }
+    override val requireContext: Context by lazy { requireContext() }
 
-    override val attachedActivity: ComponentActivity by lazy { requireActivity() }
+    override val requireActivity: ComponentActivity by lazy { requireActivity() }
 
     /**
      * Разметка для использования в чистом view либо с ComposeView

@@ -9,15 +9,15 @@ enum class FileFormat(
     val extension: String,
 ) {
 
-    PDF("application/pdf", "pdf"),
-    XML_TEXT("text/xml", "xml"),
-    XML_APPLICATION("application/xml", "xml"),
-    TEXT("text/plain", "txt"),
-    HTML("text/html", "html"),
-    IMAGE_JPEG("image/jpeg", "jpg"),
-    IMAGE_PNG("image/png", "png"),
-    IMAGE_WEBP("image/webp", "png"),
-    JSON("application/json", "json");
+    PDF(MIME_TYPE_PDF, "pdf"),
+    XML_TEXT(MIME_TYPE_XML_TEXT, "xml"),
+    XML_APPLICATION(MIME_TYPE_XML_APPLICATION, "xml"),
+    TEXT(MIME_TYPE_TEXT, "txt"),
+    HTML(MIME_TYPE_HTML, "html"),
+    IMAGE_JPEG(MIME_TYPE_JPEG, "jpg"),
+    IMAGE_PNG(MIME_TYPE_PNG, "png"),
+    IMAGE_WEBP(MIME_TYPE_WEBP, "png"),
+    JSON(MIME_TYPE_JSON, "json");
 
     companion object {
 

@@ -9,7 +9,7 @@ import net.maxsmr.core.android.base.BaseViewModel
  * регистрации экранных компонентов
  * и предоставления [ViewModelProvider.Factory] для данного типа VM и аргументов по требованию
  */
-interface IComposableViewModelsContainer {
+interface ComposableViewModelsContainer {
 
     fun <VM : BaseViewModel> getFactoryForViewModel(
         viewModelClass: Class<VM>,

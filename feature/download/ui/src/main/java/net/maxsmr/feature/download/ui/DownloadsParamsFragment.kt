@@ -11,22 +11,21 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.combine
 import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.flow.field.observeFromText
 import net.maxsmr.commonutils.gui.addSoftInputStateListener
 import net.maxsmr.commonutils.gui.bindToTextNotNull
-import net.maxsmr.commonutils.gui.clearFocus
 import net.maxsmr.commonutils.gui.hideKeyboard
 import net.maxsmr.commonutils.gui.runOnceLayoutChanges
 import net.maxsmr.commonutils.gui.scrollToView
 import net.maxsmr.commonutils.gui.setTextOrGone
-import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
+import net.maxsmr.core.android.base.delegates.savedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.network.Method
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.core.ui.components.fragments.BaseMenuFragment
 import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
@@ -54,7 +53,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(),
     override val layoutId: Int = R.layout.fragment_downloads_params
 
     override val viewModel: DownloadsParamsViewModel by viewModels {
-        AbstractSavedStateViewModelFactory(this) {
+        savedStateViewModelFactory(this) {
             factory.create(it, downloadsViewModel)
         }
     }
@@ -146,18 +145,20 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(),
             binding.spinnerMethod.setSelection(it.ordinal)
         }
 
-        viewModel.bodyField.valueFlow.observeSafe {
-            binding.containerSelectRequestBody.isEnabled = it.isEnabled
-            binding.ibSelectRequestBody.isEnabled = it.isEnabled
-            binding.ibClearRequestBody.isVisible = !it.isEmpty
-            binding.tvRequestBodyName.text = it.getName(requireContext()).takeIf { name -> name.isNotEmpty() }
+        combine(viewModel.bodyField.valueFlow, viewModel.bodyField.enabledFlow) {value, enabled -> value to enabled}.observeSafe {
+            binding.ibClearRequestBody.isVisible = !it.first.isEmpty
+            binding.tvRequestBodyName.text = it.first.getName(requireContext()).takeIf { name -> name.isNotEmpty() }
                 ?: getString(
-                    if (it.isEnabled) {
+                    if (it.second) {
                         R.string.download_field_request_body_empty_text
                     } else {
                         R.string.download_field_request_body_non_required_text
                     }
                 )
+        }
+        viewModel.bodyField.enabledFlow.observeSafe {
+            binding.containerSelectRequestBody.isEnabled = it
+            binding.ibSelectRequestBody.isEnabled = it
         }
         viewModel.bodyField.errorFlow.observeSafe {
             binding.tvRequestBodyError.setTextOrGone(it?.get(requireContext()))
@@ -185,7 +186,6 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(),
 
         binding.rvHeaders.adapter = headerInfoAdapter
         viewModel.headerItems.observeSafe {
-//            requireActivity().clearFocus()
             headerInfoAdapter.items = it
         }
 
@@ -200,7 +200,6 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(),
         }
 
         binding.btStart.setOnClickListener {
-            requireActivity().clearFocus()
             doOnPermissionsResult(
                 BaseActivity.REQUEST_CODE_PERMISSION_WRITE_EXTERNAL_STORAGE,
                 listOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)

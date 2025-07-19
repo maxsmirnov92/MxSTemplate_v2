@@ -5,12 +5,10 @@ import android.widget.EditText
 import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleOwner
 import com.google.android.material.textfield.TextInputLayout
+import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.commonutils.flow.observe
 import net.maxsmr.commonutils.gui.bindTo
 import net.maxsmr.commonutils.gui.setCheckedDistinct
-import net.maxsmr.commonutils.flow.field.Field
-import net.maxsmr.core.ui.field.BooleanFieldWithState
-import net.maxsmr.core.ui.field.setFieldValueIfEnabled
 
 fun Field<Boolean>.bindValue(lifecycleOwner: LifecycleOwner, checkBox: CompoundButton) {
     checkBox.bindTo(this)
@@ -19,26 +17,26 @@ fun Field<Boolean>.bindValue(lifecycleOwner: LifecycleOwner, checkBox: CompoundB
     }
 }
 
-fun Field<BooleanFieldWithState>.bindValueWithState(
+fun Field<Boolean>.bindValueWithState(
     lifecycleOwner: LifecycleOwner,
     compoundButton: CompoundButton,
-    hideIfDisabled: Boolean = false
+    hideIfDisabled: Boolean = false,
 ) {
     compoundButton.setOnCheckedChangeListener { _, isChecked ->
-        this.setFieldValueIfEnabled(isChecked)
+        value = isChecked
     }
     valueFlow.observe(lifecycleOwner) {
-        compoundButton.setCheckedDistinct(it.value)
-        compoundButton.isEnabled = it.isEnabled
+        compoundButton.setCheckedDistinct(value)
+        compoundButton.isEnabled = enabled
         if (hideIfDisabled) {
-            compoundButton.isVisible = it.isEnabled
+            compoundButton.isVisible = enabled
         }
     }
 }
 
 fun <D> Field<D>.bindHintError(
     lifecycleOwner: LifecycleOwner,
-    textInputLayout: TextInputLayout
+    textInputLayout: TextInputLayout,
 ) {
     hintFlow.observe(lifecycleOwner) {
         textInputLayout.hint = it?.get(textInputLayout.context)
@@ -50,7 +48,7 @@ fun <D> Field<D>.bindHintError(
 
 fun <D> Field<D>.bindHintError(
     lifecycleOwner: LifecycleOwner,
-    editText: EditText
+    editText: EditText,
 ) {
     hintFlow.observe(lifecycleOwner) {
         editText.hint = it?.get(editText.context)

@@ -13,7 +13,7 @@ import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.commonutils.openBatteryOptimizationSettings
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.android.base.alert.queue.AlertQueueItem
-import net.maxsmr.core.android.permissions.ICanAskPermissions
+import net.maxsmr.core.android.permissions.PermissionsRequester
 import net.maxsmr.core.ui.components.activities.BaseActivity
 import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.permissionchecker.PermissionsHelper
@@ -57,7 +57,7 @@ fun CacheDataStoreRepository.doOnBatteryOptimizationAsk(
 fun CacheDataStoreRepository.doOnCanDrawOverlaysAsked(
     viewModel: BaseViewModel,
     context: Context,
-    targetAction: (Boolean) -> Unit,
+    targetAction: (Boolean?) -> Unit,
 ) {
     canDrawOverlaysAsked?.let { flow ->
         viewModel.doOnAnyAskOption(
@@ -73,14 +73,14 @@ fun CacheDataStoreRepository.doOnCanDrawOverlaysAsked(
             }
             targetAction.invoke(it)
         }
-    } ?: targetAction.invoke(false)
+    } ?: targetAction.invoke(null)
 }
 
 fun <T> CacheDataStoreRepository.doOnPostNotificationPermissionResult(
     host: T,
     onlyWhenGranted: Boolean,
     targetAction: () -> Unit,
-) where T : ICanAskPermissions, T : LifecycleOwner {
+) where T : PermissionsRequester, T : LifecycleOwner {
     observePostNotificationPermissionAsked(
         host,
         true,
@@ -105,7 +105,7 @@ fun <T> CacheDataStoreRepository.observePostNotificationPermissionAsked(
     onPostNotificationGranted: (() -> Unit)? = null,
     onPostNotificationDenied: (() -> Unit)? = null,
     onPostNotificationAlreadyAsked: ((Boolean) -> Unit)? = null,
-) where T : ICanAskPermissions, T : LifecycleOwner {
+) where T : PermissionsRequester, T : LifecycleOwner {
     /**
      * после получения разрешения или отказа пользователя получать уведомления - не показывать этот запрос снова
      */
@@ -139,7 +139,7 @@ fun <T> CacheDataStoreRepository.observePostNotificationPermissionAsked(
                 // проверка по факту уже была ранее
                 onPostNotificationAlreadyAsked?.invoke(
                     host.permissionsHelper.hasPermissions(
-                        host.attachedContext,
+                        host.requireContext,
                         Manifest.permission.POST_NOTIFICATIONS
                     )
                 )

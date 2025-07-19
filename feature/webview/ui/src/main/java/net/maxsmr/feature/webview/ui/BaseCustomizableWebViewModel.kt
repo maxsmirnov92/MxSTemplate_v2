@@ -12,10 +12,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import net.maxsmr.commonutils.copyToClipboard
 import net.maxsmr.commonutils.flow.field.Field
-import net.maxsmr.commonutils.getSendTextIntent
+import net.maxsmr.commonutils.getSendIntent
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.commonutils.text.EMPTY_STRING
+import net.maxsmr.core.android.content.MIME_TYPE_TEXT
 import net.maxsmr.core.android.network.NetworkStateManager
 import net.maxsmr.core.network.URL_SCHEME_HTTPS
 import net.maxsmr.core.network.equalsIgnoreSubDomain
@@ -89,9 +90,12 @@ abstract class BaseCustomizableWebViewModel(
 
     fun onShareLinkAction(context: Context) {
         currentUrl.value?.let {
-            context.startActivitySafe(getSendTextIntent(it.toString()).apply {
-                putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.webview_url_link_title))
-            }) {
+            context.startActivitySafe(
+                getSendIntent(false).apply {
+                    putExtra(Intent.EXTRA_TEXT, it.toString())
+                    putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.webview_url_link_title))
+                    type = MIME_TYPE_TEXT
+                }) {
                 showToast(net.maxsmr.core.ui.R.string.error_intent_send)
             }
         }

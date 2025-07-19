@@ -24,6 +24,7 @@ import net.maxsmr.commonutils.URL_SCHEME_MAIL
 import net.maxsmr.commonutils.URL_SCHEME_MARKET
 import net.maxsmr.commonutils.URL_SCHEME_TEL
 import net.maxsmr.commonutils.getDialIntent
+import net.maxsmr.commonutils.getSendEmailIntent
 import net.maxsmr.commonutils.getViewUrlIntent
 import net.maxsmr.commonutils.isAtLeastNougat
 import net.maxsmr.commonutils.logger.BaseLogger
@@ -40,6 +41,7 @@ import net.maxsmr.core.network.exceptions.NetworkException
 import net.maxsmr.core.network.executeCall
 import net.maxsmr.core.network.getContentTypeHeader
 import net.maxsmr.core.network.toPairs
+import net.maxsmr.core.ui.R
 import net.maxsmr.core.ui.openAnyIntentWithToastError
 import net.maxsmr.core.ui.openEmailIntentWithToastError
 import net.maxsmr.feature.webview.data.client.exception.WebResourceException
@@ -319,7 +321,12 @@ open class InterceptWebViewClient @JvmOverloads constructor(
         var handled = false
         when (scheme) {
             URL_SCHEME_MAIL -> {
-                handled = context.openEmailIntentWithToastError(uri)
+                handled = getSendEmailIntent(uri, isSendTo = false)?.let {
+                    context.openAnyIntentWithToastError(
+                        it,
+                        errorResId = R.string.error_intent_email
+                    )
+                } ?: false
             }
 
             URL_SCHEME_TEL -> {

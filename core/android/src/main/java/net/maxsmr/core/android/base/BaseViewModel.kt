@@ -1,10 +1,12 @@
 package net.maxsmr.core.android.base
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.StringRes
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +20,6 @@ import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.states.ILoadState
 import net.maxsmr.core.android.R
-import net.maxsmr.core.android.base.BaseViewModel.*
 import net.maxsmr.core.android.base.actions.NavigationAction
 import net.maxsmr.core.android.base.actions.NavigationAction.NavigationCommand
 import net.maxsmr.core.android.base.actions.SnackbarExtraData
@@ -185,7 +186,7 @@ abstract class BaseViewModel(val state: SavedStateHandle) : ViewModel() {
         AlertDialogBuilder(DIALOG_TAG_NO_INTERNET)
             .setTitle(net.maxsmr.core.network.R.string.error_server_unavailable)
             .setMessage(net.maxsmr.core.network.R.string.error_no_connection)
-            .setAnswers(Alert.Answer(R.string.understand))
+            .setAnswers(Alert.Answer(android.R.string.ok))
             .build()
     }
 

@@ -20,10 +20,7 @@ import net.maxsmr.commonutils.gui.bindToTextNotNull
 import net.maxsmr.commonutils.gui.scrollToView
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
-import net.maxsmr.core.ui.alert.delegate.BaseViewAlertDelegate
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
-import net.maxsmr.core.ui.field.setFieldValueIfEnabled
 import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.core.ui.view.bindHintError
 import net.maxsmr.core.ui.view.bindValue
@@ -50,7 +47,7 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
             with(viewModel) {
                 put(maxDownloadsField, binding.tilMaxDownloads)
                 put(connectTimeoutField, binding.tilConnectTimeout)
-                put(updateNotificationIntervalStateField, binding.tilUpdateNotificationInterval)
+                put(updateNotificationIntervalField, binding.tilUpdateNotificationInterval)
                 put(startPageUrlField, binding.tilStartPageUrl)
             }
         }
@@ -98,16 +95,15 @@ open class SettingsFragment : BaseNavigationFragment<SettingsViewModel>() {
         viewModel.disableNotificationsField.bindValue(viewLifecycleOwner, binding.switchDisableNotifications)
 
         binding.etUpdateNotificationInterval.addTextChangedListener {
-            viewModel.updateNotificationIntervalStateField.setFieldValueIfEnabled(it.toString().toLongNotNull())
+            viewModel.updateNotificationIntervalField.value = it.toString().toLongNotNull()
         }
-        viewModel.updateNotificationIntervalStateField.observeFrom(
+        viewModel.updateNotificationIntervalField.observeFrom(
             binding.etUpdateNotificationInterval,
             viewLifecycleOwner
         ) {
-            binding.etUpdateNotificationInterval.isEnabled = it.isEnabled
-            it.value.toString()
+            it.toString()
         }
-        viewModel.updateNotificationIntervalStateField.bindHintError(
+        viewModel.updateNotificationIntervalField.bindHintError(
             viewLifecycleOwner,
             binding.tilUpdateNotificationInterval
         )

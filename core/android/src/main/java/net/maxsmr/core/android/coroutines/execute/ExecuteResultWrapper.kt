@@ -27,7 +27,7 @@ object ExecuteResultWrapper {
                 ExecuteResult.Success(doExecute())
             }
         } catch (e: Exception) {
-            logger.e("invoke failed", e)
+            logger.e("execute failed", e)
             if (e is CancellationException) {
                 // переброс по стандартным правилам
                 throw e
@@ -71,7 +71,7 @@ object ExecuteResultWrapper {
         flow: Flow<ExecuteResult<T>>,
     ): Flow<ExecuteResult<T>> = flow
         .catch {
-            logger.e("flow failed", it)
+            logger.e("execute flow failed", it)
             wrapCause(it)
         }
         .flowOn(coroutineContext)

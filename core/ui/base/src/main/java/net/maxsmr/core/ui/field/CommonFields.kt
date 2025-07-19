@@ -31,7 +31,7 @@ fun BaseViewModel.urlField(
     })
     hint(hintResId, withAsterisk = withAsterisk)
     if (isRequired) {
-        setRequired(true, R.string.field_url_empty_error)
+        required(R.string.field_url_empty_error)
     }
 }
 
@@ -45,7 +45,7 @@ fun BaseViewModel.fileNameField(
     validators(Field.Validator(R.string.field_file_name_error) { Regex(REG_EX_FILE_NAME).matches(it) })
     hint(R.string.field_file_name_hint)
     if (isRequired) {
-        setRequired(true, R.string.field_file_name_empty_error)
+        required(R.string.field_file_name_empty_error)
     }
 }
 
@@ -59,7 +59,7 @@ fun BaseViewModel.subDirNameField(
     validators(Field.Validator(R.string.field_sub_dir_name_error) { Regex(REG_EX_FILE_NAME).matches(it) })
     hint(R.string.field_sub_dir_name_hint)
     if (isRequired) {
-        setRequired(true, R.string.field_sub_dir_name_empty_error)
+        required(R.string.field_sub_dir_name_empty_error)
     }
 }
 

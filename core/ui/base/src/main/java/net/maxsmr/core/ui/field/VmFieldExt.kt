@@ -6,6 +6,10 @@ import kotlinx.coroutines.flow.StateFlow
 import net.maxsmr.commonutils.flow.field.Field
 import net.maxsmr.core.android.base.BaseViewModel
 
+/**
+ * Создание поля типа [T].
+ * Указание лямбды emptyIf обязательно
+ */
 fun <T> BaseViewModel.createField(
     initialValue: T,
     key: String? = null,

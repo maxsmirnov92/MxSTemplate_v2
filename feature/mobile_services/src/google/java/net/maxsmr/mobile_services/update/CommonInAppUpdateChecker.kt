@@ -15,11 +15,11 @@ import com.google.android.play.core.install.model.UpdateAvailability
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.mobile_services.IMobileServicesAvailability
-import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
+import net.maxsmr.core.android.base.result.ActivityResultRegisterer
 
 class CommonInAppUpdateChecker(
     private val availability: IMobileServicesAvailability,
-    private val registerer: ICanRegisterForActivityResult,
+    private val registerer: ActivityResultRegisterer,
     private val updateRequestCode: Int,
     private val callbacks: InAppUpdateChecker.Callbacks,
     private val immediateUpdatePriority: Int = 4,
@@ -33,7 +33,7 @@ class CommonInAppUpdateChecker(
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("CommonInAppUpdateChecker")
 
-    private val activity: Activity by lazy { registerer.attachedActivity  }
+    private val activity: Activity by lazy { registerer.requireActivity  }
 
     private val appUpdateManager: AppUpdateManager by lazy {
         AppUpdateManagerFactory.create(activity)

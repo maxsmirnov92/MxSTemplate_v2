@@ -6,12 +6,12 @@
     <string name="pick_more_permission">You may grant permission %s to %s to see more variants.</string>
     <string name="pick_more_permissions">You may grant permissions %s to %s to see more variants.</string>
 
-    <string name="chooser_title_send_email">Choose app for sending email</string>
-    <string name="error_intent_email">Install any email application to send a letter</string>
-    <string name="error_intent_send">No apps for sending found</string>
-    <string name="error_intent_open_url">No apps for viewing links found</string>
+    <string name="chooser_title_send_email">Choose app to send email</string>
+    <string name="error_intent_email">Install any email application to send a email</string>
+    <string name="error_intent_send">No apps to send found</string>
+    <string name="error_intent_open_url">No apps to view links found</string>
     <string name="error_intent_open_document">No apps for opening document found</string>
-    <string name="error_intent_open_geo">No apps for viewing maps found</string>
+    <string name="error_intent_open_geo">No apps to view maps found</string>
     <string name="error_intent_open_market">There are no installed market apps on this device</string>
     <string name="error_intent_any">No apps can perform this action</string>
 

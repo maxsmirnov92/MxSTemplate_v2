@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.combine
 import net.maxsmr.commonutils.gui.message.errorMessage
 import net.maxsmr.commonutils.gui.setTextOrGone
 import net.maxsmr.commonutils.text.EMPTY_STRING
-import net.maxsmr.core.android.base.delegates.AbstractSavedStateViewModelFactory
+import net.maxsmr.core.android.base.delegates.savedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.storage.ContentStorage
 import net.maxsmr.core.ui.components.activities.BaseActivity
@@ -51,7 +51,7 @@ class CameraXRecognitionFragment : BaseNavigationFragment<CameraXRecognitionView
     override val layoutId: Int = R.layout.fragment_camera_x
 
     override val viewModel: CameraXRecognitionViewModel by viewModels {
-        AbstractSavedStateViewModelFactory(this) {
+        savedStateViewModelFactory(this) {
             factory.create(
                 it,
                 Executors.newSingleThreadExecutor(),

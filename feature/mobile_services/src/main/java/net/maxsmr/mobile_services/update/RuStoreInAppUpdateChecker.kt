@@ -5,7 +5,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
-import net.maxsmr.core.android.base.result.ICanRegisterForActivityResult
+import net.maxsmr.core.android.base.result.ActivityResultRegisterer
 import ru.rustore.sdk.appupdate.listener.InstallStateUpdateListener
 import ru.rustore.sdk.appupdate.manager.RuStoreAppUpdateManager
 import ru.rustore.sdk.appupdate.manager.factory.RuStoreAppUpdateManagerFactory
@@ -17,7 +17,7 @@ import ru.rustore.sdk.core.presentation.ActivityResult
 
 @RequiresApi(Build.VERSION_CODES.N)
 class RuStoreInAppUpdateChecker(
-    private val wrapper: ICanRegisterForActivityResult,
+    private val wrapper: ActivityResultRegisterer,
     private val callbacks: InAppUpdateChecker.Callbacks,
     private val immediateUpdatePriority: Int = 4,
 ) : InAppUpdateChecker {
@@ -30,7 +30,7 @@ class RuStoreInAppUpdateChecker(
 
     private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("RuStoreInAppUpdateChecker")
 
-    private val activity: Activity by lazy { wrapper.attachedActivity }
+    private val activity: Activity by lazy { wrapper.requireActivity }
 
     private val appUpdateManager: RuStoreAppUpdateManager by lazy {
         RuStoreAppUpdateManagerFactory.create(activity)

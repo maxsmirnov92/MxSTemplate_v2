@@ -5,9 +5,9 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 
-interface ICanRegisterForActivityResult {
+interface ActivityResultRegisterer {
 
-    val attachedActivity: Activity
+    val requireActivity: Activity
 
     fun <I, O> registerForActivityResult(
         contract: ActivityResultContract<I, O>,

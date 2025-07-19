@@ -2,73 +2,50 @@ package net.maxsmr.core.ui
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.annotation.StringRes
-import net.maxsmr.commonutils.SendAction
+import net.maxsmr.commonutils.getSendEmailIntent
+import net.maxsmr.commonutils.getSendIntent
 import net.maxsmr.commonutils.openDocument
-import net.maxsmr.commonutils.openEmailIntent
-import net.maxsmr.commonutils.openSendDataIntent
 import net.maxsmr.commonutils.openViewUrl
 import net.maxsmr.commonutils.startActivitySafe
 import net.maxsmr.commonutils.wrapChooser
 
-@JvmOverloads
 fun Context.openEmailIntentWithToastError(
-    address: String?,
-    sendAction: SendAction = SendAction.SENDTO,
-    sendIntentFunc: (Intent.() -> Unit)? = null,
-    flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
-    options: Bundle? = null,
-): Boolean {
-    return openEmailIntent(
-        address,
-        sendAction,
-        sendIntentFunc,
-        flags,
-        options
-    ) {
-        Toast.makeText(this, R.string.error_intent_email, Toast.LENGTH_SHORT).show()
-    }
-}
-
-/**
- * @param uri со схемой [URL_SCHEME_MAIL]
- * @param sendIntentFunc дополнительно можно указать subject, text и т.д.
- * @param chooserIntentFunc настройка chooser [Intent] при указании [chooserTitle]
- */
-@JvmOverloads
-fun Context.openEmailIntentWithToastError(
-    uri: Uri,
+    email: String?,
+    isSendTo: Boolean = true,
+    subject: String? = null,
+    text: String?,
     addresses: List<String>? = null,
-    sendAction: SendAction = SendAction.SENDTO,
-    sendIntentFunc: ((Intent) -> Unit)? = null,
     flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
-    options: Bundle? = null,
 ): Boolean {
-    return openEmailIntent(
-        uri,
-        addresses,
-        sendAction,
-        sendIntentFunc,
-        flags,
-        options
-    ) {
-        Toast.makeText(this, R.string.error_intent_email, Toast.LENGTH_SHORT).show()
-    }
+    val intent = getSendEmailIntent(
+        email,
+        isSendTo,
+        subject,
+        text,
+        addresses
+    )?.addFlags(flags) ?: return false
+    return startActivitySafe(
+        intent,
+        errorHandler = {
+            Toast.makeText(this, R.string.error_intent_email, Toast.LENGTH_SHORT).show()
+        }
+    )
 }
 
 @JvmOverloads
 fun Context.openSendDataIntentWithToastError(
-    sendAction: SendAction = SendAction.SEND,
-    sendIntentFunc: (Intent) -> Unit,
-    flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
-    options: Bundle? = null,
+    isMultiple: Boolean = false,
+    sendIntentFunc: Intent.() -> Unit,
 ): Boolean {
-    return openSendDataIntent(sendAction, sendIntentFunc, flags, options) {
-        Toast.makeText(this, getString(R.string.error_intent_send), Toast.LENGTH_SHORT).show()
-    }
+    return startActivitySafe(
+        getSendIntent(isMultiple).apply { sendIntentFunc(this) },
+        errorHandler = {
+            Toast.makeText(this, getString(R.string.error_intent_send), Toast.LENGTH_SHORT).show()
+        }
+    )
 }
 
 fun Context.openDocumentWithToastError(
@@ -104,7 +81,7 @@ fun Context.openAnyIntentWithToastError(
     chooserIntentFunc: ((Intent) -> Unit)? = null,
     flags: Int = Intent.FLAG_ACTIVITY_NEW_TASK,
     options: Bundle? = null,
-    @StringRes errorResId: Int = R.string.error_intent_any
+    @StringRes errorResId: Int = R.string.error_intent_any,
 ): Boolean {
     return startActivitySafe(
         intent.apply {
