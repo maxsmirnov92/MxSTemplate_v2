@@ -1,20 +1,22 @@
 package net.maxsmr.mobile_services.receiver
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
 import android.os.Looper
-import com.huawei.hms.location.*
+import com.huawei.hms.location.LocationAvailability
+import com.huawei.hms.location.LocationCallback
+import com.huawei.hms.location.LocationRequest
+import com.huawei.hms.location.LocationResult
+import com.huawei.hms.location.LocationServices
+import com.huawei.hms.location.LocationSettingsRequest
+import net.maxsmr.core.android.location.receiver.LocationReceiver
 import net.maxsmr.core.android.location.receiver.LocationParams
-import net.maxsmr.core.android.location.receiver.ILocationReceiver
 
 /**
- * Huawei реализация [ILocationReceiver],
+ * Huawei реализация [LocationReceiver],
  * работающая при наличии соответствующих сервисов
  */
-internal class HuaweiLocationReceiver(
-    context: Context,
-) : ILocationReceiver {
+internal class HuaweiLocationReceiver(context: Context) : LocationReceiver {
 
     override val lastKnownPosition: Location?
         get() = if (!fusedLocationClient.lastLocation.isComplete) {
@@ -23,13 +25,14 @@ internal class HuaweiLocationReceiver(
             fusedLocationClient.lastLocation.result
         }
 
-    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)!!
     override var locationCallback: net.maxsmr.core.android.location.LocationCallback? = null
         private set
 
-    private val settingsClient = LocationServices.getSettingsClient(context)!!
+    private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)!!
 
-    private val locationHuaweiCallback = object : LocationCallback() {
+    private val settingsClient = LocationServices.getSettingsClient(context)
+
+    private val huaweiLocationCallback = object : LocationCallback() {
         override fun onLocationResult(locationResult: LocationResult?) {
             locationResult?.let {
                 locationCallback?.onLocationChanged(it.lastLocation)
@@ -44,7 +47,7 @@ internal class HuaweiLocationReceiver(
     override fun registerLocationUpdates(
         callback: net.maxsmr.core.android.location.LocationCallback,
         params: LocationParams,
-        looper: Looper
+        looper: Looper,
     ) {
         if (isRegistered) {
             unregisterLocationUpdates()
@@ -70,16 +73,18 @@ internal class HuaweiLocationReceiver(
             settingsClient.checkLocationSettings(locationSettingsRequest)
 
         locationSettingsResponseTask.addOnSuccessListener {
-            fusedLocationClient.requestLocationUpdates(locationRequest,
-                locationHuaweiCallback,
-                looper)
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                huaweiLocationCallback,
+                looper
+            )
         }
     }
 
     override fun unregisterLocationUpdates() {
         if (!isRegistered) return
         locationCallback = null
-        fusedLocationClient.removeLocationUpdates(locationHuaweiCallback)
+        fusedLocationClient.removeLocationUpdates(huaweiLocationCallback)
     }
 
 }

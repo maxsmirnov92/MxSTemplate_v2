@@ -6,15 +6,13 @@ import android.location.Location
 import android.os.Looper
 import com.google.android.gms.location.*
 import net.maxsmr.core.android.location.receiver.LocationParams
-import net.maxsmr.core.android.location.receiver.ILocationReceiver
+import net.maxsmr.core.android.location.receiver.LocationReceiver
 
 /**
- * Google реализация [ILocationReceiver],
+ * Google реализация [LocationReceiver],
  * работающая при наличии соответствующих сервисов
  */
-internal class GoogleLocationReceiver(
-    context: Context,
-) : ILocationReceiver {
+internal class GoogleLocationReceiver(context: Context) : LocationReceiver {
 
     override val lastKnownPosition: Location?
         @SuppressLint("MissingPermission")
@@ -30,7 +28,7 @@ internal class GoogleLocationReceiver(
     private val settingsClient = LocationServices.getSettingsClient(context)
     private val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
 
-    private val locationGoogleCallback = object : LocationCallback() {
+    private val googleLocationCallback = object : LocationCallback() {
 
         override fun onLocationResult(locationResult: LocationResult) {
             locationResult.lastLocation?.let {
@@ -73,7 +71,7 @@ internal class GoogleLocationReceiver(
 
         locationSettingsResponseTask.addOnSuccessListener {
             fusedLocationClient.requestLocationUpdates(locationRequest,
-                locationGoogleCallback,
+                googleLocationCallback,
                 looper)
         }
     }
@@ -81,6 +79,6 @@ internal class GoogleLocationReceiver(
     override fun unregisterLocationUpdates() {
         if (!isRegistered) return
         locationCallback = null
-        fusedLocationClient.removeLocationUpdates(locationGoogleCallback)
+        fusedLocationClient.removeLocationUpdates(googleLocationCallback)
     }
 }

@@ -8,7 +8,7 @@ import android.location.LocationManager.*
 import android.os.Looper
 import androidx.core.location.LocationListenerCompat
 import net.maxsmr.core.android.location.LocationCallback
-import net.maxsmr.core.android.location.receiver.ILocationReceiver
+import net.maxsmr.core.android.location.receiver.LocationReceiver
 import net.maxsmr.core.android.location.receiver.LocationParams
 import net.maxsmr.core.android.location.receiver.LocationParams.Priority.HIGH
 import net.maxsmr.core.android.location.receiver.LocationParams.Priority.PASSIVE
@@ -17,7 +17,7 @@ import net.maxsmr.core.android.location.receiver.LocationParams.Priority.PASSIVE
  * Инкапсулирует получение геопозиции через [LocationManager]
  */
 @SuppressLint("MissingPermission")
-internal class SystemLocationReceiver(context: Context) : ILocationReceiver {
+internal class SystemLocationReceiver(context: Context) : LocationReceiver {
 
     override var locationCallback: LocationCallback? = null
         private set
@@ -31,7 +31,6 @@ internal class SystemLocationReceiver(context: Context) : ILocationReceiver {
         locationCallback?.onLocationChanged(location)
     }
 
-    @Throws(SecurityException::class)
     override fun registerLocationUpdates(callback: LocationCallback, params: LocationParams, looper: Looper) {
         if (isRegistered) {
             unregisterLocationUpdates()
@@ -46,7 +45,6 @@ internal class SystemLocationReceiver(context: Context) : ILocationReceiver {
         )
     }
 
-    @Throws(SecurityException::class)
     override fun unregisterLocationUpdates() {
         if (!isRegistered) return
         locationManager.removeUpdates(systemLocationListener)
@@ -80,9 +78,9 @@ internal class SystemLocationReceiver(context: Context) : ILocationReceiver {
         }
 
     private fun getBestProvider(priority: LocationParams.Priority) = when {
-        priority === PASSIVE -> PASSIVE_PROVIDER
-        priority === HIGH && isProviderEnabled(GPS_PROVIDER) -> GPS_PROVIDER
-        priority === HIGH && isProviderEnabled(NETWORK_PROVIDER) -> NETWORK_PROVIDER
+        priority == PASSIVE -> PASSIVE_PROVIDER
+        priority == HIGH && isProviderEnabled(GPS_PROVIDER) -> GPS_PROVIDER
+        priority == HIGH && isProviderEnabled(NETWORK_PROVIDER) -> NETWORK_PROVIDER
         isProviderEnabled(NETWORK_PROVIDER) -> NETWORK_PROVIDER
         isProviderEnabled(GPS_PROVIDER) -> GPS_PROVIDER
         else -> PASSIVE_PROVIDER

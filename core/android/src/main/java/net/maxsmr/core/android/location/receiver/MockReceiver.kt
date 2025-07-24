@@ -4,7 +4,7 @@ import android.location.Location
 import android.os.Looper
 import net.maxsmr.core.android.location.LocationCallback
 
-class MockReceiver : ILocationReceiver {
+class MockReceiver : LocationReceiver {
 
     override val lastKnownPosition: Location? = null
 

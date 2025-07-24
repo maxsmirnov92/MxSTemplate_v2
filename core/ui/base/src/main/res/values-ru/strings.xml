@@ -15,10 +15,10 @@
     <string name="error_intent_open_market">На устройстве нет установленных магазинов приложений</string>
     <string name="error_intent_any">Отсутствуют приложения для данного действия</string>
 
-    <string name="dialog_gps_not_available_message">К сожалению, ваше мобильное устройство не снабжено функцией определения местоположения.</string>
-    <string name="dialog_gps_enable_title">Местоположение недоступно</string>
-    <string name="dialog_gps_enable_message">Получение текущего местоположения недоступно. Для получения местоположения нужно включить геопозиционирование в настройках.</string>
-    <string name="dialog_gps_enable_answer_settings">Настройки</string>
+    <string name="dialog_location_not_available_message">К сожалению, ваше мобильное устройство не снабжено функцией определения местоположения.</string>
+    <string name="dialog_location_enable_title">Местоположение недоступно</string>
+    <string name="dialog_location_enable_message">Получение текущего местоположения недоступно. Для получения местоположения нужно включить геопозиционирование в настройках.</string>
+    <string name="dialog_location_enable_answer_settings">Настройки</string>
 
     <string name="search_hint">Поиск</string>
 

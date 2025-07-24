@@ -6,48 +6,42 @@ import android.content.DialogInterface
 import android.location.Location
 import android.os.HandlerThread
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.core.android.base.BaseViewModel
-import net.maxsmr.core.android.coroutines.asDispatcher
 import net.maxsmr.core.android.location.LocationCallback
-import net.maxsmr.core.android.location.receiver.ILocationReceiver
 import net.maxsmr.core.android.location.receiver.LocationParams
+import net.maxsmr.core.android.location.receiver.LocationReceiver
 import net.maxsmr.core.android.permissions.PermissionsRequester
 import net.maxsmr.core.ui.R
 
 class LocationViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
-    @Assisted private val mockLocationReceiver: ILocationReceiver?,
-    private val locationReceiver: ILocationReceiver,
-    @ApplicationContext private val context: Context
+    @Assisted private val mockLocationReceiver: LocationReceiver?,
+    private val locationReceiver: LocationReceiver,
+    @ApplicationContext private val context: Context,
 ) : BaseViewModel(state), LocationCallback {
 
-    val currentLocation: StateFlow<Location?> by lazy {  _currentLocation.asStateFlow() }
+    val currentLocation: StateFlow<Location?> by lazy { _currentLocation.asStateFlow() }
 
-    val navigateToLocationSettings by lazy { _navigateToLocationSettings.asStateFlow() }
-
-    private val locationDispatcher: CoroutineDispatcher by lazy {
-        locationThread.asDispatcher()
-    }
+    val navigateToLocationSettingsEvent by lazy { _navigateToLocationSettingsEvent.asStateFlow() }
 
     private val _currentLocation = MutableStateFlow<Location?>(null)
 
-    private val _navigateToLocationSettings = MutableStateFlow<VmEvent<Unit>?>(null)
+    private val _navigateToLocationSettingsEvent = MutableStateFlow<VmEvent<Unit>?>(null)
 
-    private val locationThread: HandlerThread = HandlerThread("LocationHandlerThread")
+    private val locationThread: HandlerThread = HandlerThread("LocationHandlerThread").apply {
+        start()
+    }
 
-    var lastGpsDeniedState: GpsDeniedState? = null
+    var lastLocationDeniedReason: LocationDeniedReason? = null
         private set
 
     override fun onLocationChanged(location: Location) {
@@ -60,18 +54,18 @@ class LocationViewModel @AssistedInject constructor(
         }
     }
 
-    override fun onGpsNotAvailable() {
+    override fun onLocationNotSupported() {
         _currentLocation.value = null
-        showOkDialog(DIALOG_TAG_GPS_NOT_AVAILABLE, R.string.dialog_gps_not_available_message)
+        showOkDialog(DIALOG_TAG_LOCATION_NOT_AVAILABLE, R.string.dialog_location_not_available_message)
     }
 
-    override fun onGpsProviderNotEnabled() {
+    override fun onLocationProviderNotEnabled() {
         _currentLocation.value = null
         showYesNoDialog(
-            DIALOG_TAG_GPS_NOT_ENABLED,
-            TextMessage(R.string.dialog_gps_enable_message),
-            TextMessage(R.string.dialog_gps_enable_title),
-            R.string.dialog_gps_enable_answer_settings,
+            DIALOG_TAG_LOCATION_NOT_ENABLED,
+            TextMessage(R.string.dialog_location_enable_message),
+            TextMessage(R.string.dialog_location_enable_title),
+            R.string.dialog_location_enable_answer_settings,
             android.R.string.cancel,
             onSelect = {
                 if (it == DialogInterface.BUTTON_POSITIVE) {
@@ -86,102 +80,61 @@ class LocationViewModel @AssistedInject constructor(
         unregisterLocationUpdates()
     }
 
-    fun getLastKnownLocation(isGpsOnly: Boolean = false): Location? {
+    fun getLastKnownLocation(withGpsOnly: Boolean = false): Location? {
         val location = (mockLocationReceiver ?: locationReceiver).lastKnownPosition
         if (location == null) {
-            checkLocationEnabled(context, isGpsOnly)
+            checkLocationEnabled(context, withGpsOnly)
         }
         return location
-    }
-
-    fun registerLocationUpdates(
-        host: PermissionsRequester,
-        isGpsOnly: Boolean,
-        requireFineLocation: Boolean,
-    ) {
-        if (!hasGpsPermissions(host, requireFineLocation)) return
-        if (!checkLocationEnabled(host.requireContext, isGpsOnly)) return
-
-        viewModelScope.launch(locationDispatcher) {
-            // запрос геолокации на отдельном треде со своим looper
-            (mockLocationReceiver ?: locationReceiver).registerLocationUpdates(
-                this@LocationViewModel,
-                LocationParams(
-                    priority = if (isGpsOnly) {
-                        LocationParams.Priority.HIGH
-                    } else {
-                        LocationParams.Priority.BALANCED
-                    }
-                ),
-                locationThread.looper
-            )
-        }
     }
 
     fun unregisterLocationUpdates() {
         (mockLocationReceiver ?: locationReceiver).unregisterLocationUpdates()
     }
 
-    private fun navigateToLocationSettings() {
-        _navigateToLocationSettings.tryEmit(VmEvent(Unit))
-    }
-
-    fun hasGpsPermissions(host: PermissionsRequester, requireFineLocation: Boolean): Boolean {
-        val perms: List<String> =
-            if (requireFineLocation || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
-                listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
-            } else {
-                listOf(Manifest.permission.ACCESS_COARSE_LOCATION)
-            }
-
-        return host.permissionsHelper.hasPermissions(host.requireContext, perms)
-    }
-
     @JvmOverloads
-    fun registerLocationUpdatesOnGpsCheck(
+    fun registerLocationUpdates(
         host: PermissionsRequester,
         requestCode: Int,
-        isGpsOnly: Boolean,
         requireFineLocation: Boolean,
-        checkOnly: Boolean = false,
-        callbacks: GpsCheckCallbacks? = null,
+        callbacks: LocationCheckCallbacks? = null,
+        withGpsOnly: Boolean = false,
     ) {
-        doOnGpsCheck(
+        doOnLocationCheck(
             host,
             requestCode,
-            isGpsOnly,
             requireFineLocation,
-            checkOnly,
-            object : GpsCheckCallbacks {
+            object : LocationCheckCallbacks {
 
-                override fun onGpsDisabledOrNotAvailable() {
-                    callbacks?.onGpsDisabledOrNotAvailable()
+                override fun onLocationDisabledOrNotAvailable() {
+                    callbacks?.onLocationDisabledOrNotAvailable()
                 }
 
-                override fun onBeforeGpsCheck() {
-                    callbacks?.onBeforeGpsCheck()
+                override fun onBeforeLocationCheck() {
+                    callbacks?.onBeforeLocationCheck()
                 }
 
-                override fun onPermissionsDenied() {
-                    callbacks?.onPermissionsDenied()
+                override fun onLocationPermissionsDenied() {
+                    callbacks?.onLocationPermissionsDenied()
                 }
 
-                override fun onPermissionsGranted() {
-                    registerLocationUpdates(host, isGpsOnly, requireFineLocation)
-                    callbacks?.onPermissionsGranted()
+                override fun onLocationPermissionsGranted() {
+                    callbacks?.onLocationPermissionsGranted()
+                    registerLocationUpdates(host, withGpsOnly)
                 }
-            }
+            },
+            withGpsOnly = withGpsOnly
         )
     }
 
     @JvmOverloads
-    fun doOnGpsCheck(
+    fun doOnLocationCheck(
         host: PermissionsRequester,
         requestCode: Int,
-        isGpsOnly: Boolean,
         requireFineLocation: Boolean,
+        callbacks: LocationCheckCallbacks,
+        withGpsOnly: Boolean = false,
         checkOnly: Boolean = false,
-        callbacks: GpsCheckCallbacks,
     ) {
         val perms: List<String> =
             if (requireFineLocation || android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.S) {
@@ -191,33 +144,57 @@ class LocationViewModel @AssistedInject constructor(
             }
 
         host.doOnPermissionsResult(requestCode, perms, onDenied = {
-            lastGpsDeniedState = GpsDeniedState.PERMISSIONS
-            callbacks.onPermissionsDenied()
+            lastLocationDeniedReason = LocationDeniedReason.PERMISSIONS
+            callbacks.onLocationPermissionsDenied()
         }) {
-            callbacks.onBeforeGpsCheck()
-            if (checkLocationEnabled(host.requireContext, isGpsOnly, checkOnly)) {
-                lastGpsDeniedState = null
-                callbacks.onPermissionsGranted()
+            callbacks.onBeforeLocationCheck()
+            if (checkLocationEnabled(host.requireContext, withGpsOnly, !checkOnly)) {
+                lastLocationDeniedReason = null
+                callbacks.onLocationPermissionsGranted()
             } else {
-                lastGpsDeniedState = GpsDeniedState.GPS
-                callbacks.onGpsDisabledOrNotAvailable()
+                lastLocationDeniedReason = LocationDeniedReason.AVAILABILITY
+                callbacks.onLocationDisabledOrNotAvailable()
             }
         }
     }
 
-    interface GpsCheckCallbacks {
-
-        fun onGpsDisabledOrNotAvailable() {}
-
-        fun onBeforeGpsCheck() {}
-
-        fun onPermissionsDenied() {}
-
-        fun onPermissionsGranted() {}
+    private fun navigateToLocationSettings() {
+        _navigateToLocationSettingsEvent.tryEmit(VmEvent(Unit))
     }
 
-    enum class GpsDeniedState {
-        GPS,
+    private fun registerLocationUpdates(
+        host: PermissionsRequester,
+        withGpsOnly: Boolean,
+    ) {
+//        if (!hasGpsPermissions(host, requireFineLocation)) return
+        if (!checkLocationEnabled(host.requireContext, withGpsOnly)) return
+
+        (mockLocationReceiver ?: locationReceiver).registerLocationUpdates(
+            this@LocationViewModel,
+            LocationParams(
+                priority = if (withGpsOnly) {
+                    LocationParams.Priority.HIGH
+                } else {
+                    LocationParams.Priority.BALANCED
+                }
+            ),
+            locationThread.looper
+        )
+    }
+
+    interface LocationCheckCallbacks {
+
+        fun onLocationDisabledOrNotAvailable() {}
+
+        fun onBeforeLocationCheck() {}
+
+        fun onLocationPermissionsDenied() {}
+
+        fun onLocationPermissionsGranted() {}
+    }
+
+    enum class LocationDeniedReason {
+        AVAILABILITY,
         PERMISSIONS
     }
 
@@ -229,13 +206,13 @@ class LocationViewModel @AssistedInject constructor(
          */
         fun create(
             state: SavedStateHandle,
-            mockLocationReceiver: ILocationReceiver?,
+            mockLocationReceiver: LocationReceiver?,
         ): LocationViewModel
     }
 
     companion object {
 
-        const val DIALOG_TAG_GPS_NOT_AVAILABLE = "DIALOG_TAG_GPS_NOT_AVAILABLE"
-        const val DIALOG_TAG_GPS_NOT_ENABLED = "DIALOG_TAG_GPS_NOT_ENABLED"
+        const val DIALOG_TAG_LOCATION_NOT_AVAILABLE = "DIALOG_TAG_LOCATION_NOT_AVAILABLE"
+        const val DIALOG_TAG_LOCATION_NOT_ENABLED = "DIALOG_TAG_LOCATION_NOT_ENABLED"
     }
 }

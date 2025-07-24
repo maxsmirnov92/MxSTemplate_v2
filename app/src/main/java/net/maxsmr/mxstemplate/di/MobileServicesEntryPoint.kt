@@ -3,7 +3,7 @@ package net.maxsmr.mxstemplate.di
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import net.maxsmr.core.android.location.receiver.ILocationReceiver
+import net.maxsmr.core.android.location.receiver.LocationReceiver
 import net.maxsmr.mobile_services.IMobileServicesAvailability
 import net.maxsmr.mobile_services.market.MarketIntentLauncher
 
@@ -24,5 +24,5 @@ interface MobileServicesEntryPoint {
      */
     val mobileServicesAvailability: IMobileServicesAvailability
 
-    val locationReceiver: ILocationReceiver
+    val locationReceiver: LocationReceiver
 }

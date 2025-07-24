@@ -150,7 +150,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
             // должен использоваться dialogQueue из locationViewModel
             LocationFragmentAlertDelegate(this@BaseAddressSorterFragment, this).handleAlerts()
             handleEvents(this@BaseAddressSorterFragment, navigationActor, toastActor)
-            navigateToLocationSettings.observeSafe(viewLifecycleOwner) {
+            navigateToLocationSettingsEvent.observeSafe(viewLifecycleOwner) {
                 startActivity(getLocationSettingsIntent())
             }
         }
@@ -401,23 +401,22 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
     }
 
     private fun doRequestGps(targetAction: (() -> Unit)? = null) {
-        locationViewModel.registerLocationUpdatesOnGpsCheck(this,
+        locationViewModel.registerLocationUpdates(this,
             REQUEST_CODE_PERMISSION_GPS,
-            isGpsOnly = false,
+            withGpsOnly = false,
             requireFineLocation = true,
-            checkOnly = false,
-            callbacks = object : LocationViewModel.GpsCheckCallbacks {
-                override fun onPermissionsGranted() {
+            callbacks = object : LocationViewModel.LocationCheckCallbacks {
+                override fun onLocationPermissionsGranted() {
                     targetAction?.invoke()
                 }
 
-                override fun onGpsDisabledOrNotAvailable() {
-                    super.onGpsDisabledOrNotAvailable()
+                override fun onLocationDisabledOrNotAvailable() {
+                    super.onLocationDisabledOrNotAvailable()
                     viewModel.clearLastLocation()
                 }
 
-                override fun onPermissionsDenied() {
-                    super.onPermissionsDenied()
+                override fun onLocationPermissionsDenied() {
+                    super.onLocationPermissionsDenied()
                     viewModel.clearLastLocation()
                 }
             }

@@ -6,7 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import net.maxsmr.core.android.location.receiver.ILocationReceiver
+import net.maxsmr.core.android.location.receiver.LocationReceiver
 import net.maxsmr.feature.camera.recognition.ITextRecognition
 import net.maxsmr.feature.camera.recognition.TextRecognitionResolver
 import net.maxsmr.mobile_services.IMobileServicesAvailability
@@ -45,7 +45,7 @@ class MobileServicesModule {
     fun provideLocationReceiver(
         @ApplicationContext context: Context,
         availability: IMobileServicesAvailability,
-    ): ILocationReceiver {
+    ): LocationReceiver {
         return LocationReceiverResolver(context, availability).resolve()
     }
 

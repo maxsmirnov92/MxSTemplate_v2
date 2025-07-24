@@ -1,21 +1,21 @@
 package net.maxsmr.mobile_services.receiver
 
 import android.content.Context
-import net.maxsmr.core.android.location.receiver.ILocationReceiver
+import net.maxsmr.core.android.location.receiver.LocationReceiver
 import net.maxsmr.mobile_services.IMobileServicesAvailability
 
-abstract class BaseLocationReceiverResolver(
-    protected val context: Context,
-    private val mobileServicesAvailability: IMobileServicesAvailability
-) {
+interface BaseLocationReceiverResolver {
 
-    protected abstract fun systemLocationReceiver(): ILocationReceiver
+    val context: Context
+    val mobileServicesAvailability: IMobileServicesAvailability
 
-    protected abstract fun huaweiLocationReceiver(): ILocationReceiver
+    fun huaweiLocationReceiver(): LocationReceiver
 
-    protected abstract fun googleLocationReceiver(): ILocationReceiver
+    fun googleLocationReceiver(): LocationReceiver
 
-    fun resolve(): ILocationReceiver {
+    fun systemLocationReceiver(): LocationReceiver = SystemLocationReceiver(context)
+
+    fun resolve(): LocationReceiver {
         return when {
             mobileServicesAvailability.isGooglePlayServicesAvailable -> googleLocationReceiver()
             mobileServicesAvailability.isHuaweiApiServicesAvailable -> huaweiLocationReceiver()

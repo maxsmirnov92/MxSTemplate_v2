@@ -8,7 +8,7 @@ import net.maxsmr.core.android.location.LocationCallback
  * Супертип, определяющий поведение делегатов для получения геопозиции
  *
  */
-interface ILocationReceiver {
+interface LocationReceiver {
 
     val lastKnownPosition: Location?
 

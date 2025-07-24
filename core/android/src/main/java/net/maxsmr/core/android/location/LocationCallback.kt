@@ -11,23 +11,23 @@ interface LocationCallback {
 
     fun onLocationAvailabilityChanged(isAvailable: Boolean)
 
-    fun onGpsNotAvailable()
+    fun onLocationNotSupported()
 
-    fun onGpsProviderNotEnabled()
+    fun onLocationProviderNotEnabled()
 
     fun checkLocationEnabled(
         context: Context,
         withGpsOnly: Boolean,
-        withNotify: Boolean = false
+        withNotify: Boolean = true
     ): Boolean {
         if (!hasLocationFeature(withGpsOnly, context)) {
-            if (!withNotify) {
-                onGpsNotAvailable()
+            if (withNotify) {
+                onLocationNotSupported()
             }
             return false
         } else if (!isLocationProviderEnabled(withGpsOnly, context)) {
-            if (!withNotify) {
-                onGpsProviderNotEnabled()
+            if (withNotify) {
+                onLocationProviderNotEnabled()
             }
             return false
         }
