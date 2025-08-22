@@ -7,7 +7,7 @@ import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.core.network.exceptions.ApiException
-import net.maxsmr.core.network.exceptions.handler.ICallExceptionHandler
+import net.maxsmr.core.network.exceptions.handler.CallExceptionHandler
 import net.maxsmr.core.network.retrofit.converters.BaseResponse
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -20,7 +20,7 @@ import retrofit2.Retrofit
  */
 @Deprecated("use ExceptionHandlingCallAdapterFactory")
 class HttpResponseErrorInterceptor(
-    private val handler: ICallExceptionHandler? = null,
+    private val handler: CallExceptionHandler? = null,
     private val responseAnnotation: Annotation? = null,
     private val retrofitProvider: () -> Retrofit,
 ) : Interceptor {

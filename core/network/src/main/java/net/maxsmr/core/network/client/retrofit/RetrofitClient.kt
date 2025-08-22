@@ -4,7 +4,7 @@ import androidx.annotation.CallSuper
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import kotlinx.serialization.json.Json
 import net.maxsmr.core.network.client.okhttp.ResponseBodyCache
-import net.maxsmr.core.network.exceptions.handler.ICallExceptionHandler
+import net.maxsmr.core.network.exceptions.handler.CallExceptionHandler
 import net.maxsmr.core.network.retrofit.internal.cache.CacheWrapper
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -21,7 +21,7 @@ open class RetrofitClient(
     private val protocolVersion: Int,
     private val disableCache: Boolean,
     private val cache: ResponseBodyCache<*>,
-    private val exceptionHandler: ICallExceptionHandler,
+    private val exceptionHandler: CallExceptionHandler,
     private val clientProvider: () -> OkHttpClient,
 ) {
 

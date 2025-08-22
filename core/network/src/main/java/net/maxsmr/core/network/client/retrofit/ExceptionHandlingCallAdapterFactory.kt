@@ -20,10 +20,8 @@ import java.lang.reflect.Type
 
 class ExceptionHandlingCallAdapterFactory(
     private val cache: ResponseBodyCache<*>,
-    private val exceptionHandler: suspend (RuntimeException) -> Unit,
+    private val exceptionHandler: (RuntimeException) -> Unit,
 ) : CallAdapter.Factory() {
-
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     override fun get(returnType: Type, annotations: Array<Annotation>, retrofit: Retrofit): CallAdapter<*, *> {
         val delegate = retrofit.nextCallAdapter(this, returnType, annotations)
@@ -71,9 +69,7 @@ class ExceptionHandlingCallAdapterFactory(
                             }
                         }
                         resultThrowable.let {
-                            scope.launch {
-                                exceptionHandler(it)
-                            }
+                            exceptionHandler(it)
                         }
                         cache.removeWithClose(request)
                         resultThrowable
