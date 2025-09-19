@@ -16,13 +16,11 @@ class CommonWrapBottomSheetDialog(
     context: Context,
     alert: Alert,
     cancelable: Boolean = true,
-    shouldExpand: Boolean = true,
 ) : BaseCustomBottomSheetDialog(
     context,
     layoutResId = net.maxsmr.core.ui.view.R.layout.layout_bottom_sheet_dialog_common_wrap,
     alert = alert,
     cancelable = cancelable,
-    shouldExpand = shouldExpand
 ) {
 
     private val binding by lazy {

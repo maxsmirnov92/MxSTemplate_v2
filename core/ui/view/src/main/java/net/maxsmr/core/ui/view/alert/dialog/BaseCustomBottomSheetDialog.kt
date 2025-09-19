@@ -12,6 +12,8 @@ import androidx.annotation.LayoutRes
 import androidx.core.view.isVisible
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import net.maxsmr.commonutils.convertAnyToPx
+import net.maxsmr.commonutils.getStatusBarHeight
 import net.maxsmr.core.android.base.alert.Alert
 import net.maxsmr.core.android.base.alert.Alert.Answer.Companion.findByTag
 import net.maxsmr.core.ui.R
@@ -23,7 +25,6 @@ abstract class BaseCustomBottomSheetDialog(
     @LayoutRes val layoutResId: Int,
     val alert: Alert? = null,
     private val cancelable: Boolean = true,
-    private val shouldExpand: Boolean = true,
 ) : BottomSheetDialog(context, themeResId), DialogInterface.OnCancelListener {
 
     protected lateinit var wrappedContentView: View
@@ -84,11 +85,18 @@ abstract class BaseCustomBottomSheetDialog(
 
     @CallSuper
     protected open fun onSetupBehaviour(behavior: BottomSheetBehavior<out View>) {
-        behavior.state = if (shouldExpand) {
-            BottomSheetBehavior.STATE_EXPANDED
-        } else {
-            BottomSheetBehavior.STATE_COLLAPSED
-        }
+        val res = context.resources
+        val height = (
+                res.displayMetrics.heightPixels
+                        - baseContentView.getStatusBarHeight()
+                        - res.convertAnyToPx(40f).toInt()
+                )
+
+        behavior.maxHeight = height
+        behavior.peekHeight = height
+
+        behavior.state = BottomSheetBehavior.STATE_EXPANDED
+        behavior.skipCollapsed = true
     }
 
     protected fun setOnAnswerCancelListener(answer: Alert.Answer?, onCancel: (() -> Unit)? = null) {
