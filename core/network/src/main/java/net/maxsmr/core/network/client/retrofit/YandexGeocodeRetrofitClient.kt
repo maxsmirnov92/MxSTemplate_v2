@@ -11,15 +11,12 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 
 class YandexGeocodeRetrofitClient(
-    baseUrl: HttpUrl?,
+    baseUrl: HttpUrl,
     json: Json,
-    cachePath: String,
-    protocolVersion: Int,
-    disableCache: Boolean,
     cache: ResponseBodyCache<*>,
     exceptionHandler: CallExceptionHandler,
     clientProvider: () -> OkHttpClient,
-) : RetrofitClient(baseUrl, json, cachePath, protocolVersion, disableCache, cache, exceptionHandler, clientProvider) {
+) : RetrofitClient(baseUrl, json,  cache, exceptionHandler, clientProvider) {
 
     override fun configureBuild(builder: Retrofit.Builder) {
         builder.addConverterFactory(

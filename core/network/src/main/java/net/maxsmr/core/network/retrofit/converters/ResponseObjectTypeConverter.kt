@@ -31,7 +31,7 @@ internal class ResponseObjectTypeConverter(
             return Converter<ResponseBody, Any> { body ->
                 val response = delegate.convert(body) as BaseResponse
 
-                responseListener?.onServerResponse(response.errorCode, response.errorMessage, null)
+                responseListener?.onServerResponse(response.errorCode, response.errorMessage)
 
                 return@Converter if (response.isOk) {
                     response

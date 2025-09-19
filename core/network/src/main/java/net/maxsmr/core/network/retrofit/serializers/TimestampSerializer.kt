@@ -2,7 +2,11 @@ package net.maxsmr.core.network.retrofit.serializers
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import kotlinx.datetime.*
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toKotlinLocalDateTime
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind.STRING
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -11,7 +15,10 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoField
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
+@OptIn(ExperimentalTime::class)
 @RequiresApi(Build.VERSION_CODES.O)
 internal object TimestampSerializer : KSerializer<Instant> {
 
@@ -35,7 +42,7 @@ internal object TimestampSerializer : KSerializer<Instant> {
 
     override fun deserialize(decoder: Decoder): Instant =
         java.time.LocalDateTime.parse(decoder.decodeString(), LOCAL_DATE_TIME).toKotlinLocalDateTime()
-            .toInstant(TimeZone.of("Europe/Moscow"))
+            .toInstant(TimeZone.currentSystemDefault())
 
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(
         serialName = "LocalDate",
@@ -43,6 +50,8 @@ internal object TimestampSerializer : KSerializer<Instant> {
     )
 
     override fun serialize(encoder: Encoder, value: Instant) =
-        encoder.encodeString(value.toLocalDateTime(TimeZone.of("Europe/Moscow")).toJavaLocalDateTime()
-            .format(LOCAL_DATE_TIME))
+        encoder.encodeString(
+            value.toLocalDateTime(TimeZone.currentSystemDefault()).toJavaLocalDateTime()
+                .format(LOCAL_DATE_TIME)
+        )
 }

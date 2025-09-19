@@ -16,10 +16,10 @@ dependencies {
     implementation(libs.rustore.sdk.appupdate)
 
     // ### В обоих реализациях можно обращаться к play-services-location
-    implementation(libs.google.location)
+    implementation(libs.google.services.location)
 
     "huaweiImplementation"(libs.huawei.agconnect.core)
-    "huaweiImplementation"(libs.huawei.location)
+    "huaweiImplementation"(libs.huawei.services.location)
 
     "googleImplementation"(libs.google.play.app.update)
     "googleImplementation"(libs.google.play.app.update.ktx)

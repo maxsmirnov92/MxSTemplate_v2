@@ -17,13 +17,13 @@ import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCau
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody.Companion.toResponseBody
-import okhttp3.internal.connection.RealCall
-import okhttp3.internal.readBomAsCharset
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
+import okio.ByteString.Companion.decodeHex
 import okio.ForwardingSink
 import okio.ForwardingSource
+import okio.Options
 import okio.Sink
 import okio.Source
 import okio.buffer
@@ -32,9 +32,15 @@ import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.lang.AssertionError
 import java.nio.charset.Charset
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.text.Charsets.UTF_16BE
+import kotlin.text.Charsets.UTF_16LE
+import kotlin.text.Charsets.UTF_32BE
+import kotlin.text.Charsets.UTF_32LE
+import kotlin.text.Charsets.UTF_8
 
 private val logger: BaseLogger = BaseLoggerHolder.instance.getLogger("OkHttpExt")
 
@@ -43,6 +49,20 @@ private const val HEADER_CONTENT_ENCODING = "Content-Encoding"
 private const val HEADER_CONTENT_DISPOSITION = "Content-Disposition"
 private const val HEADER_ACCEPT_RANGES = "Accept-Ranges"
 private const val ATTACHMENT_FILENAME = "filename"
+
+private  val UNICODE_BOMS =
+    Options.of(
+        // UTF-8.
+        "efbbbf".decodeHex(),
+        // UTF-16BE.
+        "feff".decodeHex(),
+        // UTF-32LE.
+        "fffe0000".decodeHex(),
+        // UTF-16LE.
+        "fffe".decodeHex(),
+        // UTF-32BE.
+        "0000feff".decodeHex(),
+    )
 
 fun OkHttpClient.executeCall(
     requestConfigurator: ((Request.Builder) -> Any?),
@@ -183,9 +203,9 @@ fun Response.asByteArray(previousDownloadedSize: Long? = null): ByteArray? = try
 }
 
 @Throws(IOException::class)
-fun Response.asByteArrayOrThrow(previousDownloadedSize: Long? = null): ByteArray? {
+fun Response.asByteArrayOrThrow(previousDownloadedSize: Long? = null): ByteArray {
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
-    return this.body?.bytes()
+    return this.body.bytes()
 }
 
 fun Response.asString(previousDownloadedSize: Long? = null): String? = try {
@@ -198,7 +218,7 @@ fun Response.asString(previousDownloadedSize: Long? = null): String? = try {
 @Throws(IOException::class)
 fun Response.asStringOrThrow(previousDownloadedSize: Long? = null): String? {
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
-    return this.body?.string()
+    return this.body.string()
 }
 
 fun Response.write(
@@ -218,7 +238,7 @@ fun Response.writeOrThrow(
     previousDownloadedSize: Long? = null,
     notifier: StreamNotifier? = null,
 ): ResponseBody {
-    val responseBody = this?.body ?: throw RuntimeException("Response body is missing")
+    val responseBody = this.body
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
     responseBody.byteStream().copyToOutputStreamOrThrow(outputStream, notifier, responseBody.contentLength())
     return responseBody
@@ -239,7 +259,7 @@ fun Response.writeBufferedOrThrow(
     outputStream: OutputStream,
     previousDownloadedSize: Long? = null,
 ): ResponseBody {
-    val responseBody = this?.body ?: throw RuntimeException("Response body is missing")
+    val responseBody = this.body
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
     val sink: BufferedSink = outputStream.sink().buffer()
     sink.writeAll(responseBody.source());
@@ -259,8 +279,8 @@ fun Response.asByteArrayCloned(): ByteArray? = try {
 }
 
 @Throws(IOException::class)
-fun Response.asByteArrayClonedOrThrow(): ByteArray? {
-    return body?.asByteArrayClonedOrThrow()
+fun Response.asByteArrayClonedOrThrow(): ByteArray {
+    return body.asByteArrayClonedOrThrow()
 }
 
 /**
@@ -287,7 +307,7 @@ fun Response.asStringCloned(): Pair<String, Charset>? = try {
 
 @Throws(IOException::class)
 fun Response.asStringClonedOrThrow(): Pair<String, Charset>? {
-    return body?.asStringClonedOrThrow()
+    return body.asStringClonedOrThrow()
 }
 
 /**
@@ -329,20 +349,20 @@ fun Response.writeClonedOrThrow(
     notifier: StreamNotifier? = null,
 ): ResponseBody? {
     outputStream ?: return null
-    val responseBody = this.body ?: return null
+    val responseBody = this.body
     val source = responseBody.source()
-    val buffer = source.cloneBufferOrThrow() ?: return null
+    val buffer = source.cloneBufferOrThrow()
     buffer.inputStream().copyToOutputStreamOrThrow(outputStream, notifier, responseBody.contentLength())
     return responseBody
 }
 
 fun Response.toResponseBody(shouldClone: Boolean): ResponseBody {
     val bodyBytes = if (shouldClone) {
-        body?.asByteArrayClonedOrThrow()
+        body.asByteArrayClonedOrThrow()
     } else {
         asByteArrayOrThrow()
-    } ?: ByteArray(0)
-    return bodyBytes.toResponseBody(body?.contentType())
+    }
+    return bodyBytes.toResponseBody(body.contentType())
 }
 
 @Throws(IOException::class)
@@ -352,6 +372,18 @@ private fun BufferedSource.cloneBufferOrThrow(): Buffer {
     // clone buffer before reading from it
     return this.buffer.clone()
 }
+
+internal fun BufferedSource.readBomAsCharset(default: Charset): Charset =
+    when (select(UNICODE_BOMS)) {
+        // a mapping from the index of encoding methods in UNICODE_BOMS to its corresponding encoding method
+        0 -> UTF_8
+        1 -> UTF_16BE
+        2 -> UTF_32LE
+        3 -> UTF_16LE
+        4 -> UTF_32BE
+        -1 -> default
+        else -> throw AssertionError()
+    }
 
 // endregion
 
@@ -435,13 +467,6 @@ fun Response.isResumeDownloadSupported(): Boolean {
     return acceptHeader.isNotEmpty() && !acceptHeader.equals("none", ignoreCase = true)
 }
 
-fun Interceptor.Chain.resetTimeout() {
-    (this.call() as? RealCall)?.let { realCall ->
-        realCall.timeout().exit()
-        realCall.timeout().enter()
-    }
-}
-
 @Throws(IOException::class)
 private fun Response?.skipBytesIfSupportedOrThrow(downloadedSize: Long?) {
     this ?: return
@@ -510,7 +535,7 @@ class ProgressRequestBody(
     override fun contentLength(): Long {
         return try {
             delegateBody.contentLength()
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             -1L
         }
     }

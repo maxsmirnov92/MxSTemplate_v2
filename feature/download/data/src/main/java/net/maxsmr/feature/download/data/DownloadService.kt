@@ -401,10 +401,11 @@ class DownloadService : Service() {
                 }.addNetworkInterceptor {
                     val originalResponse: Response = it.proceed(it.request())
                     originalResponse.newBuilder()
-                        .body(originalResponse.body?.let { body ->
-                            // индикация загрузки + флаг отмены
-                            ProgressResponseBody(body, ServiceProgressListener(Loading.Type.DOWNLOADING))
-                        }
+                        .body(
+                            ProgressResponseBody(
+                                originalResponse.body,
+                                ServiceProgressListener(Loading.Type.DOWNLOADING)
+                            )
                         )
                         .build()
                 }.build()

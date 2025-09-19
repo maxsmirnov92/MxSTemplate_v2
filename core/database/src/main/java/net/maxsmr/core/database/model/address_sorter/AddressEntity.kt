@@ -1,18 +1,19 @@
 package net.maxsmr.core.database.model.address_sorter
 
-import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import net.maxsmr.core.database.dao.UpsertDao.Companion.NO_ID
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address.ErrorType
+import net.maxsmr.core.domain.entities.feature.address_sorter.Address.Location
 import net.maxsmr.core.domain.entities.feature.address_sorter.AddressSuggest
 
 @Entity(tableName = "Address")
 data class AddressEntity(
     val address: String,
-    @Embedded("location_")
-    val location: Address.Location? = null,
+    // @Embedded сломано после 2.8.0
+    val latitude: Float? = null,
+    val longitude: Float? = null,
     val distance: Float? = null,
     val duration: Long? = null,
     val isSuggested: Boolean = false,
@@ -42,7 +43,11 @@ data class AddressEntity(
         return Address(
             id,
             address,
-            location,
+            if (latitude != null && longitude != null) {
+                Location(latitude, longitude)
+            } else {
+                null
+            },
             distance,
             duration,
             isSuggested,
@@ -58,7 +63,8 @@ data class AddressEntity(
         @JvmStatic
         fun Address.toEntity(sortOrder: Long) = AddressEntity(
             address = address,
-            location = location,
+            latitude = location?.latitude,
+            longitude = location?.longitude,
             distance = distance,
             duration = duration,
             isSuggested = isSuggested,
@@ -75,15 +81,24 @@ data class AddressEntity(
             sortOrder: Long,
             location: Address.Location? = null,
             locationErrorMessage: String? = null,
-        ) = AddressEntity(
-            address = displayedAddress,
-            location = location ?: this.location,
-            distance = distance,
-            isSuggested = true,
-            locationErrorMessage = locationErrorMessage
-        ).apply {
-            this.id = id
-            this.sortOrder = sortOrder
+        ): AddressEntity {
+            val latitude: Float?
+            val longitude: Float?
+            (location ?: this.location).let {
+                latitude = it?.latitude
+                longitude = it?.longitude
+            }
+            return AddressEntity(
+                address = displayedAddress,
+                latitude = latitude,
+                longitude = longitude,
+                distance = distance,
+                isSuggested = true,
+                locationErrorMessage = locationErrorMessage
+            ).apply {
+                this.id = id
+                this.sortOrder = sortOrder
+            }
         }
     }
 }

@@ -17,6 +17,12 @@ plugins {
 
 buildscript {
 
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://developer.huawei.com/repo/") }
+    }
+
     dependencies {
         // Тут остаются classpath, для которых пока нет соотв. плагина
         classpath(libs.android.gradle)

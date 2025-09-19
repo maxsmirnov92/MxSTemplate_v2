@@ -4,7 +4,7 @@ import org.gradle.api.JavaVersion
 
 object BuildConfig {
 
-    const val compileSdk = 35
+    const val compileSdk = 36
 
     const val targetSdk = 35
     const val minSdk = 23

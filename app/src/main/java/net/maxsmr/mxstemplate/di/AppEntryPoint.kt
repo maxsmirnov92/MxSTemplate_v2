@@ -6,6 +6,4 @@ import dagger.hilt.components.SingletonComponent
 
 @[EntryPoint
 InstallIn(SingletonComponent::class)]
-internal interface AppEntryPoint {
-
-}
+internal interface AppEntryPoint

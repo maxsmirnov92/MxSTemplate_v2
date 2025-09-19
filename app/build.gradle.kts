@@ -33,10 +33,7 @@ logger.info("=== Running tasks: $gradleTaskNames ===")
 
 if (isHuaweiBuild() == true) {
     logger.info("Applying plugin: com.huawei.agconnect")
-
-    with(pluginManager) {
-        apply("com.huawei.agconnect")
-    }
+    pluginManager.apply("com.huawei.agconnect")
 }
 
 data class AppVersion(
@@ -342,7 +339,6 @@ fun VariantDimension.applyAppPropertiesFields(isDebug: Boolean) {
 }
 
 fun VariantDimension.applyAppVersionFields() {
-    buildConfigField("int", "PROTOCOL_VERSION", "1")
     buildConfigField("String", "MOBILE_BUILD_TYPE", "\"${appVersion.type}\"")
     buildConfigField(
         "boolean",

@@ -4,7 +4,6 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
-
         maven { url = uri("https://developer.huawei.com/repo/") }
     }
 }
@@ -19,8 +18,8 @@ dependencyResolutionManagement {
             "dirs" to listOf("core/android/libs", "core/ui/base/libs", "core/utils/libs")
         )
 
-        maven { url = uri("https://developer.huawei.com/repo/") }
         maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://developer.huawei.com/repo/") }
         maven { url = uri("https://artifactory-external.vkpartner.ru/artifactory/maven") }
     }
 }

@@ -1,97 +1,90 @@
 [versions]
-kotlin = "2.1.0"
-androidxAppCompat = "1.7.0"
-androidxConstraintLayout = "2.2.0"
-androidxCore = "1.15.0"
+kotlin = "2.2.20"
+androidxAppCompat = "1.7.1"
+androidxConstraintLayout = "2.2.1"
+androidxCore = "1.17.0"
 androidxCoreSplashScreen = "1.0.1"
-kotlinxCoroutines = "1.9.0"
-kotlinxCoroutinesRx2 = "1.9.0"
-#firebaseCrashlytics = "19.2.0"
-#firebaseAnalytics = "22.1.2"
-#firebaseMessaging = "23.4.1"
-androidxEspresso = "3.6.1"
-androidxFragment = "1.8.5"
-googlePlayServicesLocation = "21.3.0"
-#googlePlayServicesDrive = "17.0.0"
-#googlePlayServicesAuth = "21.0.0"
-#googlePlayServicesWallet = "19.3.0"
-googleHttpClientGson = "1.43.3"
-huaweiAgconnectCore = "1.6.5.300"
-huaweiHmsLocation = "6.8.0.300"
-huaweiServices = "1.9.1.300"
-gson = "2.10.1"
+kotlinxCoroutines = "1.10.2"
+kotlinxCoroutinesRx2 = "1.10.2"
+androidxEspresso = "3.7.0"
+androidxFragment = "1.8.9"
+#googleHttpClientGson = "1.43.3"
+
+#gson = "2.10.1"
 junit = "4.13.2"
-junitExt = "1.1.5"
-androidxLifeCycle = "2.8.7"
-lottie = "4.2.1"
-googleMaterial = "1.12.0"
-mockitoCore = "3.4.6"
-mockitoKotlin = "1.5.0"
-mockitoAndroid = "2.19.0"
-okhttp = "4.12.0"
-room = "2.6.1"
-androidxTestRules = "1.6.1"
-androidxTestRunner = "1.6.2"
+#junitExt = "1.1.5"
+androidxLifeCycle = "2.9.4"
+lottie = "6.6.9"
+googleMaterial = "1.13.0"
+#mockitoCore = "3.4.6"
+#mockitoKotlin = "1.5.0"
+#mockitoAndroid = "2.19.0"
+okhttp = "5.1.0"
+room = "2.8.0"
+androidxTestRules = "1.7.0"
+androidxTestRunner = "1.7.0"
 timber = "5.0.1"
 treessence = "1.1.2"
 androidxViewPager2 = "1.1.0"
 androidxLocalBroadcastManager = "1.1.0"
 androidxSwipeRefreshLayout = "1.1.0"
-jodaTime = "2.9.4"
-retrofit = "2.11.0"
-threeTenAbp = "1.4.7"
+jodaTime = "2.14.0"
+retrofit = "3.0.0"
+threeTenAbp = "1.4.9"
+#noinspection NewerVersionAvailable
 picasso = "2.8"
 easyPermissions = "3.0.0"
 #volley = "1.2.1"
-androidxExifinterface = "1.3.7"
-hilt = "2.54"
-androidxPaging = "3.3.4"
+androidxExifinterface = "1.4.1"
+hilt = "2.57.1"
+androidxPaging = "3.3.6"
+#noinspection NewerVersionAvailable
 decoro = "1.5.1"
-androidxWindow = "1.3.0"
-androidxDataStore = "1.1.1"
+androidxWindow = "1.4.0"
+androidxDataStore = "1.1.7"
 androidxAppStartup = "1.2.0"
-recyclerview = "1.3.2"
-kotlinxSerializationJson = "1.6.3"
+recyclerview = "1.4.0"
+kotlinxSerializationJson = "1.9.0"
 kotlinxSerializationConverter = "1.0.0"
-kotlinxDatetime = "0.5.0"
-zxingCore = "3.4.0"
-zxingParent = "3.4.0"
-zxingEmbedded = "3.3.0"
+kotlinxDatetime = "0.7.1"
+zxingCore = "3.5.3"
+zxingParent = "3.5.3"
+#zxingEmbedded = "3.3.0"
 flowLayout = "1.3.3"
-androidxNavigation = "2.8.5"
-androidGradle = "8.6.1"
+androidxNavigation = "2.9.4"
+androidGradle = "8.11.2"
 #firebaseCrashlyticsPlugin = "3.0.2"
 #firebaseAppDistributionPlugin = "5.0.0"
-gmsPlugin = "4.4.2"
-ksp = "2.1.0-1.0.29"
-glide = "4.16.0"
-glideCompose = "1.0.0-beta01"
-hiltNavigationCompose = '1.2.0'
+ksp = "2.2.20-2.0.3"
+glide = "5.0.5"
+glideCompose = "1.0.0-beta08"
+hiltNavigationCompose = '1.3.0'
 #orbit = "6.1.0"
-androidxTestExtJunit = "1.2.1"
+androidxTestExtJunit = "1.3.0"
 
 #androidxCompose = '1.7.6'
-androidxComposeBom = "2025.01.00"
-androidxConstraintLayoutCompose = "1.1.0"
-androidxActivityCompose = '1.10.0'
-androidxNavigationCompose = '2.8.5'
-androidxLifecycleViewModelCompose = '2.8.7'
+androidxComposeCompiler = "2.0.0"
+androidxComposeBom = "2025.09.00"
+androidxConstraintLayoutCompose = "1.1.1"
+androidxActivityCompose = '1.11.0'
+androidxNavigationCompose = '2.9.4'
+androidxLifecycleViewModelCompose = '2.9.4'
 #accompanistNavigationMaterial = '0.36.0'
 
-gridlayout = "1.0.0"
-r8 = "8.5.35"
-lint = "31.7.3"
-androidDesugarJdkLibs = "2.1.3"
-androidxComposeCompiler = "1.5.10"
+gridlayout = "1.1.0"
+r8 = "8.11.18"
+lint = "31.13.0"
+androidDesugarJdkLibs = "2.1.5"
+
 stfalconImageViewer = "v1.0.1"
 date4j = "1.5.1"
 androidxLegacy = "1.0.0"
-circleimageview = "2.2.0"
-ucrop = "2.2.6"
-androidDeviceNames = "1.1.9"
+circleimageview = "3.1.0"
+ucrop = "2.2.11"
+androidDeviceNames = "2.1.1"
 roundedimageview = "2.3.0"
 adapterdelegates4Kotlin = "4.3.2"
-ioClient = "1.0.0"
+ioClient = "2.1.2"
 kittinunfResult = "4.0.0"
 leakCanary = "2.14"
 googlePlayReview = "2.0.2"
@@ -99,9 +92,23 @@ googlePlayAppUpdates = "2.1.0"
 ruStoreSdkBom = "6.0.0"
 showcaseView = "1.4.1"
 
-cameraX = "1.4.2"
+cameraX = "1.5.0"
 googleMlKit = "19.0.1"
 huaweiMl = "3.11.0.301"
+
+# Google
+#googleServicesPlugin = "4.4.2"
+googleServicesLocation = "21.3.0"
+#googleServicesDrive = "17.0.0"
+#googleServicesAuth = "21.0.0"
+#googleServicesWallet = "19.3.0"
+#firebaseCrashlytics = "19.2.0"
+#firebaseAnalytics = "22.1.2"
+#firebaseMessaging = "23.4.1"
+
+# Huawei
+huaweiAgconnect = "1.9.3.301"
+huaweiServicesLocation = "6.9.0.300"
 
 [libraries]
 android-desugarJdkLibs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "androidDesugarJdkLibs" }
@@ -159,7 +166,7 @@ androidx-legacy = { group = "androidx.legacy", name = "legacy-support-v4", versi
 #firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics", version.ref = "firebaseAnalytics" }
 #firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging-ktx", version.ref = "firebaseMessaging" }
 
-kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
+#kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
 kotlin-compose = { group = "org.jetbrains.kotlin", name = "compose-compiler-gradle-plugin", version.ref = "kotlin" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
@@ -169,16 +176,16 @@ kotlinx-serialization-json-okio = { group = "org.jetbrains.kotlinx", name = "kot
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-coroutines-rx2 = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-rx2", version.ref = "kotlinxCoroutinesRx2" }
 
-google-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "googlePlayServicesLocation" }
-#google-drive = { group = "com.google.android.gms", name = "play-services-drive", version.ref = "googlePlayServicesDrive" }
-#google-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "googlePlayServicesAuth" }
-#google-wallet = { group = "com.google.android.gms", name = "play-services-wallet", version.ref = "googlePlayServicesWallet" }
+google-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "googleServicesLocation" }
+#google-services-drive = { group = "com.google.android.gms", name = "play-services-drive", version.ref = "googlePlayServicesDrive" }
+#google-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "googlePlayServicesAuth" }
+#google-services-wallet = { group = "com.google.android.gms", name = "play-services-wallet", version.ref = "googlePlayServicesWallet" }
 google-material = { group = "com.google.android.material", name = "material", version.ref = "googleMaterial" }
 google-hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
 google-hilt-android-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 google-zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxingCore" }
 google-zxing-parent = { group = "com.google.zxing", name = "zxing-parent", version.ref = "zxingParent" }
-google-http-client-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttpClientGson" }
+#google-http-client-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttpClientGson" }
 
 google-play-review = { group = "com.google.android.play", name = "review", version.ref = "googlePlayReview" }
 google-play-review-ktx = { group = "com.google.android.play", name = "review-ktx", version.ref = "googlePlayReview" }
@@ -187,14 +194,14 @@ google-play-app-update-ktx = { group = "com.google.android.play", name = "app-up
 rustore-sdk-bom = { group = "ru.rustore.sdk", name = "bom", version.ref = "ruStoreSdkBom" }
 rustore-sdk-appupdate = { group = "ru.rustore.sdk", name = "appupdate" }
 
-huawei-agconnect-core = { group = "com.huawei.agconnect", name = "agconnect-core", version.ref = "huaweiAgconnectCore" }
-huawei-agconnect-agcp = { group = "com.huawei.agconnect", name = "agcp", version.ref = "huaweiServices" }
-huawei-location = { group = "com.huawei.hms", name = "location", version.ref = "huaweiHmsLocation" }
+huawei-agconnect-agcp = { group = "com.huawei.agconnect", name = "agcp", version.ref = "huaweiAgconnect" }
+huawei-agconnect-core = { group = "com.huawei.agconnect", name = "agconnect-core", version.ref = "huaweiAgconnect" }
+huawei-services-location = { group = "com.huawei.hms", name = "location", version.ref = "huaweiServicesLocation" }
 
-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+#gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 lottie = { group = "com.airbnb.android", name = "lottie", version.ref = "lottie" }
-mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoCore" }
-mockito-android = { group = "org.mockito", name = "mockito-android", version.ref = "mockitoAndroid" }
+#mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockitoCore" }
+#mockito-android = { group = "org.mockito", name = "mockito-android", version.ref = "mockitoAndroid" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-loggingInterceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
@@ -261,13 +268,13 @@ android-application = { id = "com.android.application", version.ref = "androidGr
 android-library = { id = "com.android.library", version.ref = "androidGradle" }
 #firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }
 #firebase-appdistribution = { id = "com.google.firebase.appdistribution", version.ref = "firebaseAppDistributionPlugin" }
-#gms = { id = "com.google.gms.google-services", version.ref = "gmsPlugin" }
+#gms = { id = "com.google.gms.google-services", version.ref = "googleServicesPlugin" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.1.0" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 navigation-safeargs-kotlin = { id = "androidx.navigation.safeargs.kotlin", version.ref = "androidxNavigation" }

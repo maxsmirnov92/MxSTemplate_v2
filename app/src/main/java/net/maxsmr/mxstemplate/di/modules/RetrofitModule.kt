@@ -24,8 +24,6 @@ import net.maxsmr.core.network.client.retrofit.RetrofitClient
 import net.maxsmr.core.network.client.retrofit.YandexGeocodeRetrofitClient
 import net.maxsmr.core.network.exceptions.handler.CombinedCallExceptionHandler
 import net.maxsmr.core.network.host.HostManager
-import net.maxsmr.mxstemplate.BuildConfig
-import net.maxsmr.mxstemplate.manager.CacheManager
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -37,7 +35,6 @@ class RetrofitModule {
 
     @[Provides Singleton RadarIoRetrofit]
     fun provideRadarIoRetrofit(
-        cacheManager: CacheManager,
         exceptionHandler: CombinedCallExceptionHandler,
         @RadarIoHostManager hostManager: HostManager,
         @RadarIoOkHttpClient okHttpClient: OkHttpClient,
@@ -47,9 +44,6 @@ class RetrofitModule {
         return RetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            cacheManager.dirPath,
-            BuildConfig.PROTOCOL_VERSION,
-            cacheManager.disableCache,
             cache,
             exceptionHandler,
         ) {
@@ -59,7 +53,6 @@ class RetrofitModule {
 
     @[Provides Singleton YandexSuggestRetrofit]
     fun provideYandexSuggestRetrofit(
-        cacheManager: CacheManager,
         exceptionHandler: CombinedCallExceptionHandler,
         @YandexSuggestHostManager hostManager: HostManager,
         @YandexSuggestOkHttpClient okHttpClient: OkHttpClient,
@@ -69,9 +62,6 @@ class RetrofitModule {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            cacheManager.dirPath,
-            BuildConfig.PROTOCOL_VERSION,
-            cacheManager.disableCache,
             cache,
             exceptionHandler
         ) {
@@ -81,7 +71,6 @@ class RetrofitModule {
 
     @[Provides Singleton YandexGeocodeRetrofit]
     fun provideYandexGeocodeRetrofit(
-        cacheManager: CacheManager,
         exceptionHandler: CombinedCallExceptionHandler,
         @YandexGeocodeHostManager hostManager: HostManager,
         @YandexGeocodeOkHttpClient okHttpClient: OkHttpClient,
@@ -91,9 +80,6 @@ class RetrofitModule {
         return YandexGeocodeRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            cacheManager.dirPath,
-            BuildConfig.PROTOCOL_VERSION,
-            cacheManager.disableCache,
             cache,
             exceptionHandler
         ) {
@@ -103,7 +89,6 @@ class RetrofitModule {
 
     @[Provides Singleton DoubleGisRoutingRetrofit]
     fun provideDoubleGisRoutingRetrofit(
-        cacheManager: CacheManager,
         exceptionHandler: CombinedCallExceptionHandler,
         @DoubleGisRoutingHostManager hostManager: HostManager,
         @DoubleGisRoutingOkHttpClient okHttpClient: OkHttpClient,
@@ -113,9 +98,6 @@ class RetrofitModule {
         return CommonRetrofitClient(
             hostManager.baseUrl.toHttpUrl(),
             json,
-            cacheManager.dirPath,
-            BuildConfig.PROTOCOL_VERSION,
-            cacheManager.disableCache,
             cache,
             exceptionHandler
         ) {
