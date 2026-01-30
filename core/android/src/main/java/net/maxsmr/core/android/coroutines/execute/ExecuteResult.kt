@@ -15,12 +15,14 @@ import net.maxsmr.core.network.getErrorCode
 
 sealed class ExecuteResult<out R> {
 
-    data class Success<out T>(val data: T) : ExecuteResult<T>()
+    sealed class Complete<out T>: ExecuteResult<T>()
+
+    data class Success<out T>(val data: T) : Complete<T>()
 
     data class Error(
         val exception: Exception,
-        private val message: TextMessage? = null
-    ) : ExecuteResult<Nothing>() {
+        private val message: TextMessage? = null,
+    ) : Complete<Nothing>() {
 
         /**
          * @return [TextMessage] ошибки, либо null
@@ -37,7 +39,7 @@ sealed class ExecuteResult<out R> {
         }
     }
 
-    object Loading : ExecuteResult<Nothing>()
+    class Loading(val progress: Float? = null) : ExecuteResult<Nothing>()
 
     object PgnLoading : ExecuteResult<Nothing>()
 
@@ -45,7 +47,7 @@ sealed class ExecuteResult<out R> {
         return when (this) {
             is Success<*> -> "Success[data=$data]"
             is Error -> "Error[exception=$exception]"
-            is Loading -> "Loading"
+            is Loading -> "Loading[progress=$progress]"
             is PgnLoading -> "PgnLoading"
         }
     }
@@ -58,14 +60,14 @@ val <T> ExecuteResult<T>.data: T?
     get() = (this as? ExecuteResult.Success)?.data
 
 fun <D> ExecuteResult<D>.hasData(
-    dataValidator: ((D) -> Boolean)? = null
+    dataValidator: ((D) -> Boolean)? = null,
 ): Boolean {
     val data = data
     return data != null && (dataValidator == null || dataValidator(data))
 }
 
 fun <D> ExecuteResult<D>.getData(
-    dataValidator: ((D) -> Boolean)? = null
+    dataValidator: ((D) -> Boolean)? = null,
 ): D? {
     return if (hasData(dataValidator)) {
         data
@@ -75,7 +77,7 @@ fun <D> ExecuteResult<D>.getData(
 }
 
 fun <T> Flow<ExecuteResult<T>>.flattenData(
-    dataValidator: ((T) -> Boolean)? = null
+    dataValidator: ((T) -> Boolean)? = null,
 ): Flow<T> {
     return mapNotNull { it.getData(dataValidator) }
 }
@@ -110,12 +112,13 @@ fun <T> ILoadState<T>.asExecuteResult() = when {
             if (this.loadingState is PgnLoadState.PgnLoading.PageLoad) {
                 ExecuteResult.PgnLoading
             } else {
-                ExecuteResult.Loading
+                ExecuteResult.Loading()
             }
         } else {
-            ExecuteResult.Loading
+            ExecuteResult.Loading()
         }
     }
+
     isSuccess -> ExecuteResult.Success(data)
     else -> ExecuteResult.Error(error?.error ?: Exception(), error?.message as? TextMessage)
 }
@@ -126,12 +129,13 @@ fun <T, U> ILoadState<T>.asExecuteResult(mapOnSuccess: (data: T) -> U) = when {
             if (this.loadingState is PgnLoadState.PgnLoading.PageLoad) {
                 ExecuteResult.PgnLoading
             } else {
-                ExecuteResult.Loading
+                ExecuteResult.Loading()
             }
         } else {
-            ExecuteResult.Loading
+            ExecuteResult.Loading()
         }
     }
+
     isSuccess -> {
         val data = data
         if (data != null) {
@@ -158,9 +162,9 @@ fun <T> ExecuteResult<T>.asPgnState(data: T? = null): PgnLoadState<T> = when (th
 }
 
 fun <T, U> ExecuteResult<T>.mapData(
-    mapData: (data: T) -> U
+    mapData: (data: T) -> U,
 ): ExecuteResult<U> = when (this) {
-    is ExecuteResult.Loading -> ExecuteResult.Loading
+    is ExecuteResult.Loading -> ExecuteResult.Loading()
     is ExecuteResult.PgnLoading -> ExecuteResult.PgnLoading
     is ExecuteResult.Success -> {
         try {
@@ -169,6 +173,7 @@ fun <T, U> ExecuteResult<T>.mapData(
             ExecuteResult.Error(e)
         }
     }
+
     is ExecuteResult.Error -> ExecuteResult.Error(this.exception, this.errorMessage())
 }
 

@@ -379,14 +379,6 @@ class DownloadService : Service() {
                     onDownloadProcessing(type, state, downloadInfo, params)
                     return isActive
                 }
-
-                override fun notify(currentBytes: Long, totalBytes: Long, done: Boolean, startTime: Long) {
-                    super.notify(currentBytes, totalBytes, done, startTime)
-//                    logger.d("$type: notify, currentBytes=$currentBytes, totalBytes=$totalBytes, done=$done, startTime=$startTime")
-                    if (done) {
-                        logger.d("$type: done")
-                    }
-                }
             }
 
             try {
@@ -629,7 +621,7 @@ class DownloadService : Service() {
             setDefaults(Notification.DEFAULT_ALL)
             setSmallIcon(params.notificationParams.smallIconResId)
             setContentTitle(context.getString(contentTitleResId))
-            setProgress(100, progress, progress == 0)
+            setProgress(100, progress ?: 0, progress == null)
             setContentBigText(params.notificationParams.contentText.takeIf { it.isNotEmpty() }
                 ?: params.targetResourceName)
             setGroup(groupKeyLoading)

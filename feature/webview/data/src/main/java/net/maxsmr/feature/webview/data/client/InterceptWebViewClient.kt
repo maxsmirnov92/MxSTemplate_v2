@@ -390,7 +390,7 @@ open class InterceptWebViewClient @JvmOverloads constructor(
             val headers = mutableMapOf<String, String>()
 
             // копирование тела ответа для дальнейшего переиспользования в WebView
-            val bodyWithCharset = it.asStringCloned()
+            val bodyWithCharset = it.body.asStringCloned()
             val charset = bodyWithCharset?.second ?: Charset.defaultCharset()
             responseBody = bodyWithCharset?.first
 

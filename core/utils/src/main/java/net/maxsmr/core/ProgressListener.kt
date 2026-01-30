@@ -1,9 +1,8 @@
 package net.maxsmr.core
 
 import androidx.annotation.CallSuper
-import java.io.InterruptedIOException
+import net.maxsmr.commonutils.stream.StreamCancellationException
 import java.io.Serializable
-import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -18,44 +17,59 @@ abstract class ProgressListener {
      */
     abstract fun onProcessing(state: ProgressStateInfo): Boolean
 
-    @Throws(CancellationException::class)
-    @CallSuper
-    open fun notify(currentBytes: Long, totalBytes: Long, done: Boolean, startTime: Long) {
-
+    @Throws(StreamCancellationException::class)
+    fun notifyWithCheckOrThrow(
+        currentBytes: Long,
+        totalBytes: Long,
+        startTime: Long,
+    ) {
         val interval = notifyInterval
+
         val currentTime = System.currentTimeMillis()
 
-        if (done || interval >= 0 && (interval == 0L || lastNotifyTime == 0L || currentTime - lastNotifyTime >= interval)) {
-            
-            val elapsedTimeMillis = currentTime - startTime
-            val elapsedTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(currentTime - startTime)
-
-            val speedMillis = if (elapsedTimeMillis > 0) {
-                currentBytes.toDouble() / elapsedTimeMillis
-            } else {
-                0.0
+        if (interval >= 0 && (interval == 0L || lastNotifyTime == 0L || currentTime - lastNotifyTime >= interval)) {
+            if (!notify(currentBytes, totalBytes, startTime, currentTime)) {
+                throw StreamCancellationException()
             }
-            val estimatedTimeSeconds = if (totalBytes > currentBytes && speedMillis > 0) {
-                TimeUnit.MILLISECONDS.toSeconds(((totalBytes - currentBytes) / speedMillis).toLong())
-            } else {
-                0
-            }
-
-            if (!onProcessing(
-                        ProgressStateInfo(
-                            currentBytes,
-                            totalBytes,
-                            speedMillis * 1000,
-                            elapsedTimeSeconds,
-                            estimatedTimeSeconds,
-                            done
-                        )
-                    )
-            ) {
-                throw CancellationException("Process interrupted")
-            }
-            lastNotifyTime = System.currentTimeMillis()
         }
+    }
+
+    @CallSuper
+    fun notify(
+        currentBytes: Long,
+        totalBytes: Long,
+        startTime: Long,
+        currentTime: Long,
+    ): Boolean {
+        val elapsedTimeMillis = currentTime - startTime
+        val elapsedTimeSeconds = TimeUnit.MILLISECONDS.toSeconds(currentTime - startTime)
+
+        val speedMillis = if (elapsedTimeMillis > 0) {
+            currentBytes.toDouble() / elapsedTimeMillis
+        } else {
+            0.0
+        }
+        val estimatedTimeSeconds = if (totalBytes > currentBytes && speedMillis > 0) {
+            TimeUnit.MILLISECONDS.toSeconds(((totalBytes - currentBytes) / speedMillis).toLong())
+        } else {
+            0
+        }
+
+        if (!onProcessing(
+                    ProgressStateInfo(
+                        currentBytes,
+                        totalBytes,
+                        speedMillis * 1000,
+                        elapsedTimeSeconds,
+                        estimatedTimeSeconds
+                    )
+                )
+        ) {
+            return false
+        }
+
+        lastNotifyTime = System.currentTimeMillis()
+        return true
     }
 
     /**
@@ -70,16 +84,26 @@ abstract class ProgressListener {
         val speed: Double,
         val elapsedTime: Long,
         val estimatedTime: Long,
-        val done: Boolean,
     ) : Serializable {
 
-        val progress: Float = if (totalBytes > 0) {
-            (currentBytes * 100f) / totalBytes
-        } else {
-            0f
+        val progressRatio: Float? = when {
+
+            totalBytes > 0 -> currentBytes.toFloat() / totalBytes
+
+            totalBytes < 0 -> null
+
+            else -> 0f
         }
 
-        val progressRounded: Int = progress.roundToInt()
+        val progress: Float? = progressRatio?.takeIf { it >= 0 }?.let { it * 100 }
+
+        val progressRounded: Int? = progress?.roundToInt()
+
+        val done: Boolean = if (totalBytes >= 0) {
+            currentBytes >= totalBytes
+        } else {
+            false
+        }
 
         override fun toString(): String {
             return "ProgressStateInfo(currentBytes=$currentBytes, " +
@@ -87,7 +111,7 @@ abstract class ProgressListener {
                     "speed=$speed, " +
                     "elapsedTime=$elapsedTime, " +
                     "estimatedTime=$estimatedTime, " +
-                    "progress=$progress)"
+                    "progressRatio=$progressRatio)"
         }
     }
 }

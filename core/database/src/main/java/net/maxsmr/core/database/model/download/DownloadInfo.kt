@@ -7,11 +7,10 @@ import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import kotlinx.coroutines.CancellationException
 import net.maxsmr.commonutils.states.ILoadState
+import net.maxsmr.commonutils.stream.StreamCancellationException
 import net.maxsmr.commonutils.text.appendExtension
 import net.maxsmr.core.domain.entities.feature.download.HashInfo
-import java.io.InterruptedIOException
 import java.io.Serializable
-import java.net.SocketTimeoutException
 
 /**
  * Информация о загрузке
@@ -108,8 +107,7 @@ data class DownloadInfo(
             companion object {
 
                 @JvmStatic
-                fun Exception.isCancelled() = this is CancellationException
-                        || (this is InterruptedIOException && this !is SocketTimeoutException)
+                fun Exception.isCancelled() = this is CancellationException || this is StreamCancellationException
             }
         }
 

@@ -77,12 +77,13 @@ fun downloadInfoAdapterDelegate(listener: DownloadListener) =
                 if (state != null) {
                     hasProgress = state is DownloadState.Loading || state is DownloadState.Success
                     // contentLength неизвестен - неопределённый ProgressBar
-                    isIndeterminate = state is DownloadState.Loading && state.stateInfo.totalBytes == 0L
+                    isIndeterminate = state is DownloadState.Loading
+                            && (state.stateInfo.totalBytes == 0L || state.stateInfo.progressRounded == null)
 
                     progress = when (state) {
                         is DownloadState.Loading -> {
                             if (!state.stateInfo.done) {
-                                state.stateInfo.progressRounded.takeIf { it > 0 } ?: 0
+                                state.stateInfo.progressRounded?.takeIf { it > 0 } ?: 0
                             } else {
                                 100
                             }
@@ -101,7 +102,8 @@ fun downloadInfoAdapterDelegate(listener: DownloadListener) =
 
                                     val parts = mutableListOf<CharSequence>()
 
-                                    if (this.progress >= 0) {
+                                    val progress = this.progress
+                                    if (progress != null && progress >= 0) {
                                         parts.add(
                                             context.getString(
                                                 when (state.type) {
@@ -109,7 +111,7 @@ fun downloadInfoAdapterDelegate(listener: DownloadListener) =
                                                     DownloadState.Loading.Type.DOWNLOADING -> R.string.download_status_downloading_percent_format
                                                     DownloadState.Loading.Type.STORING -> R.string.download_status_storing_percent_format
                                                 },
-                                                this.progress
+                                                progress
                                             )
                                         )
                                     } else {
@@ -249,10 +251,6 @@ fun downloadInfoAdapterDelegate(listener: DownloadListener) =
                         is DownloadState.Cancelled -> {
                             statusColorResId = R.color.textColorDownloadCancelled
                             context.getString(R.string.download_status_cancelled)
-                        }
-
-                        else -> {
-                            throw IllegalStateException("Unknown DownloadState: $state")
                         }
                     }
                 } else {

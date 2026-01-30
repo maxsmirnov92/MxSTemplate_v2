@@ -14,25 +14,27 @@ import net.maxsmr.commonutils.text.charsetForNameOrNull
 import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.network.exceptions.HttpProtocolException
 import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
-import okhttp3.*
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.Headers
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
+import okhttp3.ResponseBody
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okio.Buffer
 import okio.BufferedSink
 import okio.BufferedSource
 import okio.ByteString.Companion.decodeHex
-import okio.ForwardingSink
-import okio.ForwardingSource
 import okio.Options
-import okio.Sink
-import okio.Source
 import okio.buffer
 import okio.sink
 import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.lang.AssertionError
 import java.nio.charset.Charset
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -50,7 +52,7 @@ private const val HEADER_CONTENT_DISPOSITION = "Content-Disposition"
 private const val HEADER_ACCEPT_RANGES = "Accept-Ranges"
 private const val ATTACHMENT_FILENAME = "filename"
 
-private  val UNICODE_BOMS =
+private val UNICODE_BOMS =
     Options.of(
         // UTF-8.
         "efbbbf".decodeHex(),
@@ -232,6 +234,32 @@ fun Response.write(
     null
 }
 
+fun Response.write(
+    outputStream: OutputStream,
+    previousDownloadedSize: Long? = null,
+    listener: ProgressListener? = null,
+): ResponseBody? = try {
+    writeOrThrow(outputStream, previousDownloadedSize, listener)
+} catch (e: IOException) {
+    logger.e("Write response body to OutputStream", e)
+    null
+}
+
+@Throws(IOException::class)
+fun Response.writeOrThrow(
+    outputStream: OutputStream,
+    previousDownloadedSize: Long? = null,
+    listener: ProgressListener? = null,
+): ResponseBody {
+    return writeOrThrow(
+        outputStream,
+        previousDownloadedSize,
+        listener?.let {
+            ProgressListenerDelegate(it)
+        }
+    )
+}
+
 @Throws(IOException::class)
 fun Response.writeOrThrow(
     outputStream: OutputStream,
@@ -240,8 +268,24 @@ fun Response.writeOrThrow(
 ): ResponseBody {
     val responseBody = this.body
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
-    responseBody.byteStream().copyToOutputStreamOrThrow(outputStream, notifier, responseBody.contentLength())
+    responseBody.byteStream().writeOrThrow(outputStream, notifier, responseBody.contentLength())
     return responseBody
+}
+
+@Throws(IOException::class)
+private fun InputStream.writeOrThrow(
+    outputStream: OutputStream,
+    notifier: StreamNotifier?,
+    contentLength: Long,
+) {
+    copyStreamOrThrow(
+        outputStream,
+        if (notifier != null) {
+            StreamNotifierDelegate(notifier, contentLength)
+        } else {
+            null
+        }
+    )
 }
 
 fun Response.writeBuffered(
@@ -271,18 +315,6 @@ fun Response.writeBufferedOrThrow(
 
 // region Response: cloned
 
-fun Response.asByteArrayCloned(): ByteArray? = try {
-    asByteArrayClonedOrThrow()
-} catch (e: IOException) {
-    logger.e("Clone response body to ByteArray", e)
-    null
-}
-
-@Throws(IOException::class)
-fun Response.asByteArrayClonedOrThrow(): ByteArray {
-    return body.asByteArrayClonedOrThrow()
-}
-
 /**
  * Вычитывает тело запроса в массив байт, не изменяя исходный [InputStream]
  */
@@ -296,18 +328,6 @@ fun ResponseBody.asByteArrayCloned(): ByteArray? = try {
 @Throws(IOException::class)
 fun ResponseBody.asByteArrayClonedOrThrow(): ByteArray {
     return source().cloneBufferOrThrow().use { it.readByteArray() }
-}
-
-fun Response.asStringCloned(): Pair<String, Charset>? = try {
-    asStringClonedOrThrow()
-} catch (e: IOException) {
-    Log.e("OkHttpExt", "Clone response body to String", e)
-    null
-}
-
-@Throws(IOException::class)
-fun Response.asStringClonedOrThrow(): Pair<String, Charset>? {
-    return body.asStringClonedOrThrow()
 }
 
 /**
@@ -352,7 +372,7 @@ fun Response.writeClonedOrThrow(
     val responseBody = this.body
     val source = responseBody.source()
     val buffer = source.cloneBufferOrThrow()
-    buffer.inputStream().copyToOutputStreamOrThrow(outputStream, notifier, responseBody.contentLength())
+    buffer.inputStream().writeOrThrow(outputStream, notifier, responseBody.contentLength())
     return responseBody
 }
 
@@ -400,7 +420,7 @@ fun Response.getCharset(): Charset {
         return if (it == null) {
             val defaultCharset = Charset.defaultCharset()
             // затем в Content-Type, где через ";" после имени типа
-            body?.contentType()?.charset(defaultCharset) ?: defaultCharset
+            body.contentType()?.charset(defaultCharset) ?: defaultCharset
         } else {
             it
         }
@@ -472,44 +492,9 @@ private fun Response?.skipBytesIfSupportedOrThrow(downloadedSize: Long?) {
     this ?: return
     if (downloadedSize != null && downloadedSize > 0) {
         if (isResumeDownloadSupported()) {
-            body?.source()?.skip(downloadedSize)
+            body.source().skip(downloadedSize)
         }
     }
-}
-
-@Throws(IOException::class)
-private fun InputStream.copyToOutputStreamOrThrow(
-    outputStream: OutputStream,
-    notifier: StreamNotifier?,
-    contentLength: Long,
-) {
-    copyStreamOrThrow(outputStream,
-        if (notifier != null) {
-            object : StreamNotifier {
-
-                override val notifyInterval: Long = notifier.notifyInterval
-
-                override fun onProcessing(
-                    inputStream: InputStream,
-                    outputStream: OutputStream,
-                    bytesWrite: Long,
-                    bytesTotal: Long,
-                ): Boolean {
-                    return notifier.onProcessing(
-                        inputStream,
-                        outputStream,
-                        bytesWrite,
-                        if (contentLength != -1L && contentLength > bytesWrite) {
-                            contentLength
-                        } else {
-                            bytesTotal
-                        }
-                    )
-                }
-            }
-        } else {
-            null
-        })
 }
 
 enum class ContentDispositionType(val value: String) {
@@ -519,103 +504,52 @@ enum class ContentDispositionType(val value: String) {
     FORM_DATA("form-data")
 }
 
-class ProgressRequestBody(
-    private val delegateBody: RequestBody,
+private class ProgressListenerDelegate(
     private val listener: ProgressListener,
-) : RequestBody() {
+) : StreamNotifier {
 
-    private val contentLength = delegateBody.contentLength()
+    override val notifyInterval: Long
+        get() = listener.notifyInterval
 
-    private var writeCount = 0
+    private var startTime: Long = 0
 
-    override fun contentType(): MediaType? {
-        return delegateBody.contentType()
+    override fun onProcessing(
+        inputStream: InputStream,
+        outputStream: OutputStream,
+        bytesWrite: Long,
+        bytesTotal: Long,
+    ): Boolean {
+        return listener.notify(
+            bytesWrite,
+            bytesTotal,
+            startTime,
+            System.currentTimeMillis(),
+        )
     }
 
-    override fun contentLength(): Long {
-        return try {
-            delegateBody.contentLength()
-        } catch (_: IOException) {
-            -1L
-        }
-    }
-
-    override fun writeTo(sink: BufferedSink) {
-        writeCount++
-        if (writeCount == 1) {
-            delegateBody.writeTo(sink)
-        } else {
-            val bufferedSink = ProgressForwardingSink(sink).buffer()
-            delegateBody.writeTo(bufferedSink)
-            bufferedSink.flush()
-        }
-    }
-
-    private inner class ProgressForwardingSink(delegate: Sink) : ForwardingSink(delegate) {
-
-        private val startTime = System.currentTimeMillis()
-
-        private var totalBytesWritten: Long = 0
-
-        @Throws(IOException::class)
-        override fun write(source: Buffer, byteCount: Long) {
-            super.write(source, byteCount)
-            totalBytesWritten += byteCount
-            listener.notify(
-                totalBytesWritten,
-                contentLength.takeIf { it >= 0 } ?: 0L,
-                if (contentLength >= 0) {
-                    totalBytesWritten >= contentLength
-                } else {
-                    false
-                },
-                startTime
-            )
-        }
+    override fun onCopyStart(bytesLeft: Long) {
+        startTime = System.currentTimeMillis()
     }
 }
 
-class ProgressResponseBody(
-    private val delegateBody: ResponseBody,
-    private val listener: ProgressListener,
-) : ResponseBody() {
+private class StreamNotifierDelegate(
+    private val notifier: StreamNotifier,
+    private val contentLength: Long,
+) : StreamNotifier {
 
-    private val contentLength = delegateBody.contentLength()
+    override val notifyInterval: Long = notifier.notifyInterval
 
-    private var bufferedSource: BufferedSource? = null
-
-    override fun contentType(): MediaType? {
-        return delegateBody.contentType()
-    }
-
-    override fun contentLength(): Long {
-        return delegateBody.contentLength()
-    }
-
-    override fun source(): BufferedSource {
-        return bufferedSource ?: ProgressForwardingSource(delegateBody.source()).buffer().apply {
-            bufferedSource = this
-        }
-    }
-
-    private inner class ProgressForwardingSource(source: Source) : ForwardingSource(source) {
-
-        private val startTime = System.currentTimeMillis()
-
-        private var totalBytesRead = 0L
-
-        @Throws(IOException::class)
-        override fun read(sink: Buffer, byteCount: Long): Long {
-            val bytesRead = super.read(sink, byteCount)
-            // read() returns the number of bytes read, or -1 if this source is exhausted.
-            totalBytesRead += if (bytesRead > 0) bytesRead else 0
-            listener.notify(
-                totalBytesRead,
-                contentLength.takeIf { it >= 0 } ?: 0L,
-                bytesRead == -1L,
-                startTime
-            )
-            return bytesRead
-        }
+    override fun onProcessing(
+        inputStream: InputStream,
+        outputStream: OutputStream,
+        bytesWrite: Long,
+        bytesTotal: Long,
+    ): Boolean {
+        return notifier.onProcessing(
+            inputStream = inputStream,
+            outputStream = outputStream,
+            bytesWrite = bytesWrite,
+            bytesTotal = contentLength
+        )
     }
 }
