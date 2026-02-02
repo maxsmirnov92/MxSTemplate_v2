@@ -1,7 +1,8 @@
 package net.maxsmr.core.network.client.okhttp.interceptors
 
 import net.maxsmr.core.network.client.okhttp.ResponseBodyCache
-import net.maxsmr.core.network.getCharset
+import net.maxsmr.core.network.client.okhttp.interceptors.annotations.DisableBodyCaching
+import net.maxsmr.core.network.hasAnnotation
 import net.maxsmr.core.network.toResponseBody
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -15,9 +16,12 @@ class BodyCachingInterceptor(private val cache: ResponseBodyCache<*>) : Intercep
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
+        val disableBodyCaching = request.hasAnnotation<DisableBodyCaching>()
         val response = chain.proceed(request)
-        with(response.toResponseBody(true)) {
-            cache.store(request, this)
+        if (!disableBodyCaching || !response.isSuccessful) {
+            with(response.toResponseBody(true)) {
+                cache.store(request, this)
+            }
         }
         return response
     }

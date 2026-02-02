@@ -1,10 +1,12 @@
 package net.maxsmr.core.network.client.okhttp.interceptors
 
 import net.maxsmr.core.network.appendValues
+import net.maxsmr.core.network.client.okhttp.interceptors.annotations.Authorization
+import net.maxsmr.core.network.client.okhttp.interceptors.annotations.ServiceFields
+import net.maxsmr.core.network.hasAnnotation
 import net.maxsmr.core.network.session.SessionStorage
 import okhttp3.Interceptor
 import okhttp3.Response
-import retrofit2.Invocation
 
 class AdditionalInfoInterceptor(
     private val deviceGuid: String,
@@ -15,12 +17,10 @@ class AdditionalInfoInterceptor(
 
     override fun intercept(chain: Interceptor.Chain): Response {
         var request = chain.request()
-        val invocation = request.tag(Invocation::class.java)
-        if (invocation != null) {
-            val authorization = invocation.method().getAnnotation(Authorization::class.java)
-            val serviceFields = invocation.method().getAnnotation(ServiceFields::class.java)
-            val needSession = sessionStorage != null && authorization != null
-            val needServiceInfo = serviceFields != null
+            val hasAuthorization = request.hasAnnotation<Authorization>()
+            val hasServiceFields = request.hasAnnotation<ServiceFields>()
+            val needSession = sessionStorage != null && hasAuthorization
+            val needServiceInfo = hasServiceFields
             if (needServiceInfo || needSession) {
                 request = request.appendValues {
                     if (needServiceInfo) {
@@ -29,11 +29,10 @@ class AdditionalInfoInterceptor(
                         put("version", version)
                     }
                     if (needSession) {
-                        putOpt("session", sessionStorage?.session)
+                        putOpt("session", sessionStorage.session)
                     }
                 }
             }
-        }
         return chain.proceed(request)
     }
 }

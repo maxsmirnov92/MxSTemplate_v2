@@ -2,13 +2,13 @@ package net.maxsmr.core.network.client.okhttp
 
 import net.maxsmr.core.network.appendValues
 import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
-import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
+import net.maxsmr.core.network.client.okhttp.interceptors.annotations.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.BodyCachingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
+import net.maxsmr.core.network.hasAnnotation
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import retrofit2.Invocation
 import java.util.Locale
 
 class YandexOkHttpClientManager(
@@ -41,35 +41,27 @@ class YandexOkHttpClientManager(
 
         override fun intercept(chain: Interceptor.Chain): Response {
             var request = chain.request()
-            val invocation = request.tag(Invocation::class.java)
+            request = request.appendValues(appendQueryParametersFunc = {
+                if (request.hasAnnotation<Authorization>()) {
+                    apiKey.takeIf { it.isNotEmpty() }?.let {
+                        addQueryParameter("apikey", it)
+                    }
+                }
+                addQueryParameter("format", "json")
 
-            if (invocation != null) {
-                request = request.appendValues(appendQueryParametersFunc = {
-
-                    val needAuthorization = invocation.method().getAnnotation(Authorization::class.java) != null
-                    if (needAuthorization) {
-                        apiKey.takeIf { it.isNotEmpty() }?.let {
-                            addQueryParameter("apikey", it)
-                        }
+                val locale = Locale.getDefault().toString()
+                val lang = when (localization) {
+                    LocalizationField.LANG -> {
+                        locale.split("_").getOrNull(0)
                     }
 
-                    addQueryParameter("format", "json")
-
-                    val locale = Locale.getDefault().toString()
-                    val lang = when (localization) {
-                        LocalizationField.LANG -> {
-                            locale.split("_").getOrNull(0)
-                        }
-
-                        LocalizationField.LOCALE -> {
-                            locale
-                        }
+                    LocalizationField.LOCALE -> {
+                        locale
                     }
-                    addQueryParameter("lang",
-                        lang?.takeIf { it.isNotEmpty() } ?: defaultLangOrLocale)
-                })
-            }
-
+                }
+                addQueryParameter("lang",
+                    lang?.takeIf { it.isNotEmpty() } ?: defaultLangOrLocale)
+            })
             return chain.proceed(request)
         }
     }

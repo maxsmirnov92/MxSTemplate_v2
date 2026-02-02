@@ -2,7 +2,7 @@ package net.maxsmr.core.network.api.radar_io
 
 import net.maxsmr.core.network.client.retrofit.CommonRetrofitClient
 import net.maxsmr.core.network.retrofit.converters.ResponseObjectType
-import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
+import net.maxsmr.core.network.client.okhttp.interceptors.annotations.Authorization
 import retrofit2.http.GET
 import retrofit2.http.Query
 

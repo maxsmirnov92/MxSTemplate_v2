@@ -2,13 +2,13 @@ package net.maxsmr.core.network.client.okhttp
 
 import net.maxsmr.core.network.appendValues
 import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
-import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
+import net.maxsmr.core.network.client.okhttp.interceptors.annotations.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.BodyCachingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
+import net.maxsmr.core.network.hasAnnotation
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import retrofit2.Invocation
 import java.util.Locale
 
 class RadarIoOkHttpClientManager(
@@ -36,26 +36,20 @@ class RadarIoOkHttpClientManager(
 
         override fun intercept(chain: Interceptor.Chain): Response {
             var request = chain.request()
-            val invocation = request.tag(Invocation::class.java)
-
-            if (invocation != null) {
-                request = request.appendValues(
-                    appendQueryParametersFunc = {
-                        val country = Locale.getDefault().toString().split("_")
-                            .getOrNull(1)?.takeIf { it.isNotEmpty() } ?: defaultCountry
-                        addQueryParameter("country", country)
-                    },
-                    appendHeadersFunc = {
-                        val needAuthorization = invocation.method().getAnnotation(Authorization::class.java) != null
-                        if (needAuthorization) {
-                            authorization.takeIf { it.isNotEmpty() }?.let {
-                                addHeader("Authorization", it)
-                            }
+            request = request.appendValues(
+                appendQueryParametersFunc = {
+                    val country = Locale.getDefault().toString().split("_")
+                        .getOrNull(1)?.takeIf { it.isNotEmpty() } ?: defaultCountry
+                    addQueryParameter("country", country)
+                },
+                appendHeadersFunc = {
+                    if (request.hasAnnotation<Authorization>()) {
+                        authorization.takeIf { it.isNotEmpty() }?.let {
+                            addHeader("Authorization", it)
                         }
                     }
-                )
-            }
-
+                }
+            )
             return chain.proceed(request)
         }
     }

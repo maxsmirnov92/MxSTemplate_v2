@@ -2,13 +2,13 @@ package net.maxsmr.core.network.client.okhttp
 
 import net.maxsmr.core.network.appendValues
 import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
-import net.maxsmr.core.network.client.okhttp.interceptors.Authorization
+import net.maxsmr.core.network.client.okhttp.interceptors.annotations.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.BodyCachingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
+import net.maxsmr.core.network.hasAnnotation
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
-import retrofit2.Invocation
 
 class DoubleGisOkHttpClientManager(
     private val version: String = "2.0",
@@ -16,7 +16,7 @@ class DoubleGisOkHttpClientManager(
     connectTimeout: Long = CONNECT_TIMEOUT_DEFAULT,
     apiLoggingInterceptor: ApiLoggingInterceptor,
     cachingInterceptor: BodyCachingInterceptor,
-    connectionInterceptor: NetworkConnectionInterceptor
+    connectionInterceptor: NetworkConnectionInterceptor,
 ) : BaseRestOkHttpClientManager(
     connectTimeout,
     apiLoggingInterceptor = apiLoggingInterceptor,
@@ -35,21 +35,15 @@ class DoubleGisOkHttpClientManager(
 
         override fun intercept(chain: Interceptor.Chain): Response {
             var request = chain.request()
-            val invocation = request.tag(Invocation::class.java)
-
-            if (invocation != null) {
-                request = request.appendValues(appendQueryParametersFunc = {
-                    val needAuthorization = invocation.method().getAnnotation(Authorization::class.java) != null
-                    if (needAuthorization) {
-                        apiKeyProvider().takeIf { it.isNotEmpty() }?.let { apiKey ->
-                            addQueryParameter("key", apiKey)
-                        }
+            request = request.appendValues(appendQueryParametersFunc = {
+                if (request.hasAnnotation<Authorization>()) {
+                    apiKeyProvider().takeIf { it.isNotEmpty() }?.let { apiKey ->
+                        addQueryParameter("key", apiKey)
                     }
-                    addQueryParameter("version", version)
-                    addQueryParameter("response_format", "json")
-                })
-            }
-
+                }
+                addQueryParameter("version", version)
+                addQueryParameter("response_format", "json")
+            })
             return chain.proceed(request)
         }
     }

@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Кэш со всеми выполняемыми OkHttp-вызовами
  * с целью переиспользования тела ответа
  */
-class ResponseBodyCache<Key>(private val keyProvider: Request.() -> Key) {
+class ResponseBodyCache<Key: Any>(private val keyProvider: Request.() -> Key) {
 
     private val cache = ConcurrentHashMap<Key, ResponseBody>()
 
