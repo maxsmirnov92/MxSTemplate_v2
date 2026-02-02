@@ -207,7 +207,7 @@ fun Response.asByteArray(previousDownloadedSize: Long? = null): ByteArray? = try
 @Throws(IOException::class)
 fun Response.asByteArrayOrThrow(previousDownloadedSize: Long? = null): ByteArray {
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
-    return this.body.bytes()
+    return this.body?.bytes() ?: ByteArray(0)
 }
 
 fun Response.asString(previousDownloadedSize: Long? = null): String? = try {
@@ -218,9 +218,9 @@ fun Response.asString(previousDownloadedSize: Long? = null): String? = try {
 }
 
 @Throws(IOException::class)
-fun Response.asStringOrThrow(previousDownloadedSize: Long? = null): String? {
+fun Response.asStringOrThrow(previousDownloadedSize: Long? = null): String {
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
-    return this.body.string()
+    return this.body?.string().orEmpty()
 }
 
 fun Response.write(
@@ -268,7 +268,7 @@ fun Response.writeOrThrow(
 ): ResponseBody {
     val responseBody = this.body
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
-    responseBody.byteStream().writeOrThrow(outputStream, notifier, responseBody.contentLength())
+    responseBody!!.byteStream().writeOrThrow(outputStream, notifier, responseBody.contentLength())
     return responseBody
 }
 
@@ -306,7 +306,7 @@ fun Response.writeBufferedOrThrow(
     val responseBody = this.body
     skipBytesIfSupportedOrThrow(previousDownloadedSize)
     val sink: BufferedSink = outputStream.sink().buffer()
-    sink.writeAll(responseBody.source());
+    sink.writeAll(responseBody!!.source());
     sink.close()
     return responseBody
 }
@@ -370,13 +370,14 @@ fun Response.writeClonedOrThrow(
 ): ResponseBody? {
     outputStream ?: return null
     val responseBody = this.body
-    val source = responseBody.source()
+    val source = responseBody!!.source()
     val buffer = source.cloneBufferOrThrow()
     buffer.inputStream().writeOrThrow(outputStream, notifier, responseBody.contentLength())
     return responseBody
 }
 
 fun Response.toResponseBody(shouldClone: Boolean): ResponseBody {
+    val body = body!!
     val bodyBytes = if (shouldClone) {
         body.asByteArrayClonedOrThrow()
     } else {
@@ -420,7 +421,7 @@ fun Response.getCharset(): Charset {
         return if (it == null) {
             val defaultCharset = Charset.defaultCharset()
             // затем в Content-Type, где через ";" после имени типа
-            body.contentType()?.charset(defaultCharset) ?: defaultCharset
+            body?.contentType()?.charset(defaultCharset) ?: defaultCharset
         } else {
             it
         }
@@ -492,7 +493,7 @@ private fun Response?.skipBytesIfSupportedOrThrow(downloadedSize: Long?) {
     this ?: return
     if (downloadedSize != null && downloadedSize > 0) {
         if (isResumeDownloadSupported()) {
-            body.source().skip(downloadedSize)
+            body?.source()?.skip(downloadedSize)
         }
     }
 }

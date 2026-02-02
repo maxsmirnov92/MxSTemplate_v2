@@ -68,9 +68,7 @@ class ExceptionHandlingCallAdapterFactory(
                                 }
                             }
                         }
-                        resultThrowable.let {
-                            exceptionHandler(it)
-                        }
+                        exceptionHandler(resultThrowable)
                         cache.removeWithClose(request)
                         resultThrowable
                     },

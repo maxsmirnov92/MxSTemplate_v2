@@ -395,7 +395,7 @@ class DownloadService : Service() {
                     originalResponse.newBuilder()
                         .body(
                             ProgressResponseBody(
-                                originalResponse.body,
+                                originalResponse.body!!,
                                 ServiceProgressListener(Loading.Type.DOWNLOADING)
                             )
                         )
