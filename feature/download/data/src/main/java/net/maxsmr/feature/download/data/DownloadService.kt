@@ -78,8 +78,6 @@ import net.maxsmr.core.network.newCallSuspended
 import net.maxsmr.core.network.toValidUri
 import net.maxsmr.core.network.writeBufferedOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
-import net.maxsmr.feature.download.data.DownloadService.NotificationParams
-import net.maxsmr.feature.download.data.DownloadService.Params
 import net.maxsmr.feature.download.data.DownloadService.RequestParams.MimeTypeMatchRule
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading
 import net.maxsmr.feature.download.data.manager.DownloadsHashManager
@@ -524,9 +522,9 @@ class DownloadService : Service() {
             } catch (e: Exception) {
                 onException(e, unfinishedLocalUri)
             } finally {
-                if (params.deleteUnfinished) {
-                    unfinishedLocalUri?.delete(contentResolver)
-                }
+//                if (params.deleteUnfinished) {
+//                    unfinishedLocalUri?.delete(contentResolver)
+//                }
                 currentJobs.remove(downloadInfo.id)
             }
         }
@@ -546,7 +544,7 @@ class DownloadService : Service() {
         success?.let {
             logger.d("Got previous success download: $prevDownload")
 
-            val shouldSaveToInternal = params.storageType == Type.INTERNAL
+            val shouldSaveToInternal = params.storageType.isInternal
             val hasInternalUri = success.localUri.isContentUriFromSelfPackage(this@DownloadService)
 
             if (shouldSaveToInternal && hasInternalUri || !shouldSaveToInternal && !hasInternalUri) {

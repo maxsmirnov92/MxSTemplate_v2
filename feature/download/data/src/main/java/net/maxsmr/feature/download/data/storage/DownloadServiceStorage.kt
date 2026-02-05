@@ -7,15 +7,14 @@ import android.os.Build
 import android.os.Environment
 import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.text.getExtension
-import net.maxsmr.commonutils.toFile
 import net.maxsmr.core.android.baseAppName
 import net.maxsmr.feature.download.data.DownloadService
 import java.io.File
 import java.io.OutputStream
 
 abstract class DownloadServiceStorage(
+    val type: Type,
     protected val context: Context,
-    protected val type: Type,
 ) {
 
     protected open val baseAppDir: String = baseAppName
@@ -92,10 +91,10 @@ abstract class DownloadServiceStorage(
 
     private fun baseNamePart(name: String): String {
         name.lastIndexOf(UNIQUE_NAME_PREFIX).takeIf { it != -1 }?.let {
-            return name.substring(0, it)
+            return name.take(it)
         }
         name.lastIndexOf('.').takeIf { it != -1 }?.let {
-            return name.substring(0, it)
+            return name.take(it)
         }
         return name
     }
@@ -105,8 +104,13 @@ abstract class DownloadServiceStorage(
      * не удалось, оборачивает исключение, добавляя эту uri, чтобы в будущем можно было попробовать
      * переписать битый файл по этой [uri].
      */
-    protected fun Exception.wrapIfNeed(uri: Uri?): Exception {
-        uri ?: return this
+    protected fun Exception.wrapIfNeed(
+        uri: Uri?,
+        deleteUnfinished: Boolean
+    ): Exception {
+        if (uri == null || !deleteUnfinished) {
+            return this
+        }
         return if (uri.delete(contentResolver)) this else StoreException(uri.toString(), this)
     }
 
@@ -119,12 +123,20 @@ abstract class DownloadServiceStorage(
     @Suppress("unused")
     enum class Type {
 
-        INTERNAL {
+        CACHE {
+
+            override fun rootDirPath(context: Context): String {
+                return context.cacheDir.absolutePath
+            }
+        },
+
+        FILES {
 
             override fun rootDirPath(context: Context): String {
                 return context.filesDir.absolutePath
             }
         },
+        
         EXTERNAL {
 
             override fun rootDirPath(context: Context): String {
@@ -132,6 +144,7 @@ abstract class DownloadServiceStorage(
                     ?: throw RuntimeException("External storage unavailable")
             }
         },
+        
         SHARED {
 
             override fun rootDirPath(context: Context): String {
@@ -143,6 +156,8 @@ abstract class DownloadServiceStorage(
                 }
             }
         };
+
+        val isInternal: Boolean get() = this in listOf(CACHE, FILES)
 
         fun dirPath(
             context: Context,
@@ -161,8 +176,8 @@ abstract class DownloadServiceStorage(
 
     companion object {
 
-        const val UNIQUE_NAME_PREFIX = '('
-        const val UNIQUE_NAME_SUFFIX = ')'
+        internal const val UNIQUE_NAME_PREFIX = '('
+        internal const val UNIQUE_NAME_SUFFIX = ')'
 
         fun create(
             context: Context,
@@ -171,7 +186,7 @@ abstract class DownloadServiceStorage(
             return if (useMediaStore() && type == Type.SHARED) {
                 MediaStoreStorage(context)
             } else {
-                FileStorage(context, type)
+                FileStorage(type, context)
             }
         }
 

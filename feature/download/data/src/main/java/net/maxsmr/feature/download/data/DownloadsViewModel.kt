@@ -307,7 +307,7 @@ class DownloadsViewModel @Inject constructor(
                 storageType = if (!saveToInternalDir) {
                     DownloadServiceStorage.Type.SHARED
                 } else {
-                    DownloadServiceStorage.Type.INTERNAL
+                    DownloadServiceStorage.Type.FILES
                 },
                 subDir = subDirName,
                 targetHashInfo = targetHashInfo,

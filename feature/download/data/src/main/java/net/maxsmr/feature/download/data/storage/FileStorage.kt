@@ -17,13 +17,13 @@ import java.io.File
 import java.io.OutputStream
 
 /**
- * Используется для сохранения файлов в app-private и external области памяти, а также
- * в shared область памяти для версий < Q
+ * Используется для сохранения файлов в app-private и external области памяти,
+ * а также в shared область памяти для версий < Q
  */
 class FileStorage(
-    context: Context,
     type: Type,
-) : DownloadServiceStorage(context, type) {
+    context: Context,
+) : DownloadServiceStorage(type, context) {
 
     override fun store(
         params: DownloadService.Params,
@@ -33,10 +33,14 @@ class FileStorage(
         return if (targetUri != null) {
             try {
                 targetUri.delete(contentResolver)
-                writeStreamFunc(targetUri, targetUri.openOutputStreamOrThrow(contentResolver), targetUri.lengthOrThrow(contentResolver))
+                writeStreamFunc(
+                    targetUri,
+                    targetUri.openOutputStreamOrThrow(contentResolver),
+                    targetUri.lengthOrThrow(contentResolver)
+                )
                 targetUri
             } catch (e: Exception) {
-                throw e.wrapIfNeed(targetUri)
+                throw e.wrapIfNeed(targetUri, params.deleteUnfinished)
             }
         } else {
             var tempLock: FileLockInfo? = null
@@ -48,34 +52,33 @@ class FileStorage(
                 } else {
                     params.targetResourceName
                 }
-
-                val tempFileName = "$targetName.$EXT_TEMP_FILE"
-                val tempFile = createFileOrThrow(tempFileName, dirPath, true)
+                val tempFile = createFileOrThrow(
+                    "$targetName.$EXT_TEMP_FILE",
+                    dirPath,
+                    true
+                )
                 tempLock = tempFile.lock()
 
                 uri = tempFile.toContentUri(context)
                 writeStreamFunc(uri, uri.openOutputStreamOrThrow(contentResolver), uri.lengthOrThrow(contentResolver))
-                tempLock?.releaseSafe()
-                tempLock = null
 
                 // стрим затянут до конца -> переименовываем файл в исходный
                 // (или с номером, если уже существует)
                 val newFile = renameFileOrThrow(
                     tempFile,
-                    tempFile.parent.orEmpty(),
+                    dirPath,
                     targetName,
                     params.replaceFile,
                     false
                 )
-                scanFiles(context, listOf(newFile))
+                if (!type.isInternal) {
+                    scanFiles(context, listOf(newFile))
+                }
                 newFile.toContentUri(context)
             } catch (e: Exception) {
-                throw e.wrapIfNeed(uri)
+                throw e.wrapIfNeed(uri, params.deleteUnfinished)
             } finally {
-                tempLock?.let {
-                    it.releaseSafe()
-                    tempLock = null
-                }
+                tempLock?.releaseSafe()
             }
         }
     }

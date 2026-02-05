@@ -19,7 +19,7 @@ import java.io.OutputStream
 @RequiresApi(Build.VERSION_CODES.Q)
 class MediaStoreStorage(
     context: Context,
-) : DownloadServiceStorage(context, Type.SHARED) {
+) : DownloadServiceStorage(Type.SHARED, context) {
 
     private val idColumn: String = MediaStore.Downloads._ID
     private val nameColumn: String = MediaStore.Downloads.DISPLAY_NAME
@@ -87,7 +87,7 @@ class MediaStoreStorage(
             uri.tryUpdate(pendingValues)
             return uri
         } catch (e: Exception) {
-            throw e.wrapIfNeed(uri)
+            throw e.wrapIfNeed(uri, params.deleteUnfinished)
         }
     }
 
