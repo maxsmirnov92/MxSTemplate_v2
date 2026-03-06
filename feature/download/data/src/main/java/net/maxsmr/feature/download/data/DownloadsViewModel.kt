@@ -2,6 +2,7 @@ package net.maxsmr.feature.download.data
 
 import android.content.ContentResolver
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import androidx.annotation.DrawableRes
 import androidx.core.net.toUri
@@ -24,7 +25,7 @@ import net.maxsmr.commonutils.flow.takeWhileInclusive
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.live.event.VmEvent
 import net.maxsmr.commonutils.media.readString
-import net.maxsmr.commonutils.media.takePersistableReadPermission
+import net.maxsmr.commonutils.media.takePersistableUriPermission
 import net.maxsmr.commonutils.states.LoadState
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
@@ -134,7 +135,7 @@ class DownloadsViewModel @Inject constructor(
                 .let { list ->
                     if (list.isNotEmpty()) {
                         list.forEach {
-                            it.bodyUri?.toUri()?.takePersistableReadPermission(contentResolver)
+                            it.bodyUri?.toUri()?.takePersistableUriPermission(contentResolver, Intent.FLAG_GRANT_READ_URI_PERMISSION)
                             // тип заранее неизвестен, не игнорируем из ответа
                             downloadManager.enqueueDownloadSuspended(it.toParams(context))
                             // delay необходим из-за особенности кривых suspend'ов:

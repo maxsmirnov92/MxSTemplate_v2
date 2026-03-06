@@ -20,7 +20,6 @@ import androidx.core.os.bundleOf
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import net.maxsmr.commonutils.NotificationWrapper
-import net.maxsmr.commonutils.NotificationWrapper.Companion.setContentBigText
 import net.maxsmr.commonutils.getFileLength
 import net.maxsmr.commonutils.getSerializableExtraCompat
 import net.maxsmr.commonutils.getUriFromRawResource
@@ -43,6 +42,7 @@ import net.maxsmr.commonutils.service.startForegroundCompat
 import net.maxsmr.commonutils.service.startNoCheck
 import net.maxsmr.commonutils.service.stopForegroundCompat
 import net.maxsmr.commonutils.service.withMutabilityFlag
+import net.maxsmr.commonutils.setContentBigText
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.ProgressListener
 import net.maxsmr.core.android.content.FileFormat

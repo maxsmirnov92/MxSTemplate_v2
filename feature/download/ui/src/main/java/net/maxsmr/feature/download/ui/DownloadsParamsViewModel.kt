@@ -16,9 +16,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.maxsmr.commonutils.REG_EX_ALGORITHM_SHA1
+import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.flow.field.Field
+import net.maxsmr.commonutils.flow.field.firstValidateAndSetByRequired
 import net.maxsmr.commonutils.flow.field.observeWithClearError
-import net.maxsmr.commonutils.flow.field.validateAndSetByRequired
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.media.writeFromStreamOrThrow
@@ -48,6 +49,7 @@ import net.maxsmr.feature.preferences.data.repository.CacheDataStoreRepository
 import net.maxsmr.feature.preferences.data.repository.SettingsDataStoreRepository
 import net.maxsmr.feature.preferences.ui.doOnBatteryOptimizationWithPostNotificationsAskIfNeeded
 import java.io.Serializable
+import kotlin.text.toRegex
 
 class DownloadsParamsViewModel @AssistedInject constructor(
     @Assisted state: SavedStateHandle,
@@ -89,9 +91,14 @@ class DownloadsParamsViewModel @AssistedInject constructor(
         initialValue = EMPTY_STRING,
         key = KEY_FIELD_TARGET_HASH
     ) {
-        validators(Field.Validator(R.string.download_field_target_hash_error) {
-            Regex(REG_EX_ALGORITHM_SHA1).matches(it)
-        })
+        REG_EX_ALGORITHM_SHA1.toRegex().let { regEx ->
+            validators(
+                Field.Validator(
+                    errorMessage = TextMessage(R.string.download_field_target_hash_error),
+                    validPredicate = { it.matches(regEx) }
+                )
+            )
+        }
         hint(R.string.download_field_target_hash_hint)
     }
 
@@ -367,9 +374,9 @@ class DownloadsParamsViewModel @AssistedInject constructor(
     fun onStartDownloadClick(fragment: BaseVmFragment<*>, errorFieldResult: (Field<*>?) -> Unit) {
 
         fun startDownload() {
-            val result = allFields.validateAndSetByRequired()
-            if (result.isNotEmpty()) {
-                errorFieldResult(result.first())
+            val firstErrorField = allFields.firstValidateAndSetByRequired()
+            if (firstErrorField != null) {
+                errorFieldResult(firstErrorField)
                 return
             }
             val url = urlField.value

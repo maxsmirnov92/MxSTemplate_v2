@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import net.maxsmr.commonutils.flow.field.Field
+import net.maxsmr.commonutils.flow.field.firstValidateAndSetByRequired
 import net.maxsmr.commonutils.flow.field.observeWithClearError
-import net.maxsmr.commonutils.flow.field.validateAndSetByRequired
 import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.isAtLeastTiramisu
 import net.maxsmr.core.android.base.BaseViewModel
@@ -39,9 +39,13 @@ class SettingsViewModel @Inject constructor(
         initialValue = 0,
         key = KEY_FIELD_MAX_DOWNLOADS
     ) {
-        validators(Field.Validator(net.maxsmr.core.ui.R.string.field_error_value_negative) {
-            it >= 0
-        })
+        validators(
+            Field.Validator(
+                errorMessageResId = net.maxsmr.core.ui.R.string.field_error_value_negative,
+                validPredicate = {
+                    it >= 0
+                }
+            ))
         hint(R.string.settings_field_max_downloads_hint)
     }
 
@@ -49,11 +53,13 @@ class SettingsViewModel @Inject constructor(
         initialValue = 0L,
         key = KEY_FIELD_CONNECT_TIMEOUT
     ) {
-        validators(Field.Validator({
-            return@Validator TextMessage(net.maxsmr.core.ui.R.string.field_error_value_negative)
-        }) {
-            it >= 0
-        })
+        validators(
+            Field.Validator(
+                errorMessageResId = net.maxsmr.core.ui.R.string.field_error_value_negative,
+                validPredicate = {
+                    it >= 0
+                }
+            ))
         hint(R.string.settings_field_connect_timeout_hint)
     }
 
@@ -81,14 +87,16 @@ class SettingsViewModel @Inject constructor(
         initialValue = 0,
         key = KEY_FIELD_UPDATE_NOTIFICATION_INTERVAL_STATE
     ) {
-        validators(Field.Validator({
-            return@Validator TextMessage(
-                net.maxsmr.core.ui.R.string.field_error_value_more_or_equal_format,
-                UPDATE_NOTIFICATION_INTERVAL_MIN
-            )
-        }) {
-            it >= UPDATE_NOTIFICATION_INTERVAL_MIN
-        })
+        validators(
+            Field.Validator(
+                errorMessage = TextMessage(
+                    net.maxsmr.core.ui.R.string.field_error_value_more_or_equal_format,
+                    UPDATE_NOTIFICATION_INTERVAL_MIN
+                ),
+                validPredicate = {
+                    it >= UPDATE_NOTIFICATION_INTERVAL_MIN
+                }
+            ))
         hint(R.string.settings_field_update_notification_interval_hint)
     }
 
@@ -203,9 +211,9 @@ class SettingsViewModel @Inject constructor(
         navigationAction: (() -> Unit)? = null,
     ) {
         viewModelScope.launch {
-            val result = allFields.validateAndSetByRequired()
-            if (result.isNotEmpty()) {
-                errorFieldResult(result.first())
+            val firstErrorField = allFields.firstValidateAndSetByRequired()
+            if (firstErrorField != null) {
+                errorFieldResult(firstErrorField)
                 return@launch
             }
             if (!hasChanges.value) {

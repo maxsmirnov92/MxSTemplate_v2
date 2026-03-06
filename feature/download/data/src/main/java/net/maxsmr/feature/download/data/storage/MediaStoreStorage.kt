@@ -114,7 +114,7 @@ class MediaStoreStorage(
                 val name = cursor.getString(nameIndex)
                 val uri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, id)
                 val length = uri.length(contentResolver)
-                if (length > 0) {
+                if (length != null && length > 0) {
                     names.add(UriAndName(uri, name))
                 } else {
                     contentResolver.delete(

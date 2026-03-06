@@ -3,6 +3,7 @@ package net.maxsmr.core.ui.field
 import androidx.annotation.StringRes
 import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.flow.field.Field
+import net.maxsmr.commonutils.gui.message.TextMessage
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.android.base.BaseViewModel
 import net.maxsmr.core.network.isUrlValid
@@ -20,19 +21,24 @@ fun BaseViewModel.urlField(
 ): Field<String> = createTextField(
     initialValue = initialValue,
     key = key,
-    valueGetter = { it.trim() }
+    withTrim = true,
 ) {
-    validators(Field.Validator(R.string.field_url_error) {
-        it.isUrlValid(
-            orBlank = isValidByBlank,
-            schemeIfEmpty = schemeIfEmpty,
-            isNonResource = isNonResource
-        )
-    })
     hint(hintResId, withAsterisk = withAsterisk)
     if (isRequired) {
         required(R.string.field_url_empty_error)
     }
+    validators(
+        Field.Validator(
+            errorMessageResId = R.string.field_url_error,
+            validPredicate = {
+                it.isUrlValid(
+                    orBlank = isValidByBlank,
+                    schemeIfEmpty = schemeIfEmpty,
+                    isNonResource = isNonResource
+                )
+            }
+        )
+    )
 }
 
 fun BaseViewModel.fileNameField(
@@ -42,11 +48,18 @@ fun BaseViewModel.fileNameField(
     initialValue = initialValue,
     key = KEY_FIELD_FILE_NAME
 ) {
-    validators(Field.Validator(R.string.field_file_name_error) { Regex(REG_EX_FILE_NAME).matches(it) })
     hint(R.string.field_file_name_hint)
     if (isRequired) {
         required(R.string.field_file_name_empty_error)
     }
+    validators(
+        REG_EX_FILE_NAME.toRegex().let { regEx ->
+            Field.Validator(
+                errorMessage = TextMessage(R.string.field_file_name_error),
+                validPredicate = { it.matches(regEx) }
+            )
+        }
+    )
 }
 
 fun BaseViewModel.subDirNameField(
@@ -56,11 +69,18 @@ fun BaseViewModel.subDirNameField(
     initialValue = initialValue,
     key = KEY_FIELD_SUB_DIR_NAME,
 ) {
-    validators(Field.Validator(R.string.field_sub_dir_name_error) { Regex(REG_EX_FILE_NAME).matches(it) })
     hint(R.string.field_sub_dir_name_hint)
     if (isRequired) {
         required(R.string.field_sub_dir_name_empty_error)
     }
+    validators(
+        REG_EX_FILE_NAME.toRegex().let { regEx ->
+            Field.Validator(
+                errorMessage = TextMessage(R.string.field_sub_dir_name_error),
+                validPredicate = { it.matches(regEx) }
+            )
+        }
+    )
 }
 
 fun BaseViewModel.saveToInternalDirField() = createNonEmptyField(
