@@ -89,29 +89,29 @@ class ContentPicker<T> private constructor(
                 request.takePhotoParams?.type -> cameraPicker.onPickResult(
                     request.takePhotoParams,
                     data?.data,
-                    request.needPersistableUriAccess,
-                    context
+                    request.permission,
+                    context.contentResolver
                 )
 
                 request.takeVideoParams?.type -> cameraPicker.onPickResult(
                     request.takeVideoParams,
                     data?.data,
-                    request.needPersistableUriAccess,
-                    context
+                    request.permission,
+                    context.contentResolver
                 )
 
                 request.mediaParams?.type -> mediaPicker.onPickResult(
                     request.mediaParams,
                     data?.data,
-                    request.needPersistableUriAccess,
-                    context
+                    request.permission,
+                    context.contentResolver
                 )
 
                 request.safParams?.type -> safPicker.onPickResult(
                     request.safParams,
                     data?.data,
-                    request.needPersistableUriAccess,
-                    context
+                    request.permission,
+                    context.contentResolver
                 )
 
                 else -> throw IllegalStateException("Unexpected params type $pickerType")

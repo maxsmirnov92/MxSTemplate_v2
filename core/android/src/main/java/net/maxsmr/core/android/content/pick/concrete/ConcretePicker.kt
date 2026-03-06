@@ -1,9 +1,12 @@
 package net.maxsmr.core.android.content.pick.concrete
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import net.maxsmr.core.android.content.pick.IntentWithPermissions
+import net.maxsmr.core.android.content.pick.PersistablePermission
+import net.maxsmr.core.android.content.pick.PickRequest
 
 /**
  * Пикер контента конкретного типа
@@ -17,7 +20,12 @@ internal interface ConcretePicker<P : ConcretePickerParams> {
 
     fun requiredPermissions(params: P, context: Context): Array<String>
 
-    fun onPickResult(params: P, uri: Uri?, needPersistableAccess: Boolean, context: Context): Uri?
+    fun onPickResult(
+        params: P,
+        uri: Uri?,
+        permission: PersistablePermission,
+        contentResolver: ContentResolver
+    ): Uri?
 
     fun onPickCancelled() {}
 }

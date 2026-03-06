@@ -1,10 +1,12 @@
 package net.maxsmr.core.android.content.pick.concrete.saf
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import net.maxsmr.commonutils.getOpenDocumentIntent
 import net.maxsmr.commonutils.media.takePersistableUriPermission
+import net.maxsmr.core.android.content.pick.PersistablePermission
 import net.maxsmr.core.android.content.pick.concrete.ConcretePicker
 
 /**
@@ -27,12 +29,11 @@ internal class SafPicker : ConcretePicker<SafPickerParams> {
     override fun onPickResult(
         params: SafPickerParams,
         uri: Uri?,
-        needPersistableAccess: Boolean,
-        context: Context,
-    ): Uri? =
-        uri?.apply {
-            if (needPersistableAccess) {
-                takePersistableUriPermission(context.contentResolver, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
+        permission: PersistablePermission,
+        contentResolver: ContentResolver,
+    ): Uri? = uri?.apply {
+        permission.modeFlags()?.let {
+            takePersistableUriPermission(contentResolver, it)
         }
+    }
 }

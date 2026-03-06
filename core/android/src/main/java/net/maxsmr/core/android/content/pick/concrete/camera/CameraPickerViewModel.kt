@@ -32,7 +32,7 @@ internal class CameraPickerViewModel @Inject constructor(state: SavedStateHandle
         storage = createUriStorage(params.storageType, contentType, context)
     }
 
-    fun createCameraBox(params: CameraPickerParams, context: Context): Uri? {
+    fun createCameraUri(params: CameraPickerParams, context: Context): Uri? {
         return storage?.create(params.fileName(), params.subPath)?.onSuccess {
             when (params.pickType) {
                 CameraPickerParams.PickType.PHOTO -> photoResultUri = it

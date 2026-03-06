@@ -1,5 +1,6 @@
 package net.maxsmr.core.android.content.pick
 
+import android.content.Intent
 import android.os.Build
 import android.os.Parcelable
 import androidx.annotation.StringRes
@@ -35,9 +36,9 @@ class PickRequest private constructor(
     val takeVideoParams: CameraPickerParams?,
     val mediaParams: MediaPickerParams?,
     val safParams: SafPickerParams?,
-    val needPersistableUriAccess: Boolean,
-    var onSuccess: (PickResult.Success) -> Unit,
-    var onError: ((PickResult.Error) -> Unit)? = null,
+    val permission: PersistablePermission,
+    val onSuccess: (PickResult.Success) -> Unit,
+    val onError: ((PickResult.Error) -> Unit)? = null,
 ) : Parcelable {
 
     override fun equals(other: Any?): Boolean {
@@ -50,7 +51,6 @@ class PickRequest private constructor(
     override fun hashCode(): Int {
         return requestCode
     }
-
 
     /**
      * Абстрактный билдер для формирования [PickRequest]. Конкретные его наследники определяются типом
@@ -85,7 +85,7 @@ class PickRequest private constructor(
         private var takeVideoParams: CameraPickerParams? = null
         private var mediaParams: MediaPickerParams? = null
         private var safParams: SafPickerParams? = null
-        private var needPersistableUriAccess: Boolean = false
+        private var permission: PersistablePermission = PersistablePermission.NONE
 
         private var onPickError: ((PickResult.Error) -> Unit)? = null
         private var onPickSuccess: ((PickResult.Success) -> Unit)? = null
@@ -117,8 +117,8 @@ class PickRequest private constructor(
             safParams = params
         }
 
-        fun needPersistableUriAccess(needPersistableUriAccess: Boolean) = apply {
-            this.needPersistableUriAccess = needPersistableUriAccess
+        fun persistablePermission(permission: PersistablePermission) = apply {
+            this.permission = permission
         }
 
         fun onSuccess(onPickSuccess: (PickResult.Success) -> Unit) = apply {
@@ -133,6 +133,7 @@ class PickRequest private constructor(
             check(takePhotoParams != null || takeVideoParams != null || mediaParams != null || safParams != null) {
                 "Cannot create picker without content source. Call one of addTakePhotoSource(), addTakeVideoSource(), addMediaSource(), addSafSource() methods."
             }
+            val onPickSuccess = onPickSuccess
             check(onPickSuccess != null) {
                 "Call onSuccess to specify on success action"
             }
@@ -144,8 +145,8 @@ class PickRequest private constructor(
                     takeVideoParams = takeVideoParams,
                     mediaParams = mediaParams,
                     safParams = safParams,
-                    needPersistableUriAccess = needPersistableUriAccess,
-                    onSuccess = onPickSuccess!!,
+                    permission = permission,
+                    onSuccess = onPickSuccess,
                     onError = onPickError
             )
         }
@@ -187,7 +188,6 @@ class PickRequest private constructor(
             return super.addMediaParams(MediaPickerParams(ContentType.VIDEO)) as BuilderImage
         }
     }
-
 
     /**
      * Билдер для формирования [PickRequest] контента типа [ContentType.AUDIO]

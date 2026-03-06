@@ -1,11 +1,13 @@
 package net.maxsmr.core.android.content.pick.concrete.camera
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStoreOwner
+import net.maxsmr.core.android.content.pick.PersistablePermission
 import net.maxsmr.core.android.content.pick.concrete.ConcretePicker
 
 /**
@@ -25,7 +27,7 @@ internal class CameraPicker(viewModelStoreOwner: ViewModelStoreOwner) : Concrete
         //т.к. это происходит до запроса разрешений и на некоторых девайсах это фейлится.
         //Также на некоторых девайсах вызов метода создает пустой "битый" файл, если юзер выберет не камеру,
         // этот файл так и останется
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, viewModel.createCameraBox(params, context))
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, viewModel.createCameraUri(params, context))
     }
 
     override fun requiredPermissions(
@@ -38,9 +40,10 @@ internal class CameraPicker(viewModelStoreOwner: ViewModelStoreOwner) : Concrete
     override fun onPickResult(
         params: CameraPickerParams,
         uri: Uri?,
-        needPersistableAccess: Boolean,
-        context: Context,
+        permission: PersistablePermission,
+        contentResolver: ContentResolver
     ): Uri? {
+        require(permission == PersistablePermission.NONE) { "persistable permission must be NONE for CameraPicker" }
         return viewModel.onPickResult(params, uri)
     }
 

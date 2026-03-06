@@ -24,6 +24,7 @@ import net.maxsmr.core.android.base.delegates.savedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
+import net.maxsmr.core.android.content.pick.PersistablePermission
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.ui.components.activities.BaseActivity
@@ -70,7 +71,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(),
         .addRequest(
             PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_BODY)
                 .addSafParams(SafPickerParams.any())
-                .needPersistableUriAccess(true)
+                .persistablePermission(PersistablePermission.READ_ONLY)
                 .onSuccess {
                     viewModel.onBodyUriSelected(it.uri)
                 }
@@ -82,7 +83,7 @@ class DownloadsParamsFragment : BaseMenuFragment<DownloadsParamsViewModel>(),
         .addRequest(
             PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_PARAMS_JSON)
                 .addSafParams(SafPickerParams.json())
-                .needPersistableUriAccess(true)
+                .persistablePermission(PersistablePermission.READ_ONLY)
                 .onSuccess {
                     downloadsViewModel.downloadFromJson(it.uri, requireContext().contentResolver)
                 }

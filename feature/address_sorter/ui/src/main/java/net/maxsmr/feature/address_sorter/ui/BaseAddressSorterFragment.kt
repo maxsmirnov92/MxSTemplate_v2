@@ -29,6 +29,7 @@ import net.maxsmr.core.android.base.delegates.savedStateViewModelFactory
 import net.maxsmr.core.android.base.delegates.viewBinding
 import net.maxsmr.core.android.content.pick.ContentPicker
 import net.maxsmr.core.android.content.pick.PickRequest
+import net.maxsmr.core.android.content.pick.PersistablePermission
 import net.maxsmr.core.android.content.pick.concrete.saf.SafPickerParams
 import net.maxsmr.core.domain.entities.feature.address_sorter.Address
 import net.maxsmr.core.domain.entities.feature.address_sorter.routing.RoutingApp
@@ -100,7 +101,7 @@ abstract class BaseAddressSorterFragment : BaseNavigationFragment<AddressSorterV
             .addRequest(
                 PickRequest.BuilderDocument(REQUEST_CODE_CHOOSE_JSON)
                     .addSafParams(SafPickerParams.json())
-                    .needPersistableUriAccess(true)
+                    .persistablePermission(PersistablePermission.READ_ONLY)
                     .onSuccess {
                         viewModel.onPickAddressesJson(it.uri)
                     }

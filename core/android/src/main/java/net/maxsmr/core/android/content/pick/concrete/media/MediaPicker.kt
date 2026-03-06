@@ -1,10 +1,13 @@
 package net.maxsmr.core.android.content.pick.concrete.media
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import net.maxsmr.commonutils.media.takePersistableUriPermission
 import net.maxsmr.core.android.content.mediaStoreExternalContentUri
+import net.maxsmr.core.android.content.pick.PersistablePermission
+import net.maxsmr.core.android.content.pick.PickRequest
 import net.maxsmr.core.android.content.pick.concrete.ConcretePicker
 
 /**
@@ -29,10 +32,11 @@ internal class MediaPicker : ConcretePicker<MediaPickerParams> {
     override fun onPickResult(
         params: MediaPickerParams,
         uri: Uri?,
-        needPersistableAccess: Boolean,
-        context: Context,
-    ): Uri? =
-        uri?.apply {
-            if (needPersistableAccess) takePersistableUriPermission(context.contentResolver, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        permission: PersistablePermission,
+        contentResolver: ContentResolver,
+    ): Uri? = uri?.apply {
+        permission.modeFlags()?.let {
+            takePersistableUriPermission(contentResolver, it)
         }
+    }
 }
