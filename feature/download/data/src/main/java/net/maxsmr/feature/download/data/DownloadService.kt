@@ -29,14 +29,10 @@ import net.maxsmr.commonutils.isAtLeastUpsideDownCake
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder.Companion.formatException
-import net.maxsmr.commonutils.media.delete
 import net.maxsmr.commonutils.media.getContentName
 import net.maxsmr.commonutils.media.getMimeTypeFromName
 import net.maxsmr.commonutils.media.isContentUriFromSelfPackage
 import net.maxsmr.commonutils.media.isEmpty
-import net.maxsmr.commonutils.media.lengthOrThrow
-import net.maxsmr.commonutils.media.mimeTypeOrThrow
-import net.maxsmr.commonutils.media.openInputStreamOrThrow
 import net.maxsmr.commonutils.service.createServicePendingIntent
 import net.maxsmr.commonutils.service.startForegroundCompat
 import net.maxsmr.commonutils.service.startNoCheck
@@ -59,9 +55,10 @@ import net.maxsmr.core.domain.entities.feature.download.HashInfo
 import net.maxsmr.core.domain.entities.feature.network.Method
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_DEFAULT
 import net.maxsmr.core.domain.entities.feature.settings.AppSettings.Companion.UPDATE_NOTIFICATION_INTERVAL_MIN
-import net.maxsmr.core.network.ContentDispositionType
-import net.maxsmr.core.network.ProgressRequestBody
-import net.maxsmr.core.network.ProgressResponseBody
+import net.maxsmr.core.network.okhttp.ContentDispositionType
+import net.maxsmr.core.network.okhttp.body.InputStreamRequestBody
+import net.maxsmr.core.network.okhttp.body.ProgressRequestBody
+import net.maxsmr.core.network.okhttp.body.ProgressResponseBody
 import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.CONNECT_TIMEOUT_DEFAULT
 import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.RETRY_ON_CONNECTION_FAILURE_DEFAULT
 import net.maxsmr.core.network.client.okhttp.BaseOkHttpClientManager.Companion.withTimeouts
@@ -69,14 +66,14 @@ import net.maxsmr.core.network.exceptions.IncorrectAttachmentException
 import net.maxsmr.core.network.exceptions.IncorrectContentTypeException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException
 import net.maxsmr.core.network.exceptions.NoPreferableConnectivityException.PreferableType
-import net.maxsmr.core.network.getContentTypeHeader
-import net.maxsmr.core.network.getFileNameFromAttachmentHeader
-import net.maxsmr.core.network.hasBytesAcceptRanges
-import net.maxsmr.core.network.hasContentDisposition
+import net.maxsmr.core.network.okhttp.getContentTypeHeader
+import net.maxsmr.core.network.okhttp.getFileNameFromAttachmentHeader
+import net.maxsmr.core.network.okhttp.hasBytesAcceptRanges
+import net.maxsmr.core.network.okhttp.hasContentDisposition
 import net.maxsmr.core.network.isAnyResourceScheme
-import net.maxsmr.core.network.newCallSuspended
+import net.maxsmr.core.network.okhttp.newCallSuspended
 import net.maxsmr.core.network.toValidUri
-import net.maxsmr.core.network.writeBufferedOrThrow
+import net.maxsmr.core.network.okhttp.writeBufferedOrThrow
 import net.maxsmr.feature.download.data.DownloadService.Companion.start
 import net.maxsmr.feature.download.data.DownloadService.RequestParams.MimeTypeMatchRule
 import net.maxsmr.feature.download.data.DownloadStateNotifier.DownloadState.Loading
@@ -88,7 +85,6 @@ import net.maxsmr.feature.download.data.storage.DownloadServiceStorage.Type
 import net.maxsmr.feature.download.data.storage.StoreException
 import net.maxsmr.permissionchecker.PermissionsHelper
 import okhttp3.Headers.Companion.toHeaders
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -96,9 +92,7 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
-import okio.BufferedSink
 import okio.ByteString
-import okio.source
 import java.io.*
 import java.util.Collections
 import javax.inject.Inject
@@ -1115,8 +1109,8 @@ class DownloadService : Service() {
                 val type = mimeType?.toMediaTypeOrNull()
                 return when (content) {
                     is Uri -> {
-                        ResourceUriRequestBody(
-                            context,
+                        InputStreamRequestBody(
+                            context.contentResolver,
                             content.toUriOrThrow(),
                             mimeType
                         )
@@ -1361,28 +1355,6 @@ class DownloadService : Service() {
                             intentEmails
                         )
                     ).intent()
-            }
-        }
-    }
-
-    private class ResourceUriRequestBody(
-        private val context: Context,
-        private val uri: Uri,
-        private val type: String? = null,
-    ) : RequestBody() {
-
-        override fun contentType(): MediaType? {
-            val contentType = type ?: uri.mimeTypeOrThrow(context.contentResolver)
-            return contentType.toMediaTypeOrNull()
-        }
-
-        override fun contentLength(): Long = uri.lengthOrThrow(context.contentResolver)
-
-        @Throws(IOException::class)
-        override fun writeTo(sink: BufferedSink) {
-            val inputStream = uri.openInputStreamOrThrow(context.contentResolver)
-            inputStream.source().use { source ->
-                sink.writeAll(source)
             }
         }
     }

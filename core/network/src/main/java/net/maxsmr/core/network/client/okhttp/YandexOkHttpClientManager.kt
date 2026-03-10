@@ -1,11 +1,11 @@
 package net.maxsmr.core.network.client.okhttp
 
-import net.maxsmr.core.network.appendValues
+import net.maxsmr.core.network.okhttp.appendValues
 import net.maxsmr.core.network.client.okhttp.interceptors.ApiLoggingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.annotations.Authorization
 import net.maxsmr.core.network.client.okhttp.interceptors.BodyCachingInterceptor
 import net.maxsmr.core.network.client.okhttp.interceptors.NetworkConnectionInterceptor
-import net.maxsmr.core.network.hasAnnotation
+import net.maxsmr.core.network.okhttp.hasAnnotation
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response

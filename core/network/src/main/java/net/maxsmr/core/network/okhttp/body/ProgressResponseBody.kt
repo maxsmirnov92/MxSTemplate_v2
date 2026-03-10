@@ -1,4 +1,4 @@
-package net.maxsmr.core.network
+package net.maxsmr.core.network.okhttp.body
 
 import net.maxsmr.core.ProgressListener
 import okhttp3.MediaType

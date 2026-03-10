@@ -1,8 +1,7 @@
 package net.maxsmr.core.network.retrofit.converters
 
 import net.maxsmr.commonutils.ReflectionUtils.invokeMethodOrThrow
-import net.maxsmr.core.network.OnServerResponseListener
-import net.maxsmr.core.network.ParameterizedTypeImpl
+import net.maxsmr.core.network.retrofit.converters.OnServerResponseListener
 import net.maxsmr.core.network.exceptions.ApiException
 import net.maxsmr.core.network.exceptions.ResponseParseException
 import net.maxsmr.core.network.retrofit.internal.cache.OfflineCache

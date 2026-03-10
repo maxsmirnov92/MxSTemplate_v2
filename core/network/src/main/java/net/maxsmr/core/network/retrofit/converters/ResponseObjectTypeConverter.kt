@@ -1,7 +1,7 @@
 package net.maxsmr.core.network.retrofit.converters
 
 import net.maxsmr.commonutils.ReflectionUtils.invokeMethodOrThrow
-import net.maxsmr.core.network.OnServerResponseListener
+import net.maxsmr.core.network.retrofit.converters.OnServerResponseListener
 import net.maxsmr.core.network.exceptions.ApiException
 import okhttp3.ResponseBody
 import retrofit2.Converter

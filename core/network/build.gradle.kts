@@ -8,6 +8,8 @@ android {
 }
 
 dependencies {
+    implementation("core_android.libs:commonutils-release-1.1.3@aar")
+
     implementation(project(":core:domain"))
     implementation(project(":core:utils"))
 

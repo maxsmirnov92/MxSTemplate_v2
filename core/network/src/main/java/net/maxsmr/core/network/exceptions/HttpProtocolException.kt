@@ -2,9 +2,9 @@ package net.maxsmr.core.network.exceptions
 
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.core.network.UNKNOWN_ERROR
-import net.maxsmr.core.network.asString
-import net.maxsmr.core.network.asStringCloned
-import net.maxsmr.core.network.toPairs
+import net.maxsmr.core.network.okhttp.asString
+import net.maxsmr.core.network.okhttp.asStringCloned
+import net.maxsmr.core.network.okhttp.toPairs
 import okhttp3.Response
 
 /**

@@ -24,11 +24,10 @@ import net.maxsmr.core.android.content.FileFormat
 import net.maxsmr.core.network.URL_PAGE_BLANK
 import net.maxsmr.core.network.exceptions.HttpProtocolException
 import net.maxsmr.core.network.exceptions.NetworkException
-import net.maxsmr.core.network.isResponseOk
+import net.maxsmr.core.network.okhttp.isResponseOk
 import net.maxsmr.core.network.isUrlValid
-import net.maxsmr.core.network.toPairs
+import net.maxsmr.core.network.okhttp.toPairs
 import net.maxsmr.core.ui.alert.ConnectionHandler
-import net.maxsmr.core.ui.alert.representation.StandardAlertRepresentation
 import net.maxsmr.core.ui.components.fragments.BaseNavigationFragment
 import net.maxsmr.core.ui.view.alert.delegate.FragmentViewAlertDelegate
 import net.maxsmr.feature.webview.data.client.InterceptWebViewClient

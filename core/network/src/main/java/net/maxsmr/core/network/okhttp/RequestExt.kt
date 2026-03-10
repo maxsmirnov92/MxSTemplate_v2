@@ -1,4 +1,4 @@
-package net.maxsmr.core.network
+package net.maxsmr.core.network.okhttp
 
 import okhttp3.Request
 import retrofit2.Invocation

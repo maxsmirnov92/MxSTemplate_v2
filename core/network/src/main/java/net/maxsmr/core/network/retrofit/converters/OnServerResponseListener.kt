@@ -1,4 +1,4 @@
-package net.maxsmr.core.network
+package net.maxsmr.core.network.retrofit.converters
 
 interface OnServerResponseListener {
 

@@ -1,23 +1,28 @@
-package net.maxsmr.core.network
+package net.maxsmr.core.network.okhttp
 
+import android.content.ContentResolver
+import android.net.Uri
 import android.text.TextUtils
 import android.util.Log
 import kotlinx.coroutines.suspendCancellableCoroutine
 import net.maxsmr.commonutils.REG_EX_FILE_NAME
 import net.maxsmr.commonutils.logger.BaseLogger
 import net.maxsmr.commonutils.logger.holder.BaseLoggerHolder
+import net.maxsmr.commonutils.media.name
 import net.maxsmr.commonutils.model.toJSONObject
 import net.maxsmr.commonutils.stream.StreamNotifier
 import net.maxsmr.commonutils.stream.copyStreamOrThrow
 import net.maxsmr.commonutils.text.EMPTY_STRING
 import net.maxsmr.commonutils.text.charsetForNameOrNull
 import net.maxsmr.core.ProgressListener
+import net.maxsmr.core.network.okhttp.body.InputStreamRequestBody
 import net.maxsmr.core.network.exceptions.HttpProtocolException
 import net.maxsmr.core.network.exceptions.OkHttpException.Companion.orNetworkCause
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -35,6 +40,7 @@ import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.URLDecoder
 import java.nio.charset.Charset
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -464,7 +470,7 @@ fun Response.getFileNameFromAttachmentHeader(): String {
     } else {
         EMPTY_STRING
     }
-    return java.net.URLDecoder.decode(
+    return URLDecoder.decode(
         encodedName,
         getCharset().name()
     ).takeIf { REG_EX_FILE_NAME.toRegex().matches(it) }.orEmpty()
@@ -487,6 +493,21 @@ fun Response.isResumeDownloadSupported(): Boolean {
     val acceptHeader = this.header("Accept-Ranges") ?: ""
     return acceptHeader.isNotEmpty() && !acceptHeader.equals("none", ignoreCase = true)
 }
+
+fun ContentResolver.getMultipartRequestBody(
+    uris: Collection<Uri>,
+    name: String,
+): List<MultipartBody.Part> =
+    uris.map { uri ->
+        MultipartBody.Part.createFormData(
+            name = name,
+            filename = uri.name(this@getMultipartRequestBody),
+            body = InputStreamRequestBody(
+                contentResolver = this@getMultipartRequestBody,
+                uri = uri
+            )
+        )
+    }
 
 @Throws(IOException::class)
 private fun Response?.skipBytesIfSupportedOrThrow(downloadedSize: Long?) {

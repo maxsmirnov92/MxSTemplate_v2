@@ -2,8 +2,8 @@ package net.maxsmr.core.network.client.okhttp.interceptors
 
 import net.maxsmr.core.network.client.okhttp.ResponseBodyCache
 import net.maxsmr.core.network.client.okhttp.interceptors.annotations.DisableBodyCaching
-import net.maxsmr.core.network.hasAnnotation
-import net.maxsmr.core.network.toResponseBody
+import net.maxsmr.core.network.okhttp.hasAnnotation
+import net.maxsmr.core.network.okhttp.toResponseBody
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.ResponseBody
