@@ -1,8 +1,11 @@
 package net.maxsmr.core.android.coroutines.execute
 
 import androidx.lifecycle.MutableLiveData
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import net.maxsmr.commonutils.gui.message.TextMessage
@@ -15,7 +18,7 @@ import net.maxsmr.core.network.getErrorCode
 
 sealed class ExecuteResult<out R> {
 
-    sealed class Complete<out T>: ExecuteResult<T>()
+    sealed class Complete<out T> : ExecuteResult<T>()
 
     data class Success<out T>(val data: T) : Complete<T>()
 
@@ -88,6 +91,44 @@ fun <T, U> Flow<ExecuteResult<T>>.flattenMapData(
     return mapNotNull { it.getData() }.map { mapData(it) }
 }
 
+fun <T, U> ExecuteResult<T>.mapData(
+    mapData: (data: T) -> U,
+): ExecuteResult<U> = when (this) {
+    is ExecuteResult.Loading -> ExecuteResult.Loading(this.progress)
+
+    is ExecuteResult.PgnLoading -> ExecuteResult.PgnLoading
+
+    is ExecuteResult.Success -> {
+        try {
+            ExecuteResult.Success(mapData(this.data))
+        } catch (e: Exception) {
+            ExecuteResult.Error(e)
+        }
+    }
+
+    is ExecuteResult.Error -> ExecuteResult.Error(this.exception, this.errorMessage())
+}
+
+fun <T, U> Flow<ExecuteResult<T>>.mapData(mapData: (data: T) -> U): Flow<ExecuteResult<U>> = map {
+    it.mapData { data -> mapData(data) }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+fun <T, U> Flow<ExecuteResult<T>>.flatMapData(flatMapData: (data: T) -> Flow<ExecuteResult<U>>): Flow<ExecuteResult<U>> =
+    this.flatMapLatest {
+        return@flatMapLatest when (it) {
+            is ExecuteResult.Loading -> flowOf(ExecuteResult.Loading(it.progress))
+
+            is ExecuteResult.PgnLoading -> flowOf(ExecuteResult.PgnLoading)
+
+            is ExecuteResult.Success -> {
+                flatMapData(it.data)
+            }
+
+            is ExecuteResult.Error -> flowOf(ExecuteResult.Error(it.exception, it.errorMessage()))
+        }
+    }
+
 /**
  * Обновление значения [liveData] если [ExecuteResult] типа [Success]
  */
@@ -159,22 +200,6 @@ fun <T> ExecuteResult<T>.asPgnState(data: T? = null): PgnLoadState<T> = when (th
     is ExecuteResult.PgnLoading -> PgnLoadState.pgnLoading(PgnLoadState.PgnLoading.PageLoad, data)
     is ExecuteResult.Success -> PgnLoadState.pgnSuccess(this.data, true)
     is ExecuteResult.Error -> PgnLoadState.pgnError(errorData(), data)
-}
-
-fun <T, U> ExecuteResult<T>.mapData(
-    mapData: (data: T) -> U,
-): ExecuteResult<U> = when (this) {
-    is ExecuteResult.Loading -> ExecuteResult.Loading()
-    is ExecuteResult.PgnLoading -> ExecuteResult.PgnLoading
-    is ExecuteResult.Success -> {
-        try {
-            ExecuteResult.Success(mapData(this.data))
-        } catch (e: Exception) {
-            ExecuteResult.Error(e)
-        }
-    }
-
-    is ExecuteResult.Error -> ExecuteResult.Error(this.exception, this.errorMessage())
 }
 
 fun <T> ExecuteResult<T>?.isNetworkError(): Boolean {
