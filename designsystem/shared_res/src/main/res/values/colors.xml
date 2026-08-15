@@ -120,6 +120,8 @@
     <color name="colorControlActivated">@color/colorPrimary</color>
     <color name="colorControlHighlight">@color/colorControlActivated</color>
     <color name="colorControlDisabled">#cecdcd</color>
+<!--    <color name="statusBarColor">@color/colorPrimaryVariant</color>-->
+    <color name="statusBarColor">@android:color/transparent</color>
     <color name="navigationBarColor">@color/windowBackground</color>
     <color name="bottomNavigationBackgroundColor">@color/navigationBarColor</color>
     <color name="bottomNavigationForegroundColor">@color/textColorPrimary</color>

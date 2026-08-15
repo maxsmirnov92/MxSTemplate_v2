@@ -3,11 +3,17 @@ package net.maxsmr.core.ui.components.activities
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.View
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.NavigationRes
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavGraph
@@ -68,7 +74,9 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(contentViewResId)
+        configureInsets()
 
         navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
@@ -86,6 +94,10 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
         navHostFragment.navController.setGraph(graph, startDestinationArgs)
         appBarConfiguration = createAppBarConfiguration()
 //        setupActionBarWithNavController(navController, appBarConfiguration)
+
+        onBackPressedDispatcher.addCallback(this) {
+            onBackPressedInternal()
+        }
     }
 
     override fun onResume() {
@@ -104,43 +116,6 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
             overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
         } else {
             overridePendingTransition(0, 0)
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-
-        fun doActionWithCheck(targetAction: () -> Unit) {
-            if (currentNavFragment?.canNavigate(true, targetAction) != false) {
-                targetAction.invoke()
-            }
-        }
-
-        var handled = false
-        val mode = backPressedOverrideMode
-        if (mode != BackPressedMode.NO_CHANGE) {
-            if (!navHostFragment.childFragmentManager.isStateSaved && !supportFragmentManager.isStateSaved) {
-                val count = navBackStackEntryCount.takeIf { it > 0 } ?: supportFragmentManager.backStackEntryCount
-                if (count == 0 || mode.isCurrent && count > 0) {
-                    if (mode.isPressTwice && !backPressedTriggered) {
-                        handler.removeCallbacks(backPressedClearRunnable)
-                        backPressedTriggered = true
-                        handler.postDelayed(backPressedClearRunnable, DELAY_PRESS_TWICE)
-                        Toast.makeText(
-                            this@BaseNavigationActivity,
-                            R.string.toast_press_twice_to_quit_message,
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        doActionWithCheck { finish() }
-                    }
-                    handled = true
-                }
-            }
-        }
-        if (!handled) {
-            doActionWithCheck { super.onBackPressed() }
         }
     }
 
@@ -179,6 +154,62 @@ abstract class BaseNavigationActivity : BaseActivity(), INavigationHost,
 
     open fun onNavigationGraphInflated(navGraph: NavGraph) {
         // do nothing
+    }
+
+    private fun onBackPressedInternal() {
+
+        fun doActionWithCheck(targetAction: () -> Unit) {
+            if (currentNavFragment?.canNavigate(true, targetAction) != false) {
+                targetAction.invoke()
+            }
+        }
+
+        var handled = false
+        val mode = backPressedOverrideMode
+        if (mode != BackPressedMode.NO_CHANGE) {
+            if (!navHostFragment.childFragmentManager.isStateSaved && !supportFragmentManager.isStateSaved) {
+                val count = navBackStackEntryCount.takeIf { it > 0 } ?: supportFragmentManager.backStackEntryCount
+                if (count == 0 || mode.isCurrent && count > 0) {
+                    if (mode.isPressTwice && !backPressedTriggered) {
+                        handler.removeCallbacks(backPressedClearRunnable)
+                        backPressedTriggered = true
+                        handler.postDelayed(backPressedClearRunnable, DELAY_PRESS_TWICE)
+                        Toast.makeText(
+                            this@BaseNavigationActivity,
+                            R.string.toast_press_twice_to_quit_message,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        doActionWithCheck { finish() }
+                    }
+                    handled = true
+                }
+            }
+        }
+        if (!handled) {
+            doActionWithCheck { onBackPressedDispatcher.onBackPressed() }
+        }
+    }
+
+    private fun configureInsets() {
+        window.apply {
+            WindowCompat.setDecorFitsSystemWindows(this, false)
+            val insetsController = WindowCompat.getInsetsController(this, decorView)
+            insetsController.isAppearanceLightStatusBars = true
+            insetsController.isAppearanceLightNavigationBars = true
+        }
+        findViewById<View>(R.id.bottom_nav_view)?.let { view ->
+            ViewCompat.setOnApplyWindowInsetsListener(view) { view, insets ->
+                view.updatePadding(
+                    bottom = if (insets.isVisible(WindowInsetsCompat.Type.ime())) {
+                        insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+                    } else {
+                        insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom
+                    }
+                )
+                insets
+            }
+        }
     }
 
     enum class BackPressedMode {

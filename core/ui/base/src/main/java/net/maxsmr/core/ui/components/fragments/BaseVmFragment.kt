@@ -8,6 +8,9 @@ import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.annotation.CallSuper
 import androidx.annotation.LayoutRes
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -119,6 +122,8 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
             it.onCreated()
         }
 
+        configureInsets(view)
+
         onViewCreated(view, savedInstanceState, viewModel)
     }
 
@@ -221,6 +226,17 @@ abstract class BaseVmFragment<VM : BaseViewModel> : Fragment(),
         lifecycleState: Lifecycle.State = Lifecycle.State.STARTED,
         crossinline action: suspend (value: PagingData<T>) -> Unit,
     ) = repeatOnLifecycle(owner, lifecycleState) { this.collectLatest { action(it) } }
+
+    private fun configureInsets(view: View) {
+        ViewCompat.setOnApplyWindowInsetsListener(view) { view, insets ->
+            view.updatePadding(
+                top = insets.getInsets(
+                    WindowInsetsCompat.Type.statusBars()
+                ).top,
+            )
+            insets
+        }
+    }
 
     private fun observeNetworkConnectionHandler() {
         viewModel.connectionManager?.let { manager ->
